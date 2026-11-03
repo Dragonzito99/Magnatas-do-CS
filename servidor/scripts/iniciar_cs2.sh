@@ -18,6 +18,8 @@ if [ "${1:-}" = "--executar" ]; then
   cd "$SERVIDOR"
   CONTA=()
   [ -n "${GSLT:-}" ] && CONTA=(+sv_setsteamaccount "$GSLT")
+  # Sem -ip, o RCON escuta no endereço do nome da máquina, que no Linux costuma ser 127.0.1.1.
+  [ -n "${RCON_PASSWORD:-}" ] && CONTA+=(-usercon -ip "${CS2_IP:-0.0.0.0}" +rcon_password "$RCON_PASSWORD")
   exec game/cs2.sh -dedicated -condebug -port 27015 \
     +game_type 0 +game_mode 1 +map de_mirage \
     "${CONTA[@]}" +sv_password "$SV_PASSWORD" \

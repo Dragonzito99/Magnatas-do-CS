@@ -1,0 +1,34 @@
+{
+  "weapon": {
+    "name": "p250",
+    "id": 45
+  },
+  "bomb": false,
+  "headshot": false,
+  "thru_smoke": false,
+  "penetrated": 0,
+  "attacker_blind": false,
+  "no_scope": false,
+  "suicide": false,
+  "friendly_fire": false,
+  "attacker": {
+    "steamid": "76561198000000001",
+    "name": "dono",
+    "user_id": 3,
+    "side": "t",
+    "is_bot": false
+  },
+  "assist": null,
+  "player": {
+    "steamid": "BOT-10",
+    "name": "Ulric",
+    "user_id": 10,
+    "side": "ct",
+    "is_bot": true
+  },
+  "round_time": 12657,
+  "round_number": 1,
+  "map_number": 0,
+  "matchid": 7003,
+  "event": "player_death"
+}

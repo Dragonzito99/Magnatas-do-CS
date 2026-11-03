@@ -1,0 +1,70 @@
+{
+  "reason": 9,
+  "winner": {
+    "side": "2",
+    "team": "team1"
+  },
+  "team1": {
+    "series_score": 0,
+    "score": 2,
+    "score_ct": 0,
+    "score_t": 0,
+    "players": [
+      {
+        "steamid": "76561198000000001",
+        "name": "dono",
+        "stats": {
+          "kills": 1,
+          "deaths": 0,
+          "assists": 0,
+          "flash_assists": 0,
+          "team_kills": 0,
+          "suicides": 0,
+          "damage": 100,
+          "utility_damage": 0,
+          "enemies_flashed": 2,
+          "friendlies_flashed": 0,
+          "knife_kills": 0,
+          "headshot_kills": 0,
+          "rounds_played": 2,
+          "bomb_defuses": 0,
+          "bomb_plants": 0,
+          "1k": 0,
+          "2k": 0,
+          "3k": 0,
+          "4k": 0,
+          "5k": 0,
+          "1v1": 0,
+          "1v2": 0,
+          "1v3": 0,
+          "1v4": 0,
+          "1v5": 0,
+          "first_kills_t": 0,
+          "first_kills_ct": 0,
+          "first_deaths_t": 0,
+          "first_deaths_ct": 0,
+          "trade_kills": 0,
+          "kast": 0,
+          "score": 2,
+          "mvp": 1
+        }
+      }
+    ],
+    "id": "",
+    "name": "Time A"
+  },
+  "team2": {
+    "series_score": 0,
+    "score": 0,
+    "score_ct": 0,
+    "score_t": 0,
+    "players": [],
+    "id": "",
+    "name": "Time B"
+  },
+  "round_time": 12660,
+  "round_number": 1,
+  "map_number": 0,
+  "matchid": 7003,
+  "event": "round_end"
+}

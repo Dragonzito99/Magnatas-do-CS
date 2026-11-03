@@ -12,6 +12,21 @@
 
 **Depende de:** `docs/superpowers/plans/2026-11-03-etapa-2-site-e-entrada.md` concluído.
 
+## Resultados da Task 1
+
+Vale sobre o resto do plano quando houver conflito. Exemplos reais em `site/src/dominio/exemplos/`.
+
+- **Estatísticas vêm do `round_end`:** `team1.players[]` e `team2.players[]` trazem os totais acumulados em `stats`, com `kills`, `deaths`, `assists`, `damage`, `headshot_kills` e `rounds_played`. O `map_result` chega com `players` vazio e serve só para o placar. Como os totais são acumulados, cada `round_end` sobrescreve a linha do jogador.
+- **Fim da partida:** `series_end` com `winner.team` igual a `team1`, `team2` ou `none`. O valor `none` significa cancelada, e é o que `get5_endmatch` gera.
+- **Identificação:** `matchid` aceita número e volta igual em todos os eventos. O nome do jogador no servidor passa a ser o da configuração.
+- **Autenticação:** `matchzy_loadmatch_url <url> Authorization "Bearer x"` manda o cabeçalho no GET, e a configuração pode ser pedida mais de uma vez. Os eventos usam `matchzy_remote_log_header_key` e `_value`.
+- **Gravação:** chega por POST, como `.dem` sem compactar (`application/octet-stream`), em média 2 minutos e meio depois do fim, com `MatchZy-MatchId` e `MatchZy-MapNumber`. Não há cabeçalho de autenticação, então o token fica no caminho da URL. Nenhum evento `demo_upload_ended` chegou.
+- **Gravação pode faltar:** em uma de três partidas no Linux, o MatchZy registrou `Demo file was not created`, sem causa confirmada. A partida precisa aparecer como "sem gravação" 10 minutos depois do fim.
+- **Fora da partida:** com `matchzy_kick_when_no_match_loaded true`, quem não está na partida é expulso (`NOT ALLOWED!`) mesmo estando na lista de membros, e sem partida carregada também. Não é preciso trocar o `whitelist.cfg` por partida.
+- **Espectador:** listado em `spectators`, entra na partida. No aquecimento, o MatchZy deixou essa conta entrar em um time, o que não foi testado com a partida ao vivo. A Task 10 confere isso.
+- **RCON:** precisa de `-ip 0.0.0.0` no início do servidor, e as respostas podem ter bytes que não são UTF-8.
+- **Bots:** o `cvars` da configuração não liga bots, e `live.cfg` manda em `mp_maxrounds`. Partida curta de teste precisa de ajuste em `live.cfg`.
+
 ## Global Constraints
 
 - Salas têm até 5 pessoas, e só sala completa desafia. A outra sala precisa aceitar. O desafio expira em 60 segundos.
@@ -349,10 +364,11 @@ Os testes usam os exemplos reais da Task 1.
 ```ts
 test('going_live marca a partida como ao vivo e registra o início');
 test('round_end atualiza o placar');
-test('map_result grava kills, deaths, assists, dano, tiros na cabeça e rodadas de cada jogador');
-test('map_result repetido não duplica nem soma de novo');
+test('round_end grava kills, deaths, assists, dano, tiros na cabeça e rodadas de cada jogador');
+test('round_end repetido ou fora de ordem não soma de novo nem reduz o total');
+test('map_result atualiza o placar');
 test('series_end encerra, grava o vencedor e libera o servidor');
-test('series_end sem vencedor marca como cancelada');
+test('series_end com winner none marca como cancelada');
 test('evento de partida encerrada não reabre nem muda nada');
 test('going_live depois de series_end é ignorado');
 test('evento de matchid desconhecido é ignorado');
@@ -371,7 +387,7 @@ Expected: FAIL por módulo inexistente.
 
 - [ ] **Step 3: Implementar**
 
-Validar o evento com Zod, com os nomes reais da Task 1. O arquivo é salvo como `<numero>.dem.zip` em `GRAVACOES_PASTA`, sem usar o nome recebido. A liberação do servidor roda na mesma transação.
+Validar o evento com Zod, com os nomes reais da Task 1. O arquivo é salvo como `<numero>.dem` em `GRAVACOES_PASTA`, sem usar o nome recebido, e o número vem de `MatchZy-MatchId`. A liberação do servidor roda na mesma transação.
 
 - [ ] **Step 4: Rodar e ver passar**
 
