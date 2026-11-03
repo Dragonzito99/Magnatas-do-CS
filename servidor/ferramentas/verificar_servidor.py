@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 
 NUCLEOS_MINIMOS = 2
 RAM_MINIMA_GIB = 6.0
-DISCO_MINIMO_GIB = 70.0
+DISCO_MINIMO_GIB = 100.0
 
 
 @dataclass

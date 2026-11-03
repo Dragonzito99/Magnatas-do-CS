@@ -49,7 +49,7 @@ O projeto será construído em conjunto: o Claude explica cada escolha técnica 
 
 **LGPD.** Dados de documento, de identidade e de rosto exigem proteção. O advogado precisa orientar antes que a etapa 2 trate documentos reais, mesmo que sejam de amigos. Até lá, o desenvolvimento usa o modo de teste do serviço de verificação. A mesma consulta responde em nome de quem a plataforma opera, pessoa física ou empresa, porque isso define quem assina com o serviço de verificação. **(minha escolha)**
 
-**Orçamento baixo no começo. (minha suposição, o dono não fixou valor)** O teste usa o servidor que o dono já tem, fora do Brasil. **(você)** Servidores no Brasil só são contratados quando a galera começar a entrar. **(minha escolha)** Cada etapa mostra o custo antes, e nada pago é contratado sem o aval do dono. Os R$ 490 da seção 5.4 cobrem só os servidores de jogo, sem contar anti-wall, armazenamento de gravações, hospedagem do site, verificação e advogado. **(minha escolha)**
+**Orçamento baixo no começo. (minha suposição, o dono não fixou valor)** O teste começa no PC do dono, e a partida com os amigos roda em um servidor novo. **(você)** O servidor que o dono já tem não recebe o CS2, porque roda outros sistemas dele. **(você)** O servidor novo e os preços são decididos antes da partida com os amigos. **(minha escolha)** Cada etapa mostra o custo antes, e nada pago é contratado sem o aval do dono. Os R$ 490 da seção 5.4 cobrem só os servidores de jogo, sem contar anti-wall, armazenamento de gravações, hospedagem do site, verificação e advogado. **(minha escolha)**
 
 **Atualizações do CS2** podem quebrar os plugins até serem corrigidos. É preciso um servidor de teste e um jeito de checar tudo depois de cada atualização.
 
@@ -124,10 +124,10 @@ Fantasma: um time invisível na faca contra um time armado. Mutação: quem é p
 Cada etapa recebe seu próprio plano, começando pela etapa 1. **(ordem proposta pelo Claude e seguida com o aval do dono)**
 
 **Etapa 1: servidor de teste, sem site.**
-Começa conferindo o servidor do dono: acesso total ou só painel, sistema, processador, memória, disco e região. Se ele não servir, a troca é decidida com o dono antes de gastar qualquer coisa. **(minha escolha)**
+Primeiro roda no PC do dono, em uma cópia separada do CS2, sem abrir portas no roteador. **(você)** Depois, o servidor novo passa pela conferência de acesso, sistema, processador, memória, disco e região, e recebe a partida com os amigos. **(você)**
 
 Pronto quando:
-- 10 amigos jogam uma partida inteira no servidor do dono.
+- 10 amigos jogam uma partida inteira no servidor novo.
 - Quem não está na lista não consegue entrar.
 - A partida fica gravada e o KD é exportado.
 - O CS2AC gera alertas.

@@ -19,7 +19,7 @@ def test_servidor_bom_nao_tem_problemas():
         ("avx", False, "AVX"),
         ("nucleos", 1, "núcleos"),
         ("ram_gib", 5.9, "RAM"),
-        ("disco_livre_gib", 69.0, "disco"),
+        ("disco_livre_gib", 99.0, "disco"),
         ("root", False, "root"),
     ],
 )
@@ -29,7 +29,7 @@ def test_cada_requisito_reprova(campo, valor, trecho):
 
 
 def test_valores_no_limite_sao_aceitos():
-    assert avaliar(replace(BOM, nucleos=2, ram_gib=6.0, disco_livre_gib=70.0)) == []
+    assert avaliar(replace(BOM, nucleos=2, ram_gib=6.0, disco_livre_gib=100.0)) == []
 
 
 def test_avx_vem_da_linha_de_flags():

@@ -10,6 +10,17 @@
 
 **Spec:** `docs/2026-11-03-irmandade-design.md` (seções 3, 5.4, 5.5 e 6)
 
+## Ajuste de 03/11/2026, decidido pelo dono
+
+Vale sobre o resto do plano quando houver conflito.
+
+- O servidor conferido na Task 1 roda outros sistemas do dono e não recebe o CS2.
+- As Tasks 2 a 7 rodam primeiro no PC do dono, no Windows, em `G:\Irmandade\cs2`. O CS2 da Steam não é alterado, e nenhuma porta é aberta no roteador.
+- No PC, os scripts são `servidor/scripts/windows/instalar_local.ps1` e `iniciar_local.ps1`, e o console do servidor fica em uma janela própria. Os segredos ficam em `G:\Irmandade\cs2.env`.
+- Sem outra pessoa no PC, a lista de membros é testada tirando o próprio dono da lista, e os testes com "dono mais um amigo" usam bots quando der. O que não der fica registrado como pendente para o servidor novo.
+- O mínimo de disco sobe para 100 GiB, porque o CS2 ocupa cerca de 74 GB.
+- A Task 8 fica para o servidor novo, depois de repetir nele as Tasks 1 a 4 com os scripts Linux.
+
 ## Global Constraints
 
 - Quem faz cada passo está marcado. **(dono)** é algo que só o dono pode fazer. O resto pode ser feito pelo Claude, se o dono der acesso por chave SSH.
