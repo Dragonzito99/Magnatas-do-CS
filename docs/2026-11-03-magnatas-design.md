@@ -1,4 +1,4 @@
-# Irmandade (nome provisório): projeto
+# Magnatas: projeto
 
 Data: 03/11/2026. Situação: aprovado pelo dono em 03/11/2026.
 

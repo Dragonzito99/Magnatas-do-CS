@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Irmandade: formatos</title>
+<title>Magnatas: formatos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -225,7 +225,7 @@ const BIO = '<svg class="art" viewBox="0 0 24 24" aria-hidden="true"><circle cx=
 const mode = (cls, art, count, title, text) => `<article class="dark mode ${cls}">${art}<span class="live self">${count}</span><div><h3>${title}</h3><p>${text}</p><div class="btns"><button class="btn primary sm">Entrar</button><button class="btn line sm">Criar sala</button></div></div></article>`;
 const modes = () => mode('ghost', GHOST, '6/12 jogando', 'Fantasma', 'Um time invisível, só na faca, contra um time armado.') + mode('mut', BIO, '9/16 jogando', 'Mutação', 'Quem é pego vira mutante. Os humanos tentam sobreviver.');
 const soon = '<div class="soon"><h3>Próximo modo</h3><p>Os novos modos entram aqui.</p></div>';
-const logo = `<div class="logo"><i>${I('target')}</i><div>IRMAN<span>DADE</span></div></div>`;
+const logo = `<div class="logo"><i>${I('target')}</i><div>MAGNA<span>TAS</span></div></div>`;
 const me = `<div class="me"><button class="btn gray sm">${I('ticket')}2 convites</button>${av('sn',1)}</div>`;
 const mixCount = `<div class="big mono">7<small>/10</small></div><div class="bars">${Array.from({ length: 10 }, (_, i) => `<div class="${i < 7 ? 'on' : ''}"></div>`).join('')}</div>`;
 

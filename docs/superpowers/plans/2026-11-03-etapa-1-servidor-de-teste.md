@@ -8,7 +8,7 @@
 
 **Tech Stack:** Linux x86_64, SteamCMD, CS2 dedicated server (app 730), Metamod:Source 2.x, CounterStrikeSharp com runtime, MatchZy, Python 3 (só biblioteca padrão nas ferramentas do servidor), pytest, `python-a2s`.
 
-**Spec:** `docs/2026-11-03-irmandade-design.md` (seções 3, 5.4, 5.5 e 6)
+**Spec:** `docs/2026-11-03-magnatas-design.md` (seções 3, 5.4, 5.5 e 6)
 
 ## Ajuste de 03/11/2026, decidido pelo dono
 
