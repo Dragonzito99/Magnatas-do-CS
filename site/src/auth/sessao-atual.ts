@@ -4,6 +4,7 @@ import type { Usuario } from '@/bd/esquema';
 import { encerrarSessao, lerSessao } from './sessoes';
 
 export const COOKIE_SESSAO = 'magnatas_sessao';
+export const COOKIE_CONVITE = 'magnatas_convite';
 const TRINTA_DIAS_S = 30 * 24 * 60 * 60;
 
 export function enderecoDoSite(): string {

@@ -1,69 +1,25 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { entrarComConvite } from './acoes';
 
-export default function Home() {
+const ERROS: Record<string, string> = {
+  convite: 'Este código não é válido. Confira com quem convidou você.',
+  conta: 'Essa conta Steam ainda não faz parte. Entre com um código de convite.',
+  steam: 'Não foi possível confirmar seu login na Steam. Tente de novo.',
+  limite: 'Muitas tentativas. Espere um minuto e tente de novo.',
+};
+
+export default async function Inicio({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const { erro } = await searchParams;
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="entrada">
+      <h1>Magnatas</h1>
+      <p>Só entra quem tem convite.</p>
+      {erro && ERROS[erro] && <p role="alert">{ERROS[erro]}</p>}
+      <form action={entrarComConvite}>
+        <label htmlFor="codigo">Código de convite</label>
+        <input id="codigo" name="codigo" autoComplete="off" required maxLength={20} placeholder="7K2M9QX4TP" />
+        <button type="submit">Entrar com a Steam</button>
+      </form>
+      <a href="/api/auth/steam">Já tenho conta</a>
+    </main>
   );
 }
