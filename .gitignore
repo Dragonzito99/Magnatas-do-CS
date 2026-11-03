@@ -5,3 +5,9 @@ __pycache__/
 .pytest_cache/
 .claude/
 .superpowers/
+
+# Site
+site/.env.local
+site/.next/
+site/node_modules/
+site/next-env.d.ts
