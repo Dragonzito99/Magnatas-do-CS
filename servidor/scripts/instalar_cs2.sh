@@ -15,9 +15,18 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if command -v apt-get >/dev/null; then
-  dpkg --add-architecture i386
-  apt-get update -qq
-  apt-get install -y -qq tmux curl tar ca-certificates lib32gcc-s1 libicu-dev python3
+  PACOTES=(tmux curl tar ca-certificates lib32gcc-s1 python3)
+  ldconfig -p | grep -q libicuuc || PACOTES+=(libicu-dev)
+  FALTANDO=()
+  for pacote in "${PACOTES[@]}"; do
+    dpkg -s "$pacote" >/dev/null 2>&1 || FALTANDO+=("$pacote")
+  done
+  if [ "${#FALTANDO[@]}" -gt 0 ]; then
+    dpkg --add-architecture i386
+    apt-get update -qq
+    # A máquina pode rodar outros sistemas, então a instalação não reinicia serviços.
+    DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=l apt-get install -y -qq "${FALTANDO[@]}"
+  fi
 elif command -v dnf >/dev/null; then
   dnf install -y -q tmux curl tar ca-certificates glibc.i686 libstdc++.i686 libicu python3
 else
