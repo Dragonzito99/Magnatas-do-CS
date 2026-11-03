@@ -20,10 +20,16 @@ function conexaoFalsa(resposta = '') {
   return { conexao, enviados, estado };
 }
 
-test('carregar pede a configuração da partida, com o token no cabeçalho', async () => {
+test('carregar tira a partida que sobrou e pede a configuração da nova, com o token no cabeçalho', async () => {
   const { conexao, enviados, estado } = conexaoFalsa();
   await controladorRcon(AMBIENTE, async () => conexao).carregarPartida(SERVIDOR, 42);
-  expect(enviados).toEqual(['matchzy_loadmatch_url "https://site.test/api/servidor/partidas/42/config" "Authorization" "Bearer token"']);
+  expect(enviados).toEqual(['get5_endmatch', 'matchzy_loadmatch_url "https://site.test/api/servidor/partidas/42/config" "Authorization" "Bearer token"']);
+  expect(estado.fechada).toBe(true);
+});
+
+test('quando o servidor recusa a partida, carregar dá erro em vez de fingir que deu certo', async () => {
+  const { conexao, estado } = conexaoFalsa('[MatchZy] [LoadMatchDataCommand] A match is already setup with id: 3, cannot load a new match!');
+  await expect(controladorRcon(AMBIENTE, async () => conexao).carregarPartida(SERVIDOR, 4)).rejects.toThrow(/recusou a partida 4/);
   expect(estado.fechada).toBe(true);
 });
 

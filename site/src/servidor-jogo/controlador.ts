@@ -26,11 +26,14 @@ export function comandoDeExpulsar(steamid64: string): string {
 }
 
 export function controladorRcon(ambiente: AmbienteDoControlador, conectar: Conectar = conectarPorRcon): ControladorServidor {
-  async function enviar(servidor: ServidorAlvo, comando: string): Promise<void> {
+  /** Responde com o que o servidor disse ao último comando. */
+  async function enviar(servidor: ServidorAlvo, ...comandos: string[]): Promise<string> {
     if (!ambiente.RCON_SENHA) throw new Error('RCON_SENHA não configurada.');
     const conexao = await conectar(servidor, ambiente.RCON_SENHA);
     try {
-      await conexao.send(comando);
+      let resposta = '';
+      for (const comando of comandos) resposta = await conexao.send(comando);
+      return resposta;
     } finally {
       await conexao.end().catch(() => undefined);
     }
@@ -40,10 +43,16 @@ export function controladorRcon(ambiente: AmbienteDoControlador, conectar: Conec
     async carregarPartida(servidor, numero) {
       if (!ambiente.SERVIDOR_TOKEN) throw new Error('SERVIDOR_TOKEN não configurado.');
       const endereco = `${ambiente.SITE_URL}/api/servidor/partidas/${numero}/config`;
-      await enviar(servidor, `matchzy_loadmatch_url "${endereco}" "Authorization" "Bearer ${ambiente.SERVIDOR_TOKEN}"`);
+      // Só servidor livre chega aqui, então partida carregada nele é sobra, e o MatchZy recusaria a nova.
+      const resposta = await enviar(servidor, 'get5_endmatch', `matchzy_loadmatch_url "${endereco}" "Authorization" "Bearer ${ambiente.SERVIDOR_TOKEN}"`);
+      if (/cannot load/i.test(resposta)) throw new Error(`O servidor recusou a partida ${numero}.`);
     },
-    encerrarPartida: (servidor) => enviar(servidor, 'get5_endmatch'),
-    expulsar: (servidor, steamid64) => enviar(servidor, comandoDeExpulsar(steamid64)),
+    async encerrarPartida(servidor) {
+      await enviar(servidor, 'get5_endmatch');
+    },
+    async expulsar(servidor, steamid64) {
+      await enviar(servidor, comandoDeExpulsar(steamid64));
+    },
   };
 }
 
