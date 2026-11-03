@@ -715,6 +715,7 @@ Expected: resposta do site. O servidor de CS2 passa a ser acessado por `127.0.0.
 4. Rodar `atualizar_lista.sh` e conectar no servidor. Expected: entra.
 5. Marcar a própria conta como suspensa pelo banco, rodar o script e reconectar. Expected: é expulso, e o site leva para `/suspenso`.
 6. Voltar para ativo.
+7. Tentar conectar com a senha errada do servidor. Expected: é recusado. A revisão da etapa 1 pediu esse teste, e a senha é a primeira proteção do servidor.
 
 - [ ] **Step 7: Commit**
 

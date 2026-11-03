@@ -50,7 +50,7 @@ como_cs2 "$STEAMCMD/steamcmd.sh" +force_install_dir "$SERVIDOR" +login anonymous
 
 como_cs2 ln -sf "$STEAMCMD/linux64/steamclient.so" "$CASA/.steam/sdk64/steamclient.so"
 
-install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$CASA/bin/"
+install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$ORIGEM/scripts/conferir_cs2.sh" "$CASA/bin/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$CASA/bin/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/config/server.cfg" "$SERVIDOR/game/csgo/cfg/server.cfg"
 
@@ -59,4 +59,8 @@ if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
 fi
 
 echo "CS2 instalado em $SERVIDOR."
+if ! { command -v ufw >/dev/null && ufw status | grep -q "Status: active"; } \
+  && ! { command -v firewall-cmd >/dev/null && firewall-cmd --state >/dev/null 2>&1; }; then
+  echo "ATENÇÃO: nenhum firewall ativo nesta máquina. Em um servidor na internet, deixe aberta só a porta 27015/udp." >&2
+fi
 echo "Se houver firewall no painel do provedor, libere só a porta 27015/udp."

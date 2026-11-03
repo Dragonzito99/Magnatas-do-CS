@@ -3,10 +3,14 @@
 Uso: python stats.py <entrada.csv> <saida.csv>
 """
 import csv
+import os
+import re
 import sys
 
 COLUNAS_NECESSARIAS = ("steamid64", "team", "name", "kills", "deaths", "assists", "damage", "head_shot_kills")
+COLUNAS_NUMERICAS = ("kills", "deaths", "assists", "damage", "head_shot_kills")
 COLUNAS_SAIDA = ("steamid64", "apelido", "time", "abates", "mortes", "assistencias", "kd", "hs_pct", "dano")
+INTEIRO = re.compile(r"-?[0-9]+")
 
 
 def calcular_kd(kills: int, deaths: int) -> float:
@@ -25,7 +29,14 @@ def ler_partida(caminho: str) -> list[dict]:
         faltando = [coluna for coluna in COLUNAS_NECESSARIAS if coluna not in leitor.fieldnames]
         if faltando:
             raise ValueError(f"{caminho} não tem as colunas: {', '.join(faltando)}.")
-        linhas = list(leitor)
+        linhas = []
+        for linha in leitor:
+            for coluna in COLUNAS_NUMERICAS:
+                valor = linha.get(coluna)
+                if valor is None or not INTEIRO.fullmatch(valor):
+                    raise ValueError(f"{caminho}, linha {leitor.line_num}: a coluna {coluna} tem '{valor}', e devia ser um número inteiro.")
+                linha[coluna] = int(valor)
+            linhas.append(linha)
     if not linhas:
         raise ValueError(f"{caminho} está vazio, sem nenhum jogador.")
     return linhas
@@ -33,25 +44,25 @@ def ler_partida(caminho: str) -> list[dict]:
 
 def exportar(entrada: str, saida: str) -> None:
     linhas = ler_partida(entrada)
-    with open(saida, "w", encoding="utf-8", newline="") as arquivo:
+    temporario = f"{saida}.tmp"
+    with open(temporario, "w", encoding="utf-8", newline="") as arquivo:
         escritor = csv.writer(arquivo, lineterminator="\n")
         escritor.writerow(COLUNAS_SAIDA)
         for linha in linhas:
-            abates = int(linha["kills"])
-            mortes = int(linha["deaths"])
             escritor.writerow(
                 [
                     linha["steamid64"],
                     linha["name"],
                     linha["team"],
-                    abates,
-                    mortes,
-                    int(linha["assists"]),
-                    calcular_kd(abates, mortes),
-                    hs_pct(int(linha["head_shot_kills"]), abates),
-                    int(linha["damage"]),
+                    linha["kills"],
+                    linha["deaths"],
+                    linha["assists"],
+                    calcular_kd(linha["kills"], linha["deaths"]),
+                    hs_pct(linha["head_shot_kills"], linha["kills"]),
+                    linha["damage"],
                 ]
             )
+    os.replace(temporario, saida)
 
 
 def main() -> int:

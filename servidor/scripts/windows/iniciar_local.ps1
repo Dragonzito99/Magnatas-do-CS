@@ -25,5 +25,12 @@ if ($valores['GSLT']) { $argumentos += '+sv_setsteamaccount', $valores['GSLT'] }
 if ($valores['SV_PASSWORD']) { $argumentos += '+sv_password', $valores['SV_PASSWORD'] }
 if ($valores['RCON_PASSWORD']) { $argumentos = @('-usercon') + $argumentos + '+rcon_password', $valores['RCON_PASSWORD'] }
 
+# A atualizacao do CS2 restaura o gameinfo.gi, e sem o Metamod a lista de membros deixa de valer.
+$csgo = Join-Path $raiz 'cs2\game\csgo'
+if (Test-Path -LiteralPath (Join-Path $csgo 'addons\metamod')) {
+    & python (Join-Path $PSScriptRoot '..\..\ferramentas\gameinfo.py') (Join-Path $csgo 'gameinfo.gi')
+    if ($LASTEXITCODE -ne 0) { throw 'Nao consegui aplicar o Metamod no gameinfo.gi.' }
+}
+
 $processo = Start-Process -FilePath $executavel -ArgumentList $argumentos -WorkingDirectory (Split-Path $executavel) -WindowStyle Minimized -PassThru
 Write-Output "Servidor iniciado (processo $($processo.Id)). No CS2: connect 127.0.0.1:27015"

@@ -17,6 +17,7 @@ from dataclasses import dataclass
 COLUNAS = ("steamid64", "apelido", "papel")
 PAPEIS = ("jogador", "gm", "adm")
 STEAMID64 = re.compile(r"7656119\d{10}")
+NOTACAO_DO_EXCEL = re.compile(r"[0-9.,]+e\+[0-9]+", re.IGNORECASE)
 JOGADORES_POR_PARTIDA = 10
 
 
@@ -48,6 +49,11 @@ def ler_membros(caminho: str) -> list[Membro]:
     for linha in leitor:
         numero = leitor.line_num
         steamid, apelido, papel = ((linha.get(coluna) or "").strip() for coluna in COLUNAS)
+        if NOTACAO_DO_EXCEL.fullmatch(steamid):
+            raise ValueError(
+                f"linha {numero}: o Excel transformou o SteamID em '{steamid}' e perdeu os últimos dígitos. "
+                "Formate a coluna como Texto e digite o ID de novo."
+            )
         if not STEAMID64.fullmatch(steamid):
             raise ValueError(f"linha {numero}: '{steamid}' não é um SteamID64 de 17 dígitos.")
         if steamid in vistos:
@@ -59,6 +65,18 @@ def ler_membros(caminho: str) -> list[Membro]:
         vistos.add(steamid)
         membros.append(Membro(steamid, apelido, papel))
     return membros
+
+
+def suspeitos_de_arredondamento(membros: list[Membro]) -> list[Membro]:
+    return [membro for membro in membros if membro.steamid64.endswith("00")]
+
+
+def _avisar_suspeitos(membros: list[Membro]) -> None:
+    for membro in suspeitos_de_arredondamento(membros):
+        print(
+            f"Aviso: o ID de {membro.apelido} termina em 00. Confira no perfil da Steam, porque o Excel arredonda IDs longos.",
+            file=sys.stderr,
+        )
 
 
 def gerar_whitelist(membros: list[Membro]) -> str:
@@ -104,10 +122,14 @@ def main(argumentos: list[str]) -> int:
     try:
         if len(argumentos) in (2, 3) and argumentos[0] == "whitelist":
             destino = argumentos[2] if len(argumentos) == 3 else None
-            _entregar(gerar_whitelist(ler_membros(argumentos[1])), destino)
+            membros = ler_membros(argumentos[1])
+            _avisar_suspeitos(membros)
+            _entregar(gerar_whitelist(membros), destino)
         elif len(argumentos) in (3, 4) and argumentos[0] == "partida":
             destino = argumentos[3] if len(argumentos) == 4 else None
-            partida = gerar_partida(ler_membros(argumentos[1]), argumentos[2])
+            membros = ler_membros(argumentos[1])
+            _avisar_suspeitos(membros)
+            partida = gerar_partida(membros, argumentos[2])
             _entregar(json.dumps(partida, ensure_ascii=False, indent=2) + "\n", destino)
         else:
             print(__doc__.strip(), file=sys.stderr)

@@ -41,7 +41,13 @@ Preenchido durante os testes. Só entra aqui o que foi visto na prática.
 - Opinião dos jogadores: pendente
 
 ## O que quebrou e como foi resolvido
-- Nada registrado ainda
+- Linux: o servidor não subia com o binário direto (`libv8.so` ausente). Agora inicia pelo `game/cs2.sh`.
+- Windows: a gravação falha com `invalid path`. Não será corrigido, porque o alvo é Linux.
+- CS2AC e CS2FOW grátis: não carregam (interface 17 contra 18).
+- A reinstalação removia o Metamod sem avisar. Agora `iniciar_cs2.sh` reaplica, e `conferir_cs2.sh` desliga o servidor se a lista de membros não estiver valendo. Provado em Linux com o `gameinfo.gi` sem a linha e com a lista desativada.
+- `atualizar_cs2.sh` provado em Linux: o `validate` restaurou o `gameinfo.gi`, o Metamod foi reaplicado, a conferência passou e o VAC seguiu ativo.
+- A senha errada ainda não foi testada na prática. Fica para o teste de ponta a ponta da etapa 2.
+- O VAC foi medido sem GSLT, em modo anônimo.
 
 ## O que muda antes da etapa 2
 - Pendente

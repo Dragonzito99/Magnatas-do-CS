@@ -23,5 +23,4 @@ fi
 "$CASA/steamcmd/steamcmd.sh" +force_install_dir "$SERVIDOR" +login anonymous +app_update 730 validate +quit
 python3 "$CASA/bin/gameinfo.py" "$SERVIDOR/game/csgo/gameinfo.gi"
 bash "$CASA/bin/iniciar_cs2.sh"
-
-echo "Confira no console (tmux attach -t cs2) se 'meta list' mostra o CounterStrikeSharp."
+bash "$CASA/bin/conferir_cs2.sh"

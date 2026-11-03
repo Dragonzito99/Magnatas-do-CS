@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from membros import Membro, gerar_partida, gerar_whitelist, ler_membros
+from membros import Membro, gerar_partida, gerar_whitelist, ler_membros, suspeitos_de_arredondamento
 
 FERRAMENTA = Path(__file__).parents[1] / "ferramentas" / "membros.py"
 ID1 = "76561198000000001"
@@ -103,6 +103,32 @@ def test_aceita_csv_do_excel_brasileiro(tmp_path):
 def test_aceita_csv_utf8_com_bom(tmp_path):
     arquivo = escrever(tmp_path, CABECALHO + f"{ID1},João,jogador\n", "utf-8-sig")
     assert ler_membros(arquivo) == [Membro(ID1, "João", "jogador")]
+
+
+@pytest.mark.parametrize("arredondado", ["7,65612E+16", "7.65612E+16", "7,65612e+16"])
+def test_notacao_cientifica_do_excel_e_explicada(tmp_path, arredondado):
+    arquivo = escrever(tmp_path, f"steamid64;apelido;papel\n{arredondado};Bia;jogador\n")
+    with pytest.raises(ValueError, match=r"linha 2.*Excel"):
+        ler_membros(arquivo)
+
+
+def test_id_terminado_em_zeros_e_suspeito_de_arredondamento():
+    suspeito = membro("76561198000000100", apelido="Bia")
+    normal = membro("76561198000000123", apelido="Rafa")
+    assert suspeitos_de_arredondamento([suspeito, normal]) == [suspeito]
+
+
+def test_comando_avisa_sobre_id_suspeito_sem_bloquear(tmp_path):
+    arquivo = escrever(tmp_path, CABECALHO + "76561198000000100,Bia,jogador\n")
+    resultado = rodar("whitelist", arquivo)
+    assert resultado.returncode == 0
+    assert resultado.stdout == b"76561198000000100\n"
+    assert b"Excel" in resultado.stderr and b"Bia" in resultado.stderr
+
+
+def test_comando_sem_id_suspeito_nao_avisa(tmp_path):
+    arquivo = escrever(tmp_path, CABECALHO + f"{ID1},Bia,jogador\n")
+    assert rodar("whitelist", arquivo).stderr == b""
 
 
 def test_whitelist_tem_um_id_por_linha():

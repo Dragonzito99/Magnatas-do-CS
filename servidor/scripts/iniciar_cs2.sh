@@ -21,7 +21,7 @@ if [ "${1:-}" = "--executar" ]; then
   exec game/cs2.sh -dedicated -condebug -port 27015 \
     +game_type 0 +game_mode 1 +map de_mirage \
     "${CONTA[@]}" +sv_password "$SV_PASSWORD" \
-    +tv_enable 1 +tv_delay 0 +exec server.cfg
+    +tv_enable 1 +tv_delay 0 +tv_password "$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" +exec server.cfg
 fi
 
 if tmux has-session -t cs2 2>/dev/null; then
@@ -49,5 +49,10 @@ if [ -z "${GSLT:-}" ]; then
   echo "Aviso: sem GSLT, o servidor entra em modo anônimo. Use só em testes locais." >&2
 fi
 
-tmux new-session -d -s cs2 "bash $(printf %q "${BASH_SOURCE[0]}") --executar"
+# A atualização do CS2 restaura o gameinfo.gi, e sem o Metamod a lista de membros deixa de valer.
+if [ -d "$SERVIDOR/game/csgo/addons/metamod" ]; then
+  python3 "$CASA/bin/gameinfo.py" "$SERVIDOR/game/csgo/gameinfo.gi"
+fi
+
+tmux new-session -d -x 200 -y 50 -s cs2 "bash $(printf %q "${BASH_SOURCE[0]}") --executar"
 echo "Servidor iniciado. Console: tmux attach -t cs2. Para sair sem desligar: Ctrl+B e depois D."
