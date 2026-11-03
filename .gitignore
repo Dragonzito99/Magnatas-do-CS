@@ -1,0 +1,7 @@
+membros.csv
+*.env
+cs2fow.cfg
+__pycache__/
+.pytest_cache/
+.claude/
+.superpowers/
