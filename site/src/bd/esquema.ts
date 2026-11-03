@@ -1,4 +1,4 @@
-import { bigint, boolean, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 export const papel = pgEnum('papel', ['jogador', 'gm', 'adm']);
 export const estadoUsuario = pgEnum('estado_usuario', ['aguardando_verificacao', 'ativo', 'suspenso', 'banido']);
@@ -16,6 +16,7 @@ export const usuarios = pgTable('usuarios', {
   cpfHmac: text('cpf_hmac').unique(),
   convitesRestantes: integer('convites_restantes').notNull().default(0),
   convidadoPor: uuid('convidado_por'),
+  vistoEm: timestamp('visto_em', { withTimezone: true }),
   criadoEm: criadoEm(),
 });
 
@@ -177,7 +178,47 @@ export const gravacoes = pgTable('gravacoes', {
   apagadaEm: timestamp('apagada_em', { withTimezone: true }),
 });
 
+export const estadoDenuncia = pgEnum('estado_denuncia', ['aberta', 'em_analise', 'encerrada']);
+
+export const denuncias = pgTable(
+  'denuncias',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    partidaId: uuid('partida_id')
+      .notNull()
+      .references(() => partidas.id),
+    denuncianteId: uuid('denunciante_id')
+      .notNull()
+      .references(() => usuarios.id),
+    // Fica vazio quando o chamado sem equipe online vira denúncia, e a equipe descobre quem é pela gravação.
+    acusadoId: uuid('acusado_id').references(() => usuarios.id),
+    motivo: text('motivo').notNull(),
+    estado: estadoDenuncia('estado').notNull().default('aberta'),
+    analistaId: uuid('analista_id').references(() => usuarios.id),
+    conclusao: text('conclusao'),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [unique().on(tabela.partidaId, tabela.denuncianteId, tabela.acusadoId)],
+);
+
+export const estadoChamado = pgEnum('estado_chamado', ['aberto', 'atendido', 'virou_denuncia']);
+
+export const chamados = pgTable('chamados', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  partidaId: uuid('partida_id')
+    .notNull()
+    .references(() => partidas.id),
+  chamadoPor: uuid('chamado_por')
+    .notNull()
+    .references(() => usuarios.id),
+  estado: estadoChamado('estado').notNull().default('aberto'),
+  atendidoPor: uuid('atendido_por').references(() => usuarios.id),
+  criadoEm: criadoEm(),
+});
+
 export type Usuario = typeof usuarios.$inferSelect;
+export type Denuncia = typeof denuncias.$inferSelect;
+export type Chamado = typeof chamados.$inferSelect;
 export type Gravacao = typeof gravacoes.$inferSelect;
 export type Desafio = typeof desafios.$inferSelect;
 export type Sala = typeof salas.$inferSelect;

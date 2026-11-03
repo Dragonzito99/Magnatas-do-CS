@@ -1,12 +1,17 @@
 import { redirect } from 'next/navigation';
 import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
+import { obterBd } from '@/bd/conexao';
+import { contarCasos } from '@/dominio/denuncias';
 import { Avatar } from './avatar';
 import { Menu } from './menu';
 
 export default async function LayoutDeMembros({ children }: { children: React.ReactNode }) {
   const usuario = await usuarioAtual();
   if (!usuario) redirect('/');
+
+  const mostrarEquipe = pode(usuario, 'ver_equipe');
+  const casos = pode(usuario, 'moderar') ? await contarCasos(obterBd(), usuario) : 0;
 
   return (
     <div className="app">
@@ -25,7 +30,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
             MAGNA<span>TAS</span>
           </div>
         </div>
-        <Menu mostrarEquipe={pode(usuario, 'ver_equipe')} />
+        <Menu mostrarEquipe={mostrarEquipe} casos={casos} />
         <div className="rodape-lateral">
           <div className="perfil">
             <Avatar usuario={usuario} />

@@ -48,16 +48,28 @@ const CAMINHOS_DOS_ICONES: Record<string, React.ReactNode> = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </>
   ),
+  'equipe/casos': (
+    <>
+      <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />
+      <path d="M12 8v4" />
+      <path d="M12 16h.01" />
+    </>
+  ),
 };
 
-export function Menu({ mostrarEquipe }: { mostrarEquipe: boolean }) {
+export function Menu({ mostrarEquipe, casos }: { mostrarEquipe: boolean; casos: number }) {
   const caminho = usePathname();
-  const itens = [
+  const itens: { id: string; nome: string; exato?: boolean; contador?: number }[] = [
     { id: 'salas', nome: 'Salas' },
     { id: 'mix', nome: 'Mix' },
     { id: 'diversao', nome: 'Diversão' },
     { id: 'convites', nome: 'Convites' },
-    ...(mostrarEquipe ? [{ id: 'equipe', nome: 'Equipe' }] : []),
+    ...(mostrarEquipe
+      ? [
+          { id: 'equipe', nome: 'Equipe', exato: true },
+          { id: 'equipe/casos', nome: 'Casos', contador: casos },
+        ]
+      : []),
   ];
 
   return (
@@ -69,12 +81,13 @@ export function Menu({ mostrarEquipe }: { mostrarEquipe: boolean }) {
             key={item.id}
             href={destino}
             className="item-menu"
-            aria-current={caminho === destino || caminho.startsWith(`${destino}/`) ? 'page' : undefined}
+            aria-current={caminho === destino || (!item.exato && caminho.startsWith(`${destino}/`)) ? 'page' : undefined}
           >
             <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
               {CAMINHOS_DOS_ICONES[item.id]}
             </svg>
             {item.nome}
+            {!!item.contador && <small className="contador">{item.contador}</small>}
           </Link>
         );
       })}

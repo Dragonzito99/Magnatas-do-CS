@@ -5,9 +5,9 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { gravacoes, partidas, type Partida } from '@/bd/esquema';
-import { criarBancoDeTeste } from '@/bd/teste';
-import { GravacaoGrandeDemais, GravacaoRecusada, respostaDaGravacao, salvarGravacao } from './gravacoes';
+import { auditoria, gravacoes, partidas, type Partida } from '@/bd/esquema';
+import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
+import { GravacaoGrandeDemais, GravacaoRecusada, respostaDaGravacao, respostaDoDownload, salvarGravacao } from './gravacoes';
 
 let bd: Bd;
 let pasta: string;
@@ -78,4 +78,34 @@ test('a rota responde 200 ao salvar, 404 a partida desconhecida e 413 ao que pas
   expect((await respostaDaGravacao(bd, pasta, 'certo', 'certo', pedido(partida.numero + 100))).status).toBe(404);
   expect((await respostaDaGravacao(bd, pasta, 'certo', 'certo', pedido(partida.numero), 4)).status).toBe(413);
   expect((await respostaDaGravacao(bd, pasta, 'certo', 'certo', pedido(partida.numero))).status).toBe(200);
+});
+
+test('a equipe baixa a gravação, e o download fica registrado', async () => {
+  await salvarGravacao(bd, pasta, cabecalhos(), corpo('demo'));
+  const [{ id }] = await bd.select().from(gravacoes);
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  const resposta = await respostaDoDownload(bd, pasta, gm, id);
+  expect(resposta.status).toBe(200);
+  expect(await resposta.text()).toBe('demo');
+  expect(resposta.headers.get('content-disposition')).toContain(`${partida.numero}.dem`);
+  const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'baixar_gravacao'));
+  expect(registro).toMatchObject({ atorId: gm.id });
+});
+
+test('jogador comum e visitante não baixam a gravação', async () => {
+  await salvarGravacao(bd, pasta, cabecalhos(), corpo('demo'));
+  const [{ id }] = await bd.select().from(gravacoes);
+  expect((await respostaDoDownload(bd, pasta, null, id)).status).toBe(401);
+  expect((await respostaDoDownload(bd, pasta, await criarUsuario(bd, { estado: 'ativo' }), id)).status).toBe(403);
+  expect(await bd.select().from(auditoria)).toEqual([]);
+});
+
+test('gravação apagada, inexistente ou com id estranho dá 404', async () => {
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  await salvarGravacao(bd, pasta, cabecalhos(), corpo('demo'));
+  const [{ id }] = await bd.select().from(gravacoes);
+  await bd.update(gravacoes).set({ apagadaEm: new Date() }).where(eq(gravacoes.id, id));
+  expect((await respostaDoDownload(bd, pasta, gm, id)).status).toBe(404);
+  expect((await respostaDoDownload(bd, pasta, gm, '00000000-0000-0000-0000-000000000000')).status).toBe(404);
+  expect((await respostaDoDownload(bd, pasta, gm, '../../x')).status).toBe(404);
 });

@@ -6,6 +6,7 @@ import { partidaAtualDe } from '@/dominio/partidas';
 import { listarSalas, minhaSala, TAMANHO_DA_SALA, TAMANHO_MAXIMO_DO_NOME, type SalaComMembros } from '@/dominio/salas';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
+import { OnlineAgora } from '../online-agora';
 import { aceitar, cancelar, chamarParaDesafio, criar, entrar, expulsar, recusar, sair } from './acoes';
 
 const ERROS: Record<string, string> = {
@@ -196,6 +197,7 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
               <p>Crie uma sala ou entre em uma aberta. Com 5 pessoas, o líder pode desafiar outra sala completa.</p>
             </section>
           )}
+          <OnlineAgora />
         </div>
       </div>
     </>

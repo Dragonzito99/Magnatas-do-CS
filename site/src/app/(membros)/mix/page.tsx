@@ -6,6 +6,7 @@ import { partidaAtualDe, partidasEmAndamento } from '@/dominio/partidas';
 import { nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
+import { OnlineAgora } from '../online-agora';
 import { entrar, sair } from './acoes';
 
 const TOTAL = 10;
@@ -115,6 +116,7 @@ export default async function Mix({ searchParams }: { searchParams: Promise<{ er
             </div>
             <p>{faltam === 1 ? 'Falta 1 para começar' : `Faltam ${faltam} para começar`}</p>
           </section>
+          <OnlineAgora />
         </div>
       </div>
     </>

@@ -1,14 +1,16 @@
 import { randomUUID } from 'node:crypto';
-import { createWriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync } from 'node:fs';
 import { mkdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { ReadableStream as FluxoWeb } from 'node:stream/web';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
+import { z } from 'zod';
 import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
-import { gravacoes, partidas } from '@/bd/esquema';
+import { gravacoes, partidas, type Usuario } from '@/bd/esquema';
+import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 
 export class GravacaoRecusada extends Error {
   constructor() {
@@ -63,6 +65,35 @@ export async function salvarGravacao(
     await rm(temporario, { force: true });
     throw erro;
   }
+}
+
+/** Só a equipe baixa gravações, e cada download fica registrado. */
+export async function respostaDoDownload(bd: Bd, pasta: string, leitor: Usuario | null, gravacaoId: string): Promise<Response> {
+  if (!leitor) return new Response('Não autorizado.', { status: 401 });
+  try {
+    await exigirPermissao(bd, leitor, 'moderar');
+  } catch (erro) {
+    if (erro instanceof SemPermissao) return new Response('Não autorizado.', { status: 403 });
+    throw erro;
+  }
+  if (!z.uuid().safeParse(gravacaoId).success) return new Response('Gravação não encontrada.', { status: 404 });
+  const [gravacao] = await bd
+    .select()
+    .from(gravacoes)
+    .where(and(eq(gravacoes.id, gravacaoId), isNull(gravacoes.apagadaEm)));
+  if (!gravacao) return new Response('Gravação não encontrada.', { status: 404 });
+
+  const caminho = path.join(pasta, gravacao.arquivo);
+  if (!existsSync(caminho)) return new Response('Gravação não encontrada.', { status: 404 });
+  await registrarAuditoria(bd, { atorId: leitor.id, acao: 'baixar_gravacao', detalhes: { gravacaoId, partidaId: gravacao.partidaId } });
+  return new Response(Readable.toWeb(createReadStream(caminho)) as ReadableStream, {
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'Content-Length': String(gravacao.bytes),
+      'Content-Disposition': `attachment; filename="${gravacao.arquivo}"`,
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 export async function respostaDaGravacao(

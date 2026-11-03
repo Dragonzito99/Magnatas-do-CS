@@ -27,9 +27,11 @@ export async function registrarAuditoria(
   await bd.insert(auditoria).values(entrada);
 }
 
-async function exigirPermissao(tx: Transacao, ator: Usuario, acao: Acao) {
-  const [atual] = await tx.select().from(usuarios).where(eq(usuarios.id, ator.id));
+/** Confere no banco, porque o objeto da sessão pode estar desatualizado. */
+export async function exigirPermissao(bd: Bd | Transacao, ator: Pick<Usuario, 'id'>, acao: Acao): Promise<Usuario> {
+  const [atual] = await bd.select().from(usuarios).where(eq(usuarios.id, ator.id));
   if (!atual || !pode(atual, acao)) throw new SemPermissao();
+  return atual;
 }
 
 export async function mudarPapel(bd: Bd, ator: Usuario, alvoId: string, papel: Papel): Promise<void> {

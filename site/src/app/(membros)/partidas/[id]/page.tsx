@@ -8,6 +8,22 @@ import { dadosDeConexao, detalheDaPartida, type JogadorDaPartida } from '@/domin
 import { nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../../atualizar';
 import { Avatar } from '../../avatar';
+import { chamar, denunciarJogador } from './acoes';
+
+const ERROS: Record<string, string> = {
+  motivo: 'Escreva o motivo, com até 500 caracteres.',
+  acusado: 'Escolha outro jogador desta partida.',
+  repetida: 'Você já denunciou este jogador nesta partida.',
+  'nao-jogou': 'Só quem joga a partida pode fazer isso.',
+  chamado: 'Esta partida não recebe mais chamados.',
+  'sem-acesso': 'Sua conta não pode fazer isso agora.',
+};
+
+const AVISOS: Record<string, string> = {
+  denunciado: 'Denúncia enviada para a equipe.',
+  chamado: 'A equipe foi chamada. Um GM vai entrar como espectador.',
+  'sem-equipe': 'Não há ninguém da equipe online agora. Seu chamado virou uma denúncia, e a partida será analisada depois.',
+};
 
 function Time({ titulo, jogadores }: { titulo: string; jogadores: JogadorDaPartida[] }) {
   return (
@@ -56,8 +72,15 @@ function Time({ titulo, jogadores }: { titulo: string; jogadores: JogadorDaParti
   );
 }
 
-export default async function PaginaDaPartida({ params }: { params: Promise<{ id: string }> }) {
+export default async function PaginaDaPartida({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string; aviso?: string }>;
+}) {
   const { id } = await params;
+  const { erro, aviso } = await searchParams;
   const usuario = await exigirAcesso(`/partidas/${id}`);
   if (!z.uuid().safeParse(id).success) notFound();
   const detalhe = await detalheDaPartida(obterBd(), id);
@@ -67,6 +90,7 @@ export default async function PaginaDaPartida({ params }: { params: Promise<{ id
   const estado = TEXTOS_DO_ESTADO[partida.estado];
   const ativa = (ESTADOS_ATIVOS_DE_PARTIDA as readonly string[]).includes(partida.estado);
   const jogaNaPartida = jogadores.some((jogador) => jogador.id === usuario.id);
+  const podeChamar = jogaNaPartida && (partida.estado === 'ao_vivo' || partida.estado === 'aguardando_jogadores');
   const conexao = dadosDeConexao(partida, servidor, { papel: usuario.papel, jogaNaPartida }, process.env.SERVIDOR_SENHA ?? '');
 
   return (
@@ -76,6 +100,12 @@ export default async function PaginaDaPartida({ params }: { params: Promise<{ id
         <h1>{nomeDaPartida(partida)}</h1>
         <span className="etiqueta">{nomeDoMapa(partida.mapa)}</span>
       </div>
+      {erro && ERROS[erro] && (
+        <p role="alert" className="aviso">
+          {ERROS[erro]}
+        </p>
+      )}
+      {aviso && AVISOS[aviso] && <p className="aviso">{AVISOS[aviso]}</p>}
       <section className="cartao-escuro">
         <span className="ao-vivo">{estado.etiqueta}</span>
         <div className="numero-grande mono">
@@ -84,18 +114,55 @@ export default async function PaginaDaPartida({ params }: { params: Promise<{ id
           {partida.placar2}
         </div>
         <p>{estado.explicacao}</p>
-        {conexao && (
-          <div className="acoes">
+        <div className="acoes">
+          {conexao && (
             <a className="botao laranja" href={conexao.url}>
-              Conectar ao servidor
+              {jogaNaPartida ? 'Conectar ao servidor' : 'Assistir como espectador'}
             </a>
-          </div>
-        )}
+          )}
+          {podeChamar && (
+            <form action={chamar}>
+              <input type="hidden" name="partidaId" value={partida.id} />
+              <button type="submit" className="botao contorno">
+                Chamar a equipe
+              </button>
+            </form>
+          )}
+        </div>
       </section>
       <div className="grade-times">
         <Time titulo={partida.vencedor === 1 ? 'Time 1, vencedor' : 'Time 1'} jogadores={jogadores.filter((jogador) => jogador.time === 1)} />
         <Time titulo={partida.vencedor === 2 ? 'Time 2, vencedor' : 'Time 2'} jogadores={jogadores.filter((jogador) => jogador.time === 2)} />
       </div>
+      {jogaNaPartida && (
+        <section className="painel">
+          <div className="cabeca-painel">
+            <h2>Denunciar um jogador</h2>
+            <span>Só a equipe vê</span>
+          </div>
+          <form action={denunciarJogador} className="formulario-denuncia">
+            <input type="hidden" name="partidaId" value={partida.id} />
+            <select name="acusadoId" aria-label="Jogador denunciado" required defaultValue="">
+              <option value="" disabled>
+                Escolha o jogador
+              </option>
+              {jogadores
+                .filter((jogador) => jogador.id !== usuario.id)
+                .map((jogador) => (
+                  <option key={jogador.id} value={jogador.id}>
+                    {jogador.apelido}
+                  </option>
+                ))}
+            </select>
+            <textarea name="motivo" aria-label="Motivo" placeholder="O que aconteceu? Se puder, diga a rodada." maxLength={500} required rows={3} />
+            <div>
+              <button type="submit" className="botao cinza pequeno">
+                Enviar denúncia
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
     </>
   );
 }
