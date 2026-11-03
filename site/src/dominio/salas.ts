@@ -1,6 +1,6 @@
-import { and, asc, count, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { salaMembros, salas, usuarios, type Sala, type Usuario } from '@/bd/esquema';
+import { desafios, salaMembros, salas, usuarios, type Sala, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, exigirLivre, type Transacao } from './disponibilidade';
 
 export class SalaCheia extends Error {
@@ -59,8 +59,17 @@ export async function entrarNaSala(bd: Bd, ator: Pick<Usuario, 'id'>, salaId: st
   });
 }
 
+/** Sala que perde alguém deixa de estar completa, então o desafio pendente cai. */
+async function cancelarDesafiosDaSala(tx: Transacao, salaId: string): Promise<void> {
+  await tx
+    .update(desafios)
+    .set({ estado: 'cancelado' })
+    .where(and(eq(desafios.estado, 'pendente'), or(eq(desafios.salaOrigemId, salaId), eq(desafios.salaAlvoId, salaId))));
+}
+
 /** Tira a pessoa da sala, passa a liderança adiante e apaga a sala vazia. */
 export async function removerDaSala(tx: Transacao, sala: Sala, usuarioId: string): Promise<void> {
+  await cancelarDesafiosDaSala(tx, sala.id);
   await tx.delete(salaMembros).where(and(eq(salaMembros.salaId, sala.id), eq(salaMembros.usuarioId, usuarioId)));
   if (sala.liderId !== usuarioId) return;
   const [proximo] = await tx
@@ -97,6 +106,7 @@ export async function expulsarDaSala(bd: Bd, lider: Pick<Usuario, 'id'>, usuario
       .where(and(eq(salaMembros.salaId, sala.id), eq(salaMembros.usuarioId, usuarioId)))
       .returning();
     if (removidos.length === 0) throw new SemPermissaoNaSala();
+    await cancelarDesafiosDaSala(tx, sala.id);
   });
 }
 

@@ -152,7 +152,20 @@ export const filaMix = pgTable('fila_mix', {
   entrouEm: timestamp('entrou_em', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const estadoDesafio = pgEnum('estado_desafio', ['pendente', 'aceito', 'recusado', 'cancelado', 'expirado']);
+
+export const desafios = pgTable('desafios', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  // Sem chave estrangeira: o desafio encerrado continua no histórico depois que a sala acaba.
+  salaOrigemId: uuid('sala_origem_id').notNull(),
+  salaAlvoId: uuid('sala_alvo_id').notNull(),
+  estado: estadoDesafio('estado').notNull().default('pendente'),
+  expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
+  criadoEm: criadoEm(),
+});
+
 export type Usuario = typeof usuarios.$inferSelect;
+export type Desafio = typeof desafios.$inferSelect;
 export type Sala = typeof salas.$inferSelect;
 export type Partida = typeof partidas.$inferSelect;
 export type Servidor = typeof servidores.$inferSelect;
