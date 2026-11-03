@@ -16,9 +16,11 @@ if [ "${1:-}" = "--executar" ]; then
   # shellcheck disable=SC1090
   source "$SEGREDOS"
   cd "$SERVIDOR"
-  exec game/bin/linuxsteamrt64/cs2 -dedicated -condebug -port 27015 \
+  CONTA=()
+  [ -n "${GSLT:-}" ] && CONTA=(+sv_setsteamaccount "$GSLT")
+  exec game/cs2.sh -dedicated -condebug -port 27015 \
     +game_type 0 +game_mode 1 +map de_mirage \
-    +sv_setsteamaccount "$GSLT" +sv_password "$SV_PASSWORD" \
+    "${CONTA[@]}" +sv_password "$SV_PASSWORD" \
     +tv_enable 1 +tv_delay 0 +exec server.cfg
 fi
 
@@ -28,7 +30,7 @@ if tmux has-session -t cs2 2>/dev/null; then
 fi
 
 if [ ! -f "$SEGREDOS" ]; then
-  echo "Crie $SEGREDOS com GSLT e SV_PASSWORD, com permissão 600." >&2
+  echo "Crie $SEGREDOS com SV_PASSWORD e GSLT, com permissão 600." >&2
   exit 1
 fi
 
@@ -39,9 +41,12 @@ fi
 
 # shellcheck disable=SC1090
 source "$SEGREDOS"
-if [ -z "${GSLT:-}" ] || [ -z "${SV_PASSWORD:-}" ]; then
-  echo "$SEGREDOS precisa definir GSLT e SV_PASSWORD." >&2
+if [ -z "${SV_PASSWORD:-}" ]; then
+  echo "$SEGREDOS precisa definir SV_PASSWORD." >&2
   exit 1
+fi
+if [ -z "${GSLT:-}" ]; then
+  echo "Aviso: sem GSLT, o servidor entra em modo anônimo. Use só em testes locais." >&2
 fi
 
 tmux new-session -d -s cs2 "bash $(printf %q "${BASH_SOURCE[0]}") --executar"
