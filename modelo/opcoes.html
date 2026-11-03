@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Irmandade: formatos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #efeff0; --ink: #18181b; --ink2: #52525b; --ink3: #8a8a93;
+  --line: rgba(0,0,0,.08); --panel: rgba(255,255,255,.68); --dark: #0d1013;
+  --green: #22c55e; --orange: #fb923c;
+  --glow: radial-gradient(circle at 80% 10%, rgba(249,115,22,.6), transparent 55%), radial-gradient(circle at 10% 95%, rgba(20,184,166,.2), transparent 50%), var(--dark);
+}
+* { box-sizing: border-box; margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--page); color: var(--ink); font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+
+.compare { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; padding: 8px 12px; background: var(--ink); color: #a1a1aa; font-size: 12px; }
+.compare button { padding: 5px 14px; border-radius: 999px; color: #d4d4d8; font-size: 12px; font-weight: 500; }
+.compare button:hover { color: #fff; }
+.compare button[aria-pressed="true"] { background: var(--orange); color: var(--ink); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 11px 20px; border-radius: 999px; font-size: 14px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; transition: transform .2s, filter .2s; }
+.btn:hover { transform: translateY(-1px); filter: brightness(1.03); }
+.btn.primary { color: var(--ink); background: radial-gradient(circle at 10% 0%, #fed7aa 0%, #fb923c 100%); box-shadow: 0 12px 22px -10px rgba(248,113,22,.7), inset 0 4px 8px rgba(253,230,138,.9), inset 0 -4px 8px rgba(249,115,22,.9); }
+.btn.gray { color: #3f3f46; background: linear-gradient(rgba(0,0,0,.06),rgba(0,0,0,.14),rgba(0,0,0,.06)); box-shadow: 0 8px 16px -8px rgba(31,41,55,.28), 0 0 0 1px rgba(209,213,219,.55), inset 0 1px 0 rgba(255,255,255,.7); }
+.btn.line { color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.28); }
+.btn.sm { padding: 7px 15px; font-size: 13px; gap: 8px; }
+.btn.lg { padding: 14px 28px; font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+
+.logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 500; letter-spacing: -.03em; }
+.logo i { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; background: radial-gradient(circle at 30% 20%, #a1a1aa, #3f3f46); box-shadow: inset 0 1px 2px rgba(255,255,255,.5); }
+.logo span { color: var(--ink3); font-weight: 400; }
+.av { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 10px; font-weight: 600; color: #fff; background: #52525b; flex: none; text-transform: uppercase; }
+.a0 { background: #27272a; } .a1 { background: #7c2d12; } .a2 { background: #0f766e; } .a3 { background: #52525b; } .a4 { background: #9a3412; }
+.stack { display: flex; }
+.stack .av { margin-left: -7px; box-shadow: 0 0 0 2px #fff; }
+.stack .av:first-child { margin-left: 0; }
+.free { color: var(--ink3); background: transparent; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.dark .free { color: rgba(255,255,255,.6); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+.tag { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #71717a; white-space: nowrap; }
+.tag.ok::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.dark .tag { color: rgba(255,255,255,.7); }
+
+.panel { border-radius: 22px; background: var(--panel); box-shadow: 0 0 0 1px var(--line); }
+.p-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px 12px; }
+.p-head h2 { font-size: 15px; font-weight: 500; letter-spacing: -.02em; }
+.p-head span { font-size: 12px; color: var(--ink3); }
+.row { display: grid; grid-template-columns: minmax(0,1.3fr) auto minmax(92px,.7fr) 96px; align-items: center; gap: 14px; padding: 11px 20px; border-top: 1px solid var(--line); }
+.row b { font-weight: 500; }
+.line-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 20px; border-top: 1px solid var(--line); }
+.line-row small { display: block; font-size: 12px; color: var(--ink3); }
+.friend { display: flex; align-items: center; gap: 10px; padding: 8px 20px; }
+.friend small { display: block; font-size: 12px; color: var(--ink3); }
+.friend:last-child { padding-bottom: 16px; }
+
+.dark { position: relative; overflow: hidden; border-radius: 24px; color: #fff; background: var(--glow); box-shadow: 0 26px 46px -28px rgba(0,0,0,.55); }
+.live { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.glass { padding: 14px; border-radius: 16px; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+.glass small { display: block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.big { font-size: 56px; line-height: 1; letter-spacing: -.05em; font-weight: 500; }
+.big small { font-size: 24px; color: rgba(255,255,255,.5); font-weight: 400; }
+.bars { display: grid; grid-template-columns: repeat(10,minmax(0,1fr)); gap: 4px; height: 12px; margin: 14px 0 10px; }
+.bars div { border-radius: 3px; background: rgba(255,255,255,.16); }
+.bars .on { background: var(--green); }
+.players { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 14px 8px; padding: 6px 20px 20px; }
+.pl { display: grid; justify-items: center; gap: 6px; font-size: 12px; color: var(--ink2); }
+.dark .pl { color: rgba(255,255,255,.75); }
+.pl .av { width: 48px; height: 48px; font-size: 13px; }
+.mode { display: flex; flex-direction: column; justify-content: space-between; gap: 22px; min-height: 240px; padding: 18px; }
+.mode.ghost { background: radial-gradient(circle at 75% 15%, rgba(56,189,248,.42), transparent 58%), var(--dark); }
+.mode.mut { background: radial-gradient(circle at 75% 15%, rgba(239,68,68,.6), transparent 58%), radial-gradient(circle at 12% 95%, rgba(132,204,22,.2), transparent 50%), var(--dark); }
+.mode .art { position: absolute; top: 12px; right: -14px; width: 160px; height: 160px; fill: none; stroke: rgba(255,255,255,.3); stroke-width: .7; stroke-linecap: round; stroke-linejoin: round; }
+.mode > * { position: relative; }
+.mode .art { position: absolute; }
+.mode h3 { font-size: 24px; font-weight: 500; letter-spacing: -.04em; }
+.mode p { color: rgba(255,255,255,.72); font-size: 13px; margin: 4px 0 14px; }
+.live.self { align-self: flex-start; }
+.soon { display: flex; flex-direction: column; justify-content: flex-end; min-height: 120px; padding: 18px; border-radius: 24px; border: 1px dashed rgba(0,0,0,.2); color: var(--ink3); }
+.soon h3 { font-size: 20px; font-weight: 400; letter-spacing: -.03em; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.me { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink2); }
+.pills { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.65); box-shadow: 0 2px 3px -1px rgba(0,0,0,.1), 0 0 0 1px rgba(25,28,33,.08); }
+.pill { display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 500; color: #71717a; }
+.pill:hover { color: var(--ink); }
+.pill[aria-selected="true"] { color: var(--ink); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+
+/* A */
+.a { display: grid; grid-template-columns: 224px minmax(0,1fr); min-height: calc(100vh - 42px); }
+.a aside { display: flex; flex-direction: column; gap: 22px; padding: 20px 14px; border-right: 1px solid var(--line); background: rgba(255,255,255,.4); }
+.a nav { display: grid; gap: 4px; }
+.navi { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 12px; text-align: left; font-weight: 500; color: var(--ink2); }
+.navi small { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--ink3); }
+.navi:hover { background: rgba(0,0,0,.04); }
+.navi[aria-selected="true"] { color: #fff; background: var(--dark); }
+.navi[aria-selected="true"] small { color: rgba(255,255,255,.6); }
+.a .bottom { margin-top: auto; display: grid; gap: 12px; }
+.a main { padding: 22px 26px 30px; min-width: 0; }
+.a-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.a-top h1, .b-title { font-size: 26px; font-weight: 500; letter-spacing: -.04em; }
+.a-grid { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 16px; align-items: start; }
+.stackv { display: grid; gap: 16px; }
+.a .room { padding: 16px; display: grid; gap: 14px; }
+
+/* B */
+.b { max-width: 1160px; margin: 0 auto; padding: 18px 26px 32px; }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 18px; margin: 18px 0; padding: 26px 24px 28px; text-align: center; }
+.team { display: flex; justify-content: center; gap: clamp(8px, 2.4vw, 28px); flex-wrap: wrap; }
+.team .pl .av { width: clamp(52px, 8vw, 92px); height: clamp(52px, 8vw, 92px); font-size: 18px; }
+.team.ten .pl .av { width: clamp(40px, 5.4vw, 62px); height: clamp(40px, 5.4vw, 62px); font-size: 14px; }
+.incoming { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; text-align: left; width: min(100%, 520px); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 14px; }
+.rc { display: grid; gap: 12px; padding: 16px; }
+.rc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rc b { font-weight: 500; }
+.modes2 { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 14px; margin-top: 18px; }
+
+/* C */
+.c { max-width: 1160px; margin: 0 auto; padding: 18px 26px 32px; }
+.bigtabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 18px 0; }
+.bt { display: grid; gap: 14px; padding: 16px 18px; border-radius: 22px; text-align: left; background: var(--panel); box-shadow: 0 0 0 1px var(--line); transition: transform .2s; }
+.bt:hover { transform: translateY(-1px); }
+.bt b { display: block; font-size: 21px; font-weight: 500; letter-spacing: -.03em; }
+.bt small { font-size: 13px; color: var(--ink3); }
+.bt .ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: rgba(0,0,0,.05); color: var(--ink2); }
+.bt[aria-selected="true"] { color: #fff; background: var(--glow); box-shadow: 0 18px 34px -22px rgba(0,0,0,.6); }
+.bt[aria-selected="true"] small { color: rgba(255,255,255,.65); }
+.bt[aria-selected="true"] .ic { color: #fff; background: rgba(255,255,255,.12); }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { padding: 6px 13px; border-radius: 999px; font-size: 13px; color: var(--ink2); box-shadow: inset 0 0 0 1px var(--line); }
+.chip.on { color: #fff; background: var(--dark); }
+.c-cols { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,.7fr); gap: 14px; align-items: start; }
+.mine-wide { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; padding: 16px 18px; margin-bottom: 14px; }
+.mine-wide b { font-weight: 500; }
+
+.note { padding: 0 16px 18px; text-align: center; font-size: 12px; color: var(--ink3); }
+
+@media (max-width: 860px) {
+  .a { grid-template-columns: minmax(0,1fr); min-height: 0; }
+  .a aside { padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--line); gap: 12px; }
+  .a nav { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .navi { justify-content: center; padding: 9px 6px; font-size: 13px; }
+  .navi small, .navi svg { display: none; }
+  .a .bottom { display: none; }
+  .a main { padding: 16px; }
+  .a-grid, .c-cols { grid-template-columns: minmax(0,1fr); }
+  .b, .c { padding: 14px 16px 24px; }
+  .pills { order: 3; width: 100%; }
+  .pill { flex: 1; justify-content: center; padding: 8px 6px; }
+  .row { grid-template-columns: minmax(0,1fr) auto; padding: 11px 16px; }
+  .row .stack { display: none; }
+  .row .btn { grid-column: 1 / -1; }
+  .bigtabs { gap: 8px; }
+  .bt { padding: 12px; gap: 8px; }
+  .bt b { font-size: 16px; }
+  .bt small { font-size: 12px; }
+  .bt .ic { display: none; }
+  .players { padding: 6px 12px 18px; }
+  .pl .av { width: 44px; height: 44px; }
+  .stage { padding: 20px 14px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></symbol>
+  <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 2v5"/><path d="M12 17v5"/><path d="M2 12h5"/><path d="M17 12h5"/></symbol>
+  <symbol id="salas" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></symbol>
+  <symbol id="mix" viewBox="0 0 24 24"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></symbol>
+  <symbol id="diversao" viewBox="0 0 24 24"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></symbol>
+</svg>
+
+<div class="compare" role="group" aria-label="Formatos para comparar">
+  <span>Compare os formatos:</span>
+  <button data-layout="a">A. Menu lateral</button>
+  <button data-layout="b">B. Time no centro</button>
+  <button data-layout="c">C. Abas grandes</button>
+</div>
+<div id="root"></div>
+<p class="note">Modelo para comparar formatos. Nomes e números são exemplos, e só as abas e a troca de formato funcionam.</p>
+
+<script>
+const TABS = [
+  { id: 'salas', label: 'Salas', stat: '12 abertas' },
+  { id: 'mix', label: 'Mix', stat: '7 de 10 na sala' },
+  { id: 'diversao', label: 'Diversão', stat: '15 jogando' },
+];
+const ROOMS = [
+  { name: 'Sala do Gordo', who: ['gd','kt','nn','dd','lp'], ready: true },
+  { name: 'Só headshot', who: ['zc','vt','mg','ju','pp'], ready: true },
+  { name: 'Time do Zeca', who: ['zk','to','al','gu'], ready: false },
+  { name: 'Os sem mira', who: ['br','ti','fe'], ready: false },
+];
+const MIX = ['gd','kt','nn','dd','lp','zc','vt'];
+const RUNNING = [['Mix #41','Mirage, round 16','9 x 6'],['Mix #40','Inferno, round 21','11 x 9'],['Mix #39','Nuke, round 7','4 x 2']];
+const FRIENDS = [['bi','Bia','Na sua sala'],['rf','Rafa','Na sua sala'],['kt','Kaká','Jogando mix'],['dd','Dudu','Online']];
+const I = n => `<svg class="i"><use href="#${n}"/></svg>`;
+const av = (s, i) => `<span class="av a${i % 5}">${s}</span>`;
+const stack = l => `<div class="stack">${l.map(av).join('')}</div>`;
+const roomStatus = r => r.ready ? '<span class="tag ok">5/5, pronta</span>' : `<span class="tag">${r.who.length}/5, falta${5 - r.who.length > 1 ? 'm' : ''} ${5 - r.who.length}</span>`;
+const roomAct = r => `<button class="btn gray sm">${r.ready ? 'Desafiar' : 'Entrar'}</button>`;
+const rows = () => ROOMS.map(r => `<div class="row"><b>${r.name}</b>${stack(r.who)}${roomStatus(r)}${roomAct(r)}</div>`).join('');
+const cards = () => ROOMS.map(r => `<div class="panel rc"><div class="rc-top"><b>${r.name}</b>${roomStatus(r)}</div><div class="rc-top">${stack(r.who)}${roomAct(r)}</div></div>`).join('');
+const pl = (s, i) => s ? `<div class="pl">${av(s, i)}${s}</div>` : '<div class="pl"><span class="av free"></span>livre</div>';
+const mixSlots = () => Array.from({ length: 10 }, (_, i) => pl(MIX[i], i)).join('');
+const running = () => RUNNING.map(r => `<div class="line-row"><div>${r[0]}<small>${r[1]}</small></div><span class="mono">${r[2]}</span></div>`).join('');
+const mine = `${av('sn',1)}${av('bi',2)}${av('rf',4)}<span class="av free">${I('plus')}</span><span class="av free">${I('plus')}</span>`;
+const challenge = `<div><small>Desafio recebido</small>Só headshot chamou vocês</div><div class="btns"><button class="btn primary sm">Aceitar</button><button class="btn line sm">Recusar</button></div>`;
+const GHOST = '<svg class="art" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>';
+const BIO = '<svg class="art" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="11.9" r="2"/><path d="M6.7 3.4c-.9 2.5 0 5.2 2.2 6.7C6.5 9 3.7 9.6 2 11.6"/><path d="m8.9 10.1 1.4.8"/><path d="M17.3 3.4c.9 2.5 0 5.2-2.2 6.7 2.4-1.2 5.2-.6 6.9 1.5"/><path d="m15.1 10.1-1.4.8"/><path d="M16.7 20.8c-2.6-.4-4.6-2.6-4.7-5.3-.2 2.6-2.1 4.8-4.7 5.2"/><path d="M12 13.9v1.6"/><path d="M13.5 5.4c-1-.2-2-.2-3 0"/><path d="M17 16.4c.7-.7 1.2-1.6 1.5-2.5"/><path d="M5.5 13.9c.3.9.8 1.8 1.5 2.5"/></svg>';
+const mode = (cls, art, count, title, text) => `<article class="dark mode ${cls}">${art}<span class="live self">${count}</span><div><h3>${title}</h3><p>${text}</p><div class="btns"><button class="btn primary sm">Entrar</button><button class="btn line sm">Criar sala</button></div></div></article>`;
+const modes = () => mode('ghost', GHOST, '6/12 jogando', 'Fantasma', 'Um time invisível, só na faca, contra um time armado.') + mode('mut', BIO, '9/16 jogando', 'Mutação', 'Quem é pego vira mutante. Os humanos tentam sobreviver.');
+const soon = '<div class="soon"><h3>Próximo modo</h3><p>Os novos modos entram aqui.</p></div>';
+const logo = `<div class="logo"><i>${I('target')}</i><div>IRMAN<span>DADE</span></div></div>`;
+const me = `<div class="me"><button class="btn gray sm">${I('ticket')}2 convites</button>${av('sn',1)}</div>`;
+const mixCount = `<div class="big mono">7<small>/10</small></div><div class="bars">${Array.from({ length: 10 }, (_, i) => `<div class="${i < 7 ? 'on' : ''}"></div>`).join('')}</div>`;
+
+function layoutA(tab) {
+  const nav = TABS.map(t => `<button class="navi" role="tab" data-tab="${t.id}" aria-selected="${t.id === tab}">${I(t.id)}${t.label}<small>${t.id === 'mix' ? '7/10' : t.stat.split(' ')[0]}</small></button>`).join('');
+  const titles = { salas: ['Salas', '<button class="btn primary sm">Criar sala</button>'], mix: ['Mix', '<button class="btn primary sm">Entrar no mix</button>'], diversao: ['Diversão', ''] };
+  const friends = `<div class="panel"><div class="p-head"><h2>Amigos online</h2><span>4</span></div>${FRIENDS.map((f, i) => `<div class="friend">${av(f[0], i + 2)}<div>${f[1]}<small>${f[2]}</small></div></div>`).join('')}</div>`;
+  const body = {
+    salas: `<div class="a-grid"><div class="panel"><div class="p-head"><h2>Salas abertas</h2><span>Prontas primeiro</span></div>${rows()}</div><div class="stackv"><div class="dark room"><span class="live self" style="justify-self:start">Sua sala, 3/5</span><div class="team" style="justify-content:flex-start;gap:6px">${mine}</div><div class="glass">${challenge}</div></div>${friends}</div></div>`,
+    mix: `<div class="a-grid"><div class="stackv"><div class="panel"><div class="p-head"><h2>Quem está na sala</h2><span>7 de 10</span></div><div class="players">${mixSlots()}</div></div><div class="panel"><div class="p-head"><h2>Em andamento</h2><span>3 partidas</span></div>${running()}</div></div><div class="stackv"><div class="dark room"><span class="live self" style="justify-self:start">Mix aberto</span><div>${mixCount}<span style="font-size:13px">Faltam 3 para começar</span></div></div>${friends}</div></div>`,
+    diversao: `<div class="modes2" style="margin-top:0">${modes()}</div><div style="margin-top:14px">${soon}</div>`,
+  }[tab];
+  return `<div class="a"><aside>${logo}<nav role="tablist" aria-label="Áreas">${nav}</nav><div class="bottom"><button class="btn gray sm">${I('ticket')}2 convites</button><div class="me">${av('sn',1)}seu_nick</div></div></aside><main><div class="a-top"><h1>${titles[tab][0]}</h1>${titles[tab][1]}</div>${body}</main></div>`;
+}
+
+function layoutB(tab) {
+  const pills = TABS.map(t => `<button class="pill" role="tab" data-tab="${t.id}" aria-selected="${t.id === tab}">${t.label}</button>`).join('');
+  const body = {
+    salas: `<div class="dark stage"><span class="live">Sua sala, 3/5</span><div class="team"><div class="pl">${av('sn',1)}você</div><div class="pl">${av('bi',2)}Bia</div><div class="pl">${av('rf',4)}Rafa</div><div class="pl"><span class="av free">${I('plus')}</span>chamar</div><div class="pl"><span class="av free">${I('plus')}</span>chamar</div></div><button class="btn primary lg">Procurar desafio</button><div class="glass incoming">${challenge}</div></div><div class="p-head" style="padding:0 2px 10px"><h2>Salas abertas</h2><span>12 agora</span></div><div class="cards">${cards()}</div>`,
+    mix: `<div class="dark stage"><span class="live">Mix aberto</span><div class="big mono">7<small>/10</small></div><div class="team ten">${mixSlots()}</div><button class="btn primary lg">Entrar no mix</button></div><div class="p-head" style="padding:0 2px 10px"><h2>Em andamento</h2><span>3 partidas</span></div><div class="cards">${RUNNING.map(r => `<div class="panel rc"><div class="rc-top"><b>${r[0]}</b><span class="mono">${r[2]}</span></div><span class="tag">${r[1]}</span></div>`).join('')}</div>`,
+    diversao: `<div class="modes2">${modes()}</div><div style="margin-top:14px">${soon}</div>`,
+  }[tab];
+  return `<div class="b"><div class="topbar">${logo}<div class="pills" role="tablist" aria-label="Áreas">${pills}</div>${me}</div>${body}</div>`;
+}
+
+function layoutC(tab) {
+  const big = TABS.map(t => `<button class="bt" role="tab" data-tab="${t.id}" aria-selected="${t.id === tab}"><span class="ic">${I(t.id)}</span><span><b>${t.label}</b><small>${t.stat}</small></span></button>`).join('');
+  const body = {
+    salas: `<div class="toolbar"><div class="chips"><span class="chip on">Todas</span><span class="chip">Prontas</span><span class="chip">Faltando gente</span></div><button class="btn primary sm">Criar sala</button></div><div class="dark mine-wide"><div><div class="rc-top" style="margin-bottom:10px"><b>Sua sala</b><span class="tag">3/5</span></div><div class="team" style="justify-content:flex-start;gap:6px">${mine}</div></div><div class="glass incoming">${challenge}</div></div><div class="cards">${cards()}</div>`,
+    mix: `<div class="c-cols"><div class="panel"><div class="p-head"><h2>Quem está na sala</h2><span>7 de 10</span></div><div class="players">${mixSlots()}</div><div style="padding:0 20px 20px"><button class="btn primary" style="width:100%">Entrar no mix</button></div></div><div class="panel"><div class="p-head"><h2>Em andamento</h2><span>3 partidas</span></div>${running()}</div></div>`,
+    diversao: `<div class="modes2" style="margin-top:0">${modes()}</div><div style="margin-top:14px">${soon}</div>`,
+  }[tab];
+  return `<div class="c"><div class="topbar">${logo}${me}</div><div class="bigtabs" role="tablist" aria-label="Áreas">${big}</div>${body}</div>`;
+}
+
+const LAYOUTS = { a: layoutA, b: layoutB, c: layoutC };
+let state = { layout: 'a', tab: 'salas' };
+const fromHash = () => {
+  const [l, t] = location.hash.slice(1).split('-');
+  if (LAYOUTS[l]) state.layout = l;
+  if (TABS.some(x => x.id === t)) state.tab = t;
+};
+function render() {
+  document.getElementById('root').innerHTML = LAYOUTS[state.layout](state.tab);
+  document.querySelectorAll('[data-layout]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === state.layout)));
+  history.replaceState(null, '', `#${state.layout}-${state.tab}`);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tab],[data-layout]');
+  if (!b) return;
+  if (b.dataset.tab) state.tab = b.dataset.tab;
+  if (b.dataset.layout) { state.layout = b.dataset.layout; scrollTo(0, 0); }
+  render();
+});
+addEventListener('hashchange', () => { fromHash(); render(); });
+fromHash();
+render();
+</script>
+</body>
+</html>

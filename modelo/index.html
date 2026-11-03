@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Irmandade: modelo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #efeff0; --ink: #18181b; --ink2: #52525b; --ink3: #8a8a93;
+  --line: rgba(0,0,0,.07); --panel: rgba(255,255,255,.6); --dark: #0d1013;
+  --green: #22c55e; --orange: #fb923c;
+}
+* { box-sizing: border-box; margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--page); color: var(--ink); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+
+.frame { position: relative; max-width: 1240px; margin: 0 auto; padding: 28px 40px 48px; }
+.frame::before { content: ""; position: absolute; inset: 0 40px; pointer-events: none; z-index: 0;
+  background-image: linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line));
+  background-size: 1px 100%; background-repeat: no-repeat; background-position: 0 0, 33.33% 0, 66.66% 0, 100% 0; }
+.frame > * { position: relative; z-index: 1; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 44px; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; letter-spacing: -.03em; }
+.logo i { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: #fff; background: radial-gradient(circle at 30% 20%, #a1a1aa, #3f3f46); box-shadow: inset 0 1px 2px rgba(255,255,255,.5); }
+.logo span { color: var(--ink3); font-weight: 400; }
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.7);
+  box-shadow: 0 2px 3px -1px rgba(0,0,0,.1), 0 0 0 1px rgba(25,28,33,.08); }
+.tab { display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; font-size: 12px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: #71717a; transition: background .2s, color .2s; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.tab[aria-selected="true"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+.me { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink2); }
+
+.btn { display: inline-flex; align-items: center; gap: 12px; padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; transition: transform .2s, filter .2s; }
+.btn:hover { transform: translateY(-1px); filter: brightness(1.03); }
+.btn.primary { color: var(--ink); background: radial-gradient(circle at 10% 0%, #fed7aa 0%, #fb923c 100%);
+  box-shadow: 0 15px 25px -10px rgba(248,113,22,.7), inset 0 4px 8px rgba(253,230,138,.9), inset 0 -4px 8px rgba(249,115,22,.9); }
+.btn.primary b { display: grid; place-items: center; padding: 3px 11px; border-radius: 999px; background: rgba(0,0,0,.1); font-weight: 500; }
+.btn.gray { color: #3f3f46; background: linear-gradient(rgba(0,0,0,.08),rgba(0,0,0,.17),rgba(0,0,0,.08)); box-shadow: 0 14px 26px -8px rgba(31,41,55,.28), 0 0 0 1px rgba(209,213,219,.5), inset 0 1px 0 rgba(255,255,255,.7); }
+.btn.sm { padding: 7px 16px; font-size: 13px; gap: 8px; }
+.btn.line { color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.28); }
+.btn.sent { color: var(--ink3); background: rgba(0,0,0,.04); box-shadow: none; }
+
+.badge { display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px 6px 7px; border-radius: 999px; background: #fff; font-size: 13px; color: var(--ink2); box-shadow: 0 0 0 1px rgba(0,0,0,.04), 0 6px 14px -8px rgba(0,0,0,.2); }
+.badge strong { color: var(--ink); font-weight: 500; }
+.stack { display: flex; }
+.av { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 10px; font-weight: 600; letter-spacing: .02em; color: #fff; background: #52525b; flex: none; text-transform: uppercase; }
+.stack .av { margin-left: -7px; box-shadow: 0 0 0 2px #fff; }
+.stack .av:first-child { margin-left: 0; }
+.a1 { background: #27272a; } .a2 { background: #7c2d12; } .a3 { background: #0f766e; } .a4 { background: #52525b; } .a5 { background: #9a3412; }
+
+h1 { margin: 22px 0 22px; font-size: clamp(44px, 6.2vw, 78px); line-height: .98; font-weight: 500; letter-spacing: -.05em; }
+h1 em { display: block; font-style: normal; font-weight: 300; color: transparent; background: linear-gradient(to right, #a1a1aa, #d4d4d8); -webkit-background-clip: text; background-clip: text; padding-bottom: .08em; }
+.lead { max-width: 440px; color: #71717a; font-size: 16px; line-height: 1.65; }
+.actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+
+.hero { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr); gap: 44px; align-items: center; margin-bottom: 40px; }
+.dark { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; min-height: 430px; padding: 22px; border-radius: 32px; color: #fff;
+  background: radial-gradient(circle at 78% 16%, rgba(249,115,22,.62), transparent 52%), radial-gradient(circle at 12% 88%, rgba(20,184,166,.2), transparent 48%), var(--dark);
+  box-shadow: 0 40px 70px -32px rgba(0,0,0,.55); }
+.dark > * { position: relative; z-index: 1; }
+.live { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; padding: 6px 13px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.radar { position: absolute !important; z-index: 0 !important; top: -40px; right: -70px; width: 380px; height: 380px; stroke: rgba(255,255,255,.2); fill: none; }
+.sweep { transform-origin: 190px 190px; animation: spin 7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sweep { animation: none; } .btn { transition: none; } }
+.glass { padding: 16px; border-radius: 22px; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.gl-top { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 500; }
+.gl-top small { font-size: 12px; font-weight: 500; color: #4ade80; }
+.slots { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; }
+.slot { display: grid; place-items: center; flex: 1; aspect-ratio: 1; max-width: 52px; border-radius: 50%; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #fff; }
+.slot.free { color: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(255,255,255,.28); }
+.slot.free:hover { color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); }
+.sep { height: 1px; margin: 14px 0; background: rgba(255,255,255,.12); }
+.challenge { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.challenge span small { display: block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.challenge .btns { display: flex; gap: 8px; }
+
+.panel { border-radius: 28px; background: var(--panel); box-shadow: 0 0 0 1px var(--line); }
+.p-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 22px 26px 12px; }
+.p-head h2 { font-size: 19px; font-weight: 500; letter-spacing: -.03em; }
+.p-head span { font-size: 13px; color: var(--ink3); }
+.row { display: grid; grid-template-columns: minmax(0,1.3fr) auto minmax(84px,.6fr) 118px; align-items: center; gap: 16px; padding: 14px 26px; border-top: 1px solid var(--line); font-size: 14px; }
+.row b { font-weight: 500; letter-spacing: -.01em; }
+.tag { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #71717a; }
+.tag.ok::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.row .btn { justify-content: center; }
+
+.big { font-size: 84px; line-height: 1; letter-spacing: -.05em; font-weight: 500; }
+.big small { font-size: 34px; color: rgba(255,255,255,.5); font-weight: 400; }
+.bars { display: grid; grid-template-columns: repeat(10,minmax(0,1fr)); gap: 5px; align-items: end; height: 76px; margin: 14px 0 12px; }
+.bar { border-radius: 4px; background: rgba(255,255,255,.16); transition: background .3s; }
+.bar.on { background: var(--green); }
+.cols2 { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr); gap: 18px; }
+.players { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 18px 10px; padding: 12px 26px 26px; }
+.pl { display: grid; justify-items: center; gap: 8px; font-size: 12px; color: var(--ink2); text-align: center; }
+.pl .av { width: 58px; height: 58px; font-size: 15px; transition: background .3s; }
+.pl .av.free { color: var(--ink3); background: transparent; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+.pl.me-in .av { box-shadow: 0 0 0 2px var(--page), 0 0 0 4px var(--orange); }
+.live-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 26px; border-top: 1px solid var(--line); font-size: 14px; }
+.live-row small { display: block; font-size: 12px; color: var(--ink3); }
+
+.intro { margin-bottom: 32px; }
+.modes { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+.mode { min-height: 400px; }
+.mode.ghost { background: radial-gradient(circle at 70% 20%, rgba(56,189,248,.42), transparent 55%), radial-gradient(circle at 10% 90%, rgba(99,102,241,.2), transparent 50%), var(--dark); }
+.mode.mut { background: radial-gradient(circle at 70% 20%, rgba(239,68,68,.62), transparent 55%), radial-gradient(circle at 15% 90%, rgba(132,204,22,.24), transparent 50%), var(--dark); }
+.mode .art { position: absolute !important; z-index: 0 !important; top: 34px; right: -26px; width: 230px; height: 230px; fill: none; stroke: rgba(255,255,255,.34); stroke-width: .7; stroke-linecap: round; stroke-linejoin: round; }
+.mode h3 { font-size: 30px; font-weight: 500; letter-spacing: -.04em; line-height: 1.1; margin-bottom: 8px; }
+.mode p { color: rgba(255,255,255,.72); font-size: 14px; margin-bottom: 16px; }
+.mode .foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.soon { display: flex; flex-direction: column; justify-content: flex-end; padding: 22px; border-radius: 32px; border: 1px dashed rgba(0,0,0,.2); }
+.soon h3 { font-size: 30px; font-weight: 400; letter-spacing: -.04em; color: var(--ink3); margin-bottom: 8px; }
+.soon p { font-size: 14px; color: var(--ink3); }
+
+.note { margin-top: 26px; font-size: 12px; color: var(--ink3); text-align: center; }
+[hidden] { display: none !important; }
+
+@media (max-width: 860px) {
+  .frame { padding: 18px 16px 32px; }
+  .frame::before { display: none; }
+  header { margin-bottom: 28px; }
+  .tabs { order: 3; width: 100%; }
+  .tab { flex: 1; justify-content: center; padding: 9px 6px; letter-spacing: .06em; }
+  .hero, .cols2, .modes { grid-template-columns: minmax(0,1fr); gap: 24px; }
+  .dark { min-height: 380px; }
+  .mode { min-height: 340px; }
+  .soon { min-height: 180px; }
+  .row { grid-template-columns: minmax(0,1fr) auto; gap: 10px 12px; padding: 14px 18px; }
+  .row .stack { display: none; }
+  .row .btn { grid-column: 1 / -1; }
+  .p-head { padding: 18px 18px 10px; }
+  .players { padding: 8px 14px 20px; gap: 14px 4px; }
+  .pl .av { width: 46px; height: 46px; font-size: 13px; }
+  .live-row { padding: 14px 18px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></symbol>
+  <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 2v5"/><path d="M12 17v5"/><path d="M2 12h5"/><path d="M17 12h5"/></symbol>
+</svg>
+
+<div class="frame">
+  <header>
+    <div class="logo"><i><svg class="i"><use href="#target"/></svg></i><div>IRMAN<span>DADE</span></div></div>
+    <div class="tabs" role="tablist" aria-label="Áreas da plataforma">
+      <button class="tab" role="tab" data-tab="salas">Salas</button>
+      <button class="tab" role="tab" data-tab="mix">Mix</button>
+      <button class="tab" role="tab" data-tab="diversao">Diversão</button>
+    </div>
+    <div class="me">
+      <button class="btn gray sm"><svg class="i"><use href="#ticket"/></svg>2 convites</button>
+      <span class="av a2">sn</span>
+    </div>
+  </header>
+
+  <section id="painel-salas" role="tabpanel">
+    <div class="hero">
+      <div>
+        <div class="badge"><div class="stack"><span class="av a1">gd</span><span class="av a2">kt</span><span class="av a3">nn</span></div><span><strong>12 salas</strong> abertas agora</span></div>
+        <h1>Monte seu time.<em>Desafie outra sala.</em></h1>
+        <p class="lead">Crie uma sala, chame até 4 amigos e desafie outro time. Quando a outra sala aceita, a partida começa.</p>
+        <div class="actions">
+          <button class="btn primary">Criar sala<b><svg class="i"><use href="#arrow"/></svg></b></button>
+          <button class="btn gray" id="ver-salas">Ver salas abertas</button>
+        </div>
+      </div>
+      <div class="dark">
+        <svg class="radar" viewBox="0 0 380 380" aria-hidden="true"><circle cx="190" cy="190" r="60"/><circle cx="190" cy="190" r="120"/><circle cx="190" cy="190" r="180"/><path d="M190 10v360M10 190h360"/><path class="sweep" d="M190 190 L190 10" stroke="rgba(255,255,255,.65)"/><circle cx="125" cy="240" r="4" fill="#fb923c" stroke="none"/><circle cx="250" cy="130" r="4" fill="#4ade80" stroke="none"/><circle cx="110" cy="130" r="4" fill="#fb923c" stroke="none"/></svg>
+        <span class="live">Sua sala</span>
+        <div class="glass">
+          <div class="gl-top"><span>Sala do seu_nick</span><small class="mono">3/5</small></div>
+          <div class="slots">
+            <span class="slot a2">sn</span><span class="slot a3">bi</span><span class="slot a5">rf</span>
+            <button class="slot free" aria-label="Chamar amigo"><svg class="i"><use href="#plus"/></svg></button>
+            <button class="slot free" aria-label="Chamar amigo"><svg class="i"><use href="#plus"/></svg></button>
+          </div>
+          <div class="sep"></div>
+          <div class="challenge" id="desafio">
+            <span><small>Desafio recebido</small>Só headshot chamou vocês</span>
+            <div class="btns"><button class="btn primary sm" id="aceitar">Aceitar</button><button class="btn line sm" id="recusar">Recusar</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="lista-salas">
+      <div class="p-head"><h2>Salas abertas</h2><span>Prontas primeiro</span></div>
+      <div class="row"><b>Sala do Gordo</b><div class="stack"><span class="av a1">gd</span><span class="av a2">kt</span><span class="av a3">nn</span><span class="av a4">dd</span><span class="av a5">lp</span></div><span class="tag ok">5/5, pronta</span><button class="btn gray sm challenge-btn">Desafiar</button></div>
+      <div class="row"><b>Só headshot</b><div class="stack"><span class="av a3">zc</span><span class="av a5">vt</span><span class="av a1">mg</span><span class="av a2">ju</span><span class="av a4">pp</span></div><span class="tag ok">5/5, pronta</span><button class="btn gray sm challenge-btn">Desafiar</button></div>
+      <div class="row"><b>Time do Zeca</b><div class="stack"><span class="av a5">zk</span><span class="av a4">to</span><span class="av a1">al</span><span class="av a3">gu</span></div><span class="tag">4/5, falta 1</span><button class="btn gray sm">Entrar</button></div>
+      <div class="row"><b>Os sem mira</b><div class="stack"><span class="av a2">br</span><span class="av a3">ti</span><span class="av a1">fe</span></div><span class="tag">3/5, faltam 2</span><button class="btn gray sm">Entrar</button></div>
+    </div>
+  </section>
+
+  <section id="painel-mix" role="tabpanel" hidden>
+    <div class="hero">
+      <div>
+        <div class="badge"><div class="stack"><span class="av a3">nn</span><span class="av a1">gd</span></div><span><strong>3 mixes</strong> rolando agora</span></div>
+        <h1>Entrou, esperou.<em>Começou sozinho.</em></h1>
+        <p class="lead">Entra quem quiser, sem precisar de time. Quando chega em 10 pessoas, os times são sorteados e a partida começa.</p>
+        <div class="actions">
+          <button class="btn primary" id="entrar-mix"><span id="entrar-txt">Entrar no mix</span><b><svg class="i"><use href="#arrow"/></svg></b></button>
+        </div>
+      </div>
+      <div class="dark">
+        <svg class="radar" viewBox="0 0 380 380" aria-hidden="true"><circle cx="190" cy="190" r="60"/><circle cx="190" cy="190" r="120"/><circle cx="190" cy="190" r="180"/><path d="M190 10v360M10 190h360"/><path class="sweep" d="M190 190 L190 10" stroke="rgba(255,255,255,.65)"/></svg>
+        <span class="live">Mix aberto</span>
+        <div class="glass">
+          <div class="big mono"><span id="mix-n">7</span><small>/10</small></div>
+          <div class="bars" id="mix-bars" aria-hidden="true"></div>
+          <div id="mix-status" style="font-size:14px">Faltam 3 para começar</div>
+        </div>
+      </div>
+    </div>
+    <div class="cols2">
+      <div class="panel">
+        <div class="p-head"><h2>Quem está na sala</h2><span id="mix-sub">7 de 10</span></div>
+        <div class="players" id="mix-players"></div>
+      </div>
+      <div class="panel">
+        <div class="p-head"><h2>Em andamento</h2><span>3 partidas</span></div>
+        <div class="live-row"><div>Mix #41<small>Mirage, round 16</small></div><span class="mono">9 x 6</span></div>
+        <div class="live-row"><div>Mix #40<small>Inferno, round 21</small></div><span class="mono">11 x 9</span></div>
+        <div class="live-row"><div>Mix #39<small>Nuke, round 7</small></div><span class="mono">4 x 2</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="painel-diversao" role="tabpanel" hidden>
+    <div class="intro">
+      <div class="badge" style="padding-left:16px"><span><strong>15 pessoas</strong> na bagunça agora</span></div>
+      <h1>Sem ranking.<em>Só diversão.</em></h1>
+    </div>
+    <div class="modes">
+      <article class="dark mode ghost">
+        <svg class="art" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>
+        <span class="live">6/12 jogando</span>
+        <div>
+          <h3>Fantasma</h3>
+          <p>Um time invisível, só na faca, contra um time armado.</p>
+          <div class="foot"><button class="btn primary sm">Entrar<b><svg class="i"><use href="#arrow"/></svg></b></button><button class="btn line sm">Criar sala</button></div>
+        </div>
+      </article>
+      <article class="dark mode mut">
+        <svg class="art" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="11.9" r="2"/><path d="M6.7 3.4c-.9 2.5 0 5.2 2.2 6.7C6.5 9 3.7 9.6 2 11.6"/><path d="m8.9 10.1 1.4.8"/><path d="M17.3 3.4c.9 2.5 0 5.2-2.2 6.7 2.4-1.2 5.2-.6 6.9 1.5"/><path d="m15.1 10.1-1.4.8"/><path d="M16.7 20.8c-2.6-.4-4.6-2.6-4.7-5.3-.2 2.6-2.1 4.8-4.7 5.2"/><path d="M12 13.9v1.6"/><path d="M13.5 5.4c-1-.2-2-.2-3 0"/><path d="M17 16.4c.7-.7 1.2-1.6 1.5-2.5"/><path d="M5.5 13.9c.3.9.8 1.8 1.5 2.5"/></svg>
+        <span class="live">9/16 jogando</span>
+        <div>
+          <h3>Mutação</h3>
+          <p>Quem é pego vira mutante. Os humanos tentam sobreviver até o fim.</p>
+          <div class="foot"><button class="btn primary sm">Entrar<b><svg class="i"><use href="#arrow"/></svg></b></button><button class="btn line sm">Criar sala</button></div>
+        </div>
+      </article>
+      <div class="soon">
+        <h3>Próximo modo</h3>
+        <p>Os novos modos que você criar entram aqui.</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="note">Modelo para discussão. Nomes e números são exemplos, e nada aqui se conecta a um jogo de verdade.</p>
+</div>
+
+<script>
+const tabs = [...document.querySelectorAll('.tab')];
+const panels = [...document.querySelectorAll('[role="tabpanel"]')];
+function show(id) {
+  if (!panels.some(p => p.id === 'painel-' + id)) id = 'salas';
+  tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === id)));
+  panels.forEach(p => { p.hidden = p.id !== 'painel-' + id; });
+  if (location.hash.slice(1) !== id) history.replaceState(null, '', '#' + id);
+}
+tabs.forEach(t => t.addEventListener('click', () => show(t.dataset.tab)));
+addEventListener('hashchange', () => show(location.hash.slice(1)));
+show(location.hash.slice(1) || 'salas');
+
+document.getElementById('ver-salas').addEventListener('click', () => document.getElementById('lista-salas').scrollIntoView({ behavior: 'smooth' }));
+document.querySelectorAll('.challenge-btn').forEach(b => b.addEventListener('click', () => { b.textContent = 'Desafio enviado'; b.classList.add('sent'); }));
+document.getElementById('aceitar').addEventListener('click', () => { document.getElementById('desafio').innerHTML = '<span><small>Desafio aceito</small>Partida começando contra Só headshot</span>'; });
+document.getElementById('recusar').addEventListener('click', () => { document.getElementById('desafio').innerHTML = '<span><small>Nenhum desafio</small>Sua sala aparece para os outros times</span>'; });
+
+const names = ['gd', 'kt', 'nn', 'dd', 'lp', 'zc', 'vt'];
+const others = ['mg', 'ju', 'pp', 'to'];
+const heights = [46, 62, 38, 70, 52, 84, 58, 92, 66, 100];
+const colors = ['a1', 'a2', 'a3', 'a4', 'a5'];
+let inMix = false, timer = null;
+function renderMix() {
+  const n = names.length;
+  document.getElementById('mix-n').textContent = n;
+  document.getElementById('mix-sub').textContent = n + ' de 10';
+  document.getElementById('mix-bars').innerHTML = heights.map((h, i) => `<div class="bar${i < n ? ' on' : ''}" style="height:${h}%"></div>`).join('');
+  document.getElementById('mix-players').innerHTML = Array.from({ length: 10 }, (_, i) => names[i]
+    ? `<div class="pl${names[i] === 'sn' ? ' me-in' : ''}"><span class="av ${colors[i % 5]}">${names[i]}</span>${names[i] === 'sn' ? 'você' : names[i]}</div>`
+    : '<div class="pl"><span class="av free"></span>livre</div>').join('');
+  const falta = 10 - n;
+  document.getElementById('mix-status').textContent = falta === 0 ? 'Times sorteados. A partida está começando.' : `Falta${falta > 1 ? 'm' : ''} ${falta} para começar`;
+}
+renderMix();
+document.getElementById('entrar-mix').addEventListener('click', () => {
+  clearInterval(timer);
+  if (inMix) { inMix = false; names.length = 7; others.splice(0, others.length, 'mg', 'ju', 'pp', 'to'); document.getElementById('entrar-txt').textContent = 'Entrar no mix'; renderMix(); return; }
+  inMix = true;
+  names.push('sn');
+  document.getElementById('entrar-txt').textContent = 'Recomeçar demonstração';
+  renderMix();
+  timer = setInterval(() => {
+    if (names.length >= 10) { clearInterval(timer); return; }
+    names.push(others.shift());
+    renderMix();
+  }, 1100);
+});
+</script>
+</body>
+</html>
