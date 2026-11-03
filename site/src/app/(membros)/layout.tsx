@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
+import { Avatar } from './avatar';
 import { Menu } from './menu';
 
 export default async function LayoutDeMembros({ children }: { children: React.ReactNode }) {
@@ -27,14 +28,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         <Menu mostrarEquipe={pode(usuario, 'ver_equipe')} />
         <div className="rodape-lateral">
           <div className="perfil">
-            {usuario.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img className="avatar" src={usuario.avatarUrl} alt="" />
-            ) : (
-              <span className="avatar" aria-hidden="true">
-                {usuario.apelido.slice(0, 2)}
-              </span>
-            )}
+            <Avatar usuario={usuario} />
             <b>{usuario.apelido}</b>
           </div>
           <form action="/api/auth/sair" method="post">

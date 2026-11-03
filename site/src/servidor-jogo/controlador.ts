@@ -47,6 +47,11 @@ export function controladorRcon(ambiente: AmbienteDoControlador, conectar: Conec
   };
 }
 
+export function controladorDoAmbiente(): ControladorServidor {
+  const { RCON_SENHA, SITE_URL, SERVIDOR_TOKEN } = process.env;
+  return controladorRcon({ RCON_SENHA, SITE_URL, SERVIDOR_TOKEN });
+}
+
 type ChamadaFalsa =
   | { acao: 'carregarPartida'; host: string; numero: number }
   | { acao: 'encerrarPartida'; host: string }

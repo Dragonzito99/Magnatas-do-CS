@@ -1,7 +1,7 @@
-import { and, asc, eq, inArray, isNull, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, notInArray } from 'drizzle-orm';
 import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor } from '@/bd/esquema';
+import { partidaJogadores, partidas, salas, servidores, usuarios, type Papel, type Partida, type Servidor } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 
@@ -154,6 +154,75 @@ export async function configDaPartida(bd: Bd, numero: number): Promise<object | 
       ),
     },
   };
+}
+
+export async function partidaAtualDe(bd: Bd, usuarioId: string): Promise<Partida | null> {
+  const [linha] = await bd
+    .select({ partida: partidas })
+    .from(partidaJogadores)
+    .innerJoin(partidas, eq(partidaJogadores.partidaId, partidas.id))
+    .where(and(eq(partidaJogadores.usuarioId, usuarioId), inArray(partidas.estado, [...ESTADOS_ATIVOS_DE_PARTIDA])));
+  return linha?.partida ?? null;
+}
+
+export async function partidasEmAndamento(bd: Bd): Promise<Partida[]> {
+  return bd
+    .select()
+    .from(partidas)
+    .where(inArray(partidas.estado, [...ESTADOS_ATIVOS_DE_PARTIDA]))
+    .orderBy(desc(partidas.numero));
+}
+
+export type JogadorDaPartida = {
+  id: string;
+  apelido: string;
+  avatarUrl: string | null;
+  time: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
+  rodadas: number;
+};
+
+export async function detalheDaPartida(
+  bd: Bd,
+  id: string,
+): Promise<{ partida: Partida; servidor: Servidor | null; jogadores: JogadorDaPartida[] } | null> {
+  const [partida] = await bd.select().from(partidas).where(eq(partidas.id, id));
+  if (!partida) return null;
+  const [servidor] = partida.servidorId ? await bd.select().from(servidores).where(eq(servidores.id, partida.servidorId)) : [];
+  const jogadores = await bd
+    .select({
+      id: usuarios.id,
+      apelido: usuarios.apelido,
+      avatarUrl: usuarios.avatarUrl,
+      time: partidaJogadores.time,
+      kills: partidaJogadores.kills,
+      deaths: partidaJogadores.deaths,
+      assists: partidaJogadores.assists,
+      damage: partidaJogadores.damage,
+      rodadas: partidaJogadores.rodadas,
+    })
+    .from(partidaJogadores)
+    .innerJoin(usuarios, eq(partidaJogadores.usuarioId, usuarios.id))
+    .where(eq(partidaJogadores.partidaId, id))
+    .orderBy(desc(partidaJogadores.kills), asc(usuarios.apelido));
+  return { partida, servidor: servidor ?? null, jogadores };
+}
+
+const ESTADOS_COM_SERVIDOR_PRONTO: Partida['estado'][] = ['aguardando_jogadores', 'ao_vivo'];
+
+/** A senha do servidor só aparece para quem joga a partida e para a equipe, e só com o servidor pronto. */
+export function dadosDeConexao(
+  partida: Pick<Partida, 'estado'>,
+  servidor: Pick<Servidor, 'host' | 'porta'> | null,
+  usuario: { papel: Papel; jogaNaPartida: boolean },
+  senha: string,
+): { url: string } | null {
+  if (!servidor || !ESTADOS_COM_SERVIDOR_PRONTO.includes(partida.estado)) return null;
+  if (!usuario.jogaNaPartida && usuario.papel === 'jogador') return null;
+  return { url: `steam://connect/${servidor.host}:${servidor.porta}/${encodeURIComponent(senha)}` };
 }
 
 export async function respostaDaConfig(

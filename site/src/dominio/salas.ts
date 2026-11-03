@@ -21,8 +21,20 @@ export class SemPermissaoNaSala extends Error {
   }
 }
 
+export class SalaInexistente extends Error {
+  constructor() {
+    super('Sala não encontrada.');
+  }
+}
+
 export const TAMANHO_DA_SALA = 5;
-const TAMANHO_MAXIMO_DO_NOME = 30;
+export const TAMANHO_MAXIMO_DO_NOME = 30;
+
+export class NomeDeSalaInvalido extends Error {
+  constructor() {
+    super(`O nome da sala precisa ter de 1 a ${TAMANHO_MAXIMO_DO_NOME} caracteres.`);
+  }
+}
 
 export type UsuarioPublico = Pick<Usuario, 'id' | 'apelido' | 'avatarUrl'>;
 export type SalaComMembros = Sala & { membros: UsuarioPublico[] };
@@ -35,7 +47,7 @@ async function travarSala(tx: Transacao, salaId: string): Promise<Sala | undefin
 export async function criarSala(bd: Bd, ator: Pick<Usuario, 'id'>, nome: string): Promise<Sala> {
   const nomeLimpo = nome.trim();
   if (!nomeLimpo || nomeLimpo.length > TAMANHO_MAXIMO_DO_NOME) {
-    throw new Error(`O nome da sala precisa ter de 1 a ${TAMANHO_MAXIMO_DO_NOME} caracteres.`);
+    throw new NomeDeSalaInvalido();
   }
   return bd.transaction(async (tx) => {
     await exigirAtivo(tx, ator);
@@ -50,7 +62,7 @@ export async function entrarNaSala(bd: Bd, ator: Pick<Usuario, 'id'>, salaId: st
   await bd.transaction(async (tx) => {
     await exigirAtivo(tx, ator);
     const sala = await travarSala(tx, salaId);
-    if (!sala) throw new Error('Sala não encontrada.');
+    if (!sala) throw new SalaInexistente();
     if (sala.partidaId) throw new SalaEmPartida();
     await exigirLivre(tx, ator.id);
     const [{ total }] = await tx.select({ total: count() }).from(salaMembros).where(eq(salaMembros.salaId, salaId));
