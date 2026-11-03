@@ -24,6 +24,21 @@ export async function criarPartida(
   return partida;
 }
 
+/** Encerra a partida e devolve o servidor e as salas, que voltam a poder jogar. */
+export async function finalizarPartida(
+  tx: Transacao,
+  partidaId: string,
+  resultado: { estado: 'encerrada' | 'cancelada'; vencedor: number | null },
+): Promise<void> {
+  const agora = new Date();
+  await tx
+    .update(partidas)
+    .set({ ...resultado, encerradaEm: agora, estadoDesde: agora })
+    .where(eq(partidas.id, partidaId));
+  await tx.update(servidores).set({ partidaId: null }).where(eq(servidores.partidaId, partidaId));
+  await tx.update(salas).set({ partidaId: null }).where(eq(salas.partidaId, partidaId));
+}
+
 export async function criarServidor(bd: Bd, dados: { nome: string; host: string; porta: number }): Promise<Servidor> {
   return bd.transaction(async (tx) => {
     const [existente] = await tx

@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const papel = pgEnum('papel', ['jogador', 'gm', 'adm']);
 export const estadoUsuario = pgEnum('estado_usuario', ['aguardando_verificacao', 'ativo', 'suspenso', 'banido']);
@@ -164,7 +164,21 @@ export const desafios = pgTable('desafios', {
   criadoEm: criadoEm(),
 });
 
+export const gravacoes = pgTable('gravacoes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  partidaId: uuid('partida_id')
+    .notNull()
+    .unique()
+    .references(() => partidas.id),
+  arquivo: text('arquivo').notNull(),
+  // Uma gravação de partida longa pode passar de 2 GB, o limite de um integer.
+  bytes: bigint('bytes', { mode: 'number' }).notNull(),
+  criadoEm: criadoEm(),
+  apagadaEm: timestamp('apagada_em', { withTimezone: true }),
+});
+
 export type Usuario = typeof usuarios.$inferSelect;
+export type Gravacao = typeof gravacoes.$inferSelect;
 export type Desafio = typeof desafios.$inferSelect;
 export type Sala = typeof salas.$inferSelect;
 export type Partida = typeof partidas.$inferSelect;
