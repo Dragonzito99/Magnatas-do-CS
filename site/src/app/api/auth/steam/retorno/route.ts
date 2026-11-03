@@ -6,7 +6,7 @@ import { COOKIE_CONVITE, enderecoDoSite, guardarSessao } from '@/auth/sessao-atu
 import { criarSessao } from '@/auth/sessoes';
 import { validarRetornoSteam } from '@/auth/steam';
 import { consumirConvite, ConviteInvalido } from '@/dominio/convites';
-import { buscarPorSteam } from '@/dominio/usuarios';
+import { atualizarPerfil, buscarPorSteam } from '@/dominio/usuarios';
 
 export async function GET(pedido: NextRequest) {
   const site = enderecoDoSite();
@@ -15,12 +15,15 @@ export async function GET(pedido: NextRequest) {
 
   const bd = obterBd();
   const lista = await cookies();
+  const perfil = await perfilPublicoSteam(steamid64);
   let conta = await buscarPorSteam(bd, steamid64);
-  if (!conta) {
+  if (conta) {
+    await atualizarPerfil(bd, conta, perfil);
+  } else {
     const codigo = lista.get(COOKIE_CONVITE)?.value;
     if (!codigo) return NextResponse.redirect(`${site}/?erro=conta`);
     try {
-      conta = await consumirConvite(bd, codigo, { steamid64, ...(await perfilPublicoSteam(steamid64)) });
+      conta = await consumirConvite(bd, codigo, { steamid64, ...perfil });
     } catch (erro) {
       if (erro instanceof ConviteInvalido) return NextResponse.redirect(`${site}/?erro=convite`);
       throw erro;
