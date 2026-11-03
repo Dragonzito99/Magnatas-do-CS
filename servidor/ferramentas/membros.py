@@ -1,8 +1,10 @@
 """Valida o arquivo de membros e gera a lista de liberados e a partida do MatchZy.
 
 Uso:
-  python membros.py whitelist membros.csv
-  python membros.py partida membros.csv de_mirage
+  python membros.py whitelist membros.csv [saida]
+  python membros.py partida membros.csv de_mirage [saida]
+
+No Windows, use [saida]: o redirecionamento ">" do PowerShell muda a codificação do arquivo.
 """
 import csv
 import io
@@ -88,15 +90,25 @@ def gerar_partida(membros: list[Membro], mapa: str, semente: int | None = None) 
     return partida
 
 
+def _entregar(texto: str, destino: str | None) -> None:
+    if destino is None:
+        sys.stdout.write(texto)
+        return
+    with open(destino, "w", encoding="utf-8", newline="\n") as arquivo:
+        arquivo.write(texto)
+
+
 def main(argumentos: list[str]) -> int:
     sys.stdout.reconfigure(encoding="utf-8", newline="\n")
     sys.stderr.reconfigure(encoding="utf-8")
     try:
-        if len(argumentos) == 2 and argumentos[0] == "whitelist":
-            sys.stdout.write(gerar_whitelist(ler_membros(argumentos[1])))
-        elif len(argumentos) == 3 and argumentos[0] == "partida":
+        if len(argumentos) in (2, 3) and argumentos[0] == "whitelist":
+            destino = argumentos[2] if len(argumentos) == 3 else None
+            _entregar(gerar_whitelist(ler_membros(argumentos[1])), destino)
+        elif len(argumentos) in (3, 4) and argumentos[0] == "partida":
+            destino = argumentos[3] if len(argumentos) == 4 else None
             partida = gerar_partida(ler_membros(argumentos[1]), argumentos[2])
-            print(json.dumps(partida, ensure_ascii=False, indent=2))
+            _entregar(json.dumps(partida, ensure_ascii=False, indent=2) + "\n", destino)
         else:
             print(__doc__.strip(), file=sys.stderr)
             return 2

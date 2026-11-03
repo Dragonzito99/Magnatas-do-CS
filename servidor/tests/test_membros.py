@@ -158,6 +158,23 @@ def test_comando_whitelist_usa_fim_de_linha_do_linux(tmp_path):
     assert resultado.stdout == f"{ID1}\n{ID2}\n".encode()
 
 
+def test_comando_whitelist_grava_em_arquivo_sem_mudar_a_codificacao(tmp_path):
+    arquivo = escrever(tmp_path, CABECALHO + f"{ID1},Bia,jogador\n")
+    saida = tmp_path / "whitelist.cfg"
+    resultado = rodar("whitelist", arquivo, str(saida))
+    assert resultado.returncode == 0
+    assert saida.read_bytes() == f"{ID1}\n".encode()
+
+
+def test_comando_partida_grava_json_em_utf8(tmp_path):
+    linhas = "".join(f"765611980000001{n:02d},João{n},jogador\n" for n in range(10))
+    arquivo = escrever(tmp_path, CABECALHO + linhas)
+    saida = tmp_path / "partida.json"
+    resultado = rodar("partida", arquivo, "de_mirage", str(saida))
+    assert resultado.returncode == 0
+    assert "João" in saida.read_bytes().decode("utf-8")
+
+
 def test_comando_partida_gera_json_com_acentos(tmp_path):
     linhas = "".join(f"765611980000001{n:02d},João{n},jogador\n" for n in range(10))
     arquivo = escrever(tmp_path, CABECALHO + linhas)

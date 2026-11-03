@@ -10,8 +10,10 @@ Preenchido durante os testes. Só entra aqui o que foi visto na prática.
 - O cache de build do Docker ocupa 66 GB, com 62 GB que podem ser liberados.
 
 ## VAC
-- Antes dos plugins (`checar_vac.py` e console): pendente
-- Depois dos plugins (`checar_vac.py` e console): pendente
+- Antes dos plugins, no PC com Windows: `vac_enabled=1` e `VAC secure mode is activated`.
+- Depois dos plugins, no PC com Windows, sem `-insecure`: `vac_enabled=1` e `VAC secure mode is activated`. Versões: Metamod 2.0.0-git1483, CounterStrikeSharp v1.0.379 e MatchZy 0.9.2.
+- Isso mostra que o servidor se declara seguro, não que o VAC pega trapaça. Falta repetir no Linux, no servidor novo.
+- Com os plugins, o console mostra 68 avisos `Could not PreloadLibrary` nas DLLs do .NET. O MatchZy carregou mesmo assim. Observar se isso causa algum problema.
 
 ## Lista de membros
 - Quem está fora é barrado: pendente
