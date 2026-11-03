@@ -1,4 +1,4 @@
-import { integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const papel = pgEnum('papel', ['jogador', 'gm', 'adm']);
 export const estadoUsuario = pgEnum('estado_usuario', ['aguardando_verificacao', 'ativo', 'suspenso', 'banido']);
@@ -67,7 +67,95 @@ export const auditoria = pgTable('auditoria', {
   criadoEm: criadoEm(),
 });
 
+export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix']);
+export const estadoPartida = pgEnum('estado_partida', [
+  'aguardando_servidor',
+  'carregando',
+  'aguardando_jogadores',
+  'ao_vivo',
+  'encerrada',
+  'cancelada',
+]);
+
+export const servidores = pgTable('servidores', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nome: text('nome').notNull(),
+  host: text('host').notNull(),
+  porta: integer('porta').notNull().default(27015),
+  ativo: boolean('ativo').notNull().default(true),
+  partidaId: uuid('partida_id'),
+  criadoEm: criadoEm(),
+});
+
+export const partidas = pgTable('partidas', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  // É o matchid do MatchZy, que precisa ser um número.
+  numero: serial('numero').notNull().unique(),
+  tipo: tipoPartida('tipo').notNull(),
+  estado: estadoPartida('estado').notNull().default('aguardando_servidor'),
+  mapa: text('mapa').notNull(),
+  servidorId: uuid('servidor_id').references(() => servidores.id),
+  vencedor: integer('vencedor'),
+  placar1: integer('placar1').notNull().default(0),
+  placar2: integer('placar2').notNull().default(0),
+  criadoEm: criadoEm(),
+  estadoDesde: timestamp('estado_desde', { withTimezone: true }).notNull().defaultNow(),
+  iniciadaEm: timestamp('iniciada_em', { withTimezone: true }),
+  encerradaEm: timestamp('encerrada_em', { withTimezone: true }),
+});
+
+export const partidaJogadores = pgTable(
+  'partida_jogadores',
+  {
+    partidaId: uuid('partida_id')
+      .notNull()
+      .references(() => partidas.id),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    time: integer('time').notNull(),
+    kills: integer('kills').notNull().default(0),
+    deaths: integer('deaths').notNull().default(0),
+    assists: integer('assists').notNull().default(0),
+    damage: integer('damage').notNull().default(0),
+    headshotKills: integer('headshot_kills').notNull().default(0),
+    rodadas: integer('rodadas').notNull().default(0),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.partidaId, tabela.usuarioId] })],
+);
+
+export const salas = pgTable('salas', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nome: text('nome').notNull(),
+  liderId: uuid('lider_id')
+    .notNull()
+    .references(() => usuarios.id),
+  partidaId: uuid('partida_id').references(() => partidas.id),
+  criadoEm: criadoEm(),
+});
+
+export const salaMembros = pgTable('sala_membros', {
+  // Ser chave primária garante uma sala por pessoa, mesmo com pedidos ao mesmo tempo.
+  usuarioId: uuid('usuario_id')
+    .primaryKey()
+    .references(() => usuarios.id),
+  salaId: uuid('sala_id')
+    .notNull()
+    .references(() => salas.id, { onDelete: 'cascade' }),
+  entrouEm: timestamp('entrou_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const filaMix = pgTable('fila_mix', {
+  usuarioId: uuid('usuario_id')
+    .primaryKey()
+    .references(() => usuarios.id),
+  entrouEm: timestamp('entrou_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Usuario = typeof usuarios.$inferSelect;
+export type Sala = typeof salas.$inferSelect;
+export type Partida = typeof partidas.$inferSelect;
+export type Servidor = typeof servidores.$inferSelect;
 export type Convite = typeof convites.$inferSelect;
 export type Papel = Usuario['papel'];
 export type EstadoUsuario = Usuario['estado'];
