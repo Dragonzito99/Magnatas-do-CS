@@ -1,9 +1,6 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
-};
+// As páginas mostram dados de cada pessoa, então nada de cache de componentes nem de pré-carregamento parcial.
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

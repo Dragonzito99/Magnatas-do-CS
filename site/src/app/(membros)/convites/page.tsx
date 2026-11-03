@@ -1,7 +1,6 @@
-import { redirect } from 'next/navigation';
 import { obterBd } from '@/bd/conexao';
 import type { Convite } from '@/bd/esquema';
-import { usuarioAtual } from '@/auth/sessao-atual';
+import { exigirAcesso } from '@/auth/guarda';
 import { listarConvites } from '@/dominio/convites';
 import { gerar, revogar } from './acoes';
 import { BotaoCopiar } from './botao-copiar';
@@ -18,8 +17,7 @@ function situacao(convite: Convite): string {
 }
 
 export default async function Convites({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
-  const usuario = await usuarioAtual();
-  if (!usuario) redirect('/');
+  const usuario = await exigirAcesso('/convites');
   const { erro } = await searchParams;
   const lista = await listarConvites(obterBd(), usuario);
   const ilimitado = usuario.papel !== 'jogador';

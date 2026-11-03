@@ -1,3 +1,6 @@
+import { redirect } from 'next/navigation';
+import { destinoPara } from '@/auth/destino';
+import { usuarioAtual } from '@/auth/sessao-atual';
 import { entrarComConvite } from './acoes';
 
 const ERROS: Record<string, string> = {
@@ -8,18 +11,36 @@ const ERROS: Record<string, string> = {
 };
 
 export default async function Inicio({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const destino = destinoPara(await usuarioAtual(), '/');
+  if (destino) redirect(destino);
   const { erro } = await searchParams;
+
   return (
-    <main className="entrada">
-      <h1>Magnatas</h1>
-      <p>Só entra quem tem convite.</p>
-      {erro && ERROS[erro] && <p role="alert">{ERROS[erro]}</p>}
-      <form action={entrarComConvite}>
-        <label htmlFor="codigo">Código de convite</label>
-        <input id="codigo" name="codigo" autoComplete="off" required maxLength={20} placeholder="7K2M9QX4TP" />
-        <button type="submit">Entrar com a Steam</button>
-      </form>
-      <a href="/api/auth/steam">Já tenho conta</a>
-    </main>
+    <div className="centro">
+      <main className="cartao-central">
+        <div className="logo">
+          <div>
+            MAGNA<span>TAS</span>
+          </div>
+        </div>
+        <p>Só entra quem tem convite.</p>
+        {erro && ERROS[erro] && (
+          <p role="alert" className="aviso">
+            {ERROS[erro]}
+          </p>
+        )}
+        <form action={entrarComConvite} className="formulario">
+          <label htmlFor="codigo">Código de convite</label>
+          <input id="codigo" name="codigo" className="mono" autoComplete="off" required maxLength={20} placeholder="7K2M9QX4TP" />
+          <button type="submit" className="botao laranja">
+            Entrar com a Steam
+          </button>
+        </form>
+        {/* Fica como <a>, porque o Link do Next pré-carregaria a rota e abriria a Steam sozinho. */}
+        <a href="/api/auth/steam" className="botao-texto">
+          Já tenho conta
+        </a>
+      </main>
+    </div>
   );
 }

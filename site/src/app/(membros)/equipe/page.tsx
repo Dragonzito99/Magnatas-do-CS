@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { obterBd } from '@/bd/conexao';
 import type { EstadoUsuario, Papel } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
-import { usuarioAtual } from '@/auth/sessao-atual';
+import { exigirAcesso } from '@/auth/guarda';
 import { listarMembros } from '@/dominio/equipe';
 import { concederConvites, trocarPapel } from './acoes';
 
@@ -20,8 +20,8 @@ const ERROS: Record<string, string> = {
 };
 
 export default async function Equipe({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
-  const usuario = await usuarioAtual();
-  if (!usuario || !pode(usuario, 'ver_equipe')) redirect('/salas');
+  const usuario = await exigirAcesso('/equipe');
+  if (!pode(usuario, 'ver_equipe')) redirect('/salas');
   const { erro } = await searchParams;
   const membros = await listarMembros(obterBd());
   const podeMudarPapel = pode(usuario, 'mudar_papel');
