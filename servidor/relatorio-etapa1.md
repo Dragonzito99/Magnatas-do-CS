@@ -25,16 +25,13 @@ Preenchido durante os testes. Só entra aqui o que foi visto na prática.
 - KD: funcionou em uma partida real de 2 rounds contra bots. O CSV saiu em `csgo/MatchZy_Stats/1/match_data_map0_1.csv`, com o mesmo cabeçalho dos testes, e a exportação deu 2 abates, 0 mortes, KD 2.0, 100% de tiros na cabeça e 200 de dano. Bots não aparecem no CSV.
 
 ## CS2AC
-- Versão testada: pendente
-- Canal de alerta: pendente
-- Detecção real sem hack: pendente
-- Alertas injustos: pendente
+- Versão gratuita 1.0.14: não carrega. O Metamod responde que ela usa a interface 17, e o Metamod atual usa a 18. O Metamod git1468, o mais antigo acima do mínimo do CounterStrikeSharp que testei, também usa a 18.
+- Versão paga: não testada. Custa US$ 10 por mês com o CS2FOW na mesma chave, e o teste exige cartão. Decisão do dono, adiada.
+- Canal de alerta, detecção real e alertas injustos: não testados.
 
 ## CS2FOW
-- Versão testada: pendente
-- Esconde quem está atrás da parede: pendente
-- Uso de CPU antes e depois: pendente
-- Vale o custo: pendente
+- Versão gratuita 0.3.6: não carrega, pelo mesmo motivo do CS2AC (interface 17 contra 18).
+- Versão paga: não testada. Esconder quem está atrás da parede, uso de processador e custo-benefício seguem sem resposta.
 
 ## Partida completa
 - 10 jogadores até o fim: pendente
