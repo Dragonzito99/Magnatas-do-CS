@@ -27,6 +27,9 @@ export async function exigirAtivo(tx: Transacao, usuario: Pick<Usuario, 'id'>): 
 
 /** Uma pessoa só pode estar em uma sala, no mix ou em uma partida de cada vez. */
 export async function exigirLivre(tx: Transacao, usuarioId: string): Promise<void> {
+  // Trava a linha da pessoa: dois pedidos juntos dela passam um de cada vez, e o segundo já vê o primeiro.
+  await tx.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.id, usuarioId)).for('no key update');
+
   const [naSala] = await tx.select({ id: salaMembros.usuarioId }).from(salaMembros).where(eq(salaMembros.usuarioId, usuarioId));
   if (naSala) throw new JaOcupado();
 
