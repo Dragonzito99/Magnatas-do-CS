@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
+import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
-import type { Papel } from '@/bd/esquema';
 import { fichaDoJogador, type SituacaoDaGravacao } from '@/dominio/ficha';
+import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { Avatar } from '../../avatar';
+import { Punicoes } from './punicoes';
 
-const NOME_DO_PAPEL: Record<Papel, string> = { jogador: 'Jogador', gm: 'GM', adm: 'Adm' };
 const NOME_DA_DENUNCIA = { aberta: 'Aberta', em_analise: 'Em análise', encerrada: 'Encerrada' };
 const NOME_DA_GRAVACAO: Record<Exclude<SituacaoDaGravacao, 'disponivel'>, string> = {
   aguardando: 'Gravação chegando',
@@ -18,8 +19,24 @@ const NOME_DA_GRAVACAO: Record<Exclude<SituacaoDaGravacao, 'disponivel'>, string
 
 const dataCurta = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
-export default async function FichaDoJogador({ params }: { params: Promise<{ id: string }> }) {
+const ERROS: Record<string, string> = {
+  motivo: 'Escreva o motivo, com até 500 caracteres.',
+  alvo: 'A situação desta conta não permite isso.',
+  proposta: 'Já existe uma proposta de banimento aberta para esta conta.',
+  decidido: 'Este banimento já foi decidido.',
+  'quem-propos': 'Quem propôs não pode confirmar. Outro Adm precisa decidir.',
+  permissao: 'Você não tem permissão para isso.',
+};
+
+export default async function FichaDoJogador({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string }>;
+}) {
   const { id } = await params;
+  const { erro } = await searchParams;
   const usuario = await exigirAcesso(`/jogadores/${id}`);
   if (!z.uuid().safeParse(id).success) notFound();
   const ficha = await fichaDoJogador(obterBd(), usuario, id);
@@ -37,6 +54,11 @@ export default async function FichaDoJogador({ params }: { params: Promise<{ id:
           </span>
         </div>
       </div>
+      {erro && ERROS[erro] && (
+        <p role="alert" className="aviso">
+          {ERROS[erro]}
+        </p>
+      )}
       <div className="numeros">
         <div>
           <small>Partidas</small>
@@ -104,9 +126,7 @@ export default async function FichaDoJogador({ params }: { params: Promise<{ id:
               <span>Só GM e Adm veem</span>
             </div>
             <div className="dados-da-equipe">
-              <span>
-                Situação da conta: <b>{equipe.estado}</b>
-              </span>
+              <span>Situação da conta: {NOME_DO_ESTADO[equipe.estado]}</span>
               <span>
                 SteamID: <span className="mono">{equipe.steamid64}</span>
               </span>
@@ -127,6 +147,15 @@ export default async function FichaDoJogador({ params }: { params: Promise<{ id:
               </span>
             </div>
           </section>
+          <Punicoes
+            jogadorId={jogador.id}
+            apelido={jogador.apelido}
+            papel={jogador.papel}
+            estado={equipe.estado}
+            banimentos={equipe.banimentos}
+            ehProprio={jogador.id === usuario.id}
+            leitorEhAdm={pode(usuario, 'decidir_banimento')}
+          />
           <section className="painel">
             <div className="cabeca-painel">
               <h2>Denúncias contra este jogador</h2>

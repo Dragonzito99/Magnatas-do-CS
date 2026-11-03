@@ -216,7 +216,28 @@ export const chamados = pgTable('chamados', {
   criadoEm: criadoEm(),
 });
 
+export const estadoBanimento = pgEnum('estado_banimento', ['proposto', 'confirmado', 'recusado', 'revertido']);
+
+export const banimentos = pgTable('banimentos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id')
+    .notNull()
+    .references(() => usuarios.id),
+  cpfHmac: text('cpf_hmac'),
+  motivo: text('motivo').notNull(),
+  estado: estadoBanimento('estado').notNull().default('proposto'),
+  propostoPor: uuid('proposto_por')
+    .notNull()
+    .references(() => usuarios.id),
+  confirmadoPor: uuid('confirmado_por').references(() => usuarios.id),
+  revertidoPor: uuid('revertido_por').references(() => usuarios.id),
+  motivoReversao: text('motivo_reversao'),
+  criadoEm: criadoEm(),
+  decididoEm: timestamp('decidido_em', { withTimezone: true }),
+});
+
 export type Usuario = typeof usuarios.$inferSelect;
+export type Banimento = typeof banimentos.$inferSelect;
 export type Denuncia = typeof denuncias.$inferSelect;
 export type Chamado = typeof chamados.$inferSelect;
 export type Gravacao = typeof gravacoes.$inferSelect;

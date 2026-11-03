@@ -1,6 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { denuncias, gravacoes, partidaJogadores, partidas, usuarios, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, usuarios, type Partida, type Usuario } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
 
 const ESPERA_DA_GRAVACAO_MS = 10 * 60_000;
@@ -47,9 +47,24 @@ async function dadosDaEquipe(bd: Bd, jogador: Usuario) {
     .from(usuarios)
     .where(eq(usuarios.convidadoPor, jogador.id));
 
+  const historicoDeBanimentos = await bd
+    .select({
+      id: banimentos.id,
+      estado: banimentos.estado,
+      motivo: banimentos.motivo,
+      motivoReversao: banimentos.motivoReversao,
+      criadoEm: banimentos.criadoEm,
+      propostoPorApelido: usuarios.apelido,
+    })
+    .from(banimentos)
+    .innerJoin(usuarios, eq(banimentos.propostoPor, usuarios.id))
+    .where(eq(banimentos.usuarioId, jogador.id))
+    .orderBy(desc(banimentos.criadoEm));
+
   return {
     estado: jogador.estado,
     steamid64: jogador.steamid64,
+    banimentos: historicoDeBanimentos,
     denuncias: contraEle,
     convidadoPor: padrinho ?? null,
     convidados,

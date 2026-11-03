@@ -1,18 +1,12 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { obterBd } from '@/bd/conexao';
-import type { EstadoUsuario, Papel } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
 import { exigirAcesso } from '@/auth/guarda';
 import { listarMembros } from '@/dominio/equipe';
+import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { concederConvites, trocarPapel } from './acoes';
 
-const NOME_DO_PAPEL: Record<Papel, string> = { jogador: 'Jogador', gm: 'GM', adm: 'Adm' };
-const NOME_DO_ESTADO: Record<EstadoUsuario, string> = {
-  aguardando_verificacao: 'Aguardando verificação',
-  ativo: 'Ativo',
-  suspenso: 'Suspenso',
-  banido: 'Banido',
-};
 const ERROS: Record<string, string> = {
   'ultimo-adm': 'A plataforma precisa ter pelo menos um Adm ativo.',
   quantidade: 'A quantidade de convites precisa ser de 1 a 100.',
@@ -42,7 +36,9 @@ export default async function Equipe({ searchParams }: { searchParams: Promise<{
         {membros.map((membro) => (
           <div className="linha linha-membro" key={membro.id}>
             <div>
-              <b>{membro.apelido}</b>
+              <b>
+                <Link href={`/jogadores/${membro.id}`}>{membro.apelido}</Link>
+              </b>
               <small>{membro.convidadoPorApelido ? `Convidado por ${membro.convidadoPorApelido}` : 'Sem convite registrado'}</small>
             </div>
             <span className={membro.estado === 'ativo' ? 'etiqueta ok' : 'etiqueta'}>{NOME_DO_ESTADO[membro.estado]}</span>

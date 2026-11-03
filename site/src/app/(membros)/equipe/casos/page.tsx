@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
+import { listarBanimentosAbertos } from '@/dominio/banimentos';
 import { listarCasos } from '@/dominio/denuncias';
 import { Atualizar } from '../../atualizar';
 import { analisar, atender } from './acoes';
@@ -19,7 +20,7 @@ export default async function Casos({ searchParams }: { searchParams: Promise<{ 
   const usuario = await exigirAcesso('/equipe/casos');
   if (!pode(usuario, 'moderar')) redirect('/salas');
   const { erro } = await searchParams;
-  const casos = await listarCasos(obterBd(), usuario);
+  const [casos, propostas] = await Promise.all([listarCasos(obterBd(), usuario), listarBanimentosAbertos(obterBd(), usuario)]);
 
   return (
     <>
@@ -50,6 +51,24 @@ export default async function Casos({ searchParams }: { searchParams: Promise<{ 
                 Atender
               </button>
             </form>
+          </div>
+        ))}
+      </section>
+      <section className="painel">
+        <div className="cabeca-painel">
+          <h2>Propostas de banimento</h2>
+          <span>{propostas.length}</span>
+        </div>
+        {propostas.length === 0 && <p className="vazio">Nenhuma proposta aberta.</p>}
+        {propostas.map((proposta) => (
+          <div className="caso" key={proposta.id}>
+            <div>
+              <b>
+                <Link href={`/jogadores/${proposta.usuarioId}`}>{proposta.alvoApelido}</Link>
+              </b>
+              <small>Proposto por {proposta.propostoPorApelido}. A decisão fica na ficha do jogador.</small>
+            </div>
+            <p>{proposta.motivo}</p>
           </div>
         ))}
       </section>
