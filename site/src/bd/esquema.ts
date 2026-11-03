@@ -101,6 +101,7 @@ export const partidas = pgTable('partidas', {
   placar2: integer('placar2').notNull().default(0),
   criadoEm: criadoEm(),
   estadoDesde: timestamp('estado_desde', { withTimezone: true }).notNull().defaultNow(),
+  ultimoEventoEm: timestamp('ultimo_evento_em', { withTimezone: true }),
   iniciadaEm: timestamp('iniciada_em', { withTimezone: true }),
   encerradaEm: timestamp('encerrada_em', { withTimezone: true }),
 });

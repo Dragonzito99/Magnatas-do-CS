@@ -100,6 +100,7 @@ export async function aplicarEvento(bd: Bd, evento: unknown): Promise<void> {
       .where(and(eq(partidas.numero, dados.matchid), inArray(partidas.estado, [...ESTADOS_ATIVOS_DE_PARTIDA])))
       .for('update');
     if (!partida) return;
+    await tx.update(partidas).set({ ultimoEventoEm: new Date() }).where(eq(partidas.id, partida.id));
 
     switch (dados.event) {
       case 'series_start':

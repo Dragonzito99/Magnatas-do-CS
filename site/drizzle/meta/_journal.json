@@ -43,6 +43,13 @@
       "when": 1793742414214,
       "tag": "0005_complete_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793742667581,
+      "tag": "0006_mysterious_thundra",
+      "breakpoints": true
     }
   ]
 }

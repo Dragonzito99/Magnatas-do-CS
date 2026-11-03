@@ -110,6 +110,12 @@ test('jogador que não é da partida é ignorado', async () => {
   expect(await bd.select().from(partidaJogadores).where(eq(partidaJogadores.usuarioId, fora.id))).toEqual([]);
 });
 
+test('todo evento conhecido registra a hora, para a varredura saber que a partida está viva', async () => {
+  expect((await atual()).ultimoEventoEm).toBeNull();
+  await aplicarEvento(bd, fimDeRodada(1, 0, []));
+  expect((await atual()).ultimoEventoEm).toBeInstanceOf(Date);
+});
+
 test('map_result atualiza o placar', async () => {
   await aplicarEvento(bd, daPartida(map_result));
   expect(await atual()).toMatchObject({ placar1: map_result.team1.score, placar2: map_result.team2.score });

@@ -121,6 +121,12 @@ test('config traz matchid, mapa, times com apelidos, players_per_team 5 e skip_v
   expect(config.team1.name).toBe('Time 1');
 });
 
+test('a config pede 5 prontos por time, e só um teste pode baixar esse número', async () => {
+  const { partida } = await novaPartida();
+  expect(await configDaPartida(bd, partida.numero)).toMatchObject({ min_players_to_ready: 5 });
+  expect(await configDaPartida(bd, partida.numero, 1)).toMatchObject({ min_players_to_ready: 1 });
+});
+
 test('em desafio, o time leva o nome da sala', async () => {
   const { partida, time1 } = await novaPartida();
   const [sala] = await bd.insert(salas).values({ nome: 'Os sem mira', liderId: time1[0].id, partidaId: partida.id }).returning();

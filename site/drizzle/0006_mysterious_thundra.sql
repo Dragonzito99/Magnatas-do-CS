@@ -1,0 +1,1 @@
+ALTER TABLE "partidas" ADD COLUMN "ultimo_evento_em" timestamp with time zone;

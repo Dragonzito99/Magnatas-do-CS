@@ -3,12 +3,15 @@
 //      npx tsx scripts/dev-preencher.ts mix <quantas>
 //      npx tsx scripts/dev-preencher.ts completar <nome da sala>
 //      npx tsx scripts/dev-preencher.ts lider <nome da sala>  (imprime uma sessão do líder)
+//      npx tsx scripts/dev-preencher.ts limpar  (cancela as partidas em andamento e esvazia salas e mix)
 import { randomInt } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { criarSessao } from '@/auth/sessoes';
 import { obterBd, type Bd } from '@/bd/conexao';
-import { salas, usuarios, type Usuario } from '@/bd/esquema';
+import { desafios, filaMix, partidas, salas, usuarios, type Usuario } from '@/bd/esquema';
+import { ESTADOS_ATIVOS_DE_PARTIDA } from '@/dominio/disponibilidade';
 import { entrarNoMix } from '@/dominio/mix';
+import { finalizarPartida } from '@/dominio/partidas';
 import { criarSala, entrarNaSala, minhaSala, TAMANHO_DA_SALA } from '@/dominio/salas';
 import { carregarAmbiente } from './ambiente';
 
@@ -49,8 +52,20 @@ async function principal() {
       for (let i = atual?.membros.length ?? 0; i < TAMANHO_DA_SALA; i += 1) await entrarNaSala(bd, await contaFicticia(bd), sala.id);
       console.log(`Sala ${sala.nome} completa.`);
     }
+  } else if (modo === 'limpar') {
+    await bd.transaction(async (tx) => {
+      const ativas = await tx
+        .select({ id: partidas.id })
+        .from(partidas)
+        .where(inArray(partidas.estado, [...ESTADOS_ATIVOS_DE_PARTIDA]));
+      for (const partida of ativas) await finalizarPartida(tx, partida.id, { estado: 'cancelada', vencedor: null });
+      await tx.update(desafios).set({ estado: 'cancelado' }).where(eq(desafios.estado, 'pendente'));
+      await tx.delete(salas);
+      await tx.delete(filaMix);
+    });
+    console.log('Partidas canceladas, salas apagadas e fila do mix vazia.');
   } else {
-    throw new Error('Use: dev-preencher sala <nome> <quantas>, mix <quantas>, completar <nome> ou lider <nome>');
+    throw new Error('Use: dev-preencher sala <nome> <quantas>, mix <quantas>, completar <nome>, lider <nome> ou limpar');
   }
   process.exit(0);
 }

@@ -81,12 +81,13 @@ async function reservarServidor(bd: Bd, ignorar: string[]): Promise<{ partida: P
   });
 }
 
-async function devolverPartida(bd: Bd, partidaId: string, servidorId: string): Promise<void> {
+export async function devolverPartida(bd: Bd, partidaId: string, servidorId: string | null): Promise<void> {
   await bd.transaction(async (tx) => {
     await tx
       .update(partidas)
       .set({ estado: 'aguardando_servidor', servidorId: null, estadoDesde: new Date() })
       .where(and(eq(partidas.id, partidaId), eq(partidas.estado, 'carregando')));
+    if (!servidorId) return;
     await tx
       .update(servidores)
       .set({ partidaId: null })
@@ -111,7 +112,7 @@ export async function alocarServidores(bd: Bd, controlador: ControladorServidor)
   }
 }
 
-export async function configDaPartida(bd: Bd, numero: number): Promise<object | null> {
+export async function configDaPartida(bd: Bd, numero: number, minimoDeProntos: number = JOGADORES_POR_TIME): Promise<object | null> {
   const [partida] = await bd
     .select()
     .from(partidas)
@@ -144,7 +145,7 @@ export async function configDaPartida(bd: Bd, numero: number): Promise<object | 
     maplist: [partida.mapa],
     num_maps: 1,
     players_per_team: JOGADORES_POR_TIME,
-    min_players_to_ready: JOGADORES_POR_TIME,
+    min_players_to_ready: minimoDeProntos,
     skip_veto: true,
     team1: time(1),
     team2: time(2),
@@ -233,7 +234,9 @@ export async function respostaDaConfig(
 ): Promise<Response> {
   if (!tokenConfere(cabecalho, tokenEsperado)) return new Response('Não autorizado.', { status: 401 });
   const valor = /^\d+$/.test(numero) ? Number(numero) : NaN;
-  const config = valor <= MAIOR_NUMERO_DE_PARTIDA ? await configDaPartida(bd, valor) : null;
+  // Só para testar sem 10 pessoas: em produção essa variável não existe, e valem os 5 por time.
+  const minimoDeProntos = Number(process.env.PARTIDA_MIN_PRONTOS) || undefined;
+  const config = valor <= MAIOR_NUMERO_DE_PARTIDA ? await configDaPartida(bd, valor, minimoDeProntos) : null;
   if (!config) return new Response('Partida não encontrada.', { status: 404 });
   return Response.json(config, { headers: { 'Cache-Control': 'no-store' } });
 }
