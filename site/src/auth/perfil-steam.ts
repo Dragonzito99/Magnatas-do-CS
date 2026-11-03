@@ -3,6 +3,8 @@ export interface PerfilSteam {
   avatarUrl?: string;
 }
 
+const AVATAR_DA_STEAM = /^https:\/\/avatars\.([a-z0-9-]+\.)?steamstatic\.com\//;
+
 function campo(xml: string, nome: string): string | undefined {
   return new RegExp(`<${nome}><!\\[CDATA\\[(.*?)\\]\\]></${nome}>`, 's').exec(xml)?.[1];
 }
@@ -18,7 +20,7 @@ export async function perfilPublicoSteam(steamid64: string, buscar: typeof fetch
     const apelido = campo(xml, 'steamID')?.trim();
     if (!apelido) return { apelido: steamid64 };
     const avatar = campo(xml, 'avatarFull');
-    return avatar?.startsWith('https://avatars.steamstatic.com/') ? { apelido, avatarUrl: avatar } : { apelido };
+    return avatar && AVATAR_DA_STEAM.test(avatar) ? { apelido, avatarUrl: avatar } : { apelido };
   } catch {
     return { apelido: steamid64 };
   }

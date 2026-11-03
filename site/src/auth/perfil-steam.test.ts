@@ -32,3 +32,24 @@ test('ignora avatar que não vem da Steam', async () => {
     new Response('<profile><steamID><![CDATA[Bia]]></steamID><avatarFull><![CDATA[https://falso.net/a.jpg]]></avatarFull></profile>');
   expect(await perfilPublicoSteam(STEAM_A, buscar)).toEqual({ apelido: 'Bia' });
 });
+
+test.each([
+  'https://avatars.steamstatic.com/abc_full.jpg',
+  'https://avatars.fastly.steamstatic.com/abc_full.jpg',
+  'https://avatars.akamai.steamstatic.com/abc_full.jpg',
+  'https://avatars.cloudflare.steamstatic.com/abc_full.jpg',
+])('aceita avatar da Steam em %s', async (avatar) => {
+  const buscar = async () =>
+    new Response(`<profile><steamID><![CDATA[Bia]]></steamID><avatarFull><![CDATA[${avatar}]]></avatarFull></profile>`);
+  expect(await perfilPublicoSteam(STEAM_A, buscar)).toEqual({ apelido: 'Bia', avatarUrl: avatar });
+});
+
+test.each([
+  'https://avatars.steamstatic.com.falso.net/a.jpg',
+  'http://avatars.steamstatic.com/a.jpg',
+  'https://falso.net/avatars.steamstatic.com/a.jpg',
+])('recusa avatar parecido em %s', async (avatar) => {
+  const buscar = async () =>
+    new Response(`<profile><steamID><![CDATA[Bia]]></steamID><avatarFull><![CDATA[${avatar}]]></avatarFull></profile>`);
+  expect(await perfilPublicoSteam(STEAM_A, buscar)).toEqual({ apelido: 'Bia' });
+});
