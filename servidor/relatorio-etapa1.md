@@ -16,11 +16,11 @@ Preenchido durante os testes. Só entra aqui o que foi visto na prática.
 - Com os plugins, o console mostra 68 avisos `Could not PreloadLibrary` nas DLLs do .NET. O MatchZy carregou mesmo assim. Observar se isso causa algum problema.
 
 ## Lista de membros
-- Quem está fora é barrado: pendente
+- Quem está na lista entra, e quem está fora é barrado: confirmado no PC em 03/11/2026. O dono entrou com a conta na lista e foi expulso ao reconectar depois de sair dela. Falta repetir com um amigo no servidor novo.
 
 ## Gravação e KD
-- Gravação gerada e abrindo: pendente
-- KD confere com o placar: pendente
+- Gravação: FALHOU no PC com Windows. O MatchZy 0.9.2 pediu a gravação com o caminho completo, e o servidor respondeu `record G:/Irmandade/...dem: invalid path`. Testes manuais com `tv_record` pelo console remoto também não geraram arquivo. A causa não foi confirmada, e a suspeita é o caminho do Windows. Precisa ser o primeiro teste no servidor novo, em Linux, porque a análise de partidas depende disso.
+- KD: funcionou em uma partida real de 2 rounds contra bots. O CSV saiu em `csgo/MatchZy_Stats/1/match_data_map0_1.csv`, com o mesmo cabeçalho dos testes, e a exportação deu 2 abates, 0 mortes, KD 2.0, 100% de tiros na cabeça e 200 de dano. Bots não aparecem no CSV.
 
 ## CS2AC
 - Versão testada: pendente
