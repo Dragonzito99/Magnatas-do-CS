@@ -1,18 +1,8 @@
 // Aplica as migrações no banco de DATABASE_URL. Uso: npm run db:migrar
-import { readFileSync } from 'node:fs';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
-
-function carregarAmbiente() {
-  if (process.env.DATABASE_URL) return;
-  for (const linha of readFileSync('.env.local', 'utf8').split(/\r?\n/)) {
-    const separador = linha.indexOf('=');
-    if (separador > 0 && !linha.startsWith('#')) {
-      process.env[linha.slice(0, separador).trim()] = linha.slice(separador + 1).trim();
-    }
-  }
-}
+import { carregarAmbiente } from './ambiente';
 
 async function principal() {
   carregarAmbiente();
