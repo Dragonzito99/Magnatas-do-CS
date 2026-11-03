@@ -10,12 +10,14 @@
     "test": "vitest run",
     "db:gerar": "drizzle-kit generate",
     "db:migrar": "tsx scripts/migrar.ts",
-    "adm:criar": "tsx scripts/criar-adm.ts"
+    "adm:criar": "tsx scripts/criar-adm.ts",
+    "servidor:criar": "tsx scripts/criar-servidor.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
     "next": "16.4.4",
     "pg": "^8.23.1",
+    "rcon-client": "^4.2.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.7"
