@@ -46,7 +46,7 @@ Preenchido durante os testes. Só entra aqui o que foi visto na prática.
 - CS2AC e CS2FOW grátis: não carregam (interface 17 contra 18).
 - A reinstalação removia o Metamod sem avisar. Agora `iniciar_cs2.sh` reaplica, e `conferir_cs2.sh` desliga o servidor se a lista de membros não estiver valendo. Provado em Linux com o `gameinfo.gi` sem a linha e com a lista desativada.
 - `atualizar_cs2.sh` provado em Linux: o `validate` restaurou o `gameinfo.gi`, o Metamod foi reaplicado, a conferência passou e o VAC seguiu ativo.
-- A senha errada ainda não foi testada na prática. Fica para o teste de ponta a ponta da etapa 2.
+- Senha do servidor testada em 03/11/2026 no Linux: com senha errada pelo IP da rede, o servidor recusou (`password failed`). Por `127.0.0.1` a entrada é direta e não pede senha, e isso não dá acesso a quem está fora da máquina.
 - O VAC foi medido sem GSLT, em modo anônimo.
 
 ## O que muda antes da etapa 2
