@@ -34,6 +34,7 @@ Preenchido durante os testes. Só entra aqui o que foi visto na prática.
 - Versão paga: não testada. Esconder quem está atrás da parede, uso de processador e custo-benefício seguem sem resposta.
 
 ## Partida completa
+- Adiada por decisão do dono em 03/11/2026: o plano de internet dele não libera o acesso à rede (só plano PJ), então a partida espera um servidor. O site vem antes.
 - 10 jogadores até o fim: pendente
 - Sair e voltar: pendente
 - GM como espectador: pendente
