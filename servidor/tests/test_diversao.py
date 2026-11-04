@@ -226,7 +226,7 @@ def test_a_regra_de_equipe_vem_da_configuracao():
 
 def test_a_partida_dura_o_tempo_do_relogio_da_tela():
     # Um valor só: mudar o tempo é mudar uma linha da configuração, e o relógio e o fim continuam combinando.
-    assert 'ConVar.Find("mp_roundtime")' in CODIGO_DO_PLUGIN
+    assert 'ConVar<float>.Find("mp_roundtime")' in CODIGO_DO_PLUGIN
     assert "MinutosDaPartida" not in CODIGO_DO_PLUGIN
 
 

@@ -72,7 +72,7 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
         MostrarNoPlacar();
         fimDaPartida?.Kill();
         // O mesmo valor do relógio da tela, para os dois chegarem juntos ao fim.
-        var minutos = ConVar.Find("mp_roundtime")?.GetPrimitiveValue<float>() ?? MinutosSeFaltarORelogio;
+        var minutos = ConVar<float>.Find("mp_roundtime")?.Value ?? MinutosSeFaltarORelogio;
         fimDaPartida = AddTimer(minutos * 60f, EncerrarPartida);
     }
 
