@@ -4,7 +4,9 @@ RAIZ = pathlib.Path(__file__).resolve().parents[1]
 CONFIG = (RAIZ / "config" / "mata_mata.cfg").read_text(encoding="utf-8")
 INICIAR = (RAIZ / "scripts" / "iniciar_mata_mata.sh").read_text(encoding="utf-8")
 INSTALADOR = (RAIZ / "scripts" / "instalar_cs2.sh").read_text(encoding="utf-8")
-PASTA_DO_PLUGIN = RAIZ / "plugins" / "MagnatasMataMata"
+PASTA_DO_PLUGIN = RAIZ / "plugins" / "MagnatasDiversao"
+CODIGO_DO_PLUGIN = (PASTA_DO_PLUGIN / "MagnatasDiversao.cs").read_text(encoding="utf-8")
+COMPILAR = (RAIZ / "scripts" / "compilar_plugin.sh").read_text(encoding="utf-8")
 
 
 def valor(comando):
@@ -32,16 +34,23 @@ def test_so_desert_e_faca_vem_da_configuracao():
     assert valor("mp_t_default_melee") == "weapon_knife"
 
 
-def test_o_plugin_entrega_a_ak_a_cada_renascimento():
-    # O modo mata-mata do jogo ignora a arma principal padrão, e todo mundo nasceria só com a Desert.
-    codigo = (PASTA_DO_PLUGIN / "MagnatasMataMata.cs").read_text(encoding="utf-8")
-    assert "EventPlayerSpawn" in codigo
-    assert '"weapon_ak47"' in codigo
-    assert "GiveNamedItem" in codigo
+def test_o_plugin_entrega_a_arma_definida_na_configuracao():
+    # O modo mata-mata do jogo ignora a arma principal padrão, e cada servidor tem a sua.
+    assert "ArmaPrincipal" in CODIGO_DO_PLUGIN
+    assert "IPluginConfig" in CODIGO_DO_PLUGIN
+    assert "EventPlayerSpawn" in CODIGO_DO_PLUGIN
+    assert "GiveNamedItem" in CODIGO_DO_PLUGIN
+    assert '"weapon_ak47"' not in CODIGO_DO_PLUGIN
+
+
+def test_a_compilacao_gera_o_plugin_da_diversao():
+    assert 'plugins/MagnatasDiversao' in COMPILAR
+    assert 'MagnatasDiversao.dll' in COMPILAR
+    assert 'MagnatasMataMata' not in COMPILAR
 
 
 def test_o_plugin_nao_entrega_uma_segunda_ak():
-    codigo = (PASTA_DO_PLUGIN / "MagnatasMataMata.cs").read_text(encoding="utf-8")
+    codigo = CODIGO_DO_PLUGIN
     assert "MyWeapons" in codigo
 
 
@@ -66,7 +75,7 @@ def test_sem_os_extras_do_modo_mata_mata():
 
 
 def test_placar_zera_a_cada_20_minutos_pelo_plugin():
-    codigo = (PASTA_DO_PLUGIN / "MagnatasMataMata.cs").read_text(encoding="utf-8")
+    codigo = CODIGO_DO_PLUGIN
     assert "SegundosAteZerarOPlacar = 20 * 60" in codigo
     assert "mp_restartgame" in codigo
     assert "TimerFlags.REPEAT" in codigo
@@ -82,7 +91,7 @@ def test_a_partida_nunca_acaba_pelo_tempo_do_jogo():
 
 def test_o_plugin_informa_as_contas_conectadas_so_ao_servidor():
     # O status_json do CS2 só olha as primeiras vagas, e quem está em uma vaga alta fica de fora.
-    codigo = (PASTA_DO_PLUGIN / "MagnatasMataMata.cs").read_text(encoding="utf-8")
+    codigo = CODIGO_DO_PLUGIN
     assert '"magnatas_jogadores"' in codigo
     assert "CommandUsage.SERVER_ONLY" in codigo
     assert "magnatas_jogadores=[" in codigo

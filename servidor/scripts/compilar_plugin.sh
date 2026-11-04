@@ -35,8 +35,8 @@ if [ "$("$SDK/dotnet" --version 2>/dev/null || true)" != "$VERSAO" ]; then
 fi
 
 # Compila em uma pasta temporária para não deixar arquivos gerados junto do código.
-cp -r "$ORIGEM/plugins/MagnatasMataMata" "$OBRA/codigo"
+cp -r "$ORIGEM/plugins/MagnatasDiversao" "$OBRA/codigo"
 DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_CLI_HOME="$OBRA/casa" \
   "$SDK/dotnet" build "$OBRA/codigo" -c Release -o "$OBRA/saida" -p:CssApi="$API" -v quiet --nologo
-install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida/MagnatasMataMata.dll" "$CASA/bin/"
-echo "Plugin compilado em $CASA/bin/MagnatasMataMata.dll."
+install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida/MagnatasDiversao.dll" "$CASA/bin/"
+echo "Plugin compilado em $CASA/bin/MagnatasDiversao.dll."
