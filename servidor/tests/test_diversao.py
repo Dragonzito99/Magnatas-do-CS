@@ -459,7 +459,7 @@ def test_instalador_compila_o_plugin():
 
 def test_fantasma_so_liga_na_regra_dele():
     assert 'Config.Regra == "fantasma"' in CODIGO_DO_PLUGIN
-    assert "LigarFantasma()" in CODIGO_DO_PLUGIN
+    assert "LigarFantasma(hotReload)" in CODIGO_DO_PLUGIN
 
 
 def test_fantasma_nao_zera_a_contagem_a_cada_rodada():
@@ -679,3 +679,57 @@ def test_fantasma_sem_aquecimento_entre_as_partidas():
     # Sem isso, o jogo faz 1 minuto de aquecimento em vez dos 15 segundos do aviso.
     assert valor("mp_warmuptime_all_players_connected", "fantasma") == "0"
     assert valor("mp_warmup_online_enabled", "fantasma") == "0"
+
+
+def test_morte_pela_bomba_nao_conta_abate():
+    # O dono pediu: a explosão da bomba não é abate do fantasma, nem para o XP.
+    trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("AoMorrer"):]
+    assert 'evento.Weapon.Contains("c4")' in trecho
+    assert trecho.index('evento.Weapon.Contains("c4")') < trecho.index(".Abates++")
+
+
+def test_andar_no_shift_deixa_o_fantasma_invisivel():
+    # O script do mapa deixa 50% visível nessa velocidade, e o dono pediu 100% invisível.
+    assert "VelocidadeDoShift = 140f" in CODIGO_DO_FANTASMA
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void AjustarInvisibilidade"):]
+    assert "CsTeam.Terrorist" in trecho
+    assert "VelocidadeDoShift" in trecho
+    assert '"alpha"' in trecho
+    assert "AjustarInvisibilidade, TimerFlags.REPEAT" in CODIGO_DO_FANTASMA
+
+
+def test_no_ar_o_fantasma_fica_invisivel():
+    # O dono pediu: no bhop ele continua invisível.
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void AjustarInvisibilidade"):]
+    assert "FL_ONGROUND" in trecho
+
+
+def test_correndo_o_fantasma_aparece_como_no_mapa():
+    assert 'AlfaDevagar = "128"' in CODIGO_DO_FANTASMA
+    assert 'AlfaCorrendo = "176"' in CODIGO_DO_FANTASMA
+    assert "VelocidadeDevagar = 160f" in CODIGO_DO_FANTASMA
+
+
+def test_o_mapa_cria_a_respiracao_antes_de_o_plugin_assumir():
+    # Com o time desligado no script, ele não cria a respiração. Por isso liga antes da rodada e só desliga depois do início.
+    assert '"invisTeamModifyTTrue"' in CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("AoPrepararRodada"):]
+    assert "AssumirInvisibilidade" in CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void ComecarRodadaDoFantasma"):]
+    assert '"invisTeamModifyTFalse"' in CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void AssumirInvisibilidade"):]
+
+
+def test_sem_o_script_do_mapa_o_plugin_nao_mexe_na_transparencia():
+    # Se o autor do mapa renomear o script, os dois não podem ficar disputando e fazer o fantasma piscar.
+    assert "if (!invisibilidadeNoPlugin) return;" in CODIGO_DO_FANTASMA
+    assert "invisibilidadeNoPlugin = ChamarScriptDoMapa(" in CODIGO_DO_FANTASMA
+
+
+def test_fantasma_com_bhop():
+    assert valor("sv_autobunnyhopping", "fantasma") == "1"
+    assert valor("sv_staminajumpcost", "fantasma") == "0"
+    assert valor("sv_staminalandcost", "fantasma") == "0"
+
+
+def test_ao_ligar_o_servidor_nao_procura_o_script_antes_do_mapa():
+    # Antes de o mapa abrir, procurar uma entidade derruba o plugin inteiro, e o servidor fica sem regra nenhuma.
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void LigarFantasma"):CODIGO_DO_FANTASMA.index("bool ChamarScriptDoMapa")]
+    assert 'if (hotReload) ChamarScriptDoMapa("invisTeamModifyTTrue");' in trecho

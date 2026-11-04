@@ -9,12 +9,12 @@ using CounterStrikeSharp.API.Modules.Utils;
 namespace MagnatasDiversao;
 
 /// <summary>
-/// O modo Fantasma. A invisibilidade, os áudios e a bomba são do script do mapa gm_laboratory, e as 13 rodadas
-/// com a troca de lados são do próprio jogo. Aqui fica o que nenhum dos dois faz.
+/// O modo Fantasma. A respiração e os áudios são do script do mapa gm_laboratory, e as 13 rodadas com a troca de
+/// lados são do próprio jogo. Aqui fica o que nenhum dos dois faz, e a transparência, que o dono quis diferente da do mapa.
 /// </summary>
 public partial class ModoDeDiversao
 {
-    private const float EsperaParaSortearOKit = 0.2f;
+    private const float EsperaDepoisDeComecarARodada = 0.2f;
     private const int InicioDeSom = 208;
     private const float RepassarCorte = 0.1f;
     private const int CopiasDaRespiracao = 3;
@@ -24,6 +24,13 @@ public partial class ModoDeDiversao
     private const string SomDaRespiracao = "CrossFire_ghost_Breath01";
     private const ushort NumeroDaM4Silenciada = 60;
     private const ushort NumeroDaUsp = 61;
+    private const float VelocidadeDoShift = 140f;
+    private const float VelocidadeDevagar = 160f;
+    private const float IntervaloDaInvisibilidade = 0.05f;
+    private const string AlfaInvisivel = "0";
+    private const string AlfaDevagar = "128";
+    private const string AlfaCorrendo = "176";
+    private const string AlfaDaArmaAparecendo = "128";
     private static readonly string[] GranadasDoCt = { "weapon_smokegrenade", "weapon_flashbang", "weapon_hegrenade" };
 
     // CrossFire_ghost_Breath01, 02 e 03, tocados pelo script do mapa. Se o autor do mapa renomear os sons, a respiração volta a ficar presa ao corpo.
@@ -34,11 +41,56 @@ public partial class ModoDeDiversao
     private DateTime inicioDaPartida = DateTime.UtcNow;
     private int respiracoesVistas, respiracoesBloqueadas, sonsCortados;
     private string erroDoSom = "nenhum";
+    private bool invisibilidadeNoPlugin;
 
-    private void LigarFantasma()
+    private void LigarFantasma(bool hotReload)
     {
         AddTimer(IntervaloDaRespiracao, TocarCopiasDaRespiracao, TimerFlags.REPEAT);
         HookUserMessage(InicioDeSom, AoComecarSom, HookMode.Pre);
+        AddTimer(IntervaloDaInvisibilidade, AjustarInvisibilidade, TimerFlags.REPEAT);
+        // Recarregado no meio da partida, o plugin só assume de novo na próxima rodada.
+        // Ao ligar o servidor o mapa ainda não abriu, e procurar uma entidade nessa hora derrubaria o plugin.
+        if (hotReload) ChamarScriptDoMapa("invisTeamModifyTTrue");
+    }
+
+    private static bool ChamarScriptDoMapa(string entrada)
+    {
+        var achou = false;
+        foreach (var script in Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("point_script"))
+        {
+            script.AcceptInput("RunScriptInput", null, null, entrada);
+            achou = true;
+        }
+        return achou;
+    }
+
+    /// <summary>Só depois do início da rodada: com o time desligado no script, ele não criaria a respiração.</summary>
+    private void AssumirInvisibilidade()
+    {
+        invisibilidadeNoPlugin = ChamarScriptDoMapa("invisTeamModifyTFalse");
+    }
+
+    /// <summary>
+    /// O script do mapa deixa quem anda no shift 50% visível e, enquanto controla a transparência, qualquer outro
+    /// ajuste pisca. Por isso o plugin assume a tabela dele, com o shift e o ar invisíveis, a pedido do dono.
+    /// </summary>
+    private void AjustarInvisibilidade()
+    {
+        if (!invisibilidadeNoPlugin) return;
+        foreach (var fantasma in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }))
+        {
+            var corpo = fantasma.PlayerPawn.Value;
+            if (corpo == null) continue;
+            var noAr = (corpo.Flags & (uint)PlayerFlags.FL_ONGROUND) == 0;
+            var velocidade = corpo.AbsVelocity.Length();
+            var alfa = noAr || velocidade <= VelocidadeDoShift ? AlfaInvisivel : velocidade <= VelocidadeDevagar ? AlfaDevagar : AlfaCorrendo;
+            var alfaDaArma = noAr || velocidade <= VelocidadeDevagar ? AlfaInvisivel : AlfaDaArmaAparecendo;
+
+            corpo.AcceptInput("alpha", null, null, alfa);
+            var armas = corpo.WeaponServices?.MyWeapons;
+            if (armas == null) continue;
+            foreach (var item in armas) item.Value?.AcceptInput("alpha", null, null, alfaDaArma);
+        }
     }
 
     /// <summary>Só o som do mapa não chega longe o bastante para localizar o fantasma pelo fone.</summary>
@@ -130,6 +182,8 @@ public partial class ModoDeDiversao
             foreach (var som in sons) PararSom(som);
         }
         tocando.Clear();
+        invisibilidadeNoPlugin = false;
+        ChamarScriptDoMapa("invisTeamModifyTTrue");
         return HookResult.Continue;
     }
 
@@ -142,8 +196,12 @@ public partial class ModoDeDiversao
             ZerarContagem();
             inicioDaPartida = DateTime.UtcNow;
         }
-        // Espera todos nascerem, para o sorteio não deixar ninguém de fora.
-        AddTimer(EsperaParaSortearOKit, SortearKitDeDefuse);
+        // Espera todos nascerem, para o sorteio não deixar ninguém de fora, e o script criar a respiração da rodada.
+        AddTimer(EsperaDepoisDeComecarARodada, () =>
+        {
+            SortearKitDeDefuse();
+            AssumirInvisibilidade();
+        });
     }
 
     /// <summary>A configuração já não entrega arma ao fantasma. Isto cobre o que vem do chão, como a arma largada por um CT.</summary>
@@ -282,9 +340,9 @@ public partial class ModoDeDiversao
             // O nome interno da M4 silenciada e da USP é igual ao da M4A4 e da P2000. Só o número do item separa.
             var armas = corpo?.WeaponServices?.MyWeapons.Select(item => $"{item.Value?.DesignerName ?? "?"}:{item.Value?.AttributeManager.Item.ItemDefinitionIndex}") ?? Enumerable.Empty<string>();
             var kit = corpo?.ItemServices != null && new CCSPlayer_ItemServices(corpo.ItemServices.Handle).HasDefuser;
-            comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} kit={kit} armas={string.Join(",", armas)}");
+            comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} kit={kit} velocidade={corpo?.AbsVelocity.Length():0} alfa={corpo?.Render.A} armas={string.Join(",", armas)}");
         }
         var (ct, tr) = RodadasVencidas();
-        comando.ReplyToCommand($"rodadas={RegrasDoJogo()?.TotalRoundsPlayed} ct={ct} tr={tr} respiracoes={respiracoesVistas} bloqueadas={respiracoesBloqueadas} cortadas={sonsCortados} erro={erroDoSom}");
+        comando.ReplyToCommand($"plugin_na_transparencia={invisibilidadeNoPlugin} rodadas={RegrasDoJogo()?.TotalRoundsPlayed} ct={ct} tr={tr} respiracoes={respiracoesVistas} bloqueadas={respiracoesBloqueadas} cortadas={sonsCortados} erro={erroDoSom}");
     }
 }

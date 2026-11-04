@@ -124,7 +124,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         }
         else if (Config.Regra == "fantasma")
         {
-            LigarFantasma();
+            LigarFantasma(hotReload);
         }
     }
 
@@ -312,6 +312,8 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         var quem = evento.Attacker;
         var alvo = evento.Userid;
         if (quem == null || alvo == null || quem == alvo) return HookResult.Continue;
+        // A explosão da bomba não é abate de ninguém.
+        if (evento.Weapon.Contains("c4")) return HookResult.Continue;
 
         if (Config.Regra != "cada_um" && quem.Team == alvo.Team) return HookResult.Continue;
 

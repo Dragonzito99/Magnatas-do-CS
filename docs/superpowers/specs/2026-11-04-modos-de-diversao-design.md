@@ -47,6 +47,7 @@ Renascimento espalhado e sem compra de outras armas, como o atual. Os mapas muda
 - A cada rodada, um CT sorteado recebe o kit de defuse.
 - Morreu, a respiração para na hora. O dono testou e confirmou.
 - O volume da respiração ficou bom com os bots, e será conferido de novo com pessoas.
+- Depois de jogar, o dono pediu e aprovou: andando no shift, o fantasma fica 100% invisível. No ar também, com o bhop automático ligado, o que vale para os dois times porque o jogo não separa.
 
 ## O que os testes já provaram
 
@@ -60,6 +61,12 @@ Estes testes usaram plugins descartáveis, que não fazem parte do projeto. O c�
   - bloquear (`HookResult.Stop`) a respiração que venha de um corpo morto ou da entidade 0.
 - **Volume:** além do som do mapa, 3 cópias de `CrossFire_ghost_Breath01` emitidas do corpo a cada 2,5 segundos em cada fantasma vivo. Elas também são cortadas na morte.
 - **Limpeza dos mortos:** limpar a lista de mortos no início de cada rodada, porque o evento de nascer nem sempre traz o corpo de um jogador humano.
+- **Na construção do modo, também ficou provado:**
+  - A configuração entrega a P2000 no lugar da USP, e o nome interno das duas é igual. O plugin confere o número do item (USP 61, M4 silenciada 60).
+  - Quem sobrevive não recebe de volta a granada usada, e o plugin completa as três.
+  - `RenderMode` não esconde o corpo. A transparência passa ao plugin pela entrada `invisTeamModifyTFalse`, sempre depois de o script criar a respiração da rodada.
+  - Na morte pela bomba, o jogo informa `planted_c4` sem autor: o abate não sobe no placar nem no XP. Quem plantou só ganha os 2 pontos normais do CS.
+  - Entregue como item, o kit de defuse demora a chegar e em uma rodada de 13 não chegou. Ele é marcado direto no jogador.
 - **O modo mata-mata do CS2 (`game_type 1`, `game_mode 2`) ignora `mp_*_default_primary`.** Só ele espalha quem renasce. Por isso a arma principal vem do plugin.
 - **O modo personalizado (`game_type 3`, `game_mode 0`) entrega a arma principal e renasce na base.** Com `mp_timelimit 0` e `mp_maxrounds 0` juntos, ele congela todo mundo como partida encerrada. Com `mp_maxrounds 1`, `mp_timelimit 0`, `mp_roundtime` definido e `mp_match_end_restart 1`, a partida termina e recomeça sozinha.
 - **Fim de partida no modo mata-mata** deixa todo mundo sem time e nada recomeça. Por isso o plugin atual reinicia com `mp_restartgame` antes.
@@ -115,7 +122,7 @@ Cada etapa termina com o dono testando no jogo.
 
 - **Mapas da Oficina podem mudar ou sumir.** O autor pode atualizar ou apagar o mapa, e o servidor baixa a versão nova sozinho. O `gm_laboratory` é o mais sensível, porque o modo depende do script dele e dos hashes dos sons. Se os hashes mudarem, a respiração volta a ficar presa ao corpo.
 - **Limitações que o autor do `gm_laboratory` avisa.** Com vários fantasmas por perto, toca no máximo uma respiração por vez. O fantasma pode aparecer um instante ao aterrissar de um pulo. As mãos do próprio fantasma continuam visíveis para ele.
-- **Fantasma testado só com bots no papel de fantasma.** Falta testar uma pessoa como fantasma e várias pessoas ao mesmo tempo.
+- **Fantasma ainda sem várias pessoas ao mesmo tempo.** O dono jogou uma partida inteira dos dois lados com bots, com XP no site. Faltam várias pessoas juntas, o volume da respiração com elas e o equilíbrio com o shift e o bhop invisíveis.
 - **Mapas ainda não jogados.** O `zm_biochemical_hotel` e o Transport Ship só foram carregados. Podem trazer regras ou scripts próprios que atrapalhem os modos, e isso só aparece ao jogar.
 - **Direito de uso.** Os mapas recriam conteúdo do CrossFire, e o `gm_laboratory` traz os áudios originais. Isso entra na conversa com o advogado, antes de abrir para fora.
 - **Máquina.** São 6 servidores de Diversão mais o de partidas. Sete CS2 vazios já somam cerca de 8 GB. Sugiro partir de 8 núcleos dedicados e 32 GB, e confirmar medindo com o servidor cheio. A máquina ainda não foi contratada.
