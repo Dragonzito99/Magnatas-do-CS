@@ -8,19 +8,8 @@ INICIAR = (RAIZ / "scripts" / "iniciar_diversao.sh").read_text(encoding="utf-8")
 INSTALADOR = (RAIZ / "scripts" / "instalar_cs2.sh").read_text(encoding="utf-8")
 COMPILAR = (RAIZ / "scripts" / "compilar_plugin.sh").read_text(encoding="utf-8")
 CODIGO_DO_PLUGIN = (RAIZ / "plugins" / "MagnatasDiversao" / "MagnatasDiversao.cs").read_text(encoding="utf-8")
-SERVIDORES = ["ak-desert", "pistola", "awp"]
-
-
-def valor(comando, servidor):
-    # A configuração do servidor vem depois da base, então a última linha é a que vale.
-    achado = None
-    for arquivo in ["cada_um_por_si.cfg", f"{servidor}.cfg"]:
-        for linha in (CONFIGS / arquivo).read_text(encoding="utf-8").splitlines():
-            partes = linha.split()
-            if partes and partes[0] == comando:
-                achado = partes[1]
-    assert achado is not None, f"{comando} não está na configuração de {servidor}"
-    return achado
+CADA_UM_POR_SI = ["ak-desert", "pistola", "awp"]
+SERVIDORES = [*CADA_UM_POR_SI, "equipe"]
 
 
 def conf(servidor):
@@ -32,12 +21,28 @@ def conf(servidor):
     return campos
 
 
-@pytest.mark.parametrize("servidor", SERVIDORES)
+def linhas_de(comando, servidor):
+    # A configuração do servidor vem depois da base, então a última linha é a que vale.
+    achadas = []
+    for arquivo in [conf(servidor)["BASE"], f"{servidor}.cfg"]:
+        for linha in (CONFIGS / arquivo).read_text(encoding="utf-8").splitlines():
+            partes = linha.split(maxsplit=1)
+            if partes and partes[0] == comando:
+                achadas.append(partes[1] if len(partes) > 1 else "")
+    assert achadas, f"{comando} não está na configuração de {servidor}"
+    return achadas
+
+
+def valor(comando, servidor):
+    return linhas_de(comando, servidor)[-1]
+
+
+@pytest.mark.parametrize("servidor", CADA_UM_POR_SI)
 def test_cada_um_por_si(servidor):
     assert valor("mp_teammates_are_enemies", servidor) == "1"
 
 
-@pytest.mark.parametrize("servidor", SERVIDORES)
+@pytest.mark.parametrize("servidor", CADA_UM_POR_SI)
 def test_renasce_em_outro_lugar_do_mapa(servidor):
     assert valor("mp_randomspawn", servidor) == "1"
     assert valor("mp_respawn_on_death_ct", servidor) == "1"
@@ -51,14 +56,14 @@ def test_ninguem_pega_arma_do_chao(servidor):
     assert valor("mp_weapons_allow_map_placed", servidor) == "0"
 
 
-@pytest.mark.parametrize("servidor", SERVIDORES)
+@pytest.mark.parametrize("servidor", CADA_UM_POR_SI)
 def test_sem_os_extras_do_modo_mata_mata(servidor):
     assert valor("mp_dm_bonus_length_max", servidor) == "0"
     assert int(valor("mp_dm_healthshot_killcount", servidor)) >= 1000
     assert valor("mp_weapons_allow_zeus", servidor) == "0"
 
 
-@pytest.mark.parametrize("servidor", SERVIDORES)
+@pytest.mark.parametrize("servidor", CADA_UM_POR_SI)
 def test_a_partida_nunca_acaba_pelo_tempo_do_jogo(servidor):
     # Neste modo, quem chega ao fim da partida fica sem time, e o jogo não recomeça.
     assert valor("mp_timelimit", servidor) == "0"
@@ -80,7 +85,70 @@ def test_cada_servidor_tem_nome_proprio(servidor):
 
 def test_portas_diferentes():
     portas = [conf(servidor)["PORTA"] for servidor in SERVIDORES]
-    assert portas == ["27016", "27017", "27018"]
+    assert portas == ["27016", "27017", "27018", "27019"]
+
+
+@pytest.mark.parametrize("servidor", CADA_UM_POR_SI)
+def test_cada_um_por_si_usa_o_modo_mata_mata_para_espalhar_quem_renasce(servidor):
+    # Nos outros modos do jogo, o renascimento espalhado não vale e cada time volta para a própria base.
+    campos = conf(servidor)
+    assert campos["GAME_TYPE"] == "1"
+    assert campos["GAME_MODE"] == "2"
+    assert campos["BASE"] == "cada_um_por_si.cfg"
+    assert campos["REGRAS_DO_JOGO"] == "gamemode_deathmatch_server.cfg"
+    assert campos["REGRA"] == "cada_um"
+
+
+def test_equipe_usa_o_modo_personalizado_e_o_mapa_da_oficina():
+    # O modo personalizado entrega a arma principal e renasce na base.
+    campos = conf("equipe")
+    assert campos["GAME_TYPE"] == "3"
+    assert campos["GAME_MODE"] == "0"
+    assert campos["BASE"] == "equipe_base.cfg"
+    assert campos["REGRAS_DO_JOGO"] == "gamemode_custom_server.cfg"
+    assert campos["REGRA"] == "equipe"
+    assert campos["OFICINA"] == "3122345065"
+    assert campos["ARMA_PRINCIPAL"] == ""
+    assert campos["VAGAS"] == "16"
+
+
+def test_equipe_tem_times_de_verdade_e_renasce_na_base():
+    assert valor("mp_teammates_are_enemies", "equipe") == "0"
+    assert valor("mp_friendlyfire", "equipe") == "0"
+    assert valor("mp_randomspawn", "equipe") == "0"
+    assert valor("mp_respawn_on_death_ct", "equipe") == "1"
+    assert valor("mp_respawn_on_death_t", "equipe") == "1"
+
+
+def test_equipe_com_times_equilibrados():
+    assert valor("mp_autoteambalance", "equipe") == "1"
+    assert valor("mp_limitteams", "equipe") == "1"
+
+
+def test_equipe_com_m4_ak_pistola_padrao_e_kit_de_granadas():
+    assert valor("mp_ct_default_primary", "equipe") == "weapon_m4a1"
+    assert valor("mp_t_default_primary", "equipe") == "weapon_ak47"
+    assert valor("mp_ct_default_secondary", "equipe") == "weapon_hkp2000"
+    assert valor("mp_t_default_secondary", "equipe") == "weapon_glock"
+    kit = '"weapon_smokegrenade weapon_flashbang weapon_hegrenade"'
+    assert valor("mp_ct_default_grenades", "equipe") == kit
+    assert valor("mp_t_default_grenades", "equipe") == kit
+
+
+def test_equipe_sem_compra_e_sem_bomba():
+    assert valor("sv_buy_status_override", "equipe") == "3"
+    assert valor("mp_buy_during_immunity", "equipe") == "0"
+    assert valor("mp_give_player_c4", "equipe") == "0"
+
+
+def test_equipe_quem_encerra_a_partida_e_o_plugin():
+    # O tempo do jogo fica um minuto acima dos 10 minutos do plugin, para quem encerra ser ele.
+    assert valor("mp_ignore_round_win_conditions", "equipe") == "1"
+    assert valor("mp_roundtime", "equipe") == "11"
+    assert valor("mp_roundtime_defuse", "equipe") == "0"
+    assert valor("mp_maxrounds", "equipe") == "1"
+    assert valor("mp_timelimit", "equipe") == "0"
+    assert valor("mp_match_end_restart", "equipe") == "1"
 
 
 def test_ak_e_desert_na_dust_2():
@@ -203,23 +271,36 @@ def test_le_porta_mapa_e_vagas_da_configuracao():
     assert '+map "$MAPA"' in INICIAR
 
 
-def test_usa_o_modo_mata_mata_para_espalhar_quem_renasce():
-    # Nos outros modos do jogo, o renascimento espalhado não vale e cada time volta para a própria base.
-    assert "+game_type 1 +game_mode 2" in INICIAR
+def test_o_modo_do_jogo_vem_da_configuracao():
+    assert '+game_type "$GAME_TYPE" +game_mode "$GAME_MODE"' in INICIAR
+
+
+def test_abre_o_mapa_da_oficina_depois_do_mapa_inicial():
+    # Só com host_workshop_map, o servidor liga e fica parado, sem mapa.
+    assert '+map "$MAPA"' in INICIAR
+    assert 'OFICINA:-' in INICIAR
+    assert "+host_workshop_map" in INICIAR
 
 
 def test_a_configuracao_vale_depois_que_o_mapa_carrega():
     # O jogo aplica as regras do modo ao carregar o mapa, por cima do que veio antes.
-    assert "gamemode_deathmatch_server.cfg" in INICIAR
+    assert '"$PASTA/csgo/cfg/$REGRAS_DO_JOGO"' in INICIAR
 
 
 def test_junta_a_base_com_a_configuracao_do_servidor_nessa_ordem():
-    assert 'cat "$CONFIGS/cada_um_por_si.cfg" "$CONFIGS/$NOME.cfg"' in INICIAR
+    assert 'cat "$CONFIGS/$BASE" "$CONFIGS/$NOME.cfg"' in INICIAR
+
+
+def test_mapas_da_oficina_baixam_uma_vez_so():
+    assert 'OFICINA_COMPARTILHADA=$CASA/diversao/oficina' in INICIAR
+    assert 'ln -sfn "$OFICINA_COMPARTILHADA" "$PASTA/bin/linuxsteamrt64/steamapps"' in INICIAR
 
 
 def test_grava_a_arma_para_o_plugin():
     assert "MagnatasDiversao.json" in INICIAR
     assert "$ARMA_PRINCIPAL" in INICIAR
+    assert "$REGRA" in INICIAR
+    assert '"Regra"' in INICIAR
 
 
 def test_nao_grava_a_partida():
