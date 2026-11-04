@@ -1,6 +1,6 @@
 import type { Usuario } from '@/bd/esquema';
 
-const SO_EQUIPE = ['/equipe'];
+const SO_EQUIPE = ['/equipe', '/olho-de-aguia'];
 
 /** Devolve para onde a pessoa deve ir, ou null se ela pode ficar nesse caminho. */
 export function destinoPara(usuario: Pick<Usuario, 'estado' | 'papel'> | null, caminho: string): string | null {

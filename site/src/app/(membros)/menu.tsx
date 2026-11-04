@@ -48,11 +48,10 @@ const CAMINHOS_DOS_ICONES: Record<string, React.ReactNode> = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </>
   ),
-  'equipe/casos': (
+  'olho-de-aguia': (
     <>
-      <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />
-      <path d="M12 8v4" />
-      <path d="M12 16h.01" />
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+      <circle cx="12" cy="12" r="3" />
     </>
   ),
 };
@@ -67,7 +66,7 @@ export function Menu({ mostrarEquipe, casos }: { mostrarEquipe: boolean; casos: 
     ...(mostrarEquipe
       ? [
           { id: 'equipe', nome: 'Equipe', exato: true },
-          { id: 'equipe/casos', nome: 'Casos', contador: casos },
+          { id: 'olho-de-aguia', nome: 'Olho de Águia', contador: casos },
         ]
       : []),
   ];

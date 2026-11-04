@@ -265,3 +265,7 @@ test('motivoDaProposta junta o nome da partida e a conclusão', () => {
   expect(motivoDaProposta({ tipo: 'mix', numero: 7 }, 'Mira na parede')).toBe('Mix #7: Mira na parede');
   expect(motivoDaProposta({ tipo: 'desafio', numero: 5 }, '  Sabia onde eu estava  ')).toBe('Desafio #5: Sabia onde eu estava');
 });
+
+test('motivoDaProposta sem conclusão é recusado, porque o nome da partida sozinho não explica nada', () => {
+  expect(() => motivoDaProposta({ tipo: 'mix', numero: 7 }, '   ')).toThrow(ConclusaoInvalida);
+});

@@ -1,5 +1,4 @@
 import { and, asc, count, eq, gte, inArray, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, chamados, denuncias, partidaJogadores, partidas, usuarios, type Chamado, type Denuncia, type Partida, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, type Transacao } from './disponibilidade';
@@ -154,70 +153,6 @@ export async function atenderChamado(bd: Bd, gm: Pick<Usuario, 'id'>, chamadoId:
     await registrarAuditoria(tx, { atorId: gm.id, acao: 'atender_chamado', detalhes: { chamadoId, partidaId: chamado.partidaId } });
     return atendido;
   });
-}
-
-export async function analisarDenuncia(bd: Bd, gm: Pick<Usuario, 'id'>, denunciaId: string, conclusao: string): Promise<void> {
-  const texto = conclusao.trim();
-  await bd.transaction(async (tx) => {
-    await exigirPermissao(tx, gm, 'moderar');
-    if (!texto || texto.length > MAXIMO_DO_TEXTO) throw new ConclusaoInvalida();
-    const [denuncia] = await tx.select().from(denuncias).where(eq(denuncias.id, denunciaId));
-    if (!denuncia) throw new DenunciaIndisponivel();
-    if (denuncia.denuncianteId === gm.id || denuncia.acusadoId === gm.id) throw new SemPermissao();
-    const [encerrada] = await tx
-      .update(denuncias)
-      .set({ estado: 'encerrada', analistaId: gm.id, conclusao: texto })
-      .where(and(eq(denuncias.id, denunciaId), ne(denuncias.estado, 'encerrada')))
-      .returning();
-    if (!encerrada) throw new DenunciaIndisponivel();
-    await registrarAuditoria(tx, {
-      atorId: gm.id,
-      acao: 'analisar_denuncia',
-      alvoId: denuncia.acusadoId ?? undefined,
-      detalhes: { denunciaId, conclusao: texto },
-    });
-  });
-}
-
-export async function listarCasos(bd: Bd, leitor: Pick<Usuario, 'id'>) {
-  await exigirPermissao(bd, leitor, 'moderar');
-  const denunciante = alias(usuarios, 'denunciante');
-  const acusado = alias(usuarios, 'acusado');
-
-  const listaDeChamados = await bd
-    .select({
-      id: chamados.id,
-      criadoEm: chamados.criadoEm,
-      partidaId: partidas.id,
-      partidaNumero: partidas.numero,
-      chamadoPorApelido: usuarios.apelido,
-    })
-    .from(chamados)
-    .innerJoin(partidas, eq(chamados.partidaId, partidas.id))
-    .innerJoin(usuarios, eq(chamados.chamadoPor, usuarios.id))
-    .where(eq(chamados.estado, 'aberto'))
-    .orderBy(asc(chamados.criadoEm));
-
-  const listaDeDenuncias = await bd
-    .select({
-      id: denuncias.id,
-      motivo: denuncias.motivo,
-      criadoEm: denuncias.criadoEm,
-      partidaId: partidas.id,
-      partidaNumero: partidas.numero,
-      denuncianteId: denuncias.denuncianteId,
-      denunciantePorApelido: denunciante.apelido,
-      acusadoId: denuncias.acusadoId,
-      acusadoApelido: acusado.apelido,
-    })
-    .from(denuncias)
-    .innerJoin(partidas, eq(denuncias.partidaId, partidas.id))
-    .innerJoin(denunciante, eq(denuncias.denuncianteId, denunciante.id))
-    .leftJoin(acusado, eq(denuncias.acusadoId, acusado.id))
-    .where(ne(denuncias.estado, 'encerrada'))
-    .orderBy(asc(denuncias.criadoEm));
-
-  return { chamados: listaDeChamados, denuncias: listaDeDenuncias };
 }
 
 /** Quando a partida acaba sem ninguém atender, a reclamação vira denúncia em vez de sumir. */

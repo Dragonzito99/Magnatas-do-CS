@@ -1,4 +1,11 @@
 import type { Partida } from '@/bd/esquema';
+import type { SituacaoDaGravacao } from './ficha';
+
+export const NOME_DA_GRAVACAO: Record<Exclude<SituacaoDaGravacao, 'disponivel'>, string> = {
+  aguardando: 'Gravação chegando',
+  sem: 'Sem gravação',
+  apagada: 'Gravação apagada',
+};
 
 export function nomeDaPartida(partida: Pick<Partida, 'tipo' | 'numero'>): string {
   return `${partida.tipo === 'mix' ? 'Mix' : 'Desafio'} #${partida.numero}`;

@@ -1078,6 +1078,239 @@ textarea {
   padding: 0 20px 16px;
 }
 
+/* Olho de Águia */
+.titulo-com-icone {
+  justify-content: flex-start;
+  padding: 11px 15px;
+  border-radius: 14px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.titulo-com-icone .icone {
+  width: 24px;
+  height: 24px;
+  color: var(--ouro);
+}
+
+.titulo-com-icone h1 {
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.chamado-agora {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(245, 179, 1, 0.17), rgba(245, 179, 1, 0.04));
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.55);
+}
+
+.chamado-agora strong {
+  margin-right: 8px;
+  color: var(--ouro);
+  font-size: 11px;
+  letter-spacing: 0.07em;
+}
+
+.grade-de-casos {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.item-de-caso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--linha);
+  text-decoration: none;
+}
+
+.item-de-caso:hover {
+  background: var(--roxo-fraco);
+}
+
+.item-de-caso[aria-current='true'] {
+  background: linear-gradient(90deg, rgba(245, 179, 1, 0.15), transparent);
+  box-shadow: inset 3px 0 0 var(--ouro);
+}
+
+.item-de-caso .avatar {
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+}
+
+.item-de-caso-texto {
+  min-width: 0;
+}
+
+.item-de-caso-texto b {
+  display: block;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-de-caso-texto small {
+  display: block;
+  color: var(--tinta-3);
+  font-size: 11px;
+}
+
+.item-de-caso em {
+  margin-left: auto;
+  color: var(--ouro);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.caso-aberto {
+  display: grid;
+  gap: 11px;
+  padding: 15px;
+}
+
+.caso-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.caso-topo .avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.caso-topo > div {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.caso-topo b {
+  display: block;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caso-topo small {
+  color: var(--tinta-3);
+  font-size: 11px;
+}
+
+.numeros.numeros-do-caso {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.numeros.numeros-do-caso > div {
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--painel-2);
+}
+
+.numeros.numeros-do-caso b {
+  font-size: 16px;
+}
+
+.numeros.numeros-do-caso small {
+  font-size: 10px;
+}
+
+.lista-de-denuncias {
+  display: grid;
+  gap: 8px;
+}
+
+.lista-de-denuncias blockquote {
+  padding: 8px 12px;
+  border-left: 2px solid var(--ouro);
+  border-radius: 0 9px 9px 0;
+  background: var(--painel-2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.lista-de-denuncias small {
+  display: block;
+  color: var(--tinta-3);
+  font-size: 10px;
+}
+
+.bloco-da-gravacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.32), rgba(245, 179, 1, 0.1));
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+}
+
+.bloco-da-gravacao b {
+  display: block;
+}
+
+.bloco-da-gravacao small {
+  color: #cbbfe0;
+  font-size: 11px;
+}
+
+.assistir-no-cs2 {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.passos-do-cs2 {
+  flex-basis: 100%;
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 10px 12px 10px 30px;
+  border-radius: 9px;
+  background: var(--painel-2);
+  font-size: 12px;
+}
+
+.passos-do-cs2 .caminho {
+  overflow-wrap: anywhere;
+}
+
+.conclusao-do-caso {
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 860px) {
+  .grade-de-casos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .numeros.numeros-do-caso {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Diversão */
 .modos {
   display: grid;

@@ -34,7 +34,7 @@ function codigoDoErro(erro: unknown): string | null {
 
 function idDe(dados: FormData, campo: string): string {
   const lido = z.uuid().safeParse(dados.get(campo));
-  if (!lido.success) redirect('/equipe/casos');
+  if (!lido.success) redirect('/olho-de-aguia');
   return lido.data;
 }
 

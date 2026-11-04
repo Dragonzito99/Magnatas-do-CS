@@ -5,7 +5,6 @@ import { auditoria, banimentos, chamados, denuncias, partidas, usuarios, type Pa
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import {
   AcusadoInvalido,
-  analisarDenuncia,
   atenderChamado,
   ChamadoIndisponivel,
   chamarEquipe,
@@ -13,14 +12,11 @@ import {
   contarCasos,
   converterChamadosSemResposta,
   denunciar,
-  DenunciaIndisponivel,
   DenunciaRepetida,
-  listarCasos,
   marcarVisto,
   membrosOnline,
   MotivoInvalido,
   NaoJogou,
-  ConclusaoInvalida,
 } from './denuncias';
 import { ContaSemAcesso } from './disponibilidade';
 import { SemPermissao } from './equipe';
@@ -232,60 +228,10 @@ test('dois GMs atendendo: só o primeiro fica', async () => {
   expect(linha.atendidoPor).toBe(a.id);
 });
 
-test('jogador comum não vê casos nem conclui denúncia', async () => {
-  const denuncia = await denunciar(bd, time1[0], { partidaId: partida.id, acusadoId: time2[0].id, motivo: 'x' });
+test('jogador comum não conta casos nem atende chamado', async () => {
   const { chamado } = await chamarEquipe(bd, time1[1], partida.id, AGORA);
-  await expect(listarCasos(bd, time1[0])).rejects.toThrow(SemPermissao);
   await expect(contarCasos(bd, time1[0])).rejects.toThrow(SemPermissao);
-  await expect(analisarDenuncia(bd, time1[0], denuncia.id, 'Nada')).rejects.toThrow(SemPermissao);
   await expect(atenderChamado(bd, time1[0], chamado.id)).rejects.toThrow(SemPermissao);
-});
-
-test('analisar encerra a denúncia, registra quem analisou e grava na auditoria', async () => {
-  const gm = await gmOnline();
-  const denuncia = await denunciar(bd, time1[0], { partidaId: partida.id, acusadoId: time2[0].id, motivo: 'x' });
-  await analisarDenuncia(bd, gm, denuncia.id, '  Sem indício na gravação  ');
-  const [linha] = await bd.select().from(denuncias);
-  expect(linha).toMatchObject({ estado: 'encerrada', analistaId: gm.id, conclusao: 'Sem indício na gravação' });
-  const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'analisar_denuncia'));
-  expect(registro).toMatchObject({ atorId: gm.id, alvoId: time2[0].id });
-  await expect(analisarDenuncia(bd, gm, denuncia.id, 'De novo')).rejects.toThrow(DenunciaIndisponivel);
-});
-
-test('a conclusão é obrigatória', async () => {
-  const gm = await gmOnline();
-  const denuncia = await denunciar(bd, time1[0], { partidaId: partida.id, acusadoId: time2[0].id, motivo: 'x' });
-  await expect(analisarDenuncia(bd, gm, denuncia.id, '  ')).rejects.toThrow(ConclusaoInvalida);
-});
-
-test('quem denunciou ou foi acusado não analisa a própria denúncia', async () => {
-  await bd.update(usuarios).set({ papel: 'gm' }).where(eq(usuarios.id, time1[0].id));
-  await bd.update(usuarios).set({ papel: 'gm' }).where(eq(usuarios.id, time2[0].id));
-  const [denunciante] = await bd.select().from(usuarios).where(eq(usuarios.id, time1[0].id));
-  const [acusado] = await bd.select().from(usuarios).where(eq(usuarios.id, time2[0].id));
-  const denuncia = await denunciar(bd, denunciante, { partidaId: partida.id, acusadoId: acusado.id, motivo: 'x' });
-  await expect(analisarDenuncia(bd, denunciante, denuncia.id, 'Culpado')).rejects.toThrow(SemPermissao);
-  await expect(analisarDenuncia(bd, acusado, denuncia.id, 'Inocente')).rejects.toThrow(SemPermissao);
-});
-
-test('casos trazem chamados abertos e denúncias não encerradas, com os nomes', async () => {
-  const gm = await gmOnline();
-  const denuncia = await denunciar(bd, time1[0], { partidaId: partida.id, acusadoId: time2[0].id, motivo: 'Mira grudada' });
-  const encerrada = await denunciar(bd, time1[1], { partidaId: partida.id, acusadoId: time2[1].id, motivo: 'y' });
-  await analisarDenuncia(bd, gm, encerrada.id, 'Nada');
-  const { chamado } = await chamarEquipe(bd, time1[2], partida.id, AGORA);
-
-  const casos = await listarCasos(bd, gm);
-  expect(casos.chamados.map((c) => c.id)).toEqual([chamado.id]);
-  expect(casos.chamados[0]).toMatchObject({ chamadoPorApelido: time1[2].apelido, partidaNumero: partida.numero, partidaId: partida.id });
-  expect(casos.denuncias.map((d) => d.id)).toEqual([denuncia.id]);
-  expect(casos.denuncias[0]).toMatchObject({
-    denunciantePorApelido: time1[0].apelido,
-    acusadoApelido: time2[0].apelido,
-    acusadoId: time2[0].id,
-    motivo: 'Mira grudada',
-  });
-  expect(await contarCasos(bd, gm)).toBe(2);
 });
 
 test('marcarVisto registra a hora, sem escrever de novo a cada instante', async () => {

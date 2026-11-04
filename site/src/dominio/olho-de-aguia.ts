@@ -174,5 +174,7 @@ export async function chamadosEmAndamento(bd: Bd, leitor: Pick<Usuario, 'id'>) {
 
 /** O banimento não guarda de qual partida veio, então o motivo leva o nome dela para o Adm. */
 export function motivoDaProposta(partida: Pick<Partida, 'tipo' | 'numero'>, conclusao: string): string {
-  return `${nomeDaPartida(partida)}: ${conclusao.trim()}`;
+  const texto = conclusao.trim();
+  if (!texto) throw new ConclusaoInvalida();
+  return `${nomeDaPartida(partida)}: ${texto}`;
 }

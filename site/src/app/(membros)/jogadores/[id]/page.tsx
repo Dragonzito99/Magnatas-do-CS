@@ -4,18 +4,13 @@ import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
-import { fichaDoJogador, type SituacaoDaGravacao } from '@/dominio/ficha';
+import { fichaDoJogador } from '@/dominio/ficha';
 import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
-import { nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
+import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { Avatar } from '../../avatar';
 import { Punicoes } from './punicoes';
 
 const NOME_DA_DENUNCIA = { aberta: 'Aberta', em_analise: 'Em análise', encerrada: 'Encerrada' };
-const NOME_DA_GRAVACAO: Record<Exclude<SituacaoDaGravacao, 'disponivel'>, string> = {
-  aguardando: 'Gravação chegando',
-  sem: 'Sem gravação',
-  apagada: 'Gravação apagada',
-};
 
 const dataCurta = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
