@@ -125,6 +125,8 @@ public partial class ModoDeDiversao
             AddTimer(mutanteDaRodada.SegundosParaRenascer, () => RenascerComoMutante(jogador));
             return;
         }
+        // Antes do sorteio todo mundo é humano, mesmo quem o jogo colocou do outro lado.
+        if (jogador.Team == CsTeam.Terrorist) jogador.SwitchTeam(CsTeam.CounterTerrorist);
         jogador.Respawn();
         if (tempoDeEspalharAcabou) SortearMutantes();
     }

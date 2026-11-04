@@ -959,3 +959,9 @@ def test_mutacao_sem_aquecimento():
     assert valor("mp_warmuptime", "mutacao") == "0"
     assert valor("mp_warmup_online_enabled", "mutacao") == "0"
     assert valor("mp_warmuptime_all_players_connected", "mutacao") == "0"
+
+
+def test_antes_do_sorteio_ninguem_nasce_mutante():
+    # O jogo pode colocar quem entra em TR. Antes do sorteio, todo mundo é humano.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ColocarNaRodada"):]
+    assert trecho.index("SwitchTeam(CsTeam.CounterTerrorist)") < trecho.index("jogador.Respawn()")
