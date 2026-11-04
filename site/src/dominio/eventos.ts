@@ -140,7 +140,7 @@ export async function aplicarEvento(bd: Bd, evento: unknown): Promise<void> {
 }
 
 /** Lê o corpo até o limite, sem guardar na memória o que passar dele. */
-async function lerAte(pedido: Request, limite: number): Promise<string | null> {
+export async function lerAte(pedido: Request, limite: number): Promise<string | null> {
   if (Number(pedido.headers.get('content-length') ?? 0) > limite) return null;
   if (!pedido.body) return '';
   const partes: Uint8Array[] = [];
