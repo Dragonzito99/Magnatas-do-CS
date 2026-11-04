@@ -9,6 +9,7 @@ INSTALADOR = (RAIZ / "scripts" / "instalar_cs2.sh").read_text(encoding="utf-8")
 COMPILAR = (RAIZ / "scripts" / "compilar_plugin.sh").read_text(encoding="utf-8")
 CODIGO_DO_PLUGIN = (RAIZ / "plugins" / "MagnatasDiversao" / "MagnatasDiversao.cs").read_text(encoding="utf-8")
 CODIGO_DO_FANTASMA = (RAIZ / "plugins" / "MagnatasDiversao" / "Fantasma.cs").read_text(encoding="utf-8")
+CODIGO_DA_MUTACAO = (RAIZ / "plugins" / "MagnatasDiversao" / "Mutacao.cs").read_text(encoding="utf-8")
 CADA_UM_POR_SI = ["ak-desert", "pistola", "awp"]
 SERVIDORES = [*CADA_UM_POR_SI, "equipe", "fantasma"]
 
@@ -733,3 +734,63 @@ def test_ao_ligar_o_servidor_nao_procura_o_script_antes_do_mapa():
     # Antes de o mapa abrir, procurar uma entidade derruba o plugin inteiro, e o servidor fica sem regra nenhuma.
     trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void LigarFantasma"):CODIGO_DO_FANTASMA.index("bool ChamarScriptDoMapa")]
     assert 'if (hotReload) ChamarScriptDoMapa("invisTeamModifyTTrue");' in trecho
+
+
+def test_mutacao_so_liga_na_regra_dela():
+    assert 'Config.Regra == "mutacao"' in CODIGO_DO_PLUGIN
+    assert "LigarMutacao()" in CODIGO_DO_PLUGIN
+
+
+def test_os_atributos_do_mutante_ficam_em_um_lugar_so():
+    # Os mutantes de outros tipos entram aqui, sem reescrever o modo.
+    assert "record TipoDeMutante" in CODIGO_DA_MUTACAO
+    assert 'new("Mutante", 2000, 1.1f, 3f' in CODIGO_DA_MUTACAO
+
+
+def test_o_golpe_transforma_sem_causar_dano():
+    assert "RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano)" in CODIGO_DA_MUTACAO
+    assert "HookResult.Handled" in CODIGO_DA_MUTACAO
+
+
+def test_erro_ao_olhar_o_dano_nao_derruba_o_jogo():
+    # Roda a cada dano do servidor. Um erro aqui, numa atualização do jogo, só pode deixar o dano seguir.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("HookResult AoReceberDano"):]
+    assert trecho.index("try") < trecho.index("catch") < trecho.index("return HookResult.Continue;", trecho.index("catch"))
+
+
+def test_humano_que_morre_vira_mutante():
+    # Queda, ou golpe se o gancho quebrar numa atualização do jogo.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDeath"):]
+    assert "SwitchTeam(CsTeam.Terrorist)" in trecho
+    assert "SegundosParaRenascer" in trecho
+    assert ".Respawn()" in trecho
+
+
+def test_dois_golpes_nao_transformam_duas_vezes():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TransformarEmMutante"):]
+    assert "PawnIsAlive: true, Team: CsTeam.CounterTerrorist" in trecho
+    assert trecho.index("Team: CsTeam.CounterTerrorist") < trecho.index("SwitchTeam(CsTeam.Terrorist)")
+
+
+def test_quem_vira_mutante_fica_so_com_a_faca():
+    assert "DeixarSoAFaca(" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
+
+
+def test_mutante_nao_fica_com_arma_do_chao():
+    assert '"mutacao"' in CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("AoPegarItem"):]
+
+
+def test_o_mutante_tem_vida_velocidade_e_cor():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
+    for campo in ['"m_iHealth"', '"m_iMaxHealth"', '"m_clrRender"', "VelocityModifier"]:
+        assert campo in trecho
+
+
+def test_o_mutante_mantem_a_velocidade():
+    assert "ManterVelocidadeDosMutantes, TimerFlags.REPEAT" in CODIGO_DA_MUTACAO
+
+
+def test_todos_voltam_a_ser_humanos_na_rodada_seguinte():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
+    assert "SwitchTeam(CsTeam.CounterTerrorist)" in trecho
+    assert "MaxHealth = VidaDoHumano" in trecho

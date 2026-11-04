@@ -279,7 +279,7 @@ public partial class ModoDeDiversao
     [GameEventHandler]
     public HookResult AoPegarItem(EventItemPickup evento, GameEventInfo informacao)
     {
-        if (Config.Regra != "fantasma") return HookResult.Continue;
+        if (Config.Regra is not ("fantasma" or "mutacao")) return HookResult.Continue;
         var jogador = evento.Userid;
         // O item só entra na lista do jogador depois do evento.
         AddTimer(EsperaAposNascer, () => DeixarSoAFaca(jogador));

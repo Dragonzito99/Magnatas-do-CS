@@ -21,7 +21,7 @@ public class ConfiguracaoDoModo : BasePluginConfig
     [JsonPropertyName("ArmaPrincipal")]
     public string ArmaPrincipal { get; set; } = "";
 
-    /// <summary>cada_um, equipe ou fantasma.</summary>
+    /// <summary>cada_um, equipe, fantasma ou mutacao.</summary>
     [JsonPropertyName("Regra")]
     public string Regra { get; set; } = "cada_um";
 
@@ -99,7 +99,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.2.0";
+    public override string ModuleVersion => "1.3.0";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -125,6 +125,10 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         else if (Config.Regra == "fantasma")
         {
             LigarFantasma(hotReload);
+        }
+        else if (Config.Regra == "mutacao")
+        {
+            LigarMutacao();
         }
     }
 
@@ -341,6 +345,13 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         {
             AddTimer(EsperaAposNascer, () => DeixarSoAFaca(jogador));
             AddTimer(EsperaAposNascer, () => CompletarKitDoCt(jogador));
+        }
+        else if (Config.Regra == "mutacao")
+        {
+            AddTimer(EsperaAposNascer, () =>
+            {
+                if (jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }) AplicarAtributosDoMutante(jogador);
+            });
         }
         return HookResult.Continue;
     }
