@@ -7,6 +7,9 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { AcusadoInvalido, ChamadoIndisponivel, chamarEquipe, denunciar, DenunciaRepetida, MotivoInvalido, NaoJogou } from '@/dominio/denuncias';
 import { ContaSemAcesso } from '@/dominio/disponibilidade';
+import { SemPermissao } from '@/dominio/equipe';
+import { cancelarPartidaPelaEquipe, PartidaIndisponivel } from '@/dominio/varredura';
+import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 
 function codigoDoErro(erro: unknown): string | null {
   if (erro instanceof MotivoInvalido) return 'motivo';
@@ -38,6 +41,19 @@ export async function denunciarJogador(dados: FormData) {
   }
   revalidatePath(`/partidas/${partidaId}`);
   redirect(`/partidas/${partidaId}?aviso=denunciado`);
+}
+
+export async function cancelar(dados: FormData) {
+  const partidaId = idDe(dados, 'partidaId');
+  const ator = await exigirAcesso(`/partidas/${partidaId}`);
+  try {
+    await cancelarPartidaPelaEquipe(obterBd(), controladorDoAmbiente(), ator, partidaId);
+  } catch (erro) {
+    if (erro instanceof SemPermissao) redirect(`/partidas/${partidaId}?erro=cancelar`);
+    if (erro instanceof PartidaIndisponivel) redirect(`/partidas/${partidaId}?erro=terminada`);
+    throw erro;
+  }
+  revalidatePath(`/partidas/${partidaId}`);
 }
 
 export async function chamar(dados: FormData) {

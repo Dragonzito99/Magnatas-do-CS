@@ -1,4 +1,4 @@
-import { bigint, boolean, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 export const papel = pgEnum('papel', ['jogador', 'gm', 'adm']);
 export const estadoUsuario = pgEnum('estado_usuario', ['aguardando_verificacao', 'ativo', 'suspenso', 'banido']);
@@ -104,7 +104,7 @@ export const partidas = pgTable('partidas', {
   ultimoEventoEm: timestamp('ultimo_evento_em', { withTimezone: true }),
   iniciadaEm: timestamp('iniciada_em', { withTimezone: true }),
   encerradaEm: timestamp('encerrada_em', { withTimezone: true }),
-});
+}, (tabela) => [index('partidas_estado_idx').on(tabela.estado)]);
 
 export const partidaJogadores = pgTable(
   'partida_jogadores',
@@ -123,7 +123,7 @@ export const partidaJogadores = pgTable(
     headshotKills: integer('headshot_kills').notNull().default(0),
     rodadas: integer('rodadas').notNull().default(0),
   },
-  (tabela) => [primaryKey({ columns: [tabela.partidaId, tabela.usuarioId] })],
+  (tabela) => [primaryKey({ columns: [tabela.partidaId, tabela.usuarioId] }), index('partida_jogadores_usuario_idx').on(tabela.usuarioId)],
 );
 
 export const salas = pgTable('salas', {

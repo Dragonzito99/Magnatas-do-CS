@@ -5,7 +5,7 @@ import { auditoria, banimentos, chamados, denuncias, gravacoes, partidaJogadores
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { ConclusaoInvalida, denunciar, DenunciaIndisponivel } from './denuncias';
 import { SemPermissao } from './equipe';
-import { chamadosEmAndamento, encerrarCaso, listarCasosDeDenuncia, motivoDaProposta } from './olho-de-aguia';
+import { casoEscolhido, chamadosEmAndamento, encerrarCaso, listarCasosDeDenuncia, motivoDaProposta } from './olho-de-aguia';
 
 let bd: Bd;
 let gm: Usuario;
@@ -259,6 +259,25 @@ test('chamado já atendido não aparece', async () => {
   const aoVivo = await criarPartidaCom([denunciante], { estado: 'ao_vivo', encerradaEm: null, vencedor: null });
   await bd.insert(chamados).values({ partidaId: aoVivo.id, chamadoPor: denunciante.id, estado: 'atendido' });
   expect(await chamadosEmAndamento(bd, gm)).toEqual([]);
+});
+
+test('casoEscolhido abre o caso pedido no endereço', () => {
+  const casos = [{ chave: 'a' }, { chave: 'b' }];
+  expect(casoEscolhido(casos, 'b')).toEqual({ aberto: casos[1], encerrado: false });
+});
+
+test('sem caso pedido, casoEscolhido não troca de caso sozinho: devolve o primeiro para virar endereço fixo', () => {
+  const casos = [{ chave: 'a' }, { chave: 'b' }];
+  expect(casoEscolhido(casos, undefined)).toEqual({ aberto: casos[0], encerrado: false });
+});
+
+test('caso pedido que não existe mais fica sem detalhe, para a conclusão não ir parar em outro caso', () => {
+  const casos = [{ chave: 'b' }];
+  expect(casoEscolhido(casos, 'a')).toEqual({ aberto: null, encerrado: true });
+});
+
+test('sem nenhum caso, casoEscolhido fica vazio', () => {
+  expect(casoEscolhido([], undefined)).toEqual({ aberto: null, encerrado: false });
 });
 
 test('motivoDaProposta junta o nome da partida e a conclusão', () => {

@@ -2,13 +2,15 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
+import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { ESTADOS_ATIVOS_DE_PARTIDA } from '@/dominio/disponibilidade';
 import { dadosDeConexao, detalheDaPartida, type JogadorDaPartida } from '@/dominio/partidas';
 import { nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../../atualizar';
 import { Avatar } from '../../avatar';
-import { chamar, denunciarJogador } from './acoes';
+import { BotaoConfirmar } from '../../botao-confirmar';
+import { cancelar, chamar, denunciarJogador } from './acoes';
 
 const ERROS: Record<string, string> = {
   motivo: 'Escreva o motivo, com até 500 caracteres.',
@@ -17,6 +19,8 @@ const ERROS: Record<string, string> = {
   'nao-jogou': 'Só quem joga a partida pode fazer isso.',
   chamado: 'Esta partida não recebe mais chamados.',
   'sem-acesso': 'Sua conta não pode fazer isso agora.',
+  cancelar: 'Quem joga a partida não pode cancelar. Outra pessoa da equipe precisa fazer isso.',
+  terminada: 'Esta partida já terminou.',
 };
 
 const AVISOS: Record<string, string> = {
@@ -126,6 +130,17 @@ export default async function PaginaDaPartida({
               <button type="submit" className="botao contorno">
                 Chamar a equipe
               </button>
+            </form>
+          )}
+          {ativa && pode(usuario, 'moderar') && !jogaNaPartida && (
+            <form action={cancelar}>
+              <input type="hidden" name="partidaId" value={partida.id} />
+              <BotaoConfirmar
+                mensagem={`Cancelar a ${nomeDaPartida(partida)}? Ela não conta nas estatísticas, e todo mundo fica livre para jogar de novo.`}
+                className="botao contorno"
+              >
+                Cancelar partida
+              </BotaoConfirmar>
             </form>
           )}
         </div>

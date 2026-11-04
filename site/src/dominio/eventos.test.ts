@@ -141,6 +141,7 @@ test('series_end devolve as salas, que podem jogar de novo', async () => {
 });
 
 test('series_end com winner none marca como cancelada', async () => {
+  await aplicarEvento(bd, daPartida(going_live));
   await aplicarEvento(bd, daPartida(series_end_cancelada));
   expect(await atual()).toMatchObject({ estado: 'cancelada', vencedor: null });
 });
@@ -180,14 +181,41 @@ test.each([
   await expect(aplicarEvento(bd, evento)).resolves.toBeUndefined();
 });
 
+const pedidoDeEvento = (token: string, corpo: string) =>
+  new Request('http://site.test/api/servidor/eventos', { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: corpo });
+
 test('a rota de eventos recusa token errado e responde 200 com o certo', async () => {
   const corpo = JSON.stringify(daPartida(going_live));
-  expect((await respostaDeEvento(bd, 'Bearer errado', 'certo', corpo)).status).toBe(401);
+  expect((await respostaDeEvento(bd, pedidoDeEvento('errado', corpo), 'certo')).status).toBe(401);
   expect((await atual()).estado).toBe('carregando');
-  expect((await respostaDeEvento(bd, 'Bearer certo', 'certo', corpo)).status).toBe(200);
+  expect((await respostaDeEvento(bd, pedidoDeEvento('certo', corpo), 'certo')).status).toBe(200);
   expect((await atual()).estado).toBe('ao_vivo');
 });
 
 test('a rota de eventos responde 200 para corpo que não é JSON, para o servidor não repetir o envio', async () => {
-  expect((await respostaDeEvento(bd, 'Bearer certo', 'certo', 'não é json')).status).toBe(200);
+  expect((await respostaDeEvento(bd, pedidoDeEvento('certo', 'não é json'), 'certo')).status).toBe(200);
+});
+
+test('com token errado, a rota nem lê o corpo', async () => {
+  const pedido = pedidoDeEvento('errado', 'qualquer coisa');
+  await respostaDeEvento(bd, pedido, 'certo');
+  expect(pedido.bodyUsed).toBe(false);
+});
+
+test('corpo grande demais é recusado, sem aplicar o evento', async () => {
+  const corpo = JSON.stringify({ ...daPartida(going_live), sobra: 'x'.repeat(1024 * 1024) });
+  expect((await respostaDeEvento(bd, pedidoDeEvento('certo', corpo), 'certo')).status).toBe(413);
+  expect((await atual()).estado).toBe('carregando');
+});
+
+test.each([['carregando'], ['aguardando_servidor']] as const)('cancelamento em %s é ignorado, porque vem de limpar uma sobra do servidor', async (estado) => {
+  await bd.update(partidas).set({ estado }).where(eq(partidas.id, partida.id));
+  await aplicarEvento(bd, daPartida(series_end_cancelada));
+  expect((await atual()).estado).toBe(estado);
+});
+
+test('cancelamento com a partida aguardando jogadores vale', async () => {
+  await bd.update(partidas).set({ estado: 'aguardando_jogadores' }).where(eq(partidas.id, partida.id));
+  await aplicarEvento(bd, daPartida(series_end_cancelada));
+  expect((await atual()).estado).toBe('cancelada');
 });

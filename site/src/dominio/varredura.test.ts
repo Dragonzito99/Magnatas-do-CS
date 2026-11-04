@@ -5,11 +5,12 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
+import { auditoria, banimentos, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
+import { SemPermissao } from './equipe';
 import { fichaDoJogador } from './ficha';
-import { varrer } from './varredura';
+import { cancelarPartidaPelaEquipe, PartidaIndisponivel, varrer } from './varredura';
 
 let bd: Bd;
 let pasta: string;
@@ -77,13 +78,127 @@ test('partida carregando há menos de 2 minutos fica como está', async () => {
   expect((await estadoDe(partida.id)).estado).toBe('carregando');
 });
 
-test('partida aguardando jogadores há mais de 5 minutos é cancelada, encerrada no servidor e libera o servidor', async () => {
-  const { partida, servidor } = await partidaComServidor('aguardando_jogadores', atras(6));
+test('partida aguardando jogadores há mais de 10 minutos é cancelada, encerrada no servidor e libera o servidor', async () => {
+  const { partida, servidor } = await partidaComServidor('aguardando_jogadores', atras(11));
   const controlador = controladorFalso();
   await varrer(bd, controlador, pasta, AGORA);
   expect(await estadoDe(partida.id)).toMatchObject({ estado: 'cancelada', vencedor: null });
   expect((await servidorDe(servidor)).partidaId).toBeNull();
   expect(controlador.chamadas).toContainEqual({ acao: 'encerrarPartida', host: servidor.host });
+});
+
+test('aos 9 minutos aguardando jogadores, a partida ainda espera, porque o tempo inclui preparar e a rodada de faca', async () => {
+  const { partida } = await partidaComServidor('aguardando_jogadores', atras(9));
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect((await estadoDe(partida.id)).estado).toBe('aguardando_jogadores');
+});
+
+test('partida esperando servidor há mais de 1 hora é cancelada, e as pessoas ficam livres', async () => {
+  const [partida] = await bd.insert(partidas).values({ tipo: 'mix', mapa: 'de_mirage', criadoEm: atras(61) }).returning();
+  await bd.insert(partidaJogadores).values({ partidaId: partida.id, usuarioId: jogador.id, time: 1 });
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect(await estadoDe(partida.id)).toMatchObject({ estado: 'cancelada', vencedor: null });
+});
+
+test('partida esperando servidor há menos de 1 hora continua na fila', async () => {
+  const [partida] = await bd.insert(partidas).values({ tipo: 'mix', mapa: 'de_mirage', criadoEm: atras(59) }).returning();
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect((await estadoDe(partida.id)).estado).toBe('aguardando_servidor');
+});
+
+test('partida que fica voltando de carregando conta o tempo desde que foi criada', async () => {
+  const { partida, servidor } = await partidaComServidor('carregando', atras(3), { criadoEm: atras(61) });
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect((await estadoDe(partida.id)).estado).toBe('cancelada');
+  expect((await servidorDe(servidor)).partidaId).toBeNull();
+});
+
+test.each([['suspenso'], ['banido']] as const)('conta %s é expulsa de novo a cada varredura enquanto a partida dura', async (estado) => {
+  const { servidor } = await partidaComServidor('ao_vivo', atras(1), { ultimoEventoEm: atras(1) });
+  await bd.update(usuarios).set({ estado }).where(eq(usuarios.id, jogador.id));
+  const controlador = controladorFalso();
+  await varrer(bd, controlador, pasta, AGORA);
+  await varrer(bd, controlador, pasta, new Date(AGORA.getTime() + 15_000));
+  const expulsoes = controlador.chamadas.filter((chamada) => chamada.acao === 'expulsar');
+  expect(expulsoes).toEqual([
+    { acao: 'expulsar', host: servidor.host, steamid64: jogador.steamid64 },
+    { acao: 'expulsar', host: servidor.host, steamid64: jogador.steamid64 },
+  ]);
+});
+
+test('conta ativa não é expulsa', async () => {
+  await partidaComServidor('ao_vivo', atras(1), { ultimoEventoEm: atras(1) });
+  const controlador = controladorFalso();
+  await varrer(bd, controlador, pasta, AGORA);
+  expect(controlador.chamadas.filter((chamada) => chamada.acao === 'expulsar')).toEqual([]);
+});
+
+test('GM suspenso que não joga a partida também é expulso, porque entra como espectador', async () => {
+  const { servidor } = await partidaComServidor('ao_vivo', atras(1), { ultimoEventoEm: atras(1) });
+  const gm = await criarUsuario(bd, { estado: 'suspenso', papel: 'gm' });
+  const controlador = controladorFalso();
+  await varrer(bd, controlador, pasta, AGORA);
+  expect(controlador.chamadas).toContainEqual({ acao: 'expulsar', host: servidor.host, steamid64: gm.steamid64 });
+});
+
+test('jogador suspenso de partida sem servidor não gera expulsão', async () => {
+  const [partida] = await bd.insert(partidas).values({ tipo: 'mix', mapa: 'de_mirage' }).returning();
+  await bd.insert(partidaJogadores).values({ partidaId: partida.id, usuarioId: jogador.id, time: 1 });
+  await bd.update(usuarios).set({ estado: 'suspenso' }).where(eq(usuarios.id, jogador.id));
+  const controlador = controladorFalso();
+  await varrer(bd, controlador, pasta, AGORA);
+  expect(controlador.chamadas.filter((chamada) => chamada.acao === 'expulsar')).toEqual([]);
+});
+
+test('servidor fora do ar não impede a expulsão no outro', async () => {
+  const primeiro = await partidaComServidor('ao_vivo', atras(1), { ultimoEventoEm: atras(1) });
+  const outro = await criarUsuario(bd, { estado: 'suspenso' });
+  const [segunda] = await bd.insert(partidas).values({ tipo: 'mix', mapa: 'de_nuke', estado: 'ao_vivo', ultimoEventoEm: atras(1) }).returning();
+  const [segundo] = await bd.insert(servidores).values({ nome: 'RJ', host: '10.9.9.9', porta: 27015, partidaId: segunda.id }).returning();
+  await bd.update(partidas).set({ servidorId: segundo.id }).where(eq(partidas.id, segunda.id));
+  await bd.insert(partidaJogadores).values({ partidaId: segunda.id, usuarioId: outro.id, time: 1 });
+  await bd.update(usuarios).set({ estado: 'suspenso' }).where(eq(usuarios.id, jogador.id));
+  const controlador = controladorFalso({ hostsComFalha: [primeiro.servidor.host] });
+  await varrer(bd, controlador, pasta, AGORA);
+  expect(controlador.chamadas).toContainEqual({ acao: 'expulsar', host: '10.9.9.9', steamid64: outro.steamid64 });
+});
+
+test('a equipe cancela uma partida presa, com auditoria, e libera servidor e pessoas', async () => {
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  const { partida, servidor } = await partidaComServidor('carregando', atras(1));
+  const controlador = controladorFalso();
+  await cancelarPartidaPelaEquipe(bd, controlador, gm, partida.id);
+  expect(await estadoDe(partida.id)).toMatchObject({ estado: 'cancelada', vencedor: null });
+  expect((await servidorDe(servidor)).partidaId).toBeNull();
+  expect(controlador.chamadas).toContainEqual({ acao: 'encerrarPartida', host: servidor.host });
+  const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'cancelar_partida'));
+  expect(registro).toMatchObject({ atorId: gm.id });
+});
+
+test('jogador comum não cancela partida', async () => {
+  const { partida } = await partidaComServidor('ao_vivo', atras(1));
+  await expect(cancelarPartidaPelaEquipe(bd, controladorFalso(), jogador, partida.id)).rejects.toBeInstanceOf(SemPermissao);
+  expect((await estadoDe(partida.id)).estado).toBe('ao_vivo');
+});
+
+test('quem joga a partida não pode cancelar', async () => {
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  const { partida } = await partidaComServidor('ao_vivo', atras(1));
+  await bd.insert(partidaJogadores).values({ partidaId: partida.id, usuarioId: gm.id, time: 2 });
+  await expect(cancelarPartidaPelaEquipe(bd, controladorFalso(), gm, partida.id)).rejects.toBeInstanceOf(SemPermissao);
+});
+
+test('partida que já terminou não pode ser cancelada', async () => {
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  const partida = await partidaEncerrada();
+  await expect(cancelarPartidaPelaEquipe(bd, controladorFalso(), gm, partida.id)).rejects.toBeInstanceOf(PartidaIndisponivel);
+});
+
+test('servidor fora do ar não impede a equipe de cancelar', async () => {
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  const { partida, servidor } = await partidaComServidor('ao_vivo', atras(1));
+  await expect(cancelarPartidaPelaEquipe(bd, controladorFalso({ hostsComFalha: [servidor.host] }), gm, partida.id)).resolves.toBeUndefined();
+  expect((await estadoDe(partida.id)).estado).toBe('cancelada');
 });
 
 test('partida ao vivo sem evento há 3 horas é cancelada', async () => {
@@ -105,7 +220,7 @@ test('partida ao vivo que nunca mandou evento conta a partir de quando ficou ao 
 });
 
 test('cancelar por falta de jogadores devolve as salas e não conta em estatística', async () => {
-  const { partida } = await partidaComServidor('aguardando_jogadores', atras(6));
+  const { partida } = await partidaComServidor('aguardando_jogadores', atras(11));
   const [sala] = await bd.insert(salas).values({ nome: 'Sala', liderId: jogador.id, partidaId: partida.id }).returning();
   await varrer(bd, controladorFalso(), pasta, AGORA);
   const [livre] = await bd.select().from(salas).where(eq(salas.id, sala.id));
@@ -201,7 +316,7 @@ test('varrer transforma chamado sem resposta em denúncia', async () => {
 });
 
 test('rodar duas vezes seguidas não muda o resultado', async () => {
-  const { partida, servidor } = await partidaComServidor('aguardando_jogadores', atras(6));
+  const { partida, servidor } = await partidaComServidor('aguardando_jogadores', atras(11));
   const { gravacao } = await gravacaoAntiga(await partidaEncerrada());
   const controlador = controladorFalso();
   await varrer(bd, controlador, pasta, AGORA);
@@ -213,7 +328,7 @@ test('rodar duas vezes seguidas não muda o resultado', async () => {
 });
 
 test('falha em uma etapa não impede as outras', async () => {
-  const { partida, servidor } = await partidaComServidor('aguardando_jogadores', atras(6));
+  const { partida, servidor } = await partidaComServidor('aguardando_jogadores', atras(11));
   const { caminho } = await gravacaoAntiga(await partidaEncerrada());
   const quebrado = controladorFalso({ hostsComFalha: [servidor.host] });
   await expect(varrer(bd, quebrado, pasta, AGORA)).resolves.toBeUndefined();
@@ -223,7 +338,7 @@ test('falha em uma etapa não impede as outras', async () => {
 });
 
 test('sem pasta de gravações configurada, o resto continua', async () => {
-  const { partida } = await partidaComServidor('aguardando_jogadores', atras(6));
+  const { partida } = await partidaComServidor('aguardando_jogadores', atras(11));
   await expect(varrer(bd, controladorFalso(), undefined, AGORA)).resolves.toBeUndefined();
   expect((await estadoDe(partida.id)).estado).toBe('cancelada');
 });

@@ -1,7 +1,7 @@
-import { and, asc, desc, eq, inArray, isNull, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, notInArray } from 'drizzle-orm';
 import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, salas, servidores, usuarios, type Papel, type Partida, type Servidor } from '@/bd/esquema';
+import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Papel, type Partida, type Servidor } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 
@@ -9,6 +9,7 @@ export const MAPAS = ['de_mirage', 'de_inferno', 'de_nuke', 'de_ancient', 'de_an
 
 const JOGADORES_POR_TIME = 5;
 const MAIOR_NUMERO_DE_PARTIDA = 2_147_483_647;
+const ESPERA_DA_GRAVACAO_NO_SERVIDOR_MS = 5 * 60_000;
 
 export async function criarPartida(
   tx: Transacao,
@@ -54,7 +55,7 @@ export async function criarServidor(bd: Bd, dados: { nome: string; host: string;
   });
 }
 
-async function reservarServidor(bd: Bd, ignorar: string[]): Promise<{ partida: Partida; servidor: Servidor } | null> {
+async function reservarServidor(bd: Bd, ignorar: string[], agora: Date): Promise<{ partida: Partida; servidor: Servidor } | null> {
   return bd.transaction(async (tx) => {
     const [partida] = await tx
       .select()
@@ -64,10 +65,24 @@ async function reservarServidor(bd: Bd, ignorar: string[]): Promise<{ partida: P
       .limit(1)
       .for('update', { skipLocked: true });
     if (!partida) return null;
+    // A gravação chega minutos depois do fim, e é a prova: carregar outra partida antes pode cortar o envio.
+    const esperandoGravacao = await tx
+      .select({ id: partidas.servidorId })
+      .from(partidas)
+      .leftJoin(gravacoes, eq(gravacoes.partidaId, partidas.id))
+      .where(
+        and(
+          eq(partidas.estado, 'encerrada'),
+          isNotNull(partidas.servidorId),
+          isNull(gravacoes.id),
+          gt(partidas.encerradaEm, new Date(agora.getTime() - ESPERA_DA_GRAVACAO_NO_SERVIDOR_MS)),
+        ),
+      );
+    const foraDaVez = [...ignorar, ...esperandoGravacao.flatMap((linha) => (linha.id ? [linha.id] : []))];
     const [servidor] = await tx
       .select()
       .from(servidores)
-      .where(and(eq(servidores.ativo, true), isNull(servidores.partidaId), notInArray(servidores.id, ignorar)))
+      .where(and(eq(servidores.ativo, true), isNull(servidores.partidaId), notInArray(servidores.id, foraDaVez)))
       .orderBy(asc(servidores.criadoEm), asc(servidores.id))
       .limit(1)
       .for('update', { skipLocked: true });
@@ -83,11 +98,13 @@ async function reservarServidor(bd: Bd, ignorar: string[]): Promise<{ partida: P
 
 export async function devolverPartida(bd: Bd, partidaId: string, servidorId: string | null): Promise<void> {
   await bd.transaction(async (tx) => {
-    await tx
+    const devolvidas = await tx
       .update(partidas)
       .set({ estado: 'aguardando_servidor', servidorId: null, estadoDesde: new Date() })
-      .where(and(eq(partidas.id, partidaId), eq(partidas.estado, 'carregando')));
-    if (!servidorId) return;
+      .where(and(eq(partidas.id, partidaId), eq(partidas.estado, 'carregando')))
+      .returning({ id: partidas.id });
+    // Se a partida já avançou enquanto o comando falhava, o servidor continua sendo dela.
+    if (devolvidas.length === 0 || !servidorId) return;
     await tx
       .update(servidores)
       .set({ partidaId: null })
@@ -96,11 +113,11 @@ export async function devolverPartida(bd: Bd, partidaId: string, servidorId: str
 }
 
 /** Chamada fora de qualquer transação, porque espera a resposta do servidor de jogo. */
-export async function alocarServidores(bd: Bd, controlador: ControladorServidor): Promise<void> {
+export async function alocarServidores(bd: Bd, controlador: ControladorServidor, agora: Date = new Date()): Promise<void> {
   // Quem falhou fica de fora só nesta rodada, para a partida tentar o próximo servidor.
   const comFalha: string[] = [];
   for (;;) {
-    const reserva = await reservarServidor(bd, comFalha);
+    const reserva = await reservarServidor(bd, comFalha, agora);
     if (!reserva) return;
     try {
       await controlador.carregarPartida(reserva.servidor, reserva.partida.numero);

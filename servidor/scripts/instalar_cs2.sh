@@ -15,7 +15,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if command -v apt-get >/dev/null; then
-  PACOTES=(tmux curl tar ca-certificates lib32gcc-s1 python3)
+  PACOTES=(tmux curl tar ca-certificates lib32gcc-s1 python3 cron)
   ldconfig -p | grep -q libicuuc || PACOTES+=(libicu-dev)
   FALTANDO=()
   for pacote in "${PACOTES[@]}"; do
@@ -28,7 +28,7 @@ if command -v apt-get >/dev/null; then
     DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=l apt-get install -y -qq "${FALTANDO[@]}"
   fi
 elif command -v dnf >/dev/null; then
-  dnf install -y -q tmux curl tar ca-certificates glibc.i686 libstdc++.i686 libicu python3
+  dnf install -y -q tmux curl tar ca-certificates glibc.i686 libstdc++.i686 libicu python3 cronie
 else
   echo "Distribuição não reconhecida. Instale tmux, curl, libicu e as bibliotecas de 32 bits da SteamCMD." >&2
   exit 1
@@ -53,6 +53,12 @@ como_cs2 ln -sf "$STEAMCMD/linux64/steamclient.so" "$CASA/.steam/sdk64/steamclie
 install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$ORIGEM/scripts/conferir_cs2.sh" "$ORIGEM/scripts/atualizar_lista.sh" "$CASA/bin/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$CASA/bin/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/config/server.cfg" "$SERVIDOR/game/csgo/cfg/server.cfg"
+
+# O MatchZy só deixa entrar quem está nesta lista: sem o agendamento, membro novo fica de fora.
+cat > /etc/cron.d/magnatas-lista <<AGENDA
+* * * * * $USUARIO bash $CASA/bin/atualizar_lista.sh >/dev/null 2>>$CASA/atualizar_lista.log
+AGENDA
+chmod 644 /etc/cron.d/magnatas-lista
 
 if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
   ufw allow 27015/udp

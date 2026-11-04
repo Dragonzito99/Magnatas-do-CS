@@ -15,6 +15,11 @@ export type Notificacao = {
 
 const OLHO_DE_AGUIA = '/olho-de-aguia';
 
+/** O contador da aba é a parte das notificações que leva até ela, sem repetir as consultas. */
+export function casosDe(notificacoes: Notificacao[]): number {
+  return notificacoes.filter((item) => item.href === OLHO_DE_AGUIA).reduce((soma, item) => soma + item.quantidade, 0);
+}
+
 /** O que está esperando a pessoa agora. Nasce de dados que já existem, então some quando o assunto é resolvido. */
 export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new Date()): Promise<Notificacao[]> {
   const lista: Notificacao[] = [];

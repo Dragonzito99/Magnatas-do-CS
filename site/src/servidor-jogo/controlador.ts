@@ -14,6 +14,8 @@ type Conexao = { send(comando: string): Promise<string>; end(): Promise<void> };
 type Conectar = (servidor: ServidorAlvo, senha: string) => Promise<Conexao>;
 
 const TEMPO_LIMITE_MS = 5000;
+// O limite da biblioteca vale por pacote, e não cobre abrir nem fechar a conexão.
+const PRAZO_DO_COMANDO_MS = 15_000;
 const BASE_DO_STEAMID64 = BigInt('76561197960265728');
 
 const conectarPorRcon: Conectar = (servidor, senha) =>
@@ -25,17 +27,30 @@ export function comandoDeExpulsar(steamid64: string): string {
   return `kickid "[U:1:${BigInt(steamid64) - BASE_DO_STEAMID64}]" "Removido pela equipe"`;
 }
 
-export function controladorRcon(ambiente: AmbienteDoControlador, conectar: Conectar = conectarPorRcon): ControladorServidor {
-  /** Responde com o que o servidor disse ao último comando. */
-  async function enviar(servidor: ServidorAlvo, ...comandos: string[]): Promise<string> {
+/** A varredura e as punições esperam esta resposta, então um servidor travado não pode prender ninguém. */
+function comPrazo<T>(promessa: Promise<T>, prazoMs: number): Promise<T> {
+  return new Promise((resolver, rejeitar) => {
+    const relogio = setTimeout(() => rejeitar(new Error('O servidor não respondeu a tempo.')), prazoMs);
+    promessa.then(resolver, rejeitar).finally(() => clearTimeout(relogio));
+  });
+}
+
+export function controladorRcon(
+  ambiente: AmbienteDoControlador,
+  conectar: Conectar = conectarPorRcon,
+  prazoMs: number = PRAZO_DO_COMANDO_MS,
+): ControladorServidor {
+  async function comConexao<T>(servidor: ServidorAlvo, trabalho: (conexao: Conexao) => Promise<T>): Promise<T> {
     if (!ambiente.RCON_SENHA) throw new Error('RCON_SENHA não configurada.');
-    const conexao = await conectar(servidor, ambiente.RCON_SENHA);
+    const abrindo = conectar(servidor, ambiente.RCON_SENHA);
+    let conexao: Conexao | undefined;
     try {
-      let resposta = '';
-      for (const comando of comandos) resposta = await conexao.send(comando);
-      return resposta;
+      conexao = await comPrazo(abrindo, prazoMs);
+      return await comPrazo(trabalho(conexao), prazoMs);
     } finally {
-      await conexao.end().catch(() => undefined);
+      // Fechar nunca é esperado: a resposta já veio, e uma conexão travada não pode prender quem chamou.
+      if (conexao) conexao.end().catch(() => undefined);
+      else abrindo.then((atrasada) => atrasada.end()).catch(() => undefined);
     }
   }
 
@@ -43,15 +58,19 @@ export function controladorRcon(ambiente: AmbienteDoControlador, conectar: Conec
     async carregarPartida(servidor, numero) {
       if (!ambiente.SERVIDOR_TOKEN) throw new Error('SERVIDOR_TOKEN não configurado.');
       const endereco = `${ambiente.SITE_URL}/api/servidor/partidas/${numero}/config`;
-      // Só servidor livre chega aqui, então partida carregada nele é sobra, e o MatchZy recusaria a nova.
-      const resposta = await enviar(servidor, 'get5_endmatch', `matchzy_loadmatch_url "${endereco}" "Authorization" "Bearer ${ambiente.SERVIDOR_TOKEN}"`);
-      if (/cannot load/i.test(resposta)) throw new Error(`O servidor recusou a partida ${numero}.`);
+      const carregar = `matchzy_loadmatch_url "${endereco}" "Authorization" "Bearer ${ambiente.SERVIDOR_TOKEN}"`;
+      await comConexao(servidor, async (conexao) => {
+        if (!/cannot load/i.test(await conexao.send(carregar))) return;
+        // Só servidor livre chega aqui, então a partida que ele ainda tem é sobra.
+        await conexao.send('get5_endmatch');
+        if (/cannot load/i.test(await conexao.send(carregar))) throw new Error(`O servidor recusou a partida ${numero}.`);
+      });
     },
     async encerrarPartida(servidor) {
-      await enviar(servidor, 'get5_endmatch');
+      await comConexao(servidor, (conexao) => conexao.send('get5_endmatch'));
     },
     async expulsar(servidor, steamid64) {
-      await enviar(servidor, comandoDeExpulsar(steamid64));
+      await comConexao(servidor, (conexao) => conexao.send(comandoDeExpulsar(steamid64)));
     },
   };
 }

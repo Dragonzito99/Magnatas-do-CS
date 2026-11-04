@@ -6,6 +6,8 @@ import { partidaJogadores, partidas, usuarios, type Partida } from '@/bd/esquema
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 import { finalizarPartida } from './partidas';
 
+// Um evento de verdade tem poucos KB. O limite impede que um pedido enorme ocupe a memória do site.
+const LIMITE_DO_EVENTO_BYTES = 1024 * 1024;
 const matchid = z.number().int().positive().max(2_147_483_647);
 const inteiro = z.number().int();
 
@@ -123,6 +125,8 @@ export async function aplicarEvento(bd: Bd, evento: unknown): Promise<void> {
         await atualizarPlacar(tx, partida, dados.team1.score, dados.team2.score);
         break;
       case 'series_end':
+        // Antes de o servidor assumir a partida, o cancelamento só pode vir de limpar uma sobra dele.
+        if (dados.winner.team === 'none' && (partida.estado === 'carregando' || partida.estado === 'aguardando_servidor')) break;
         await finalizarPartida(
           tx,
           partida.id,
@@ -135,13 +139,29 @@ export async function aplicarEvento(bd: Bd, evento: unknown): Promise<void> {
   });
 }
 
-export async function respostaDeEvento(
-  bd: Bd,
-  cabecalho: string | null,
-  tokenEsperado: string | undefined,
-  texto: string,
-): Promise<Response> {
-  if (!tokenConfere(cabecalho, tokenEsperado)) return new Response('Não autorizado.', { status: 401 });
+/** Lê o corpo até o limite, sem guardar na memória o que passar dele. */
+async function lerAte(pedido: Request, limite: number): Promise<string | null> {
+  if (Number(pedido.headers.get('content-length') ?? 0) > limite) return null;
+  if (!pedido.body) return '';
+  const partes: Uint8Array[] = [];
+  let total = 0;
+  const leitor = pedido.body.getReader();
+  for (;;) {
+    const { done, value } = await leitor.read();
+    if (done) return new TextDecoder().decode(Buffer.concat(partes));
+    total += value.byteLength;
+    if (total > limite) {
+      await leitor.cancel();
+      return null;
+    }
+    partes.push(value);
+  }
+}
+
+export async function respostaDeEvento(bd: Bd, pedido: Request, tokenEsperado: string | undefined): Promise<Response> {
+  if (!tokenConfere(pedido.headers.get('authorization'), tokenEsperado)) return new Response('Não autorizado.', { status: 401 });
+  const texto = await lerAte(pedido, LIMITE_DO_EVENTO_BYTES);
+  if (texto === null) return new Response('Evento grande demais.', { status: 413 });
   let evento: unknown = null;
   try {
     evento = JSON.parse(texto);

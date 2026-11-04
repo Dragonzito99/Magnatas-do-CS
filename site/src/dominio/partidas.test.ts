@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { beforeEach, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Usuario } from '@/bd/esquema';
+import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
 import {
@@ -11,6 +11,7 @@ import {
   criarServidor,
   dadosDeConexao,
   detalheDaPartida,
+  devolverPartida,
   MAPAS,
   partidaAtualDe,
   partidasEmAndamento,
@@ -110,6 +111,56 @@ test('com um servidor fora do ar, a partida vai para o outro', async () => {
   const bom = await criarServidor(bd, { nome: 'SP 2', host: '10.0.0.2', porta: 27015 });
   await alocarServidores(bd, controladorFalso({ hostsComFalha: ['10.0.0.1'] }));
   expect(await recarregarPartida(partida.id)).toMatchObject({ estado: 'carregando', servidorId: bom.id });
+});
+
+test('devolver partida que já saiu de carregando não libera o servidor dela', async () => {
+  const { partida } = await novaPartida();
+  const servidor = await criarServidor(bd, { nome: 'SP 1', host: '10.0.0.1', porta: 27015 });
+  await bd.update(partidas).set({ estado: 'aguardando_jogadores', servidorId: servidor.id }).where(eq(partidas.id, partida.id));
+  await bd.update(servidores).set({ partidaId: partida.id }).where(eq(servidores.id, servidor.id));
+  await devolverPartida(bd, partida.id, servidor.id);
+  expect((await recarregarPartida(partida.id)).estado).toBe('aguardando_jogadores');
+  expect((await recarregarServidor(servidor.id)).partidaId).toBe(partida.id);
+});
+
+describe('espera pela gravação da partida anterior', () => {
+  const AGORA = new Date('2026-11-03T12:00:00Z');
+  const minutosAntes = (minutos: number) => new Date(AGORA.getTime() - minutos * 60_000);
+
+  async function anteriorNoServidor(estado: 'encerrada' | 'cancelada', encerradaEm: Date) {
+    const servidor = await criarServidor(bd, { nome: 'SP 1', host: '10.0.0.1', porta: 27015 });
+    const [anterior] = await bd.insert(partidas).values({ tipo: 'mix', mapa: 'de_nuke', estado, encerradaEm, servidorId: servidor.id }).returning();
+    return anterior;
+  }
+
+  test('servidor espera a gravação da partida que acabou de encerrar', async () => {
+    await anteriorNoServidor('encerrada', minutosAntes(2));
+    const { partida } = await novaPartida();
+    await alocarServidores(bd, controladorFalso(), AGORA);
+    expect((await recarregarPartida(partida.id)).estado).toBe('aguardando_servidor');
+  });
+
+  test('com a gravação recebida, o servidor já pode ser usado', async () => {
+    const anterior = await anteriorNoServidor('encerrada', minutosAntes(2));
+    await bd.insert(gravacoes).values({ partidaId: anterior.id, arquivo: '1.dem', bytes: 10 });
+    const { partida } = await novaPartida();
+    await alocarServidores(bd, controladorFalso(), AGORA);
+    expect((await recarregarPartida(partida.id)).estado).toBe('carregando');
+  });
+
+  test('depois de 5 minutos sem gravação, o servidor não espera mais', async () => {
+    await anteriorNoServidor('encerrada', minutosAntes(6));
+    const { partida } = await novaPartida();
+    await alocarServidores(bd, controladorFalso(), AGORA);
+    expect((await recarregarPartida(partida.id)).estado).toBe('carregando');
+  });
+
+  test('partida cancelada não tem gravação para esperar', async () => {
+    await anteriorNoServidor('cancelada', minutosAntes(1));
+    const { partida } = await novaPartida();
+    await alocarServidores(bd, controladorFalso(), AGORA);
+    expect((await recarregarPartida(partida.id)).estado).toBe('carregando');
+  });
 });
 
 test('config traz matchid, mapa, times com apelidos, players_per_team 5 e skip_veto', async () => {

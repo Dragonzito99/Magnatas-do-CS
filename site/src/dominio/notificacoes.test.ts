@@ -4,7 +4,7 @@ import { banimentos, chamados, desafios, partidaJogadores, partidas, type Partid
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { contarCasos, denunciar } from './denuncias';
 import { desafiar } from './desafios';
-import { notificacoesDe } from './notificacoes';
+import { casosDe, notificacoesDe } from './notificacoes';
 import { criarSala, entrarNaSala } from './salas';
 
 let bd: Bd;
@@ -106,6 +106,18 @@ test('jogador denunciado não recebe nenhuma notificação', async () => {
   const partida = await partidaDe([jogador, outro], 'encerrada');
   await denunciar(bd, outro, { partidaId: partida.id, acusadoId: jogador.id, motivo: 'x' });
   expect(await notificacoesDe(bd, jogador, AGORA)).toEqual([]);
+});
+
+test('casosDe soma só o que é da aba Olho de Águia', () => {
+  expect(
+    casosDe([
+      { tipo: 'partida', texto: '', href: '/partidas/1', quantidade: 1 },
+      { tipo: 'desafio', texto: '', href: '/salas', quantidade: 2 },
+      { tipo: 'chamados', texto: '', href: '/olho-de-aguia', quantidade: 3 },
+      { tipo: 'denuncias', texto: '', href: '/olho-de-aguia', quantidade: 4 },
+      { tipo: 'propostas', texto: '', href: '/olho-de-aguia', quantidade: 5 },
+    ]),
+  ).toBe(12);
 });
 
 test('GM com partida pronta vê as duas coisas', async () => {

@@ -4,7 +4,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { listarBanimentosAbertos } from '@/dominio/banimentos';
-import { chamadosEmAndamento, listarCasosDeDenuncia, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
+import { casoEscolhido, chamadosEmAndamento, listarCasosDeDenuncia, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
@@ -93,9 +93,13 @@ function DetalheDoCaso({ caso }: { caso: CasoDeDenuncia }) {
         <textarea name="conclusao" aria-label="Conclusão da análise" placeholder="Conclusão da análise..." maxLength={480} required rows={2} />
         <div className="acoes">
           {caso.podeEncerrar && (
-            <button type="submit" formAction={encerrar} className="botao cinza pequeno">
+            <BotaoConfirmar
+              formAction={encerrar}
+              mensagem={`Encerrar o caso de ${acusado ? apelido : 'acusado a definir'}, na ${nomeDaPartida(partida)}? Isso não pode ser desfeito.`}
+              className="botao cinza pequeno"
+            >
               {jaPunido ? 'Encerrar caso' : 'Encerrar sem punição'}
-            </button>
+            </BotaoConfirmar>
           )}
           {acusado?.estado === 'ativo' && (
             <BotaoConfirmar
@@ -128,7 +132,9 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
     listarCasosDeDenuncia(bd, usuario),
     listarBanimentosAbertos(bd, usuario),
   ]);
-  const aberto = casos.find((caso) => caso.chave === chave) ?? casos[0];
+  const { aberto, encerrado } = casoEscolhido(casos, chave);
+  // Sem caso no endereço, fixa o primeiro: se a lista mudar, a tela não troca de caso sozinha.
+  if (aberto && !chave) redirect(`/olho-de-aguia?caso=${aberto.chave}${erro ? `&erro=${erro}` : ''}`);
 
   return (
     <>
@@ -167,10 +173,10 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
 
       {casos.length === 0 && (
         <section className="painel">
-          <p className="vazio">Nenhuma denúncia aberta.</p>
+          <p className="vazio">{encerrado ? 'Este caso já foi encerrado, e não há outras denúncias abertas.' : 'Nenhuma denúncia aberta.'}</p>
         </section>
       )}
-      {aberto && (
+      {casos.length > 0 && (
         <div className="grade-de-casos">
           <section className="painel">
             <div className="cabeca-painel">
@@ -182,7 +188,7 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
                   key={caso.chave}
                   href={`/olho-de-aguia?caso=${caso.chave}`}
                   className="item-de-caso"
-                  aria-current={caso.chave === aberto.chave ? 'true' : undefined}
+                  aria-current={caso.chave === aberto?.chave ? 'true' : undefined}
                 >
                   {caso.acusado ? <Avatar usuario={caso.acusado} /> : <span className="avatar">?</span>}
                   <span className="item-de-caso-texto">
@@ -196,7 +202,14 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
               ))}
             </nav>
           </section>
-          <DetalheDoCaso caso={aberto} />
+          {aberto ? (
+            // A chave descarta o que foi digitado se o caso mudar, para a conclusão não ir parar em outro.
+            <DetalheDoCaso key={aberto.chave} caso={aberto} />
+          ) : (
+            <section className="painel">
+              <p className="vazio">Este caso já foi encerrado. Escolha outro na lista.</p>
+            </section>
+          )}
         </div>
       )}
 

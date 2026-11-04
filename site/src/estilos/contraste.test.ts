@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from 'vitest';
 
@@ -49,6 +49,10 @@ test('toda classe usada nas telas tem estilo', () => {
     return [...texto.matchAll(/className="([^"]+)"/g)].flatMap((achado) => achado[1].split(/\s+/)).filter((classe) => !definidas.has(classe));
   });
   expect([...new Set(semEstilo)]).toEqual([]);
+});
+
+test.each([['not-found.tsx'], ['error.tsx']])('o site tem a própria tela %s, porque a padrão do Next tem fundo branco', (arquivo) => {
+  expect(existsSync(path.join(process.cwd(), 'src/app', arquivo))).toBe(true);
 });
 
 test('nenhum fundo claro sobrou', () => {

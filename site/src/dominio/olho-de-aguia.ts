@@ -172,6 +172,16 @@ export async function chamadosEmAndamento(bd: Bd, leitor: Pick<Usuario, 'id'>) {
     .orderBy(asc(chamados.criadoEm));
 }
 
+/**
+ * A página se atualiza sozinha, então o caso aberto nunca pode trocar sem a pessoa pedir.
+ * Sem isso, a conclusão escrita para um caso encerraria outro.
+ */
+export function casoEscolhido<T extends { chave: string }>(casos: T[], chave: string | undefined): { aberto: T | null; encerrado: boolean } {
+  if (!chave) return { aberto: casos[0] ?? null, encerrado: false };
+  const aberto = casos.find((caso) => caso.chave === chave) ?? null;
+  return { aberto, encerrado: !aberto };
+}
+
 /** O banimento não guarda de qual partida veio, então o motivo leva o nome dela para o Adm. */
 export function motivoDaProposta(partida: Pick<Partida, 'tipo' | 'numero'>, conclusao: string): string {
   const texto = conclusao.trim();

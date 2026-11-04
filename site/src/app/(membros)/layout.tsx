@@ -3,9 +3,8 @@ import { redirect } from 'next/navigation';
 import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
-import { contarCasos } from '@/dominio/denuncias';
 import { enderecoDoDiscord } from '@/dominio/discord';
-import { notificacoesDe } from '@/dominio/notificacoes';
+import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
 import { Atualizar } from './atualizar';
 import { Banner } from './banner';
 import { Menu } from './menu';
@@ -16,8 +15,8 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
   if (!usuario) redirect('/');
 
   const mostrarEquipe = pode(usuario, 'ver_equipe');
-  const casos = pode(usuario, 'moderar') ? await contarCasos(obterBd(), usuario) : 0;
   const notificacoes = await notificacoesDe(obterBd(), usuario);
+  const casos = casosDe(notificacoes);
 
   return (
     <div className="app">
