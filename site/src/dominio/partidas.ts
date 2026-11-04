@@ -4,12 +4,14 @@ import type { Bd } from '@/bd/conexao';
 import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Papel, type Partida, type Servidor } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
+import { lancarXp } from './xp';
 
 export const MAPAS = ['de_mirage', 'de_inferno', 'de_nuke', 'de_ancient', 'de_anubis', 'de_dust2', 'de_overpass'] as const;
 
 const JOGADORES_POR_TIME = 5;
 const MAIOR_NUMERO_DE_PARTIDA = 2_147_483_647;
 const ESPERA_DA_GRAVACAO_NO_SERVIDOR_MS = 5 * 60_000;
+const RODADAS_PERDOADAS_POR_QUEDA = 2;
 
 export async function criarPartida(
   tx: Transacao,
@@ -38,6 +40,33 @@ export async function finalizarPartida(
     .where(eq(partidas.id, partidaId));
   await tx.update(servidores).set({ partidaId: null }).where(eq(servidores.partidaId, partidaId));
   await tx.update(salas).set({ partidaId: null }).where(eq(salas.partidaId, partidaId));
+  if (resultado.estado === 'encerrada') await lancarXpDaPartida(tx, partidaId, resultado.vencedor);
+}
+
+/** O servidor só envia os números de quem está conectado, então quem saiu fica com menos rodadas que a partida. */
+export function jogouAteOFim(rodadas: number, totalDeRodadas: number): boolean {
+  return rodadas > 0 && rodadas >= totalDeRodadas - RODADAS_PERDOADAS_POR_QUEDA;
+}
+
+async function lancarXpDaPartida(tx: Transacao, partidaId: string, vencedor: number | null): Promise<void> {
+  const [partida] = await tx.select().from(partidas).where(eq(partidas.id, partidaId));
+  const jogadores = await tx
+    .select({ usuarioId: partidaJogadores.usuarioId, time: partidaJogadores.time, kills: partidaJogadores.kills, rodadas: partidaJogadores.rodadas })
+    .from(partidaJogadores)
+    .innerJoin(usuarios, eq(partidaJogadores.usuarioId, usuarios.id))
+    .where(and(eq(partidaJogadores.partidaId, partidaId), eq(usuarios.estado, 'ativo')));
+  const totalDeRodadas = partida.placar1 + partida.placar2;
+  await lancarXp(
+    tx,
+    jogadores.map((jogador) => ({
+      usuarioId: jogador.usuarioId,
+      origem: 'partida',
+      referencia: partidaId,
+      abates: jogador.kills,
+      resultado: vencedor === null ? 'empate' : jogador.time === vencedor ? 'vitoria' : 'derrota',
+      jogouAteOFim: jogouAteOFim(jogador.rodadas, totalDeRodadas),
+    })),
+  );
 }
 
 export async function criarServidor(bd: Bd, dados: { nome: string; host: string; porta: number }): Promise<Servidor> {
