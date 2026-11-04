@@ -1,4 +1,5 @@
-import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const papel = pgEnum('papel', ['jogador', 'gm', 'adm']);
 export const estadoUsuario = pgEnum('estado_usuario', ['aguardando_verificacao', 'ativo', 'suspenso', 'banido']);
@@ -87,6 +88,28 @@ export const servidores = pgTable('servidores', {
   partidaId: uuid('partida_id'),
   criadoEm: criadoEm(),
 });
+
+export const modoDiversao = pgEnum('modo_diversao', ['cada_um', 'equipe', 'mutacao', 'fantasma']);
+
+// A futura tela de Adm cria e edita estas linhas.
+export const servidoresDiversao = pgTable(
+  'servidores_diversao',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    modo: modoDiversao('modo').notNull(),
+    armas: text('armas').notNull(),
+    mapa: text('mapa').notNull(),
+    foto: text('foto').notNull(),
+    // Sem host, vale o endereço de DIVERSAO_HOST.
+    host: text('host'),
+    porta: integer('porta').notNull(),
+    vagas: integer('vagas').notNull().default(16),
+    ativo: boolean('ativo').notNull().default(false),
+    ordem: integer('ordem').notNull(),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [uniqueIndex('servidores_diversao_endereco_idx').on(sql`coalesce(${tabela.host}, '')`, tabela.porta)],
+);
 
 export const partidas = pgTable('partidas', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -246,6 +269,7 @@ export type Desafio = typeof desafios.$inferSelect;
 export type Sala = typeof salas.$inferSelect;
 export type Partida = typeof partidas.$inferSelect;
 export type Servidor = typeof servidores.$inferSelect;
+export type ServidorDiversao = typeof servidoresDiversao.$inferSelect;
 export type Convite = typeof convites.$inferSelect;
 export type Papel = Usuario['papel'];
 export type EstadoUsuario = Usuario['estado'];

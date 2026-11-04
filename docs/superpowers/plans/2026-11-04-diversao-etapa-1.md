@@ -35,7 +35,7 @@ Cada item tem teste na tarefa dona do código.
 
 ---
 
-### Tarefa 1: Tabela dos servidores
+### Task 1: Tabela dos servidores
 
 **Arquivos:**
 - Modificar: `site/src/bd/esquema.ts`
@@ -95,7 +95,7 @@ git commit -m "feat: tabela dos servidores da diversao"
 
 ---
 
-### Tarefa 2: Regras dos vários servidores
+### Task 2: Regras dos vários servidores
 
 **Arquivos:**
 - Criar: `site/src/dominio/diversao.ts`, `site/src/dominio/diversao.test.ts`
@@ -167,7 +167,7 @@ git commit -m "feat: regras dos varios servidores da diversao"
 
 ---
 
-### Tarefa 3: Tela da aba Diversão
+### Task 3: Tela da aba Diversão
 
 **Arquivos:**
 - Modificar: `site/src/app/(membros)/diversao/page.tsx`, `site/src/estilos/global.css`
@@ -231,7 +231,7 @@ git commit -m "feat: lista de servidores na aba diversao"
 
 ---
 
-### Tarefa 4: Plugin com a arma de cada servidor
+### Task 4: Plugin com a arma de cada servidor
 
 **Arquivos:**
 - Mover: `servidor/plugins/MagnatasMataMata/` para `servidor/plugins/MagnatasDiversao/`, com os arquivos `MagnatasDiversao.cs` e `MagnatasDiversao.csproj`
@@ -271,7 +271,7 @@ git commit -m "feat: plugin le a arma de cada servidor"
 
 ---
 
-### Tarefa 5: Os três servidores
+### Task 5: Os três servidores
 
 **Arquivos:**
 - Criar: `servidor/config/diversao/cada_um_por_si.cfg` (a partir de `servidor/config/mata_mata.cfg`)
@@ -324,7 +324,7 @@ git commit -m "feat: tres servidores de cada um por si"
 
 ---
 
-### Tarefa 6: Colocar no ar e testar com o dono
+### Task 6: Colocar no ar e testar com o dono
 
 **Arquivos:** nenhum, salvo correções que o teste exigir, cada uma com teste antes.
 
