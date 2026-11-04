@@ -21,6 +21,8 @@ export function situacaoDaGravacao(
 
 const umaCasa = (valor: number) => Math.round(valor * 10) / 10;
 const duasCasas = (valor: number) => Math.round(valor * 100) / 100;
+const porcentagem = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 0);
+const kdDe = (abates: number, mortes: number) => (mortes > 0 ? duasCasas(abates / mortes) : abates);
 
 async function dadosDaEquipe(bd: Bd, jogador: Usuario) {
   const contraEle = await bd
@@ -95,19 +97,53 @@ export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogado
     .where(and(eq(partidaJogadores.usuarioId, jogadorId), eq(partidas.estado, 'encerrada')))
     .orderBy(desc(partidas.encerradaEm));
 
-  const soma = (campo: 'kills' | 'deaths' | 'damage' | 'headshotKills' | 'rodadas') => linhas.reduce((total, linha) => total + linha[campo], 0);
+  const soma = (campo: 'kills' | 'deaths' | 'assists' | 'damage' | 'headshotKills' | 'rodadas') => linhas.reduce((total, linha) => total + linha[campo], 0);
+  const venceu = (linha: (typeof linhas)[number]) => linha.partida.vencedor === linha.time;
   const abates = soma('kills');
   const mortes = soma('deaths');
   const rodadas = soma('rodadas');
+  const vitorias = linhas.filter(venceu).length;
 
   const estatisticas = {
     partidas: linhas.length,
-    vitorias: linhas.filter((linha) => linha.partida.vencedor === linha.time).length,
+    vitorias,
+    vitoriasPct: porcentagem(vitorias, linhas.length),
     abates,
     mortes,
-    kd: mortes > 0 ? duasCasas(abates / mortes) : abates,
+    assistencias: soma('assists'),
+    abatesPorPartida: linhas.length > 0 ? umaCasa(abates / linhas.length) : 0,
+    kd: kdDe(abates, mortes),
     hsPct: abates > 0 ? umaCasa((soma('headshotKills') / abates) * 100) : 0,
     adr: rodadas > 0 ? umaCasa(soma('damage') / rodadas) : 0,
+  };
+
+  const mapas = new Map<string, { partidas: number; vitorias: number; abates: number; mortes: number }>();
+  for (const linha of linhas) {
+    const mapa = mapas.get(linha.partida.mapa) ?? { partidas: 0, vitorias: 0, abates: 0, mortes: 0 };
+    mapa.partidas += 1;
+    mapa.vitorias += venceu(linha) ? 1 : 0;
+    mapa.abates += linha.kills;
+    mapa.mortes += linha.deaths;
+    mapas.set(linha.partida.mapa, mapa);
+  }
+  const porMapa = [...mapas]
+    .map(([mapa, valores]) => ({
+      mapa,
+      partidas: valores.partidas,
+      vitoriasPct: porcentagem(valores.vitorias, valores.partidas),
+      kd: kdDe(valores.abates, valores.mortes),
+    }))
+    .sort((a, b) => b.partidas - a.partidas || a.mapa.localeCompare(b.mapa));
+
+  // As linhas vêm da mais nova para a mais antiga, então a primeira com mais abates é a mais recente.
+  const melhor = linhas.reduce<(typeof linhas)[number] | null>((atual, linha) => (!atual || linha.kills > atual.kills ? linha : atual), null);
+  const melhorPartida = melhor && {
+    id: melhor.partida.id,
+    numero: melhor.partida.numero,
+    tipo: melhor.partida.tipo,
+    mapa: melhor.partida.mapa,
+    kills: melhor.kills,
+    kd: kdDe(melhor.kills, melhor.deaths),
   };
 
   const historico = linhas.slice(0, TAMANHO_DO_HISTORICO).map((linha) => ({
@@ -119,10 +155,11 @@ export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogado
     placar2: linha.partida.placar2,
     encerradaEm: linha.partida.encerradaEm,
     time: linha.time,
-    venceu: linha.partida.vencedor === linha.time,
+    venceu: venceu(linha),
     kills: linha.kills,
     deaths: linha.deaths,
     assists: linha.assists,
+    adr: linha.rodadas > 0 ? umaCasa(linha.damage / linha.rodadas) : 0,
     // Gravação é assunto da equipe: o membro não recebe nem a informação de que ela existe.
     ...(ehEquipe && {
       gravacao: situacaoDaGravacao(linha.partida, linha.gravacao, agora),
@@ -141,6 +178,10 @@ export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogado
     },
     estatisticas,
     historico,
+    porMapa,
+    melhorPartida,
+    // O SteamID identifica a pessoa fora do site, então outro membro não recebe.
+    ...((ehEquipe || leitor.id === jogador.id) && { steamid64: jogador.steamid64 }),
     ...(equipe && { equipe }),
   };
 }

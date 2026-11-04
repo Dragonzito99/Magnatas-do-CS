@@ -41,83 +41,169 @@ export default async function FichaDoJogador({
   if (!z.uuid().safeParse(id).success) notFound();
   const ficha = await fichaDoJogador(obterBd(), usuario, id);
   if (!ficha) notFound();
-  const { jogador, estatisticas, historico, equipe } = ficha;
+  const { jogador, estatisticas, historico, porMapa, melhorPartida, steamid64, equipe } = ficha;
 
   return (
     <>
       <div className="ficha-topo">
         <Avatar usuario={jogador} />
         <div>
-          <h1>{jogador.apelido}</h1>
-          <span className="apoio">
-            {NOME_DO_PAPEL[jogador.papel]}, desde {dataCurta.format(jogador.criadoEm)}
-          </span>
+          <h1>
+            <span className="ficha-nome">{jogador.apelido}</span>
+            <span className="selo">{NOME_DO_PAPEL[jogador.papel]}</span>
+          </h1>
+          <span className="apoio">Na Magnatas desde {dataCurta.format(jogador.criadoEm)}</span>
         </div>
+        {steamid64 && (
+          <a className="botao cinza pequeno" href={`https://steamcommunity.com/profiles/${steamid64}`} target="_blank" rel="noreferrer">
+            Ver na Steam
+          </a>
+        )}
       </div>
       {erro && ERROS[erro] && (
         <p role="alert" className="aviso">
           {ERROS[erro]}
         </p>
       )}
-      <div className="numeros">
-        <div>
-          <small>Partidas</small>
-          <b>{estatisticas.partidas}</b>
-        </div>
-        <div>
-          <small>Vitórias</small>
-          <b>{estatisticas.vitorias}</b>
-        </div>
-        <div>
+      <div className="numeros principais">
+        <div className="destaque">
+          <b className="mono">{estatisticas.kd.toFixed(2)}</b>
           <small>K/D</small>
-          <b>{estatisticas.kd}</b>
         </div>
         <div>
-          <small>Abates</small>
-          <b>{estatisticas.abates}</b>
+          <b className="mono">{estatisticas.vitoriasPct}%</b>
+          <small>Vitórias</small>
+          <small>
+            {estatisticas.vitorias} de {estatisticas.partidas} {estatisticas.partidas === 1 ? 'partida' : 'partidas'}
+          </small>
         </div>
         <div>
-          <small>Na cabeça</small>
-          <b>{estatisticas.hsPct}%</b>
-        </div>
-        <div>
+          <b className="mono">{estatisticas.adr}</b>
           <small>Dano por rodada</small>
-          <b>{estatisticas.adr}</b>
+        </div>
+        <div>
+          <b className="mono">{estatisticas.hsPct}%</b>
+          <small>Abates na cabeça</small>
         </div>
       </div>
-      <section className="painel">
-        <div className="cabeca-painel">
-          <h2>Histórico</h2>
-          <span>Só partidas encerradas</span>
+      <div className="numeros-menores">
+        <div>
+          Abates<b className="mono">{estatisticas.abates}</b>
         </div>
-        {historico.length === 0 && <p className="vazio">Ainda não jogou nenhuma partida.</p>}
-        {historico.map((partida) => (
-          <div className="linha" key={partida.id}>
-            <div>
-              <Link href={`/partidas/${partida.id}`}>{nomeDaPartida(partida)}</Link>
-              <small>
-                {nomeDoMapa(partida.mapa)}
-                {partida.encerradaEm && `, ${dataCurta.format(partida.encerradaEm)}`}
-              </small>
-            </div>
-            <span className={partida.venceu ? 'etiqueta ok' : 'etiqueta'}>{partida.venceu ? 'Vitória' : 'Derrota'}</span>
-            <span className="mono">
-              {partida.placar1} x {partida.placar2}
-            </span>
-            <span className="mono">
-              {partida.kills}/{partida.deaths}/{partida.assists}
-            </span>
-            {partida.gravacao &&
-              (partida.gravacao === 'disponivel' ? (
-                <a className="botao cinza pequeno" href={`/api/gravacoes/${partida.gravacaoId}`}>
-                  Baixar gravação
-                </a>
-              ) : (
-                <span className="etiqueta">{NOME_DA_GRAVACAO[partida.gravacao]}</span>
-              ))}
+        <div>
+          Mortes<b className="mono">{estatisticas.mortes}</b>
+        </div>
+        <div>
+          Assistências<b className="mono">{estatisticas.assistencias}</b>
+        </div>
+        <div>
+          Abates por partida<b className="mono">{estatisticas.abatesPorPartida}</b>
+        </div>
+      </div>
+      <div className="grade">
+        <section className="painel">
+          <div className="cabeca-painel">
+            <h2>Histórico</h2>
+            <span>Só partidas encerradas</span>
           </div>
-        ))}
-      </section>
+          {historico.length === 0 && <p className="vazio">Ainda não jogou nenhuma partida.</p>}
+          {historico.map((partida) => (
+            <div className="linha linha-historico" key={partida.id}>
+              <div>
+                <Link href={`/partidas/${partida.id}`}>{nomeDaPartida(partida)}</Link>
+                <small>
+                  {nomeDoMapa(partida.mapa)}
+                  {partida.encerradaEm && `, ${dataCurta.format(partida.encerradaEm)}`}
+                </small>
+              </div>
+              <span className={partida.venceu ? 'resultado ganhou' : 'resultado'}>
+                <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
+                  {partida.venceu ? (
+                    <path d="M20 6 9 17l-5-5" />
+                  ) : (
+                    <>
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </>
+                  )}
+                </svg>
+                {partida.venceu ? 'Vitória' : 'Derrota'}
+              </span>
+              <span className="mono">
+                {partida.placar1} x {partida.placar2}
+              </span>
+              <span className="mono" title="Abates, mortes e assistências">
+                {partida.kills}/{partida.deaths}/{partida.assists}
+              </span>
+              <span className="mono" title="Dano por rodada">
+                {partida.adr}
+              </span>
+              {partida.gravacao &&
+                (partida.gravacao === 'disponivel' ? (
+                  <a className="botao cinza pequeno" href={`/api/gravacoes/${partida.gravacaoId}`}>
+                    Baixar gravação
+                  </a>
+                ) : (
+                  <span className="etiqueta">{NOME_DA_GRAVACAO[partida.gravacao]}</span>
+                ))}
+            </div>
+          ))}
+        </section>
+        <div className="pilha">
+          <section className="painel">
+            <div className="cabeca-painel">
+              <h2>Por mapa</h2>
+            </div>
+            {porMapa.length === 0 && <p className="vazio">Ainda não há partidas.</p>}
+            {porMapa.length > 0 && (
+              <table className="tabela">
+                <thead>
+                  <tr>
+                    <th scope="col">Mapa</th>
+                    <th scope="col">Partidas</th>
+                    <th scope="col">Vitórias</th>
+                    <th scope="col">K/D</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {porMapa.map((linha) => (
+                    <tr key={linha.mapa}>
+                      <th scope="row">{nomeDoMapa(linha.mapa)}</th>
+                      <td>{linha.partidas}</td>
+                      <td>{linha.vitoriasPct}%</td>
+                      <td>{linha.kd.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
+          <section className="painel melhor-partida">
+            <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 21h8" />
+              <path d="M12 17v4" />
+              <path d="M7 4h10v6a5 5 0 0 1-10 0z" />
+              <path d="M7 6H4a3 3 0 0 0 3 4" />
+              <path d="M17 6h3a3 3 0 0 1-3 4" />
+            </svg>
+            <div>
+              <small>Melhor partida</small>
+              {melhorPartida ? (
+                <>
+                  <b>
+                    {melhorPartida.kills} {melhorPartida.kills === 1 ? 'abate' : 'abates'}, K/D {melhorPartida.kd.toFixed(2)}
+                  </b>
+                  <small>
+                    <Link href={`/partidas/${melhorPartida.id}`}>{nomeDaPartida(melhorPartida)}</Link>, {nomeDoMapa(melhorPartida.mapa)}
+                  </small>
+                </>
+              ) : (
+                <b>Ainda não há partidas</b>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
       {equipe && (
         <>
           <section className="painel">

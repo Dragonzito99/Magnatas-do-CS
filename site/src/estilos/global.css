@@ -885,30 +885,60 @@ textarea {
 .ficha-topo {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.28), rgba(245, 179, 1, 0.07));
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
 }
 
 .ficha-topo .avatar {
-  width: 56px;
-  height: 56px;
-  font-size: 16px;
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 2px var(--ouro), 0 0 18px rgba(245, 179, 1, 0.3);
+  font-size: 21px;
 }
 
 .ficha-topo > div {
+  flex: 1;
   min-width: 0;
 }
 
 .ficha-topo h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.ficha-nome {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.selo {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .numeros {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
+}
+
+.numeros.principais {
+  grid-template-columns: 1.25fr repeat(3, minmax(0, 1fr));
 }
 
 .numeros > div {
@@ -925,9 +955,99 @@ textarea {
 }
 
 .numeros b {
-  font-size: 22px;
-  font-weight: 500;
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
   letter-spacing: -0.03em;
+}
+
+.numeros .destaque {
+  background: linear-gradient(135deg, rgba(245, 179, 1, 0.18), rgba(168, 85, 247, 0.12));
+  box-shadow: 0 0 0 1px rgba(245, 179, 1, 0.6), 0 0 16px rgba(245, 179, 1, 0.13);
+}
+
+.numeros .destaque b {
+  font-size: 34px;
+}
+
+.numeros-menores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.numeros-menores > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 13px;
+  border-radius: 10px;
+  background: var(--painel-2);
+  box-shadow: 0 0 0 1px var(--linha);
+  color: var(--tinta-3);
+  font-size: 12px;
+}
+
+.numeros-menores b {
+  color: var(--tinta);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.linha-historico {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) 76px 64px 70px 44px auto;
+  justify-content: stretch;
+  font-size: 13px;
+}
+
+.linha-historico > .mono {
+  text-align: right;
+}
+
+.resultado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tinta-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.resultado .icone {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.6;
+}
+
+.resultado.ganhou {
+  color: var(--ouro);
+}
+
+.melhor-partida {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+}
+
+.melhor-partida .icone {
+  width: 24px;
+  height: 24px;
+  color: var(--ouro);
+}
+
+.melhor-partida small {
+  display: block;
+  color: var(--tinta-3);
+  font-size: 12px;
+}
+
+.melhor-partida b {
+  display: block;
+  font-weight: 600;
 }
 
 .caso {
@@ -1031,6 +1151,32 @@ textarea {
 @media (max-width: 860px) {
   .numeros {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .numeros.principais,
+  .numeros-menores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ficha-topo {
+    flex-wrap: wrap;
+  }
+
+  .ficha-topo > div {
+    flex-basis: calc(100% - 84px);
+  }
+
+  .ficha-topo h1 {
+    flex-wrap: wrap;
+  }
+
+  .ficha-nome {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .linha-historico {
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 
   .linha-sala {

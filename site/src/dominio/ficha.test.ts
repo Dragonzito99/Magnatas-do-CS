@@ -18,7 +18,7 @@ beforeEach(async () => {
 
 async function jogada(
   conta: Usuario,
-  valores: { kills: number; deaths: number; headshotKills: number; damage: number; rodadas: number },
+  valores: { kills: number; deaths: number; assists?: number; headshotKills: number; damage: number; rodadas: number },
   partidaValores: Partial<typeof partidas.$inferInsert> = {},
   time = 1,
 ): Promise<Partida> {
@@ -30,17 +30,110 @@ async function jogada(
   return partida;
 }
 
+const numeros = (kills: number, deaths: number) => ({ kills, deaths, headshotKills: 0, damage: 100, rodadas: 10 });
+
 test('ficha soma as partidas competitivas', async () => {
-  await jogada(jogador, { kills: 20, deaths: 10, headshotKills: 5, damage: 400, rodadas: 20 });
-  await jogada(jogador, { kills: 10, deaths: 10, headshotKills: 5, damage: 300, rodadas: 15 }, {}, 2);
+  await jogada(jogador, { kills: 20, deaths: 10, assists: 3, headshotKills: 5, damage: 400, rodadas: 20 });
+  await jogada(jogador, { kills: 10, deaths: 10, assists: 2, headshotKills: 5, damage: 300, rodadas: 15 }, {}, 2);
   const ficha = await fichaDoJogador(bd, outro, jogador.id);
-  expect(ficha?.estatisticas).toEqual({ partidas: 2, vitorias: 1, abates: 30, mortes: 20, kd: 1.5, hsPct: 33.3, adr: 20 });
+  expect(ficha?.estatisticas).toEqual({
+    partidas: 2,
+    vitorias: 1,
+    vitoriasPct: 50,
+    abates: 30,
+    mortes: 20,
+    assistencias: 5,
+    abatesPorPartida: 15,
+    kd: 1.5,
+    hsPct: 33.3,
+    adr: 20,
+  });
 });
 
 test('ficha de quem nunca jogou mostra zeros, sem dividir por zero', async () => {
   const ficha = await fichaDoJogador(bd, outro, jogador.id);
-  expect(ficha?.estatisticas).toEqual({ partidas: 0, vitorias: 0, abates: 0, mortes: 0, kd: 0, hsPct: 0, adr: 0 });
+  expect(ficha?.estatisticas).toEqual({
+    partidas: 0,
+    vitorias: 0,
+    vitoriasPct: 0,
+    abates: 0,
+    mortes: 0,
+    assistencias: 0,
+    abatesPorPartida: 0,
+    kd: 0,
+    hsPct: 0,
+    adr: 0,
+  });
   expect(ficha?.historico).toEqual([]);
+});
+
+test('quem nunca jogou tem por mapa vazio e nenhuma melhor partida', async () => {
+  const ficha = await fichaDoJogador(bd, outro, jogador.id);
+  expect(ficha?.porMapa).toEqual([]);
+  expect(ficha?.melhorPartida).toBeNull();
+});
+
+test('por mapa ordena do mais jogado para o menos jogado', async () => {
+  await jogada(jogador, numeros(20, 10), { mapa: 'de_mirage', vencedor: 1 });
+  await jogada(jogador, numeros(10, 10), { mapa: 'de_mirage', vencedor: 2 });
+  await jogada(jogador, numeros(5, 5), { mapa: 'de_inferno', vencedor: 1 });
+  expect((await fichaDoJogador(bd, outro, jogador.id))?.porMapa).toEqual([
+    { mapa: 'de_mirage', partidas: 2, vitoriasPct: 50, kd: 1.5 },
+    { mapa: 'de_inferno', partidas: 1, vitoriasPct: 100, kd: 1 },
+  ]);
+});
+
+test('no empate de partidas, os mapas ficam em ordem de nome', async () => {
+  await jogada(jogador, numeros(5, 5), { mapa: 'de_nuke' });
+  await jogada(jogador, numeros(5, 5), { mapa: 'de_anubis' });
+  const porMapa = (await fichaDoJogador(bd, outro, jogador.id))?.porMapa;
+  expect(porMapa?.map((linha) => linha.mapa)).toEqual(['de_anubis', 'de_nuke']);
+});
+
+test('quem tem 0 mortes em um mapa tem KD igual aos abates', async () => {
+  await jogada(jogador, numeros(9, 0), { mapa: 'de_nuke' });
+  expect((await fichaDoJogador(bd, outro, jogador.id))?.porMapa[0].kd).toBe(9);
+});
+
+test('partida cancelada não entra nos números por mapa nem na melhor partida', async () => {
+  await jogada(jogador, numeros(50, 1), { estado: 'cancelada', vencedor: null, mapa: 'de_nuke' });
+  const ficha = await fichaDoJogador(bd, outro, jogador.id);
+  expect(ficha?.porMapa).toEqual([]);
+  expect(ficha?.melhorPartida).toBeNull();
+});
+
+test('melhor partida é a de mais abates', async () => {
+  await jogada(jogador, numeros(10, 5));
+  const melhor = await jogada(jogador, numeros(31, 11), { mapa: 'de_nuke', tipo: 'desafio' });
+  await jogada(jogador, numeros(20, 5));
+  expect((await fichaDoJogador(bd, outro, jogador.id))?.melhorPartida).toEqual({
+    id: melhor.id,
+    numero: melhor.numero,
+    tipo: 'desafio',
+    mapa: 'de_nuke',
+    kills: 31,
+    kd: 2.82,
+  });
+});
+
+test('no empate de abates, a melhor partida é a mais recente', async () => {
+  await jogada(jogador, numeros(20, 5), { encerradaEm: new Date('2026-10-01T00:00:00Z') });
+  const recente = await jogada(jogador, numeros(20, 5));
+  expect((await fichaDoJogador(bd, outro, jogador.id))?.melhorPartida?.id).toBe(recente.id);
+});
+
+test('o histórico traz o dano por rodada de cada partida', async () => {
+  await jogada(jogador, { kills: 1, deaths: 1, headshotKills: 0, damage: 95, rodadas: 10 });
+  await jogada(jogador, { kills: 1, deaths: 1, headshotKills: 0, damage: 0, rodadas: 0 }, { encerradaEm: new Date('2026-10-01T00:00:00Z') });
+  const historico = (await fichaDoJogador(bd, outro, jogador.id))?.historico;
+  expect(historico?.map((linha) => linha.adr)).toEqual([9.5, 0]);
+});
+
+test('SteamID vai para a própria pessoa e para a equipe, nunca para outro membro', async () => {
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  expect(await fichaDoJogador(bd, outro, jogador.id)).not.toHaveProperty('steamid64');
+  expect((await fichaDoJogador(bd, jogador, jogador.id))?.steamid64).toBe(jogador.steamid64);
+  expect((await fichaDoJogador(bd, gm, jogador.id))?.steamid64).toBe(jogador.steamid64);
 });
 
 test('ficha de quem tem 0 mortes mostra KD igual aos abates', async () => {
