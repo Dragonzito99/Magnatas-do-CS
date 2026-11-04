@@ -72,6 +72,34 @@ test('conexão que só abre depois do prazo é fechada, para não ficar aberta �
   expect(estado.fechada).toBe(true);
 });
 
+const STATUS_JSON = (clientes: object[]) => `{\n\t"server":\n\t{\n\t\t"clients_human": 2,\n\t\t"clients": ${JSON.stringify(clientes)}\n\t}\n}`;
+
+test('jogadores conectados vêm do status_json, só as pessoas', async () => {
+  const resposta = STATUS_JSON([
+    { name: 'Alguém', steamid64: '76561198000000001' },
+    { name: 'Bot', steamid64: '0', bot: true },
+    { name: 'Outra', steamid64: '76561198000000002' },
+  ]);
+  const { conexao, enviados } = conexaoFalsa(resposta);
+  expect(await controladorRcon(AMBIENTE, async () => conexao).jogadoresConectados(SERVIDOR)).toEqual(['76561198000000001', '76561198000000002']);
+  expect(enviados).toEqual(['status_json']);
+});
+
+test('SteamID que vem como número não perde dígitos', async () => {
+  const { conexao } = conexaoFalsa('{"server": {"clients": [{"name": "Alguém", "steamid64": 76561198000000001}]}}');
+  expect(await controladorRcon(AMBIENTE, async () => conexao).jogadoresConectados(SERVIDOR)).toEqual(['76561198000000001']);
+});
+
+test('jogadores conectados aceita texto antes do JSON e servidor vazio', async () => {
+  const { conexao } = conexaoFalsa(`algum aviso\n${STATUS_JSON([])}`);
+  expect(await controladorRcon(AMBIENTE, async () => conexao).jogadoresConectados(SERVIDOR)).toEqual([]);
+});
+
+test('resposta que não é JSON dá erro', async () => {
+  const { conexao } = conexaoFalsa('Unknown command');
+  await expect(controladorRcon(AMBIENTE, async () => conexao).jogadoresConectados(SERVIDOR)).rejects.toThrow();
+});
+
 test('encerrar manda o comando que cancela a partida', async () => {
   const { conexao, enviados } = conexaoFalsa();
   await controladorRcon(AMBIENTE, async () => conexao).encerrarPartida(SERVIDOR);

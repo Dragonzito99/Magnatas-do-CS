@@ -1676,6 +1676,31 @@ textarea {
   stroke-linejoin: round;
 }
 
+.ao-vivo.fora-do-ar::before {
+  background: var(--tinta-3);
+}
+
+.modo.mata-mata {
+  min-height: 200px;
+  background: radial-gradient(circle at 80% 10%, rgba(245, 179, 1, 0.3), transparent 55%), radial-gradient(circle at 15% 100%, rgba(168, 85, 247, 0.45), transparent 55%), var(--escuro);
+}
+
+.mata-mata-texto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.mata-mata-texto small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ouro);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .modo.fantasma {
   background: radial-gradient(circle at 75% 15%, rgba(56, 189, 248, 0.42), transparent 58%), var(--escuro);
 }

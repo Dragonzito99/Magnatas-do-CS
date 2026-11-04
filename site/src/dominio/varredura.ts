@@ -3,10 +3,11 @@ import path from 'node:path';
 import { and, eq, inArray, isNotNull, isNull, lte, ne, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, denuncias, desafios, gravacoes, partidaJogadores, partidas, servidores, usuarios, type Partida, type Usuario } from '@/bd/esquema';
-import type { ControladorServidor } from '@/servidor-jogo/controlador';
+import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
 import { converterChamadosSemResposta } from './denuncias';
 import { ESTADOS_ATIVOS_DE_PARTIDA } from './disponibilidade';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
+import { fiscalizarMataMata } from './mata-mata';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
 
 const MINUTO_MS = 60_000;
@@ -186,8 +187,15 @@ async function apagarGravacoesVencidas(bd: Bd, pasta: string | undefined, agora:
   }
 }
 
-export async function varrer(bd: Bd, controlador: ControladorServidor, pasta: string | undefined, agora: Date = new Date()): Promise<void> {
+export async function varrer(
+  bd: Bd,
+  controlador: ControladorServidor,
+  pasta: string | undefined,
+  agora: Date = new Date(),
+  mataMata: ServidorAlvo | null = null,
+): Promise<void> {
   const etapas = [
+    ...(mataMata ? [() => fiscalizarMataMata(bd, controlador, mataMata)] : []),
     () => expirarDesafios(bd, agora),
     () => reabrirCarregamentosPresos(bd, agora),
     () => cancelarPartidasAbandonadas(bd, controlador, agora),

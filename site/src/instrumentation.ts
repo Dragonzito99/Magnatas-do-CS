@@ -10,6 +10,7 @@ export async function register() {
 
   const { obterBd } = await import('@/bd/conexao');
   const { varrer } = await import('@/dominio/varredura');
+  const { mataMataDoAmbiente } = await import('@/dominio/mata-mata');
   const { controladorDoAmbiente } = await import('@/servidor-jogo/controlador');
   let varrendo = false;
   setInterval(async () => {
@@ -17,7 +18,7 @@ export async function register() {
     if (varrendo) return;
     varrendo = true;
     try {
-      await varrer(obterBd(), controladorDoAmbiente(), process.env.GRAVACOES_PASTA);
+      await varrer(obterBd(), controladorDoAmbiente(), process.env.GRAVACOES_PASTA, new Date(), mataMataDoAmbiente());
     } catch (erro) {
       console.error('Falha na varredura:', erro);
     } finally {

@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
 import { auditoria, banimentos, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
-import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
+import { criarBancoDeTeste, criarUsuario, STEAM_D } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
 import { SemPermissao } from './equipe';
 import { fichaDoJogador } from './ficha';
@@ -124,6 +124,19 @@ test.each([['suspenso'], ['banido']] as const)('conta %s é expulsa de novo a ca
     { acao: 'expulsar', host: servidor.host, steamid64: jogador.steamid64 },
     { acao: 'expulsar', host: servidor.host, steamid64: jogador.steamid64 },
   ]);
+});
+
+test('a varredura fiscaliza o modo Cada um por si, quando ele está configurado', async () => {
+  const modo = { host: '10.0.0.7', porta: 27016 };
+  const controlador = controladorFalso({ conectados: { [modo.host]: [STEAM_D] } });
+  await varrer(bd, controlador, pasta, AGORA, modo);
+  expect(controlador.chamadas).toContainEqual({ acao: 'expulsar', host: modo.host, steamid64: STEAM_D });
+});
+
+test('sem o modo configurado, a varredura não pergunta nada a ele', async () => {
+  const controlador = controladorFalso({ conectados: { '10.0.0.7': [STEAM_D] } });
+  await varrer(bd, controlador, pasta, AGORA);
+  expect(controlador.chamadas).toEqual([]);
 });
 
 test('conta ativa não é expulsa', async () => {

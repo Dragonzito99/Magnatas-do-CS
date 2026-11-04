@@ -1,12 +1,46 @@
 import { exigirAcesso } from '@/auth/guarda';
+import { conexaoDoMataMata, mataMataDoAmbiente, situacaoDoMataMata } from '@/dominio/mata-mata';
+import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 
 export default async function Diversao() {
   await exigirAcesso('/diversao');
+  const servidor = mataMataDoAmbiente();
+  const { ligado, jogando, vagas } = await situacaoDoMataMata(controladorDoAmbiente(), servidor);
+  const cheio = jogando >= vagas;
+
   return (
     <>
       <div className="topo-pagina">
         <h1>Diversão</h1>
       </div>
+      <article className="cartao-escuro modo mata-mata">
+        <svg className="arte" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="3.5" />
+          <path d="M12 1v4" />
+          <path d="M12 19v4" />
+          <path d="M1 12h4" />
+          <path d="M19 12h4" />
+        </svg>
+        <span className={ligado ? 'ao-vivo' : 'ao-vivo fora-do-ar'}>{ligado ? 'Ao vivo' : 'Fora do ar'}</span>
+        <div className="mata-mata-texto">
+          <div>
+            <h2>Cada um por si</h2>
+            <p>Dust 2, só AK e Desert. Morreu, renasce na hora em outro lugar do mapa.</p>
+            {ligado && (
+              <small>
+                {jogando} de {vagas} jogando
+              </small>
+            )}
+          </div>
+          {ligado && servidor && !cheio && (
+            <a className="botao ouro" href={conexaoDoMataMata(servidor, process.env.SERVIDOR_SENHA ?? '')}>
+              Entrar
+            </a>
+          )}
+          {ligado && cheio && <span className="etiqueta">Servidor cheio</span>}
+        </div>
+      </article>
       <div className="modos">
         <article className="cartao-escuro modo fantasma">
           <svg className="arte" viewBox="0 0 24 24" aria-hidden="true">

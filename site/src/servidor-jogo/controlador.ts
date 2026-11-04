@@ -7,6 +7,8 @@ export type ControladorServidor = {
   carregarPartida(servidor: ServidorAlvo, numero: number): Promise<void>;
   encerrarPartida(servidor: ServidorAlvo): Promise<void>;
   expulsar(servidor: ServidorAlvo, steamid64: string): Promise<void>;
+  /** Os SteamIDs das pessoas no servidor, sem os bots. */
+  jogadoresConectados(servidor: ServidorAlvo): Promise<string[]>;
 };
 
 type AmbienteDoControlador = { RCON_SENHA?: string; SITE_URL?: string; SERVIDOR_TOKEN?: string };
@@ -25,6 +27,12 @@ const conectarPorRcon: Conectar = (servidor, senha) =>
 export function comandoDeExpulsar(steamid64: string): string {
   if (!/^\d+$/.test(steamid64)) throw new Error('SteamID inválido.');
   return `kickid "[U:1:${BigInt(steamid64) - BASE_DO_STEAMID64}]" "Removido pela equipe"`;
+}
+
+/** Lê o texto em vez de converter o JSON, porque um SteamID em forma de número perderia os últimos dígitos. */
+function pessoasDoStatus(resposta: string): string[] {
+  if (!resposta.includes('"server"')) throw new Error('O servidor não mandou o status.');
+  return [...resposta.matchAll(/"steamid64"\s*:\s*"?(7656\d{13})"?/g)].map((achado) => achado[1]);
 }
 
 /** A varredura e as punições esperam esta resposta, então um servidor travado não pode prender ninguém. */
@@ -72,6 +80,7 @@ export function controladorRcon(
     async expulsar(servidor, steamid64) {
       await comConexao(servidor, (conexao) => conexao.send(comandoDeExpulsar(steamid64)));
     },
+    jogadoresConectados: (servidor) => comConexao(servidor, async (conexao) => pessoasDoStatus(await conexao.send('status_json'))),
   };
 }
 
@@ -83,10 +92,13 @@ export function controladorDoAmbiente(): ControladorServidor {
 type ChamadaFalsa =
   | { acao: 'carregarPartida'; host: string; numero: number }
   | { acao: 'encerrarPartida'; host: string }
-  | { acao: 'expulsar'; host: string; steamid64: string };
+  | { acao: 'expulsar'; host: string; steamid64: string }
+  | { acao: 'jogadoresConectados'; host: string };
 
 /** Só para testes: anota as chamadas, e os hosts da lista falham como se estivessem fora do ar. */
-export function controladorFalso(opcoes: { hostsComFalha?: string[] } = {}): ControladorServidor & { chamadas: ChamadaFalsa[] } {
+export function controladorFalso(
+  opcoes: { hostsComFalha?: string[]; conectados?: Record<string, string[]> } = {},
+): ControladorServidor & { chamadas: ChamadaFalsa[] } {
   const chamadas: ChamadaFalsa[] = [];
   const conferir = (servidor: ServidorAlvo) => {
     if (opcoes.hostsComFalha?.includes(servidor.host)) throw new Error('Servidor fora do ar.');
@@ -104,6 +116,11 @@ export function controladorFalso(opcoes: { hostsComFalha?: string[] } = {}): Con
     async expulsar(servidor, steamid64) {
       conferir(servidor);
       chamadas.push({ acao: 'expulsar', host: servidor.host, steamid64 });
+    },
+    async jogadoresConectados(servidor) {
+      conferir(servidor);
+      chamadas.push({ acao: 'jogadoresConectados', host: servidor.host });
+      return opcoes.conectados?.[servidor.host] ?? [];
     },
   };
 }
