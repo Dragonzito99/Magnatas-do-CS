@@ -143,6 +143,46 @@ def test_o_plugin_informa_as_contas_conectadas_so_ao_servidor():
     assert "magnatas_jogadores=[" in CODIGO_DO_PLUGIN
 
 
+def test_a_regra_de_equipe_vem_da_configuracao():
+    assert '"Regra"' in CODIGO_DO_PLUGIN
+    assert '"MinutosDaPartida"' in CODIGO_DO_PLUGIN
+    assert '"equipe"' in CODIGO_DO_PLUGIN
+
+
+def test_so_abate_de_inimigo_conta_ponto():
+    # Suicídio, queda e abate de colega não podem dar ponto ao time.
+    assert "quem == alvo" in CODIGO_DO_PLUGIN
+    assert "quem.Team == alvo.Team" in CODIGO_DO_PLUGIN
+
+
+def test_abates_aparecem_no_placar():
+    assert "CCSTeam" in CODIGO_DO_PLUGIN
+    assert '"m_iScore"' in CODIGO_DO_PLUGIN
+    assert "SetStateChanged" in CODIGO_DO_PLUGIN
+
+
+def test_a_partida_decide_vitoria_ou_empate_por_abates():
+    # Sem isso, o jogo daria a vitória ao CT por tempo.
+    assert "TerminateRound" in CODIGO_DO_PLUGIN
+    assert "RoundEndReason.CTsWin" in CODIGO_DO_PLUGIN
+    assert "RoundEndReason.TerroristsWin" in CODIGO_DO_PLUGIN
+    assert "RoundEndReason.RoundDraw" in CODIGO_DO_PLUGIN
+
+
+def test_aquecimento_nao_inicia_a_contagem():
+    assert "WarmupPeriod" in CODIGO_DO_PLUGIN
+
+
+def test_so_um_relogio_por_partida():
+    # Sem desligar o anterior, recarregar o plugin ou reiniciar a rodada deixaria dois relógios rodando.
+    assert CODIGO_DO_PLUGIN.index("fimDaPartida?.Kill()") < CODIGO_DO_PLUGIN.index("fimDaPartida = AddTimer")
+
+
+def test_zerar_o_placar_a_cada_20_minutos_so_no_cada_um_por_si():
+    regra = CODIGO_DO_PLUGIN.index('Config.Regra == "cada_um"')
+    assert regra < CODIGO_DO_PLUGIN.index("mp_restartgame")
+
+
 def test_a_compilacao_gera_o_plugin_da_diversao():
     assert "plugins/MagnatasDiversao" in COMPILAR
     assert "MagnatasDiversao.dll" in COMPILAR

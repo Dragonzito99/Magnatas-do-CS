@@ -3,6 +3,7 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 
@@ -14,16 +15,29 @@ public class ConfiguracaoDoModo : BasePluginConfig
     /// <summary>Vazio significa não entregar arma principal, como no servidor só de pistola.</summary>
     [JsonPropertyName("ArmaPrincipal")]
     public string ArmaPrincipal { get; set; } = "";
+
+    /// <summary>cada_um ou equipe.</summary>
+    [JsonPropertyName("Regra")]
+    public string Regra { get; set; } = "cada_um";
+
+    /// <summary>Só vale na regra de equipe.</summary>
+    [JsonPropertyName("MinutosDaPartida")]
+    public int MinutosDaPartida { get; set; } = 10;
 }
 
 /// <summary>
-/// O que o modo mata-mata do CS2 não faz sozinho nos servidores da aba Diversão:
-/// entregar a arma principal, zerar o placar sem parar o jogo e dizer ao site quem está conectado.
+/// O que o CS2 não faz sozinho nos servidores da aba Diversão: entregar a arma principal, zerar o placar
+/// sem parar o jogo, decidir a partida por abates e dizer ao site quem está conectado.
 /// </summary>
 public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
 {
     private const float EsperaAposNascer = 0.1f;
     private const float SegundosAteZerarOPlacar = 20 * 60;
+    private const float SegundosMostrandoOVencedor = 5;
+
+    private int abatesCt, abatesTr;
+    private bool partidaEncerrada;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
     public override string ModuleVersion => "1.0.0";
@@ -37,8 +51,73 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
 
     public override void Load(bool hotReload)
     {
-        // Se a partida acabar pelo tempo do jogo, este modo não recomeça e deixa todo mundo sem time.
-        AddTimer(SegundosAteZerarOPlacar, () => Server.ExecuteCommand("mp_restartgame 5"), TimerFlags.REPEAT);
+        if (Config.Regra == "cada_um")
+        {
+            // Se a partida acabar pelo tempo do jogo, este modo não recomeça e deixa todo mundo sem time.
+            AddTimer(SegundosAteZerarOPlacar, () => Server.ExecuteCommand("mp_restartgame 5"), TimerFlags.REPEAT);
+        }
+        // Recarregado no meio da partida, o plugin não veria o início da rodada e o jogo nunca terminaria.
+        else if (Config.Regra == "equipe" && hotReload)
+        {
+            ComecarPartida();
+        }
+    }
+
+    private static CCSGameRules? RegrasDoJogo() =>
+        Utilities.FindAllEntitiesByDesignerName<CCSGameRulesProxy>("cs_gamerules").FirstOrDefault()?.GameRules;
+
+    private void ComecarPartida()
+    {
+        abatesCt = 0;
+        abatesTr = 0;
+        partidaEncerrada = false;
+        MostrarNoPlacar();
+        fimDaPartida?.Kill();
+        fimDaPartida = AddTimer(Config.MinutosDaPartida * 60f, EncerrarPartida);
+    }
+
+    private void MostrarNoPlacar()
+    {
+        foreach (var time in Utilities.FindAllEntitiesByDesignerName<CCSTeam>("cs_team_manager"))
+        {
+            if (time.TeamNum == (byte)CsTeam.CounterTerrorist) time.Score = abatesCt;
+            else if (time.TeamNum == (byte)CsTeam.Terrorist) time.Score = abatesTr;
+            else continue;
+            Utilities.SetStateChanged(time, "CTeam", "m_iScore");
+        }
+    }
+
+    /// <summary>Sem isso, o jogo daria a vitória ao CT por tempo. A rodada seguinte zera o placar.</summary>
+    private void EncerrarPartida()
+    {
+        partidaEncerrada = true;
+        var motivo = abatesCt > abatesTr
+            ? RoundEndReason.CTsWin
+            : abatesTr > abatesCt ? RoundEndReason.TerroristsWin : RoundEndReason.RoundDraw;
+        RegrasDoJogo()?.TerminateRound(SegundosMostrandoOVencedor, motivo);
+    }
+
+    [GameEventHandler]
+    public HookResult AoComecarRodada(EventRoundStart evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "equipe") return HookResult.Continue;
+        var regras = RegrasDoJogo();
+        if (regras == null || regras.WarmupPeriod) return HookResult.Continue;
+        ComecarPartida();
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult AoMorrer(EventPlayerDeath evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "equipe" || partidaEncerrada || RegrasDoJogo()?.WarmupPeriod != false) return HookResult.Continue;
+        var quem = evento.Attacker;
+        var alvo = evento.Userid;
+        if (quem == null || alvo == null || quem == alvo || quem.Team == alvo.Team) return HookResult.Continue;
+        if (quem.Team == CsTeam.CounterTerrorist) abatesCt++;
+        else if (quem.Team == CsTeam.Terrorist) abatesTr++;
+        MostrarNoPlacar();
+        return HookResult.Continue;
     }
 
     /// <summary>Este modo do jogo espalha quem renasce, mas ignora a arma principal padrão.</summary>
