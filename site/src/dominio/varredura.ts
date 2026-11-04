@@ -3,11 +3,11 @@ import path from 'node:path';
 import { and, eq, inArray, isNotNull, isNull, lte, ne, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, denuncias, desafios, gravacoes, partidaJogadores, partidas, servidores, usuarios, type Partida, type Usuario } from '@/bd/esquema';
-import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
+import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { converterChamadosSemResposta } from './denuncias';
 import { ESTADOS_ATIVOS_DE_PARTIDA } from './disponibilidade';
+import { fiscalizarDiversao } from './diversao';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
-import { fiscalizarMataMata } from './mata-mata';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
 
 const MINUTO_MS = 60_000;
@@ -192,10 +192,10 @@ export async function varrer(
   controlador: ControladorServidor,
   pasta: string | undefined,
   agora: Date = new Date(),
-  mataMata: ServidorAlvo | null = null,
+  hostDaDiversao: string | undefined = undefined,
 ): Promise<void> {
   const etapas = [
-    ...(mataMata ? [() => fiscalizarMataMata(bd, controlador, mataMata)] : []),
+    () => fiscalizarDiversao(bd, controlador, hostDaDiversao),
     () => expirarDesafios(bd, agora),
     () => reabrirCarregamentosPresos(bd, agora),
     () => cancelarPartidasAbandonadas(bd, controlador, agora),

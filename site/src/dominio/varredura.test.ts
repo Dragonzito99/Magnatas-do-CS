@@ -126,14 +126,14 @@ test.each([['suspenso'], ['banido']] as const)('conta %s é expulsa de novo a ca
   ]);
 });
 
-test('a varredura fiscaliza o modo Cada um por si, quando ele está configurado', async () => {
-  const modo = { host: '10.0.0.7', porta: 27016 };
-  const controlador = controladorFalso({ conectados: { [modo.host]: [STEAM_D] } });
-  await varrer(bd, controlador, pasta, AGORA, modo);
-  expect(controlador.chamadas).toContainEqual({ acao: 'expulsar', host: modo.host, steamid64: STEAM_D });
+test('a varredura fiscaliza os servidores da Diversão, quando eles estão configurados', async () => {
+  const host = '10.0.0.7';
+  const controlador = controladorFalso({ conectados: { [host]: [STEAM_D] } });
+  await varrer(bd, controlador, pasta, AGORA, host);
+  expect(controlador.chamadas).toContainEqual({ acao: 'expulsar', host, steamid64: STEAM_D });
 });
 
-test('sem o modo configurado, a varredura não pergunta nada a ele', async () => {
+test('sem endereço da Diversão, a varredura não pergunta nada aos servidores dela', async () => {
   const controlador = controladorFalso({ conectados: { '10.0.0.7': [STEAM_D] } });
   await varrer(bd, controlador, pasta, AGORA);
   expect(controlador.chamadas).toEqual([]);
