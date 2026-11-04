@@ -18,8 +18,32 @@ export const usuarios = pgTable('usuarios', {
   convitesRestantes: integer('convites_restantes').notNull().default(0),
   convidadoPor: uuid('convidado_por'),
   vistoEm: timestamp('visto_em', { withTimezone: true }),
+  xpTotal: integer('xp_total').notNull().default(0),
+  // A patente mais alta que a pessoa já viu no perfil, para o sino avisar só da nova.
+  patenteVista: integer('patente_vista').notNull().default(1),
   criadoEm: criadoEm(),
 });
+
+export const origemXp = pgEnum('origem_xp', ['partida', 'diversao']);
+export const resultadoXp = pgEnum('resultado_xp', ['vitoria', 'empate', 'derrota']);
+
+export const xpPartidas = pgTable(
+  'xp_partidas',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    origem: origemXp('origem').notNull(),
+    // Sem chave estrangeira: pode ser uma partida do site ou uma partida de um servidor da Diversão.
+    referencia: text('referencia').notNull(),
+    abates: integer('abates').notNull(),
+    resultado: resultadoXp('resultado').notNull(),
+    xp: integer('xp').notNull(),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [unique('xp_partidas_conta_referencia').on(tabela.usuarioId, tabela.referencia), index('xp_partidas_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],
+);
 
 export const convites = pgTable('convites', {
   id: uuid('id').primaryKey().defaultRandom(),

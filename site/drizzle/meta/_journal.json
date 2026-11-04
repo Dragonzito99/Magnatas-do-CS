@@ -78,6 +78,13 @@
       "when": 1793804023574,
       "tag": "0010_ativar_equipe",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793815121169,
+      "tag": "0011_round_prowler",
+      "breakpoints": true
     }
   ]
 }
