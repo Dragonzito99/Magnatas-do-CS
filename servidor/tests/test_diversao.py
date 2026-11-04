@@ -497,3 +497,37 @@ def test_placar_de_abates_continua_so_no_equipe():
 def test_fantasma_recomeca_quando_a_ultima_pessoa_sai():
     assert "EventPlayerDisconnect" in CODIGO_DO_FANTASMA
     assert "mp_restartgame 1" in CODIGO_DO_FANTASMA
+
+
+def test_fantasma_fica_so_com_faca_e_bomba():
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void DeixarSoAFaca"):]
+    assert "CsTeam.Terrorist" in trecho
+    assert "weapon_c4" in trecho
+    assert "knife" in trecho
+
+
+def test_fantasma_nao_fica_com_arma_pega_do_chao():
+    assert "EventItemPickup" in CODIGO_DO_FANTASMA
+    assert "DeixarSoAFaca(" in CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("EventItemPickup"):]
+
+
+def test_fantasma_fica_so_com_faca_ao_nascer():
+    assert "DeixarSoAFaca(" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("AoNascer"):]
+
+
+def test_um_kit_de_defuse_sorteado_por_rodada():
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void SortearKitDeDefuse"):]
+    # Quem sobreviveu ainda carrega o kit da rodada anterior.
+    assert trecho.index("HasDefuser = false") < trecho.index('GiveNamedItem("item_defuser")')
+    assert trecho.count('GiveNamedItem("item_defuser")') == 1
+    assert "Random.Shared" in trecho
+    assert "PawnIsAlive" in trecho
+
+
+def test_sem_ct_vivo_o_sorteio_nao_quebra():
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void SortearKitDeDefuse"):]
+    assert "Count == 0" in trecho
+
+
+def test_avisa_quem_recebeu_o_kit():
+    assert "kit de defuse" in CODIGO_DO_FANTASMA

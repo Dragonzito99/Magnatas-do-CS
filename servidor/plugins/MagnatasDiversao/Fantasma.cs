@@ -11,6 +11,8 @@ namespace MagnatasDiversao;
 /// </summary>
 public partial class ModoDeDiversao
 {
+    private const float EsperaParaSortearOKit = 0.2f;
+
     private DateTime inicioDaPartida = DateTime.UtcNow;
 
     private void LigarFantasma()
@@ -24,6 +26,59 @@ public partial class ModoDeDiversao
             ZerarContagem();
             inicioDaPartida = DateTime.UtcNow;
         }
+        // Espera todos nascerem, para o sorteio não deixar ninguém de fora.
+        AddTimer(EsperaParaSortearOKit, SortearKitDeDefuse);
+    }
+
+    /// <summary>A configuração já não entrega arma ao fantasma. Isto cobre o que vem do chão, como a arma largada por um CT.</summary>
+    private void DeixarSoAFaca(CCSPlayerController? jogador)
+    {
+        if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }) return;
+        var armas = jogador.PlayerPawn.Value?.WeaponServices?.MyWeapons;
+        if (armas == null) return;
+
+        var tirou = false;
+        foreach (var item in armas.ToList())
+        {
+            var arma = item.Value;
+            if (arma == null || arma.DesignerName == "weapon_c4" || arma.DesignerName.Contains("knife") || arma.DesignerName.Contains("bayonet")) continue;
+            arma.Remove();
+            tirou = true;
+        }
+        if (tirou) jogador.ExecuteClientCommand("slot3");
+    }
+
+    private void SortearKitDeDefuse()
+    {
+        if (RegrasDoJogo()?.WarmupPeriod != false) return;
+
+        var vivos = new List<CCSPlayerController>();
+        foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.CounterTerrorist }))
+        {
+            // Quem sobreviveu ainda carrega o kit da rodada anterior.
+            var corpo = jogador.PlayerPawn.Value;
+            if (corpo?.ItemServices != null)
+            {
+                new CCSPlayer_ItemServices(corpo.ItemServices.Handle).HasDefuser = false;
+                Utilities.SetStateChanged(corpo, "CBasePlayerPawn", "m_pItemServices");
+            }
+            if (jogador.PawnIsAlive) vivos.Add(jogador);
+        }
+        if (vivos.Count == 0) return;
+
+        var sorteado = vivos[Random.Shared.Next(vivos.Count)];
+        sorteado.GiveNamedItem("item_defuser");
+        sorteado.PrintToChat(" [Magnatas] Você recebeu o kit de defuse nesta rodada.");
+    }
+
+    [GameEventHandler]
+    public HookResult AoPegarItem(EventItemPickup evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "fantasma") return HookResult.Continue;
+        var jogador = evento.Userid;
+        // O item só entra na lista do jogador depois do evento.
+        AddTimer(EsperaAposNascer, () => DeixarSoAFaca(jogador));
+        return HookResult.Continue;
     }
 
     private static (int Ct, int Tr) RodadasVencidas()
