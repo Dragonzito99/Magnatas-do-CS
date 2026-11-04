@@ -315,6 +315,34 @@ def test_o_token_nunca_vai_para_o_registro():
             assert "Token" not in linha
 
 
+def test_avisa_que_a_partida_acabou_quem_venceu_e_que_vai_recomecar():
+    assert "Partida encerrada" in CODIGO_DO_PLUGIN
+    assert '"CT venceu"' in CODIGO_DO_PLUGIN
+    assert '"TR venceu"' in CODIGO_DO_PLUGIN
+    assert '"Empate"' in CODIGO_DO_PLUGIN
+    assert "venceu com" in CODIGO_DO_PLUGIN
+    assert "Aguarde" in CODIGO_DO_PLUGIN
+    assert "{SegundosMostrandoOVencedor} segundos" in CODIGO_DO_PLUGIN
+
+
+def test_o_aviso_nao_depende_do_site():
+    # O aviso sai na hora do fim. Sem site, sem token ou sem jogador registrado, ele aparece do mesmo jeito.
+    fim = CODIGO_DO_PLUGIN.index("private void EncerrarPartidaDeEquipe")
+    fechar = CODIGO_DO_PLUGIN.index("FecharPartida(vencedor, minutos);")
+    assert "AvisarFimDaPartida(" in CODIGO_DO_PLUGIN[fim:fechar]
+
+
+def test_o_quadro_de_xp_nao_apaga_o_aviso():
+    # Só um quadro aparece por vez no centro da tela, então o de XP repete o aviso.
+    assert "avisoDoFim" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("private void MostrarGanhos") :]
+
+
+def test_o_nome_de_quem_venceu_e_escapado_no_quadro():
+    # O apelido da Steam vem de fora e entra em HTML.
+    aviso = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("private void AvisarFimDaPartida") :]
+    assert "HtmlEncode" in aviso
+
+
 def test_quinze_segundos_para_ler_o_resultado():
     assert "SegundosMostrandoOVencedor = 15" in CODIGO_DO_PLUGIN
     assert "mp_restartgame 15" in CODIGO_DO_PLUGIN

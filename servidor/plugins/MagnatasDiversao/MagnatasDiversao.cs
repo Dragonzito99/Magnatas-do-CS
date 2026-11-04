@@ -95,6 +95,7 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
     private string idDaPartida = NovoId();
     private int abatesCt, abatesTr;
     private bool partidaEncerrada;
+    private string avisoDoFim = "";
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
@@ -175,14 +176,41 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
             ? RoundEndReason.CTsWin
             : abatesTr > abatesCt ? RoundEndReason.TerroristsWin : RoundEndReason.RoundDraw;
         var vencedor = abatesCt > abatesTr ? "ct" : abatesTr > abatesCt ? "tr" : "empate";
+        AvisarFimDaPartida(vencedor == "ct" ? "CT venceu" : vencedor == "tr" ? "TR venceu" : "Empate");
         FecharPartida(vencedor, minutos);
         RegrasDoJogo()?.TerminateRound(SegundosMostrandoOVencedor, motivo);
     }
 
     private void EncerrarCicloDoCadaUm()
     {
+        AvisarFimDaPartida(QuemLiderouOCiclo());
         FecharPartida(null, MinutosDoCicloDoCadaUm);
         Server.ExecuteCommand("mp_restartgame 15");
+    }
+
+    private string QuemLiderouOCiclo()
+    {
+        var conectadas = Pessoas().ToDictionary(pessoa => pessoa.SteamID);
+        var lider = naPartida
+            .Where(par => par.Value.Abates > 0 && conectadas.ContainsKey(par.Key))
+            .OrderByDescending(par => par.Value.Abates)
+            .Select(par => (Nome: conectadas[par.Key].PlayerName, par.Value.Abates))
+            .FirstOrDefault();
+        return lider.Nome == null ? "" : $"{lider.Nome} venceu com {lider.Abates} abates";
+    }
+
+    /// <summary>Sai na hora, para ninguém ficar sem saber o que aconteceu, com ou sem resposta do site.</summary>
+    private void AvisarFimDaPartida(string resultado)
+    {
+        var espera = $"Aguarde: a próxima partida começa em {SegundosMostrandoOVencedor} segundos.";
+        var quadroDoResultado = resultado == "" ? "" : $"<br><font color='#f5b301' class='fontSize-l'>{WebUtility.HtmlEncode(resultado)}</font>";
+        avisoDoFim = $"<font class='fontSize-l'>Partida encerrada</font>{quadroDoResultado}<br>{espera}";
+        var textoDoChat = resultado == "" ? "Partida encerrada." : $"Partida encerrada. {resultado}.";
+        foreach (var pessoa in Pessoas())
+        {
+            pessoa.PrintToCenterHtml(avisoDoFim, SegundosMostrandoOVencedor);
+            pessoa.PrintToChat($" [Magnatas] {textoDoChat} {espera}");
+        }
     }
 
     /// <summary>O envio roda fora do jogo: a partida termina igual, com ou sem resposta do site.</summary>
@@ -245,7 +273,7 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
         }
     }
 
-    private static void MostrarGanhos(RespostaDoSite? dados)
+    private void MostrarGanhos(RespostaDoSite? dados)
     {
         if (dados == null) return;
         var conectadas = Pessoas().ToDictionary(pessoa => pessoa.SteamID.ToString());
@@ -253,7 +281,8 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
         {
             if (!conectadas.TryGetValue(ganho.Steamid64, out var pessoa)) continue;
             var patente = WebUtility.HtmlEncode(ganho.Patente);
-            var quadro = $"<font color='#f5b301' class='fontSize-xl'>+ {ganho.Xp} XP</font>";
+            // Só um quadro aparece por vez no centro da tela, então este repete o aviso do fim.
+            var quadro = $"{avisoDoFim}<br><font color='#f5b301' class='fontSize-xl'>+ {ganho.Xp} XP</font>";
             if (ganho.Subiu) quadro += $"<br><font color='#f5b301'>Nova patente: {patente}</font>";
             pessoa.PrintToCenterHtml(quadro, SegundosMostrandoOVencedor);
             pessoa.PrintToChat($" [Magnatas] + {ganho.Xp} XP");
