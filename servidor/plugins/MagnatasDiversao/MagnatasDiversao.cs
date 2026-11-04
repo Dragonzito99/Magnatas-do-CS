@@ -305,6 +305,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         if (regras == null || regras.WarmupPeriod) return HookResult.Continue;
         if (Config.Regra == "equipe") ComecarPartida();
         else if (Config.Regra == "fantasma") ComecarRodadaDoFantasma(regras);
+        else if (Config.Regra == "mutacao") ComecarRodadaDaMutacao();
         else ZerarContagem();
         return HookResult.Continue;
     }

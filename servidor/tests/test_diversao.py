@@ -794,3 +794,73 @@ def test_todos_voltam_a_ser_humanos_na_rodada_seguinte():
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
     assert "SwitchTeam(CsTeam.CounterTerrorist)" in trecho
     assert "MaxHealth = VidaDoHumano" in trecho
+
+
+def test_vinte_segundos_para_espalhar():
+    assert "SegundosParaEspalhar = 20f" in CODIGO_DA_MUTACAO
+
+
+def test_um_mutante_para_cada_oito():
+    assert "JogadoresPorMutante = 8" in CODIGO_DA_MUTACAO
+    assert "Math.Max(1, vivos.Count / JogadoresPorMutante)" in CODIGO_DA_MUTACAO
+
+
+def test_sozinho_ninguem_vira_mutante():
+    assert "vivos.Count < 2" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void SortearMutantes"):]
+
+
+def test_mutantes_vencem_quando_nao_sobra_humano():
+    assert "RoundEndReason.TerroristsWin" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ConferirFimDaRodada"):]
+
+
+def test_humanos_vencem_no_fim_do_tempo():
+    assert "RoundEndReason.CTsWin" in CODIGO_DA_MUTACAO
+    assert 'ConVar<float>.Find("mp_roundtime")' in CODIGO_DA_MUTACAO
+
+
+def test_so_um_relogio_por_rodada():
+    assert CODIGO_DA_MUTACAO.index("fimDaRodada?.Kill()") < CODIGO_DA_MUTACAO.index("fimDaRodada = AddTimer")
+    assert CODIGO_DA_MUTACAO.index("relogioDoSorteio?.Kill()") < CODIGO_DA_MUTACAO.index("relogioDoSorteio = AddTimer")
+
+
+def test_a_rodada_nao_termina_duas_vezes():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EncerrarRodadaDaMutacao"):]
+    assert "if (!rodadaEmAndamento) return;" in trecho
+
+
+def test_dez_rodadas_sao_uma_partida():
+    assert "RodadasPorPartida = 10" in CODIGO_DA_MUTACAO
+    assert "FecharPartida(null," in CODIGO_DA_MUTACAO
+    assert "SegundosMostrandoOVencedor" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EncerrarRodadaDaMutacao"):]
+
+
+def test_a_partida_nao_zera_a_cada_rodada():
+    assert "rodadasDaPartida == 0" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):]
+
+
+def test_o_aviso_mostra_o_placar_das_rodadas():
+    assert "Humanos {" in CODIGO_DA_MUTACAO
+    assert "AvisarFimDaPartida(" in CODIGO_DA_MUTACAO
+
+
+def test_quem_entra_no_meio_nao_fica_morto():
+    assert "EventPlayerTeam" in CODIGO_DA_MUTACAO
+    assert "ColocarNaRodada(" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerTeam"):]
+
+
+def test_quem_chega_depois_dispara_o_sorteio_que_faltou():
+    assert "SortearMutantes()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ColocarNaRodada"):]
+
+
+def test_se_o_ultimo_mutante_sai_outro_e_sorteado():
+    assert "SortearMutantes()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ConferirFimDaRodada"):]
+
+
+def test_quem_sai_pode_encerrar_a_rodada():
+    assert "ConferirFimDaRodada" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):]
+
+
+def test_se_a_ultima_pessoa_sai_a_partida_recomeca():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):]
+    assert "mp_restartgame 1" in trecho
+    assert "rodadasDaPartida = 0" in trecho
