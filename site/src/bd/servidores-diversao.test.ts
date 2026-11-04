@@ -12,7 +12,7 @@ test('os seis servidores já vêm cadastrados, em ordem', async () => {
     { ordem: 1, modo: 'cada_um', armas: 'AK e Desert', mapa: 'Dust 2', foto: '/mapas/dust2.webp', porta: 27016, ativo: true },
     { ordem: 2, modo: 'cada_um', armas: 'Só pistola, à sua escolha', mapa: 'Mirage', foto: '/mapas/mirage.webp', porta: 27017, ativo: true },
     { ordem: 3, modo: 'cada_um', armas: 'Só AWP', mapa: 'Mirage', foto: '/mapas/mirage.webp', porta: 27018, ativo: true },
-    { ordem: 4, modo: 'equipe', armas: 'Renasce na base', mapa: 'Transport Ship', foto: '/mapas/transport-ship.webp', porta: 27019, ativo: false },
+    { ordem: 4, modo: 'equipe', armas: 'Renasce na base', mapa: 'Transport Ship', foto: '/mapas/transport-ship.webp', porta: 27019, ativo: true },
     { ordem: 5, modo: 'mutacao', armas: 'Quem é pego vira mutante', mapa: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp', porta: 27020, ativo: false },
     { ordem: 6, modo: 'fantasma', armas: 'Invisíveis contra armados', mapa: 'Laboratory', foto: '/mapas/laboratory.webp', porta: 27021, ativo: false },
   ]);
