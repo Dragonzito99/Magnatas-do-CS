@@ -150,9 +150,9 @@ def test_equipe_sem_compra_e_sem_bomba():
 
 
 def test_equipe_quem_encerra_a_partida_e_o_plugin():
-    # O relógio da tela mostra os 10 minutos, e o jogo não encerra a rodada sozinho ao chegar em zero.
+    # O relógio da tela mostra os 5 minutos, e o jogo não encerra a rodada sozinho ao chegar em zero.
     assert valor("mp_ignore_round_win_conditions", "equipe") == "1"
-    assert valor("mp_roundtime", "equipe") == "10"
+    assert valor("mp_roundtime", "equipe") == "5"
     assert valor("mp_roundtime_defuse", "equipe") == "0"
     assert valor("mp_maxrounds", "equipe") == "1"
     assert valor("mp_timelimit", "equipe") == "0"
@@ -221,8 +221,13 @@ def test_o_plugin_informa_as_contas_conectadas_so_ao_servidor():
 
 def test_a_regra_de_equipe_vem_da_configuracao():
     assert '"Regra"' in CODIGO_DO_PLUGIN
-    assert '"MinutosDaPartida"' in CODIGO_DO_PLUGIN
     assert '"equipe"' in CODIGO_DO_PLUGIN
+
+
+def test_a_partida_dura_o_tempo_do_relogio_da_tela():
+    # Um valor só: mudar o tempo é mudar uma linha da configuração, e o relógio e o fim continuam combinando.
+    assert 'ConVar.Find("mp_roundtime")' in CODIGO_DO_PLUGIN
+    assert "MinutosDaPartida" not in CODIGO_DO_PLUGIN
 
 
 def test_so_abate_de_inimigo_conta_ponto():

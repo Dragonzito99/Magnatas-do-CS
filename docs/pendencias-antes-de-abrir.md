@@ -21,7 +21,7 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
 - Liberar as portas `27016/udp` a `27019/udp` no firewall. O instalador e o aviso dele ainda falam só da `27015/udp`.
 - Criar um token de servidor da Steam para cada um e guardar no `cs2.env`: `GSLT_AK_DESERT`, `GSLT_PISTOLA`, `GSLT_AWP` e `GSLT_EQUIPE`.
 - Definir `DIVERSAO_HOST` no ambiente do site. Sem isso, os cartões aparecem fora do ar.
-- Conferir no servidor real se os 10 minutos do Equipe x Equipe duram 10 minutos de relógio. No Linux dentro do Windows, o tempo do jogo anda cerca de 10% mais devagar que o real, e a partida dura cerca de 11 minutos.
+- Conferir no servidor real se os 5 minutos do Equipe x Equipe duram 5 minutos de relógio. No Linux dentro do Windows, o tempo do jogo anda cerca de 10% mais devagar que o real, e a partida dura cerca de 5 minutos e meio.
 
 ## Antes de abrir o site de verdade
 

@@ -31,7 +31,7 @@ Renascimento espalhado e sem compra de outras armas, como o atual. Os mapas muda
 - Até 8 de cada lado.
 - Quem morre renasce na base do próprio time.
 - A cada renascimento: CT com M4, TR com AK, pistola padrão e kit de smoke, flash e HE.
-- 10 minutos de partida. Vence o time com mais abates.
+- 5 minutos de partida. Vence o time com mais abates. O dono reduziu de 10 depois do teste, "por enquanto".
 
 **Mutação**
 - Igual ao CrossFire que o dono jogava. Mapa: [zm_biochemical_hotel](https://steamcommunity.com/sharedfiles/filedetails/?id=3223106683).
@@ -89,7 +89,7 @@ Estas escolhas são minhas. O dono não as revisou uma a uma.
 - Cada um por si: entrega a arma principal definida na configuração e reinicia a cada 20 minutos.
 - Só pistola: compra liberada apenas para pistolas (`mp_buy_allow_guns 1`), sem custo, em qualquer lugar. O atual e o de AWP continuam sem compra.
 - Só AWP: AWP e faca, sem pistola. Esta é escolha minha.
-- Equipe x Equipe: conta os abates por time, mostra no placar e decide o vencedor por abates ao fim dos 10 minutos. Sem isso, o jogo daria a vitória ao CT por tempo.
+- Equipe x Equipe: conta os abates por time, mostra no placar e decide o vencedor por abates ao fim dos 5 minutos. Sem isso, o jogo daria a vitória ao CT por tempo.
 - Mutação: toda a lógica da seção de regras, com os atributos do mutante em uma estrutura de dados, para os tipos futuros entrarem sem reescrever.
 - Fantasma: o que foi provado acima, mais as armas fixas do CT (`weapon_m4a1_silencer`, `weapon_usp_silencer` e as três granadas pela configuração), compra bloqueada para os dois times (`sv_buy_status_override 3`) e o sorteio de exatamente um kit de defuse por rodada entre os CTs vivos. O restante fica com o script do mapa.
 

@@ -3,6 +3,7 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
@@ -19,10 +20,6 @@ public class ConfiguracaoDoModo : BasePluginConfig
     /// <summary>cada_um ou equipe.</summary>
     [JsonPropertyName("Regra")]
     public string Regra { get; set; } = "cada_um";
-
-    /// <summary>Só vale na regra de equipe.</summary>
-    [JsonPropertyName("MinutosDaPartida")]
-    public int MinutosDaPartida { get; set; } = 10;
 }
 
 /// <summary>
@@ -34,6 +31,7 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
     private const float EsperaAposNascer = 0.1f;
     private const float SegundosAteZerarOPlacar = 20 * 60;
     private const float SegundosMostrandoOVencedor = 5;
+    private const float MinutosSeFaltarORelogio = 5;
 
     private int abatesCt, abatesTr;
     private bool partidaEncerrada;
@@ -73,7 +71,9 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
         partidaEncerrada = false;
         MostrarNoPlacar();
         fimDaPartida?.Kill();
-        fimDaPartida = AddTimer(Config.MinutosDaPartida * 60f, EncerrarPartida);
+        // O mesmo valor do relógio da tela, para os dois chegarem juntos ao fim.
+        var minutos = ConVar.Find("mp_roundtime")?.GetPrimitiveValue<float>() ?? MinutosSeFaltarORelogio;
+        fimDaPartida = AddTimer(minutos * 60f, EncerrarPartida);
     }
 
     private void MostrarNoPlacar()
