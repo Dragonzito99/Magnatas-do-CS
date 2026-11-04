@@ -49,5 +49,5 @@ export async function responderSimulador(dados: FormData) {
     },
     process.env.CPF_HMAC_CHAVE ?? '',
   );
-  redirect(desfecho === 'aprovada' ? '/salas' : `/verificacao?resultado=${desfecho}`);
+  redirect(desfecho === 'aprovada' ? '/bem-vindo' : `/verificacao?resultado=${desfecho}`);
 }

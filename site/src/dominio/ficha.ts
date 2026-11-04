@@ -21,7 +21,7 @@ export function situacaoDaGravacao(
 
 export const umaCasa = (valor: number) => Math.round(valor * 10) / 10;
 const duasCasas = (valor: number) => Math.round(valor * 100) / 100;
-const porcentagem = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 0);
+export const porcentagem = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 0);
 export const kdDe = (abates: number, mortes: number) => (mortes > 0 ? duasCasas(abates / mortes) : abates);
 
 async function dadosDaEquipe(bd: Bd, jogador: Usuario) {

@@ -192,6 +192,7 @@ textarea {
 
 .cartao-central {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   width: min(100%, 420px);
   padding: 28px;
@@ -1347,6 +1348,301 @@ textarea {
   }
 }
 
+/* Entrada de quem chega de fora */
+.entrada {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 40px 6vw;
+  background: radial-gradient(circle at 74% 42%, rgba(168, 85, 247, 0.55), transparent 42%),
+    radial-gradient(circle at 96% 100%, rgba(245, 179, 1, 0.16), transparent 34%), linear-gradient(180deg, #120721, var(--pagina));
+}
+
+.entrada-personagem {
+  position: absolute;
+  right: -10px;
+  bottom: -120px;
+  width: auto;
+  height: min(780px, 108vh);
+  filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.55));
+}
+
+.entrada-coluna {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: min(100%, 440px);
+}
+
+.entrada-coluna h1 {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.entrada-coluna > p {
+  color: #cbbfe0;
+}
+
+.entrada-coluna .botao {
+  width: 100%;
+}
+
+.entrada-coluna .botao-texto {
+  justify-self: start;
+}
+
+.entrada-coluna > p.aviso {
+  color: var(--tinta);
+}
+
+.entrada-rodape {
+  font-size: 12px;
+}
+
+.entrada-rodape b {
+  color: var(--ouro);
+  font-weight: 600;
+}
+
+/* O momento de virar magnata */
+.boas-vindas {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: radial-gradient(circle at 50% 18%, rgba(245, 179, 1, 0.2), transparent 34%),
+    radial-gradient(circle at 50% 60%, rgba(168, 85, 247, 0.42), transparent 56%), var(--pagina);
+}
+
+.boas-vindas-cartao {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(100%, 520px);
+  text-align: center;
+}
+
+.coroa {
+  width: 72px;
+  height: 54px;
+  fill: var(--ouro);
+  filter: drop-shadow(0 0 22px rgba(245, 179, 1, 0.55));
+}
+
+.boas-vindas-cartao > small {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--tinta-3);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.boas-vindas-cartao h1 {
+  color: #fff;
+  font-size: 38px;
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.boas-vindas-cartao h1 em {
+  display: block;
+  color: var(--ouro);
+  font-style: inherit;
+}
+
+.boas-vindas-cartao ul {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 8px 0 4px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.boas-vindas-cartao li {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: #cbbfe0;
+  font-size: 13px;
+}
+
+.boas-vindas-cartao li b {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.boas-vindas-cartao .botao {
+  width: 100%;
+}
+
+/* Ranking */
+.escolha-do-mes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-weight: 600;
+}
+
+.escolha-do-mes > span:not(.seta-do-mes) {
+  min-width: 138px;
+  text-align: center;
+}
+
+.seta-do-mes {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--roxo-fraco);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.seta-do-mes.apagada {
+  opacity: 0.35;
+}
+
+.podio {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.podio.com-1 {
+  grid-template-columns: minmax(0, 340px);
+  justify-content: center;
+}
+
+.podio.com-2 {
+  grid-template-columns: 1fr 1.2fr;
+}
+
+.lugar {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 12px 14px;
+  border-radius: 14px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  text-align: center;
+}
+
+.lugar.primeiro {
+  padding: 22px 12px 18px;
+  background: radial-gradient(circle at 50% 0%, rgba(245, 179, 1, 0.28), transparent 62%), linear-gradient(180deg, rgba(168, 85, 247, 0.24), var(--painel));
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.65), 0 0 22px rgba(245, 179, 1, 0.16);
+}
+
+.lugar small {
+  color: var(--tinta-3);
+  font-size: 11px;
+}
+
+.lugar strong {
+  color: var(--ouro);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.lugar .coroa {
+  width: 34px;
+  height: 26px;
+}
+
+.lugar .avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+.lugar.primeiro .avatar {
+  width: 68px;
+  height: 68px;
+  box-shadow: 0 0 0 2px var(--ouro), 0 0 18px rgba(245, 179, 1, 0.3);
+}
+
+.lugar .nome {
+  max-width: 100%;
+  font-weight: 600;
+}
+
+.lugar b {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.lugar.primeiro b {
+  color: var(--ouro);
+  font-size: 30px;
+}
+
+.tabela-ranking td:first-child {
+  padding-left: 20px;
+  color: var(--tinta-3);
+}
+
+.tabela-ranking thead th:first-child {
+  width: auto;
+  max-width: none;
+  text-align: right;
+}
+
+.tabela-ranking th:nth-child(2) {
+  width: 100%;
+  max-width: 0;
+  font-weight: 400;
+  text-align: left;
+}
+
+.minha-linha td,
+.minha-linha th {
+  background: var(--ouro-fraco);
+}
+
+.minha-linha td:first-child {
+  box-shadow: inset 3px 0 0 var(--ouro);
+}
+
+.rodape-do-ranking {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 20px;
+  border-top: 1px solid var(--linha);
+  color: var(--tinta-3);
+  font-size: 12px;
+}
+
+.rodape-do-ranking b {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
 /* Diversão */
 .modos {
   display: grid;
@@ -1418,6 +1714,43 @@ textarea {
 }
 
 @media (max-width: 860px) {
+  .entrada-personagem {
+    right: -90px;
+    bottom: -130px;
+    height: 430px;
+    opacity: 0.55;
+  }
+
+  .boas-vindas-cartao h1 {
+    font-size: 30px;
+  }
+
+  .so-computador {
+    display: none;
+  }
+
+  .escolha-do-mes {
+    justify-content: space-between;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .podio {
+    gap: 6px;
+  }
+
+  .lugar {
+    padding: 12px 6px 10px;
+  }
+
+  .lugar b {
+    font-size: 17px;
+  }
+
+  .lugar.primeiro b {
+    font-size: 22px;
+  }
+
   .numeros {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

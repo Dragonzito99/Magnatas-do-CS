@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { destinoPara } from '@/auth/destino';
 import { usuarioAtual } from '@/auth/sessao-atual';
@@ -17,10 +18,12 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
   const { erro } = await searchParams;
 
   return (
-    <div className="centro">
-      <main className="cartao-central">
+    <div className="entrada">
+      <Image className="entrada-personagem" src="/marca/personagem.webp" alt="" width={756} height={800} priority />
+      <main className="entrada-coluna">
         <LogoGrande />
-        <p>Só entra quem tem convite.</p>
+        <h1>Você foi chamado.</h1>
+        <p>Um clube fechado de CS. Só entra quem recebe o convite de um magnata.</p>
         {erro && ERROS[erro] && (
           <p role="alert" className="aviso">
             {ERROS[erro]}
@@ -35,8 +38,11 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
         </form>
         {/* Fica como <a>, porque o Link do Next pré-carregaria a rota e abriria a Steam sozinho. */}
         <a href="/api/auth/steam" className="botao-texto">
-          Já tenho conta
+          Já sou magnata
         </a>
+        <p className="entrada-rodape">
+          <b>Sem hack.</b> Quem é banido não volta, nem com outra conta.
+        </p>
       </main>
     </div>
   );
