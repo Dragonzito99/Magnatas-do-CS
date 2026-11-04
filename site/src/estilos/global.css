@@ -1,15 +1,22 @@
 :root {
-  --pagina: #efeff0;
-  --tinta: #18181b;
-  --tinta-2: #52525b;
-  --tinta-3: #71717a;
-  --linha: rgba(0, 0, 0, 0.08);
-  --painel: rgba(255, 255, 255, 0.68);
-  --escuro: #0d1013;
-  --verde: #16a34a;
-  --laranja: #fb923c;
-  --brilho: radial-gradient(circle at 80% 10%, rgba(249, 115, 22, 0.6), transparent 55%),
-    radial-gradient(circle at 10% 95%, rgba(20, 184, 166, 0.2), transparent 50%), var(--escuro);
+  color-scheme: dark;
+  --pagina: #07040d;
+  --tinta: #f3eefc;
+  --tinta-2: #ab9fc2;
+  --tinta-3: #ab9fc2;
+  --linha: rgba(168, 85, 247, 0.28);
+  --linha-forte: rgba(168, 85, 247, 0.6);
+  --painel: #120a1f;
+  --painel-2: #0c0716;
+  --escuro: #0c0716;
+  --roxo: #a855f7;
+  --roxo-fraco: rgba(168, 85, 247, 0.12);
+  --verde: #4ade80;
+  --ouro: #f5b301;
+  --ouro-fraco: rgba(245, 179, 1, 0.16);
+  --sobre-ouro: #1c1102;
+  --brilho: radial-gradient(circle at 80% 10%, rgba(168, 85, 247, 0.55), transparent 55%),
+    radial-gradient(circle at 10% 95%, rgba(245, 179, 1, 0.14), transparent 50%), var(--escuro);
 }
 
 * {
@@ -42,7 +49,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--laranja);
+  outline: 2px solid var(--ouro);
   outline-offset: 2px;
 }
 
@@ -64,9 +71,9 @@ h1 {
   gap: 10px;
   padding: 11px 20px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 9px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.01em;
   white-space: nowrap;
   cursor: pointer;
@@ -79,18 +86,18 @@ h1 {
   filter: brightness(1.03);
 }
 
-.botao.laranja {
-  color: var(--tinta);
-  background: radial-gradient(circle at 10% 0%, #fed7aa 0%, #fb923c 100%);
-  box-shadow: 0 12px 22px -10px rgba(248, 113, 22, 0.7), inset 0 4px 8px rgba(253, 230, 138, 0.9),
-    inset 0 -4px 8px rgba(249, 115, 22, 0.9);
+.botao.ouro {
+  color: var(--sobre-ouro);
+  background: linear-gradient(180deg, #ffcf33, #e88f00);
+  box-shadow: 0 0 16px rgba(245, 179, 1, 0.28);
+  font-weight: 700;
 }
 
 .botao.cinza {
-  color: #3f3f46;
-  background: linear-gradient(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.06));
-  box-shadow: 0 8px 16px -8px rgba(31, 41, 55, 0.28), 0 0 0 1px rgba(209, 213, 219, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  color: var(--tinta);
+  background: var(--roxo-fraco);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  font-weight: 500;
 }
 
 .botao.pequeno {
@@ -121,9 +128,13 @@ select,
 textarea {
   padding: 10px 14px;
   border: 0;
-  border-radius: 12px;
-  background: #fff;
+  border-radius: 9px;
+  background: var(--painel-2);
   box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+select option {
+  background: var(--painel);
 }
 
 input::placeholder,
@@ -154,10 +165,10 @@ textarea {
 /* Avisos e textos de apoio */
 .aviso {
   padding: 10px 14px;
-  border-radius: 12px;
-  background: #fff7ed;
-  box-shadow: inset 0 0 0 1px #fed7aa;
-  color: #9a3412;
+  border-radius: 9px;
+  background: var(--ouro-fraco);
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.55);
+  color: var(--tinta);
   font-size: 13px;
 }
 
@@ -184,9 +195,9 @@ textarea {
   gap: 16px;
   width: min(100%, 420px);
   padding: 28px;
-  border-radius: 24px;
-  background: var(--panel, var(--painel));
-  box-shadow: 0 0 0 1px var(--linha), 0 26px 46px -32px rgba(0, 0, 0, 0.35);
+  border-radius: 16px;
+  background: var(--painel);
+  box-shadow: 0 0 0 1px var(--linha-forte), 0 0 40px rgba(168, 85, 247, 0.22);
 }
 
 .cartao-central p {
@@ -194,7 +205,19 @@ textarea {
 }
 
 .cartao-central p.aviso {
-  color: #9a3412;
+  color: var(--tinta);
+}
+
+.logo-grande {
+  display: block;
+  width: 100%;
+  height: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent),
+    linear-gradient(to bottom, transparent, #000 8%, #000 90%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent),
+    linear-gradient(to bottom, transparent, #000 8%, #000 90%, transparent);
+  mask-composite: intersect;
 }
 
 .cartao-central .botao {
@@ -221,7 +244,7 @@ textarea {
   gap: 22px;
   padding: 20px 14px;
   border-right: 1px solid var(--linha);
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--painel-2);
 }
 
 .logo {
@@ -239,9 +262,8 @@ textarea {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  color: #fff;
-  background: radial-gradient(circle at 30% 20%, #a1a1aa, #3f3f46);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  color: var(--sobre-ouro);
+  background: var(--ouro);
   font-style: normal;
 }
 
@@ -279,12 +301,17 @@ textarea {
 }
 
 .item-menu:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--roxo-fraco);
 }
 
 .item-menu[aria-current='page'] {
-  color: #fff;
-  background: var(--escuro);
+  color: var(--tinta);
+  background: linear-gradient(90deg, rgba(245, 179, 1, 0.17), rgba(168, 85, 247, 0.14));
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.55), 0 0 14px rgba(245, 179, 1, 0.14);
+}
+
+.item-menu[aria-current='page'] .icone {
+  color: var(--ouro);
 }
 
 .rodape-lateral {
@@ -317,8 +344,8 @@ textarea {
   border-radius: 50%;
   flex: none;
   object-fit: cover;
-  background: #7c2d12;
-  color: #fff;
+  background: #2a1648;
+  color: var(--tinta);
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -342,7 +369,7 @@ textarea {
 
 /* Painéis e linhas */
 .painel {
-  border-radius: 22px;
+  border-radius: 14px;
   background: var(--painel);
   box-shadow: 0 0 0 1px var(--linha);
   overflow: hidden;
@@ -407,10 +434,10 @@ textarea {
   display: grid;
   gap: 8px;
   padding: 22px;
-  border-radius: 24px;
+  border-radius: 14px;
   color: #fff;
   background: var(--brilho);
-  box-shadow: 0 26px 46px -28px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px var(--linha);
 }
 
 .cartao-escuro h2 {
@@ -496,7 +523,7 @@ textarea {
 
 .fila-avatares .avatar {
   margin-left: -7px;
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--painel);
 }
 
 .fila-avatares .avatar:first-child {
@@ -505,7 +532,7 @@ textarea {
 
 .avatar.livre {
   background: transparent;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 0 1px var(--linha);
 }
 
 .ao-vivo {
@@ -528,7 +555,7 @@ textarea {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--verde);
 }
 
 .vidro {
@@ -611,7 +638,7 @@ textarea {
 }
 
 .barras .ligada {
-  background: #22c55e;
+  background: var(--ouro);
 }
 
 .jogadores {
@@ -691,8 +718,8 @@ textarea {
   margin-left: auto;
   padding: 1px 7px;
   border-radius: 999px;
-  color: var(--tinta);
-  background: var(--laranja);
+  color: var(--sobre-ouro);
+  background: var(--ouro);
   font-size: 11px;
   font-weight: 600;
 }
@@ -738,7 +765,7 @@ textarea {
 
 .numeros > div {
   padding: 14px 16px;
-  border-radius: 18px;
+  border-radius: 12px;
   background: var(--painel);
   box-shadow: 0 0 0 1px var(--linha);
 }
@@ -831,8 +858,8 @@ textarea {
   justify-content: flex-end;
   min-height: 120px;
   padding: 18px;
-  border-radius: 24px;
-  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 14px;
+  border: 1px dashed var(--linha-forte);
   color: var(--tinta-3);
 }
 

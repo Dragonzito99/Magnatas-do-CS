@@ -38,7 +38,7 @@ export default async function Mix({ searchParams }: { searchParams: Promise<{ er
             </form>
           ) : (
             <form action={entrar}>
-              <button type="submit" className="botao laranja pequeno">
+              <button type="submit" className="botao ouro pequeno">
                 Entrar no mix
               </button>
             </form>

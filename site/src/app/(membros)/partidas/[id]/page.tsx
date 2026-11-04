@@ -116,7 +116,7 @@ export default async function PaginaDaPartida({
         <p>{estado.explicacao}</p>
         <div className="acoes">
           {conexao && (
-            <a className="botao laranja" href={conexao.url}>
+            <a className="botao ouro" href={conexao.url}>
               {jogaNaPartida ? 'Conectar ao servidor' : 'Assistir como espectador'}
             </a>
           )}

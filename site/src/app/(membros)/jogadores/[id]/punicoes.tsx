@@ -33,7 +33,7 @@ function FormularioComMotivo({
       <input type="hidden" name="jogadorId" value={jogadorId} />
       {banimentoId && <input type="hidden" name="banimentoId" value={banimentoId} />}
       <textarea name="motivo" aria-label={dica} placeholder={dica} maxLength={500} required rows={2} />
-      <BotaoConfirmar mensagem={aviso} className={destaque ? 'botao laranja pequeno' : 'botao cinza pequeno'}>
+      <BotaoConfirmar mensagem={aviso} className={destaque ? 'botao ouro pequeno' : 'botao cinza pequeno'}>
         {rotulo}
       </BotaoConfirmar>
     </form>
@@ -118,7 +118,7 @@ export function Punicoes({
                 <input type="hidden" name="banimentoId" value={banimento.id} />
                 <BotaoConfirmar
                   mensagem={`Banir ${apelido} de vez? A conta e o CPF ficam bloqueados, e só volta com erro provado.`}
-                  className="botao laranja pequeno"
+                  className="botao ouro pequeno"
                 >
                   Confirmar banimento
                 </BotaoConfirmar>

@@ -47,7 +47,7 @@ export default async function Casos({ searchParams }: { searchParams: Promise<{ 
             </div>
             <form action={atender}>
               <input type="hidden" name="chamadoId" value={chamado.id} />
-              <button type="submit" className="botao laranja pequeno">
+              <button type="submit" className="botao ouro pequeno">
                 Atender
               </button>
             </form>

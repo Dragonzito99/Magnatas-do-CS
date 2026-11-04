@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { usuarioAtual } from '@/auth/sessao-atual';
 import { destinoPara } from '@/auth/destino';
+import { LogoGrande } from '../logo-grande';
 import { comecar } from './acoes';
 
 const RESULTADOS: Record<string, string> = {
@@ -16,6 +17,7 @@ export default async function Verificacao({ searchParams }: { searchParams: Prom
   return (
     <div className="centro">
       <main className="cartao-central">
+        <LogoGrande />
         <h1>Confirme sua identidade</h1>
         <p>Para manter a plataforma sem hack, cada pessoa pode ter só uma conta.</p>
         {resultado && RESULTADOS[resultado] && (
@@ -30,7 +32,7 @@ export default async function Verificacao({ searchParams }: { searchParams: Prom
           <li>Não guardamos a foto do seu documento.</li>
         </ul>
         <form action={comecar}>
-          <button type="submit" className="botao laranja">
+          <button type="submit" className="botao ouro">
             Começar verificação
           </button>
         </form>

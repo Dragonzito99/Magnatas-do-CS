@@ -27,7 +27,7 @@ export default async function Convites({ searchParams }: { searchParams: Promise
       <div className="topo-pagina">
         <h1>Convites</h1>
         <form action={gerar}>
-          <button type="submit" className="botao laranja pequeno">
+          <button type="submit" className="botao ouro pequeno">
             Gerar convite
           </button>
         </form>

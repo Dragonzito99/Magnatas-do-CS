@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { usuarioAtual } from '@/auth/sessao-atual';
 import { destinoPara } from '@/auth/destino';
 import { criarVerificador } from '@/verificacao/verificador';
+import { LogoGrande } from '../../logo-grande';
 import { responderSimulador } from '../acoes';
 
 export default async function Simulador({ searchParams }: { searchParams: Promise<{ ref?: string }> }) {
@@ -15,6 +16,7 @@ export default async function Simulador({ searchParams }: { searchParams: Promis
   return (
     <div className="centro">
       <main className="cartao-central">
+        <LogoGrande />
         <p role="note" className="aviso">
           Isto é um simulador de testes. Nenhum documento real é pedido ou guardado.
         </p>
@@ -24,7 +26,7 @@ export default async function Simulador({ searchParams }: { searchParams: Promis
           <label htmlFor="cpf">CPF de teste (opcional, para testar CPF repetido)</label>
           <input id="cpf" name="cpf" autoComplete="off" inputMode="numeric" placeholder="Gerado automaticamente" />
           <div className="acoes">
-            <button type="submit" name="escolha" value="aprovar" className="botao laranja">
+            <button type="submit" name="escolha" value="aprovar" className="botao ouro">
               Aprovar
             </button>
             <button type="submit" name="escolha" value="reprovar" className="botao cinza">

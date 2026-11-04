@@ -48,7 +48,7 @@ function Desafio({ desafio }: { desafio: DesafioDaSala }) {
           <>
             <form action={aceitar}>
               <input type="hidden" name="desafioId" value={desafio.id} />
-              <button type="submit" className="botao laranja pequeno">
+              <button type="submit" className="botao ouro pequeno">
                 Aceitar
               </button>
             </form>
@@ -152,7 +152,7 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
         {!minha && !partida && (
           <form action={criar} className="formulario-linha">
             <input name="nome" aria-label="Nome da sala" placeholder="Nome da sala" maxLength={TAMANHO_MAXIMO_DO_NOME} required />
-            <button type="submit" className="botao laranja pequeno">
+            <button type="submit" className="botao ouro pequeno">
               Criar sala
             </button>
           </form>

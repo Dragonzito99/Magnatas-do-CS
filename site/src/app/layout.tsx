@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--fonte-inter' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--fonte-mono' });
 
 export const metadata: Metadata = {
-  title: 'Magnatas',
+  title: 'Magnatas do CS',
   description: 'Plataforma fechada de CS2. Só entra quem tem convite.',
 };
 
