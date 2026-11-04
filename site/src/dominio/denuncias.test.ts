@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { auditoria, chamados, denuncias, partidas, usuarios, type Partida, type Usuario } from '@/bd/esquema';
+import { auditoria, banimentos, chamados, denuncias, partidas, usuarios, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import {
   AcusadoInvalido,
@@ -9,7 +9,9 @@ import {
   atenderChamado,
   ChamadoIndisponivel,
   chamarEquipe,
+  contagemDeCasos,
   contarCasos,
+  converterChamadosSemResposta,
   denunciar,
   DenunciaIndisponivel,
   DenunciaRepetida,
@@ -148,6 +150,77 @@ test('atender registra quem atendeu e libera os dados de conexão', async () => 
   expect(dadosDeConexao({ estado: 'ao_vivo' }, servidor, { papel: gm.papel, jogaNaPartida: false }, 'senha')).not.toBeNull();
   const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'atender_chamado'));
   expect(registro).toMatchObject({ atorId: gm.id });
+});
+
+test('atender chamado de partida que já acabou dá ChamadoIndisponivel', async () => {
+  const gm = await gmOnline();
+  const { chamado } = await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await bd.update(partidas).set({ estado: 'encerrada' }).where(eq(partidas.id, partida.id));
+  await expect(atenderChamado(bd, gm, chamado.id)).rejects.toThrow(ChamadoIndisponivel);
+});
+
+test.each([['encerrada'], ['cancelada']] as const)('chamado aberto de partida %s vira denúncia a definir', async (estado) => {
+  await gmOnline();
+  const { chamado } = await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await bd.update(partidas).set({ estado }).where(eq(partidas.id, partida.id));
+  await converterChamadosSemResposta(bd);
+  const [recarregado] = await bd.select().from(chamados).where(eq(chamados.id, chamado.id));
+  expect(recarregado.estado).toBe('virou_denuncia');
+  const [criada] = await bd.select().from(denuncias);
+  expect(criada).toMatchObject({
+    partidaId: partida.id,
+    denuncianteId: time1[0].id,
+    acusadoId: null,
+    motivo: 'Chamado durante a partida, sem resposta da equipe.',
+  });
+});
+
+test('chamado de partida em andamento continua aberto', async () => {
+  await gmOnline();
+  const { chamado } = await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await converterChamadosSemResposta(bd);
+  const [recarregado] = await bd.select().from(chamados).where(eq(chamados.id, chamado.id));
+  expect(recarregado.estado).toBe('aberto');
+  expect(await bd.select().from(denuncias)).toEqual([]);
+});
+
+test('chamado atendido não vira denúncia quando a partida acaba', async () => {
+  const gm = await gmOnline();
+  const { chamado } = await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await atenderChamado(bd, gm, chamado.id);
+  await bd.update(partidas).set({ estado: 'encerrada' }).where(eq(partidas.id, partida.id));
+  await converterChamadosSemResposta(bd);
+  expect(await bd.select().from(denuncias)).toEqual([]);
+});
+
+test('converter duas vezes não cria outra denúncia', async () => {
+  await gmOnline();
+  await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await bd.update(partidas).set({ estado: 'encerrada' }).where(eq(partidas.id, partida.id));
+  await converterChamadosSemResposta(bd);
+  await converterChamadosSemResposta(bd);
+  expect(await bd.select().from(denuncias)).toHaveLength(1);
+});
+
+test('quem já tem denúncia a definir nessa partida não ganha outra', async () => {
+  await bd.insert(denuncias).values({ partidaId: partida.id, denuncianteId: time1[0].id, motivo: 'Chamado durante a partida, sem equipe online.' });
+  await gmOnline();
+  await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await bd.update(partidas).set({ estado: 'encerrada' }).where(eq(partidas.id, partida.id));
+  await converterChamadosSemResposta(bd);
+  expect(await bd.select().from(denuncias)).toHaveLength(1);
+  const [recarregado] = await bd.select().from(chamados);
+  expect(recarregado.estado).toBe('virou_denuncia');
+});
+
+test('contagemDeCasos separa chamados, denúncias e propostas, e contarCasos soma tudo', async () => {
+  const gm = await gmOnline();
+  await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await denunciar(bd, time1[1], { partidaId: partida.id, acusadoId: time2[0].id, motivo: 'x' });
+  await denunciar(bd, time1[2], { partidaId: partida.id, acusadoId: time2[0].id, motivo: 'y' });
+  await bd.insert(banimentos).values({ usuarioId: time2[1].id, motivo: 'z', propostoPor: gm.id });
+  expect(await contagemDeCasos(bd, gm)).toEqual({ chamados: 1, denuncias: 2, propostas: 1 });
+  expect(await contarCasos(bd, gm)).toBe(4);
 });
 
 test('dois GMs atendendo: só o primeiro fica', async () => {

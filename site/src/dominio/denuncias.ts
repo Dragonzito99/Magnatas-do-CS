@@ -48,11 +48,12 @@ export class ChamadoIndisponivel extends Error {
   }
 }
 
-const MAXIMO_DO_TEXTO = 500;
+export const MAXIMO_DO_TEXTO = 500;
 const TEMPO_ONLINE_MS = 2 * 60_000;
 const INTERVALO_DO_VISTO_MS = 30_000;
-const ESTADOS_COM_CHAMADO: Partida['estado'][] = ['aguardando_jogadores', 'ao_vivo'];
+export const ESTADOS_COM_CHAMADO: Partida['estado'][] = ['aguardando_jogadores', 'ao_vivo'];
 const MOTIVO_DO_CHAMADO_SEM_EQUIPE = 'Chamado durante a partida, sem equipe online.';
+const MOTIVO_DO_CHAMADO_SEM_RESPOSTA = 'Chamado durante a partida, sem resposta da equipe.';
 
 async function idsDosJogadores(tx: Transacao, partidaId: string): Promise<string[]> {
   const linhas = await tx
@@ -141,6 +142,9 @@ export async function atenderChamado(bd: Bd, gm: Pick<Usuario, 'id'>, chamadoId:
     if (!chamado) throw new ChamadoIndisponivel();
     // Quem joga a partida não pode fiscalizá-la.
     if ((await idsDosJogadores(tx, chamado.partidaId)).includes(gm.id)) throw new SemPermissao();
+    // Com a partida acabada não há o que assistir, e a varredura transforma o chamado em denúncia.
+    const [partida] = await tx.select({ estado: partidas.estado }).from(partidas).where(eq(partidas.id, chamado.partidaId));
+    if (!partida || !ESTADOS_COM_CHAMADO.includes(partida.estado)) throw new ChamadoIndisponivel();
     const [atendido] = await tx
       .update(chamados)
       .set({ estado: 'atendido', atendidoPor: gm.id })
@@ -216,12 +220,55 @@ export async function listarCasos(bd: Bd, leitor: Pick<Usuario, 'id'>) {
   return { chamados: listaDeChamados, denuncias: listaDeDenuncias };
 }
 
-export async function contarCasos(bd: Bd, leitor: Pick<Usuario, 'id'>): Promise<number> {
+/** Quando a partida acaba sem ninguém atender, a reclamação vira denúncia em vez de sumir. */
+export async function converterChamadosSemResposta(bd: Bd): Promise<void> {
+  const parados = await bd
+    .select({ id: chamados.id })
+    .from(chamados)
+    .innerJoin(partidas, eq(chamados.partidaId, partidas.id))
+    .where(and(eq(chamados.estado, 'aberto'), inArray(partidas.estado, ['encerrada', 'cancelada'])));
+  for (const { id } of parados) {
+    try {
+      await bd.transaction(async (tx) => {
+        const [chamado] = await tx
+          .update(chamados)
+          .set({ estado: 'virou_denuncia' })
+          .where(and(eq(chamados.id, id), eq(chamados.estado, 'aberto')))
+          .returning();
+        if (!chamado) return;
+        const [jaTem] = await tx
+          .select({ id: denuncias.id })
+          .from(denuncias)
+          .where(
+            and(
+              eq(denuncias.partidaId, chamado.partidaId),
+              eq(denuncias.denuncianteId, chamado.chamadoPor),
+              isNull(denuncias.acusadoId),
+              ne(denuncias.estado, 'encerrada'),
+            ),
+          )
+          .limit(1);
+        if (!jaTem) {
+          await tx.insert(denuncias).values({ partidaId: chamado.partidaId, denuncianteId: chamado.chamadoPor, motivo: MOTIVO_DO_CHAMADO_SEM_RESPOSTA });
+        }
+      });
+    } catch (erro) {
+      console.error(`Não foi possível converter o chamado ${id} em denúncia:`, erro);
+    }
+  }
+}
+
+export async function contagemDeCasos(bd: Bd, leitor: Pick<Usuario, 'id'>): Promise<{ chamados: number; denuncias: number; propostas: number }> {
   await exigirPermissao(bd, leitor, 'moderar');
   const [{ abertos }] = await bd.select({ abertos: count() }).from(chamados).where(eq(chamados.estado, 'aberto'));
   const [{ pendentes }] = await bd.select({ pendentes: count() }).from(denuncias).where(ne(denuncias.estado, 'encerrada'));
   const [{ propostas }] = await bd.select({ propostas: count() }).from(banimentos).where(eq(banimentos.estado, 'proposto'));
-  return abertos + pendentes + propostas;
+  return { chamados: abertos, denuncias: pendentes, propostas };
+}
+
+export async function contarCasos(bd: Bd, leitor: Pick<Usuario, 'id'>): Promise<number> {
+  const contagem = await contagemDeCasos(bd, leitor);
+  return contagem.chamados + contagem.denuncias + contagem.propostas;
 }
 
 /** Escreve no máximo uma vez a cada 30 segundos, porque as páginas se atualizam sozinhas. */

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
+import { banimentos, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
 import { fichaDoJogador } from './ficha';
@@ -167,6 +167,37 @@ test('gravação de partida de jogador banido fica', async () => {
   await bd.update(usuarios).set({ estado: 'banido' }).where(eq(usuarios.id, jogador.id));
   await varrer(bd, controladorFalso(), pasta, AGORA);
   expect(existsSync(caminho)).toBe(true);
+});
+
+test('gravação vencida fica se um jogador da partida está suspenso', async () => {
+  const { caminho } = await gravacaoAntiga(await partidaEncerrada());
+  await bd.update(usuarios).set({ estado: 'suspenso' }).where(eq(usuarios.id, jogador.id));
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect(existsSync(caminho)).toBe(true);
+});
+
+test('gravação vencida fica se um jogador da partida tem proposta de banimento aberta', async () => {
+  const { caminho } = await gravacaoAntiga(await partidaEncerrada());
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  await bd.insert(banimentos).values({ usuarioId: jogador.id, motivo: 'x', propostoPor: gm.id });
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect(existsSync(caminho)).toBe(true);
+});
+
+test('gravação vencida é apagada depois que a proposta é recusada e o jogador está ativo', async () => {
+  const { caminho } = await gravacaoAntiga(await partidaEncerrada());
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  await bd.insert(banimentos).values({ usuarioId: jogador.id, motivo: 'x', propostoPor: gm.id, estado: 'recusado' });
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect(existsSync(caminho)).toBe(false);
+});
+
+test('varrer transforma chamado sem resposta em denúncia', async () => {
+  const partida = await partidaEncerrada();
+  await bd.insert(chamados).values({ partidaId: partida.id, chamadoPor: jogador.id });
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  const [denuncia] = await bd.select().from(denuncias);
+  expect(denuncia).toMatchObject({ partidaId: partida.id, denuncianteId: jogador.id, acusadoId: null });
 });
 
 test('rodar duas vezes seguidas não muda o resultado', async () => {

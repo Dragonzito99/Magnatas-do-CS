@@ -2,8 +2,9 @@ import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { and, eq, inArray, isNull, lte, ne, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { denuncias, desafios, gravacoes, partidaJogadores, partidas, servidores, usuarios, type Partida } from '@/bd/esquema';
+import { banimentos, denuncias, desafios, gravacoes, partidaJogadores, partidas, servidores, usuarios, type Partida } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
+import { converterChamadosSemResposta } from './denuncias';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
 
 const MINUTO_MS = 60_000;
@@ -69,7 +70,7 @@ async function cancelarPartidasAbandonadas(bd: Bd, controlador: ControladorServi
   for (const partida of abandonadas) await cancelarPartida(bd, controlador, partida);
 }
 
-/** Fica guardada a gravação com caso aberto, e a de quem foi banido, porque é a prova do banimento. */
+/** Fica guardada a gravação com caso aberto, e a de quem foi punido ou tem proposta aberta, porque é a prova. */
 async function gravacaoProtegida(bd: Bd, partidaId: string): Promise<boolean> {
   const jogadores = (
     await bd.select({ id: partidaJogadores.usuarioId }).from(partidaJogadores).where(eq(partidaJogadores.partidaId, partidaId))
@@ -80,12 +81,18 @@ async function gravacaoProtegida(bd: Bd, partidaId: string): Promise<boolean> {
     .where(and(ne(denuncias.estado, 'encerrada'), or(eq(denuncias.partidaId, partidaId), inArray(denuncias.acusadoId, jogadores))))
     .limit(1);
   if (emAberto) return true;
-  const [banido] = await bd
+  const [punido] = await bd
     .select({ id: usuarios.id })
     .from(usuarios)
-    .where(and(eq(usuarios.estado, 'banido'), inArray(usuarios.id, jogadores)))
+    .where(and(inArray(usuarios.estado, ['banido', 'suspenso']), inArray(usuarios.id, jogadores)))
     .limit(1);
-  return Boolean(banido);
+  if (punido) return true;
+  const [proposta] = await bd
+    .select({ id: banimentos.id })
+    .from(banimentos)
+    .where(and(eq(banimentos.estado, 'proposto'), inArray(banimentos.usuarioId, jogadores)))
+    .limit(1);
+  return Boolean(proposta);
 }
 
 async function apagarGravacoesVencidas(bd: Bd, pasta: string | undefined, agora: Date): Promise<void> {
@@ -107,6 +114,8 @@ export async function varrer(bd: Bd, controlador: ControladorServidor, pasta: st
     () => reabrirCarregamentosPresos(bd, agora),
     () => cancelarPartidasAbandonadas(bd, controlador, agora),
     () => alocarServidores(bd, controlador),
+    // Vem antes de apagar, porque a denúncia nova protege a gravação da partida.
+    () => converterChamadosSemResposta(bd),
     () => apagarGravacoesVencidas(bd, pasta, agora),
   ];
   for (const etapa of etapas) {
