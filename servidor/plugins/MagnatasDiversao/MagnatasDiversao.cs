@@ -21,7 +21,7 @@ public class ConfiguracaoDoModo : BasePluginConfig
     [JsonPropertyName("ArmaPrincipal")]
     public string ArmaPrincipal { get; set; } = "";
 
-    /// <summary>cada_um ou equipe.</summary>
+    /// <summary>cada_um, equipe ou fantasma.</summary>
     [JsonPropertyName("Regra")]
     public string Regra { get; set; } = "cada_um";
 
@@ -73,7 +73,7 @@ public class JogadorEnviado
 /// O que o CS2 não faz sozinho nos servidores da aba Diversão: entregar a arma principal, zerar o placar
 /// sem parar o jogo, decidir a partida por abates, informar o resultado ao site e dizer quem está conectado.
 /// </summary>
-public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
+public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
 {
     private const float EsperaAposNascer = 0.1f;
     private const float SegundosAteZerarOPlacar = 20 * 60;
@@ -99,7 +99,7 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.1.0";
+    public override string ModuleVersion => "1.2.0";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -121,6 +121,10 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
         else if (Config.Regra == "equipe" && hotReload)
         {
             ComecarPartida();
+        }
+        else if (Config.Regra == "fantasma")
+        {
+            LigarFantasma();
         }
     }
 
@@ -232,7 +236,7 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
                     abates = par.Value.Abates,
                     minutos = Math.Round((agora - par.Value.Desde).TotalMinutes, 2),
                     ateOFim = pessoa != null,
-                    time = Config.Regra == "equipe" ? time : null,
+                    time = Config.Regra != "cada_um" ? time : null,
                 };
             })
             .ToList();
@@ -296,6 +300,7 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
         var regras = RegrasDoJogo();
         if (regras == null || regras.WarmupPeriod) return HookResult.Continue;
         if (Config.Regra == "equipe") ComecarPartida();
+        else if (Config.Regra == "fantasma") ComecarRodadaDoFantasma(regras);
         else ZerarContagem();
         return HookResult.Continue;
     }
@@ -308,9 +313,10 @@ public class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoModo>
         var alvo = evento.Userid;
         if (quem == null || alvo == null || quem == alvo) return HookResult.Continue;
 
+        if (Config.Regra != "cada_um" && quem.Team == alvo.Team) return HookResult.Continue;
+
         if (Config.Regra == "equipe")
         {
-            if (quem.Team == alvo.Team) return HookResult.Continue;
             if (quem.Team == CsTeam.CounterTerrorist) abatesCt++;
             else if (quem.Team == CsTeam.Terrorist) abatesTr++;
             MostrarNoPlacar();

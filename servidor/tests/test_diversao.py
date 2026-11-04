@@ -8,6 +8,7 @@ INICIAR = (RAIZ / "scripts" / "iniciar_diversao.sh").read_text(encoding="utf-8")
 INSTALADOR = (RAIZ / "scripts" / "instalar_cs2.sh").read_text(encoding="utf-8")
 COMPILAR = (RAIZ / "scripts" / "compilar_plugin.sh").read_text(encoding="utf-8")
 CODIGO_DO_PLUGIN = (RAIZ / "plugins" / "MagnatasDiversao" / "MagnatasDiversao.cs").read_text(encoding="utf-8")
+CODIGO_DO_FANTASMA = (RAIZ / "plugins" / "MagnatasDiversao" / "Fantasma.cs").read_text(encoding="utf-8")
 CADA_UM_POR_SI = ["ak-desert", "pistola", "awp"]
 SERVIDORES = [*CADA_UM_POR_SI, "equipe"]
 
@@ -454,3 +455,45 @@ def test_instalador_leva_os_servidores():
 def test_instalador_compila_o_plugin():
     assert "compilar_plugin.sh" in INSTALADOR
     assert (RAIZ / "scripts" / "compilar_plugin.sh").is_file()
+
+
+def test_fantasma_so_liga_na_regra_dele():
+    assert 'Config.Regra == "fantasma"' in CODIGO_DO_PLUGIN
+    assert "LigarFantasma()" in CODIGO_DO_PLUGIN
+
+
+def test_fantasma_nao_zera_a_contagem_a_cada_rodada():
+    # A partida tem 13 rodadas: zerar em todas perderia os abates e o XP.
+    assert "TotalRoundsPlayed == 0" in CODIGO_DO_FANTASMA
+    assert 'Config.Regra == "fantasma"' in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("AoComecarRodada"):]
+
+
+def test_fantasma_fecha_a_partida_uma_vez_quando_o_jogo_acaba():
+    assert "EventCsWinPanelMatch" in CODIGO_DO_FANTASMA
+    assert "partidaEncerrada" in CODIGO_DO_FANTASMA
+    assert "FecharPartida(" in CODIGO_DO_FANTASMA
+
+
+def test_fantasma_decide_o_vencedor_pelas_rodadas_dos_times():
+    assert "CCSTeam" in CODIGO_DO_FANTASMA
+    assert '"ct"' in CODIGO_DO_FANTASMA and '"tr"' in CODIGO_DO_FANTASMA and '"empate"' in CODIGO_DO_FANTASMA
+    assert "venceu por" in CODIGO_DO_FANTASMA
+
+
+def test_fantasma_envia_o_time_de_cada_conta():
+    assert 'Config.Regra != "cada_um" ? time : null' in CODIGO_DO_PLUGIN
+
+
+def test_abate_de_colega_nao_conta_nos_modos_com_time():
+    assert 'Config.Regra != "cada_um" && quem.Team == alvo.Team' in CODIGO_DO_PLUGIN
+
+
+def test_placar_de_abates_continua_so_no_equipe():
+    # No Fantasma, o placar é de rodadas e quem cuida dele é o jogo.
+    trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("AoMorrer"):]
+    assert trecho.index('Config.Regra == "equipe"') < trecho.index("MostrarNoPlacar()")
+
+
+def test_fantasma_recomeca_quando_a_ultima_pessoa_sai():
+    assert "EventPlayerDisconnect" in CODIGO_DO_FANTASMA
+    assert "mp_restartgame 1" in CODIGO_DO_FANTASMA
