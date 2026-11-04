@@ -1,9 +1,11 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
 import { contarCasos } from '@/dominio/denuncias';
-import { Avatar } from './avatar';
+import { enderecoDoDiscord } from '@/dominio/discord';
+import { Banner } from './banner';
 import { Menu } from './menu';
 
 export default async function LayoutDeMembros({ children }: { children: React.ReactNode }) {
@@ -15,35 +17,21 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
 
   return (
     <div className="app">
-      <aside className="lateral">
-        <div className="logo">
-          <i aria-hidden="true">
-            <svg className="icone" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="8" />
-              <path d="M12 2v5" />
-              <path d="M12 17v5" />
-              <path d="M2 12h5" />
-              <path d="M17 12h5" />
+      <Banner usuario={usuario} discord={enderecoDoDiscord(process.env.DISCORD_URL)} />
+      <div className="app-corpo">
+        <aside className="lateral">
+          <Menu mostrarEquipe={mostrarEquipe} casos={casos} />
+          <Link href="/convites" className="seja-magnata">
+            <svg viewBox="0 0 24 18" aria-hidden="true">
+              <path d="M2 16 1 4l6 5 5-8 5 8 6-5-1 12z" />
             </svg>
-          </i>
-          <div>
-            MAGNA<span>TAS</span>
-          </div>
-        </div>
-        <Menu mostrarEquipe={mostrarEquipe} casos={casos} />
-        <div className="rodape-lateral">
-          <div className="perfil">
-            <Avatar usuario={usuario} />
-            <b>{usuario.apelido}</b>
-          </div>
-          <form action="/api/auth/sair" method="post">
-            <button type="submit" className="botao-texto">
-              Sair
-            </button>
-          </form>
-        </div>
-      </aside>
-      <main className="conteudo">{children}</main>
+            <span>
+              Seja um <em>Magnata!</em>
+            </span>
+          </Link>
+        </aside>
+        <main className="conteudo">{children}</main>
+      </div>
     </div>
   );
 }

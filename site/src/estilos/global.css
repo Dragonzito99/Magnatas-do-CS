@@ -233,43 +233,213 @@ textarea {
 
 /* Estrutura com menu lateral */
 .app {
-  display: grid;
-  grid-template-columns: 224px minmax(0, 1fr);
   min-height: 100vh;
 }
 
+.app-corpo {
+  display: grid;
+  grid-template-columns: 208px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+}
+
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Banner e barra do topo */
+.banner {
+  position: relative;
+  z-index: 10;
+  height: 196px;
+  border-bottom: 1px solid var(--linha-forte);
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.28);
+  background: radial-gradient(circle at 62% 55%, rgba(168, 85, 247, 0.62), transparent 38%),
+    radial-gradient(circle at 92% 90%, rgba(245, 179, 1, 0.14), transparent 30%), linear-gradient(180deg, #130823, #0a0512);
+}
+
+.banner-arte {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.banner-personagem {
+  position: absolute;
+  left: max(50%, 470px);
+  top: -14px;
+  width: auto;
+  height: 318px;
+  transform: translateX(-34%);
+  filter: drop-shadow(0 0 26px rgba(168, 85, 247, 0.55));
+}
+
+.banner-logo {
+  position: absolute;
+  left: 12px;
+  top: 4px;
+  display: block;
+  width: 456px;
+}
+
+.banner-frase {
+  position: absolute;
+  left: 110px;
+  top: 158px;
+  color: #e9def8;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  white-space: nowrap;
+}
+
+.banner-frase b {
+  margin: 0 7px;
+  color: var(--ouro);
+  font-weight: 600;
+}
+
+.barra-topo {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.botao-barra,
+.botao-conta {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  color: #e9def8;
+  background: rgba(12, 7, 22, 0.78);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  cursor: pointer;
+}
+
+.botao-barra {
+  justify-content: center;
+  width: 34px;
+}
+
+.botao-barra.desativado {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.botao-conta {
+  gap: 8px;
+  max-width: 240px;
+  padding: 0 8px 0 5px;
+  font-weight: 500;
+}
+
+.botao-conta .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  font-size: 9px;
+}
+
+.conta-nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-suspenso {
+  position: relative;
+}
+
+.suspenso {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  display: grid;
+  gap: 2px;
+  min-width: 170px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--painel);
+  box-shadow: 0 0 0 1px var(--linha-forte), 0 14px 30px rgba(0, 0, 0, 0.55);
+}
+
+.item-suspenso {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--tinta);
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.item-suspenso:hover {
+  background: var(--roxo-fraco);
+}
+
+/* Menu lateral */
 .lateral {
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  padding: 20px 14px;
-  border-right: 1px solid var(--linha);
-  background: var(--painel-2);
+  gap: 14px;
+  min-height: calc(100vh - 224px);
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
+.item-menu.casa {
+  margin-bottom: 6px;
+  color: var(--ouro);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: var(--roxo-fraco);
+  box-shadow: inset 0 0 0 1px var(--linha);
 }
 
-.logo i {
+.seja-magnata {
   display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  color: var(--sobre-ouro);
-  background: var(--ouro);
-  font-style: normal;
+  justify-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding: 16px 10px 14px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.55), transparent 70%), #160b28;
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+  color: #fff;
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
-.logo span {
-  color: var(--tinta-3);
-  font-weight: 400;
+.seja-magnata svg {
+  width: 34px;
+  height: 26px;
+  fill: var(--ouro);
+}
+
+.seja-magnata em {
+  color: var(--ouro);
+  font-style: inherit;
 }
 
 .icone {
@@ -314,28 +484,6 @@ textarea {
   color: var(--ouro);
 }
 
-.rodape-lateral {
-  display: grid;
-  gap: 10px;
-  margin-top: auto;
-}
-
-.perfil {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  font-size: 13px;
-  color: var(--tinta-2);
-}
-
-.perfil b {
-  overflow: hidden;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .avatar {
   display: grid;
   place-items: center;
@@ -354,9 +502,8 @@ textarea {
 .conteudo {
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
-  padding: 22px 26px 30px;
 }
 
 .topo-pagina {
@@ -726,6 +873,7 @@ textarea {
 
 .lista-online {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 2px 20px 16px;
 }
@@ -894,17 +1042,46 @@ textarea {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .app {
+  .banner {
+    height: 132px;
+  }
+
+  .banner-logo {
+    left: 2px;
+    top: auto;
+    bottom: 2px;
+    width: 246px;
+  }
+
+  .banner-frase,
+  .seja-magnata,
+  .item-menu.casa,
+  .conta-nome {
+    display: none;
+  }
+
+  .banner-personagem {
+    left: auto;
+    right: -34px;
+    top: 8px;
+    height: 250px;
+    transform: none;
+  }
+
+  .barra-topo {
+    top: 8px;
+    right: 8px;
+  }
+
+  .app-corpo {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    min-height: 100vh;
+    gap: 10px;
+    padding: 10px;
   }
 
   .lateral {
-    gap: 12px;
-    padding: 12px 16px;
-    border-right: 0;
-    border-bottom: 1px solid var(--linha);
+    min-height: 0;
+    padding: 6px;
   }
 
   .menu {
@@ -924,17 +1101,6 @@ textarea {
 
   .item-menu .icone {
     display: none;
-  }
-
-  .rodape-lateral {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 0;
-  }
-
-  .conteudo {
-    padding: 16px;
   }
 
   .linha {
