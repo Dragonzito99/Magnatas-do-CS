@@ -335,7 +335,11 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         if (jogador != null) Registrar(jogador);
         // No momento do evento, o jogo ainda está montando o jogador e as armas dele.
         AddTimer(EsperaAposNascer, () => EntregarArma(jogador));
-        if (Config.Regra == "fantasma") AddTimer(EsperaAposNascer, () => DeixarSoAFaca(jogador));
+        if (Config.Regra == "fantasma")
+        {
+            AddTimer(EsperaAposNascer, () => DeixarSoAFaca(jogador));
+            AddTimer(EsperaAposNascer, () => CompletarKitDoCt(jogador));
+        }
         return HookResult.Continue;
     }
 

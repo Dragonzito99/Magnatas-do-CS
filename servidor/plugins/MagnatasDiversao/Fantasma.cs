@@ -22,6 +22,9 @@ public partial class ModoDeDiversao
     private const float IntervaloDaRespiracao = 2.5f;
     private const int LimiteDeSonsGuardados = 200;
     private const string SomDaRespiracao = "CrossFire_ghost_Breath01";
+    private const ushort NumeroDaM4Silenciada = 60;
+    private const ushort NumeroDaUsp = 61;
+    private static readonly string[] GranadasDoCt = { "weapon_smokegrenade", "weapon_flashbang", "weapon_hegrenade" };
 
     // CrossFire_ghost_Breath01, 02 e 03, tocados pelo script do mapa. Se o autor do mapa renomear os sons, a respiração volta a ficar presa ao corpo.
     private static readonly HashSet<uint> Respiracao = new() { 2454124772, 2525673644, 3258385741 };
@@ -161,6 +164,33 @@ public partial class ModoDeDiversao
         if (tirou) jogador.ExecuteClientCommand("slot3");
     }
 
+    /// <summary>
+    /// A configuração não basta: o jogo pode dar a pistola do inventário no lugar da USP, e quem sobrevive
+    /// não recebe de volta a granada que usou.
+    /// </summary>
+    private void CompletarKitDoCt(CCSPlayerController? jogador)
+    {
+        if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }) return;
+        var armas = jogador.PlayerPawn.Value?.WeaponServices?.MyWeapons;
+        if (armas == null) return;
+
+        GarantirArma(jogador, armas, "weapon_m4a1", NumeroDaM4Silenciada, "weapon_m4a1_silencer");
+        GarantirArma(jogador, armas, "weapon_hkp2000", NumeroDaUsp, "weapon_usp_silencer");
+        foreach (var granada in GranadasDoCt)
+        {
+            if (!armas.Any(item => item.Value?.DesignerName == granada)) jogador.GiveNamedItem(granada);
+        }
+    }
+
+    /// <summary>O nome interno da M4 silenciada e da USP é igual ao da M4A4 e da P2000. Só o número do item separa.</summary>
+    private static void GarantirArma(CCSPlayerController jogador, IEnumerable<CHandle<CBasePlayerWeapon>> armas, string nomeInterno, ushort numero, string nomeParaEntregar)
+    {
+        var atual = armas.Select(item => item.Value).FirstOrDefault(arma => arma?.DesignerName == nomeInterno);
+        if (atual?.AttributeManager.Item.ItemDefinitionIndex == numero) return;
+        atual?.Remove();
+        jogador.GiveNamedItem(nomeParaEntregar);
+    }
+
     private void SortearKitDeDefuse()
     {
         if (RegrasDoJogo()?.WarmupPeriod != false) return;
@@ -169,19 +199,23 @@ public partial class ModoDeDiversao
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.CounterTerrorist }))
         {
             // Quem sobreviveu ainda carrega o kit da rodada anterior.
-            var corpo = jogador.PlayerPawn.Value;
-            if (corpo?.ItemServices != null)
-            {
-                new CCSPlayer_ItemServices(corpo.ItemServices.Handle).HasDefuser = false;
-                Utilities.SetStateChanged(corpo, "CBasePlayerPawn", "m_pItemServices");
-            }
+            DefinirKit(jogador, false);
             if (jogador.PawnIsAlive) vivos.Add(jogador);
         }
         if (vivos.Count == 0) return;
 
         var sorteado = vivos[Random.Shared.Next(vivos.Count)];
-        sorteado.GiveNamedItem("item_defuser");
+        DefinirKit(sorteado, true);
         sorteado.PrintToChat(" [Magnatas] Você recebeu o kit de defuse nesta rodada.");
+    }
+
+    /// <summary>Marcado direto no jogador: entregue como item, o kit demora a chegar e às vezes não chega.</summary>
+    private static void DefinirKit(CCSPlayerController jogador, bool temKit)
+    {
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo?.ItemServices == null) return;
+        new CCSPlayer_ItemServices(corpo.ItemServices.Handle).HasDefuser = temKit;
+        Utilities.SetStateChanged(corpo, "CBasePlayerPawn", "m_pItemServices");
     }
 
     [GameEventHandler]
@@ -245,7 +279,8 @@ public partial class ModoDeDiversao
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true }))
         {
             var corpo = jogador.PlayerPawn.Value;
-            var armas = corpo?.WeaponServices?.MyWeapons.Select(item => item.Value?.DesignerName ?? "?") ?? Enumerable.Empty<string>();
+            // O nome interno da M4 silenciada e da USP é igual ao da M4A4 e da P2000. Só o número do item separa.
+            var armas = corpo?.WeaponServices?.MyWeapons.Select(item => $"{item.Value?.DesignerName ?? "?"}:{item.Value?.AttributeManager.Item.ItemDefinitionIndex}") ?? Enumerable.Empty<string>();
             var kit = corpo?.ItemServices != null && new CCSPlayer_ItemServices(corpo.ItemServices.Handle).HasDefuser;
             comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} kit={kit} armas={string.Join(",", armas)}");
         }

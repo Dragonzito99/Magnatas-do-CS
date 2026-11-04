@@ -518,10 +518,16 @@ def test_fantasma_fica_so_com_faca_ao_nascer():
 def test_um_kit_de_defuse_sorteado_por_rodada():
     trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void SortearKitDeDefuse"):]
     # Quem sobreviveu ainda carrega o kit da rodada anterior.
-    assert trecho.index("HasDefuser = false") < trecho.index('GiveNamedItem("item_defuser")')
-    assert trecho.count('GiveNamedItem("item_defuser")') == 1
+    assert trecho.index("DefinirKit(jogador, false)") < trecho.index("DefinirKit(sorteado, true)")
+    assert trecho.count("DefinirKit(sorteado, true)") == 1
     assert "Random.Shared" in trecho
     assert "PawnIsAlive" in trecho
+
+
+def test_o_kit_nao_depende_de_pegar_no_chao():
+    # Entregue como item, o kit demorava a chegar, e em uma rodada de 13 não chegou.
+    assert "item_defuser" not in CODIGO_DO_FANTASMA
+    assert "HasDefuser = temKit" in CODIGO_DO_FANTASMA
 
 
 def test_sem_ct_vivo_o_sorteio_nao_quebra():
@@ -646,3 +652,30 @@ def test_fantasma_oito_de_cada_lado():
     assert valor("mp_autoteambalance", "fantasma") == "1"
     assert valor("mp_limitteams", "fantasma") == "1"
     assert valor("mp_friendlyfire", "fantasma") == "0"
+
+
+def test_ct_fica_com_a_usp_e_a_m4_silenciadas():
+    # O jogo dá a pistola do inventário, e o nome interno da USP é igual ao da P2000. Só o número do item separa.
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void CompletarKitDoCt"):]
+    assert "CsTeam.CounterTerrorist" in trecho
+    assert "ItemDefinitionIndex" in trecho
+    assert "NumeroDaUsp = 61" in CODIGO_DO_FANTASMA
+    assert "NumeroDaM4Silenciada = 60" in CODIGO_DO_FANTASMA
+    assert '"weapon_usp_silencer"' in CODIGO_DO_FANTASMA
+    assert '"weapon_m4a1_silencer"' in CODIGO_DO_FANTASMA
+
+
+def test_ct_recebe_de_volta_as_granadas_que_usou():
+    # Quem sobrevive continua com o que tinha, e o jogo não devolve a granada jogada.
+    for granada in ["weapon_smokegrenade", "weapon_flashbang", "weapon_hegrenade"]:
+        assert f'"{granada}"' in CODIGO_DO_FANTASMA
+
+
+def test_ct_completa_o_kit_ao_nascer():
+    assert "CompletarKitDoCt(" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("AoNascer"):]
+
+
+def test_fantasma_sem_aquecimento_entre_as_partidas():
+    # Sem isso, o jogo faz 1 minuto de aquecimento em vez dos 15 segundos do aviso.
+    assert valor("mp_warmuptime_all_players_connected", "fantasma") == "0"
+    assert valor("mp_warmup_online_enabled", "fantasma") == "0"
