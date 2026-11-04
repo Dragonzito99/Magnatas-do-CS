@@ -264,6 +264,71 @@ def test_zerar_o_placar_a_cada_20_minutos_so_no_cada_um_por_si():
     assert regra < CODIGO_DO_PLUGIN.index("mp_restartgame")
 
 
+def test_o_plugin_envia_o_resultado_ao_site():
+    assert "/api/servidor/diversao/resultado" in CODIGO_DO_PLUGIN
+    assert "HttpClient" in CODIGO_DO_PLUGIN
+    assert "Config.SiteUrl" in CODIGO_DO_PLUGIN
+    assert "Config.Token" in CODIGO_DO_PLUGIN
+
+
+def test_quem_calcula_o_xp_e_o_site():
+    # O plugin envia só os números. Se enviasse o XP pronto, um servidor conseguiria inventar XP.
+    assert "abates =" in CODIGO_DO_PLUGIN
+    assert "xp =" not in CODIGO_DO_PLUGIN.lower()
+
+
+def test_conta_os_abates_por_conta_nas_duas_regras():
+    assert "SteamID" in CODIGO_DO_PLUGIN
+    assert ".Abates++" in CODIGO_DO_PLUGIN
+
+
+def test_mostra_o_xp_no_centro_da_tela_e_no_chat():
+    assert "PrintToCenterHtml" in CODIGO_DO_PLUGIN
+    assert "PrintToChat" in CODIGO_DO_PLUGIN
+    # O nome da patente vem do site e entra em HTML.
+    assert "HtmlEncode" in CODIGO_DO_PLUGIN
+
+
+def test_a_tela_so_e_mexida_de_volta_no_jogo():
+    # O envio roda fora do jogo, e o CS2 quebra se a tela for mexida de lá.
+    assert "Server.NextFrameAsync" in CODIGO_DO_PLUGIN or "Server.NextFrame(" in CODIGO_DO_PLUGIN
+    assert "Task.Run" in CODIGO_DO_PLUGIN
+
+
+def test_site_fora_do_ar_nao_atrapalha_o_jogo():
+    # O fim da partida não espera a resposta, e o mesmo id evita contar duas vezes ao tentar de novo.
+    assert "TentativasDeEnvio = 3" in CODIGO_DO_PLUGIN
+    assert "PrazoDoEnvio" in CODIGO_DO_PLUGIN
+    assert "catch" in CODIGO_DO_PLUGIN
+    assert "await " not in CODIGO_DO_PLUGIN[: CODIGO_DO_PLUGIN.index("Task.Run")]
+
+
+def test_sem_endereco_ou_token_nao_tenta_enviar():
+    assert 'Config.SiteUrl == ""' in CODIGO_DO_PLUGIN
+    assert 'Config.Token == ""' in CODIGO_DO_PLUGIN
+
+
+def test_o_token_nunca_vai_para_o_registro():
+    assert "Console.WriteLine" in CODIGO_DO_PLUGIN
+    for linha in CODIGO_DO_PLUGIN.splitlines():
+        if "Console.WriteLine" in linha:
+            assert "Token" not in linha
+
+
+def test_quinze_segundos_para_ler_o_resultado():
+    assert "SegundosMostrandoOVencedor = 15" in CODIGO_DO_PLUGIN
+    assert "mp_restartgame 15" in CODIGO_DO_PLUGIN
+
+
+def test_o_script_entrega_site_e_token_ao_plugin_com_arquivo_protegido():
+    assert '"SiteUrl": "%s"' in INICIAR
+    assert '"Token": "%s"' in INICIAR
+    assert '"Porta": %s' in INICIAR
+    assert '"$SITE_URL"' in INICIAR
+    assert '"$SERVIDOR_TOKEN"' in INICIAR
+    assert 'chmod 600 "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"' in INICIAR
+
+
 def test_a_compilacao_gera_o_plugin_da_diversao():
     assert "plugins/MagnatasDiversao" in COMPILAR
     assert "MagnatasDiversao.dll" in COMPILAR

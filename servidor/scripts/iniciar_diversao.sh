@@ -96,7 +96,14 @@ mkdir -p "$PASTA_DOS_PLUGINS/MagnatasDiversao"
 cp "$PLUGIN" "$PASTA_DOS_PLUGINS/MagnatasDiversao/MagnatasDiversao.dll"
 CONFIG_DO_PLUGIN=$PASTA/csgo/addons/counterstrikesharp/configs/plugins/MagnatasDiversao
 mkdir -p "$CONFIG_DO_PLUGIN"
-printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "ConfigVersion": 1 }\n' "$ARMA_PRINCIPAL" "$REGRA" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+# O plugin usa o endereço e o token para informar o resultado ao site, então o arquivo só pode ser lido pelo usuário cs2.
+# shellcheck disable=SC1090
+source "$SEGREDOS"
+: "${SITE_URL:=}" "${SERVIDOR_TOKEN:=}"
+touch "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+chmod 600 "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "Porta": %s, "SiteUrl": "%s", "Token": "%s", "ConfigVersion": 1 }\n' \
+  "$ARMA_PRINCIPAL" "$REGRA" "$PORTA" "$SITE_URL" "$SERVIDOR_TOKEN" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
 cp "$SERVIDOR/csgo/gameinfo.gi" "$PASTA/csgo/gameinfo.gi"
 cat "$CONFIGS/$BASE" "$CONFIGS/$NOME.cfg" > "$PASTA/csgo/cfg/magnatas_diversao.cfg"
 # O jogo aplica as regras padrão do modo ao carregar o mapa, e só este arquivo vem depois delas.
