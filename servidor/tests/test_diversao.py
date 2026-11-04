@@ -120,6 +120,14 @@ def test_equipe_tem_times_de_verdade_e_renasce_na_base():
     assert valor("mp_respawn_on_death_t", "equipe") == "1"
 
 
+def test_equipe_renasce_em_ate_um_segundo():
+    # A câmera de morte segura cerca de 4 segundos antes de renascer, e o dono pediu no máximo 1.
+    assert valor("spec_freeze_time", "equipe") == "0"
+    assert valor("spec_freeze_deathanim_time", "equipe") == "0"
+    assert valor("spec_freeze_traveltime", "equipe") == "0"
+    assert valor("spec_freeze_time_lock", "equipe") == "0"
+
+
 def test_equipe_com_times_equilibrados():
     assert valor("mp_autoteambalance", "equipe") == "1"
     assert valor("mp_limitteams", "equipe") == "1"
