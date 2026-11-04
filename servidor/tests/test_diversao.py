@@ -531,3 +531,59 @@ def test_sem_ct_vivo_o_sorteio_nao_quebra():
 
 def test_avisa_quem_recebeu_o_kit():
     assert "kit de defuse" in CODIGO_DO_FANTASMA
+
+
+def test_reconhece_os_tres_sons_da_respiracao():
+    for som in ["2454124772", "2525673644", "3258385741"]:
+        assert som in CODIGO_DO_FANTASMA
+    assert "HookUserMessage(" in CODIGO_DO_FANTASMA
+
+
+def test_bloqueia_respiracao_de_corpo_e_do_mundo():
+    assert "entidade == 0" in CODIGO_DO_FANTASMA
+    assert "mortos.Contains(entidade)" in CODIGO_DO_FANTASMA
+    assert "HookResult.Stop" in CODIGO_DO_FANTASMA
+
+
+def test_a_morte_corta_o_som_duas_vezes():
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("EventPlayerDeath"):]
+    assert "HookMode.Pre" in CODIGO_DO_FANTASMA
+    assert "Cortar(entidade)" in trecho
+    assert "AddTimer(RepassarCorte" in trecho
+    assert "SosStopSoundEvent" in CODIGO_DO_FANTASMA
+
+
+def test_copias_com_o_volume_aprovado():
+    assert "CopiasDaRespiracao = 3" in CODIGO_DO_FANTASMA
+    assert "IntervaloDaRespiracao = 2.5f" in CODIGO_DO_FANTASMA
+    assert '"CrossFire_ghost_Breath01"' in CODIGO_DO_FANTASMA
+
+
+def test_copias_so_em_fantasma_vivo():
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void TocarCopiasDaRespiracao"):]
+    assert "PawnIsAlive" in trecho
+    assert "CsTeam.Terrorist" in trecho
+
+
+def test_a_lista_de_mortos_limpa_a_cada_rodada():
+    assert "mortos.Clear()" in CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void ComecarRodadaDoFantasma"):]
+
+
+def test_fantasma_que_cai_nao_deixa_respiracao():
+    assert "Cortar(" in CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("EventPlayerDisconnect"):]
+
+
+def test_troca_de_lados_nao_leva_a_respiracao():
+    # A rodada anterior ainda pode estar tocando: o som dura 17 segundos.
+    assert "EventRoundPrestart" in CODIGO_DO_FANTASMA
+    assert "tocando.Clear()" in CODIGO_DO_FANTASMA
+
+
+def test_a_lista_de_sons_nao_cresce_sem_limite():
+    assert "RemoveRange" in CODIGO_DO_FANTASMA
+
+
+def test_o_diagnostico_e_so_do_servidor_e_nao_mostra_contas():
+    trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index('"magnatas_fantasma_ver"'):]
+    assert "CommandUsage.SERVER_ONLY" in trecho
+    assert "SteamID" not in trecho

@@ -1,6 +1,9 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Timers;
+using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace MagnatasDiversao;
@@ -12,15 +15,125 @@ namespace MagnatasDiversao;
 public partial class ModoDeDiversao
 {
     private const float EsperaParaSortearOKit = 0.2f;
+    private const int InicioDeSom = 208;
+    private const float RepassarCorte = 0.1f;
+    private const int CopiasDaRespiracao = 3;
+    private const float VolumeDaRespiracao = 1f;
+    private const float IntervaloDaRespiracao = 2.5f;
+    private const int LimiteDeSonsGuardados = 200;
+    private const string SomDaRespiracao = "CrossFire_ghost_Breath01";
 
+    // CrossFire_ghost_Breath01, 02 e 03, tocados pelo script do mapa. Se o autor do mapa renomear os sons, a respiração volta a ficar presa ao corpo.
+    private static readonly HashSet<uint> Respiracao = new() { 2454124772, 2525673644, 3258385741 };
+
+    private readonly Dictionary<int, List<int>> tocando = new();
+    private readonly HashSet<int> mortos = new();
     private DateTime inicioDaPartida = DateTime.UtcNow;
+    private int respiracoesVistas, respiracoesBloqueadas, sonsCortados;
+    private string erroDoSom = "nenhum";
 
     private void LigarFantasma()
     {
+        AddTimer(IntervaloDaRespiracao, TocarCopiasDaRespiracao, TimerFlags.REPEAT);
+        HookUserMessage(InicioDeSom, AoComecarSom, HookMode.Pre);
+    }
+
+    /// <summary>Só o som do mapa não chega longe o bastante para localizar o fantasma pelo fone.</summary>
+    private void TocarCopiasDaRespiracao()
+    {
+        foreach (var fantasma in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }))
+        {
+            var corpo = fantasma.PlayerPawn.Value;
+            if (corpo == null || mortos.Contains((int)corpo.Index)) continue;
+            for (var copia = 0; copia < CopiasDaRespiracao; copia++) corpo.EmitSound(SomDaRespiracao, null, VolumeDaRespiracao);
+        }
+    }
+
+    /// <summary>O script do mapa continua tocando a respiração a partir do corpo no chão, por isso ela é barrada aqui.</summary>
+    private HookResult AoComecarSom(UserMessage mensagem)
+    {
+        try
+        {
+            if (!Respiracao.Contains(mensagem.ReadUInt("soundevent_hash"))) return HookResult.Continue;
+            respiracoesVistas++;
+            var entidade = mensagem.ReadInt("source_entity_index");
+            if (entidade == 0 || mortos.Contains(entidade))
+            {
+                respiracoesBloqueadas++;
+                return HookResult.Stop;
+            }
+            if (!tocando.TryGetValue(entidade, out var sons)) tocando[entidade] = sons = new List<int>();
+            sons.Add(mensagem.ReadInt("soundevent_guid"));
+            if (sons.Count > LimiteDeSonsGuardados) sons.RemoveRange(0, LimiteDeSonsGuardados / 2);
+        }
+        catch (Exception erro)
+        {
+            erroDoSom = erro.GetType().Name;
+        }
+        return HookResult.Continue;
+    }
+
+    private void PararSom(int som)
+    {
+        try
+        {
+            var parar = UserMessage.FromPartialName("SosStopSoundEvent");
+            parar.SetInt("soundevent_guid", som);
+            parar.Recipients.AddAllPlayers();
+            parar.Send();
+            sonsCortados++;
+        }
+        catch (Exception erro)
+        {
+            erroDoSom = erro.GetType().Name;
+        }
+    }
+
+    private void Cortar(int entidade)
+    {
+        if (!tocando.Remove(entidade, out var sons)) return;
+        foreach (var som in sons) PararSom(som);
+    }
+
+    [GameEventHandler(HookMode.Pre)]
+    public HookResult AoMorrerOFantasma(EventPlayerDeath evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "fantasma") return HookResult.Continue;
+        var corpo = evento.Userid?.PlayerPawn.Value;
+        if (corpo == null) return HookResult.Continue;
+        var entidade = (int)corpo.Index;
+        mortos.Add(entidade);
+        Cortar(entidade);
+        // O som que já estava saindo na hora da morte ainda não tinha passado por aqui.
+        AddTimer(RepassarCorte, () => Cortar(entidade));
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult AoNascerOFantasma(EventPlayerSpawn evento, GameEventInfo informacao)
+    {
+        var corpo = evento.Userid?.PlayerPawn.Value;
+        if (Config.Regra == "fantasma" && corpo != null) mortos.Remove((int)corpo.Index);
+        return HookResult.Continue;
+    }
+
+    /// <summary>Roda antes de a rodada nova criar a respiração dela. O som dura 17 segundos, e quem troca de lado não pode levá-lo junto.</summary>
+    [GameEventHandler]
+    public HookResult AoPrepararRodada(EventRoundPrestart evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "fantasma") return HookResult.Continue;
+        foreach (var sons in tocando.Values)
+        {
+            foreach (var som in sons) PararSom(som);
+        }
+        tocando.Clear();
+        return HookResult.Continue;
     }
 
     private void ComecarRodadaDoFantasma(CCSGameRules regras)
     {
+        // O evento de nascer nem sempre traz o corpo de um jogador humano.
+        mortos.Clear();
         if (regras.TotalRoundsPlayed == 0)
         {
             ZerarContagem();
@@ -117,8 +230,26 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "fantasma") return HookResult.Continue;
         var quem = evento.Userid;
+        var corpo = quem?.PlayerPawn.Value;
+        if (corpo != null) Cortar((int)corpo.Index);
         // Quem chegar depois não pode herdar o placar de uma partida que ninguém mais está jogando.
         if (!Pessoas().Any(pessoa => pessoa.Slot != quem?.Slot)) Server.ExecuteCommand("mp_restartgame 1");
         return HookResult.Continue;
+    }
+
+    [ConsoleCommand("magnatas_fantasma_ver", "Mostra armas, kit de defuse e respiração, para conferir o modo")]
+    [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void VerFantasma(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        if (Config.Regra != "fantasma") return;
+        foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true }))
+        {
+            var corpo = jogador.PlayerPawn.Value;
+            var armas = corpo?.WeaponServices?.MyWeapons.Select(item => item.Value?.DesignerName ?? "?") ?? Enumerable.Empty<string>();
+            var kit = corpo?.ItemServices != null && new CCSPlayer_ItemServices(corpo.ItemServices.Handle).HasDefuser;
+            comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} kit={kit} armas={string.Join(",", armas)}");
+        }
+        var (ct, tr) = RodadasVencidas();
+        comando.ReplyToCommand($"rodadas={RegrasDoJogo()?.TotalRoundsPlayed} ct={ct} tr={tr} respiracoes={respiracoesVistas} bloqueadas={respiracoesBloqueadas} cortadas={sonsCortados} erro={erroDoSom}");
     }
 }
