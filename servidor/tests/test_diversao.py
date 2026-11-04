@@ -11,7 +11,7 @@ CODIGO_DO_PLUGIN = (RAIZ / "plugins" / "MagnatasDiversao" / "MagnatasDiversao.cs
 CODIGO_DO_FANTASMA = (RAIZ / "plugins" / "MagnatasDiversao" / "Fantasma.cs").read_text(encoding="utf-8")
 CODIGO_DA_MUTACAO = (RAIZ / "plugins" / "MagnatasDiversao" / "Mutacao.cs").read_text(encoding="utf-8")
 CADA_UM_POR_SI = ["ak-desert", "pistola", "awp"]
-SERVIDORES = [*CADA_UM_POR_SI, "equipe", "fantasma"]
+SERVIDORES = [*CADA_UM_POR_SI, "equipe", "mutacao", "fantasma"]
 
 
 def conf(servidor):
@@ -87,7 +87,7 @@ def test_cada_servidor_tem_nome_proprio(servidor):
 
 def test_portas_diferentes():
     portas = [conf(servidor)["PORTA"] for servidor in SERVIDORES]
-    assert portas == ["27016", "27017", "27018", "27019", "27021"]
+    assert portas == ["27016", "27017", "27018", "27019", "27020", "27021"]
 
 
 @pytest.mark.parametrize("servidor", CADA_UM_POR_SI)
@@ -903,3 +903,59 @@ def test_o_diagnostico_da_mutacao_e_so_do_servidor_e_nao_mostra_contas():
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_mutacao_ver"'):]
     assert "CommandUsage.SERVER_ONLY" in trecho
     assert "SteamID" not in trecho
+
+
+def test_mutacao_no_mapa_certo_e_no_modo_personalizado():
+    campos = conf("mutacao")
+    assert campos["PORTA"] == "27020"
+    assert campos["VAGAS"] == "16"
+    assert campos["OFICINA"] == "3223106683"
+    assert campos["GAME_TYPE"] == "3"
+    assert campos["GAME_MODE"] == "0"
+    assert campos["REGRAS_DO_JOGO"] == "gamemode_custom_server.cfg"
+    assert campos["REGRA"] == "mutacao"
+    assert campos["ARMA_PRINCIPAL"] == ""
+
+
+def test_mutacao_rodada_de_tres_minutos_quem_encerra_e_o_plugin():
+    assert valor("mp_roundtime", "mutacao") == "3"
+    assert valor("mp_ignore_round_win_conditions", "mutacao") == "1"
+    assert valor("mp_maxrounds", "mutacao") == "1"
+    assert valor("mp_timelimit", "mutacao") == "0"
+
+
+def test_mutacao_todos_comecam_humanos():
+    assert valor("mp_humanteam", "mutacao") == "ct"
+    assert valor("mp_autoteambalance", "mutacao") == "0"
+    assert valor("mp_limitteams", "mutacao") == "0"
+
+
+def test_mutacao_arma_principal_vem_do_plugin():
+    assert valor("mp_ct_default_primary", "mutacao") == '""'
+    assert valor("mp_ct_default_secondary", "mutacao") == "weapon_hkp2000"
+    assert valor("mp_ct_default_grenades", "mutacao") == '""'
+
+
+def test_mutacao_mutante_so_com_faca():
+    assert valor("mp_t_default_primary", "mutacao") == '""'
+    assert valor("mp_t_default_secondary", "mutacao") == "null"
+    assert valor("mp_t_default_grenades", "mutacao") == '""'
+    assert valor("mp_t_default_melee", "mutacao") == "weapon_knife"
+
+
+def test_mutacao_sem_colete_sem_compra_sem_bomba():
+    assert valor("mp_free_armor", "mutacao") == "0"
+    assert valor("sv_buy_status_override", "mutacao") == "3"
+    assert valor("mp_give_player_c4", "mutacao") == "0"
+
+
+def test_mutacao_quem_renasce_e_o_plugin():
+    # Se o jogo também renascesse, os dois disputariam.
+    assert valor("mp_respawn_on_death_t", "mutacao") == "0"
+    assert valor("mp_respawn_on_death_ct", "mutacao") == "0"
+
+
+def test_mutacao_sem_aquecimento():
+    assert valor("mp_warmuptime", "mutacao") == "0"
+    assert valor("mp_warmup_online_enabled", "mutacao") == "0"
+    assert valor("mp_warmuptime_all_players_connected", "mutacao") == "0"

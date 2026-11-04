@@ -1,14 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
+import { servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { respostaDoResultado } from './xp-diversao';
 
 const TOKEN = 'token-de-teste';
 const EQUIPE = 27019;
 const CADA_UM = 27016;
-const MUTACAO_INATIVO = 27020;
 
 let bd: Bd;
 
@@ -74,12 +73,34 @@ test('mais de 32 jogadores é recusado', async () => {
 
 test.each([
   ['sem servidor', 27999],
-  ['de servidor inativo', MUTACAO_INATIVO],
 ])('porta %s não grava nada', async (_nome, porta) => {
   const conta = await membro();
   const resposta = await respostaDoResultado(bd, pedido(resultado([jogador(conta)], { porta })), TOKEN);
   expect(resposta.status).toBe(404);
   expect(await bd.select().from(xpPartidas)).toEqual([]);
+});
+
+test('porta de servidor desativado não grava nada', async () => {
+  await bd.update(servidoresDiversao).set({ ativo: false }).where(eq(servidoresDiversao.porta, 27021));
+  const conta = await membro();
+  const resposta = await respostaDoResultado(bd, pedido(resultado([jogador(conta)], { porta: 27021 })), TOKEN);
+  expect(resposta.status).toBe(404);
+  expect(await bd.select().from(xpPartidas)).toEqual([]);
+});
+
+test('na Mutação, vence o terço de cima do placar, sem olhar o lado', async () => {
+  const primeira = await membro();
+  const segunda = await membro();
+  const terceira = await membro();
+  const ganhos = await enviar(
+    resultado(
+      [jogador(primeira, { abates: 12, minutos: 30 }), jogador(segunda, { abates: 4, minutos: 30 }), jogador(terceira, { abates: 4, minutos: 30, time: 'tr' })],
+      { porta: 27020, duracaoMinutos: 30, vencedor: null },
+    ),
+  );
+  expect(ganhos.find((g) => g.steamid64 === primeira.steamid64)).toMatchObject({ xp: 840 });
+  expect(ganhos.find((g) => g.steamid64 === segunda.steamid64)).toMatchObject({ xp: 380 });
+  expect(ganhos.find((g) => g.steamid64 === terceira.steamid64)).toMatchObject({ xp: 380 });
 });
 
 test('no Fantasma, o XP sai do time, e quem jogou menos da metade não ganha', async () => {

@@ -31,7 +31,7 @@ type ResultadoRecebido = z.infer<typeof Resultado>;
 type JogadorRecebido = z.infer<typeof Jogador>;
 type ConsequenciaDaPartida = Pick<GanhoDePartida, 'resultado' | 'jogouAteOFim'>;
 
-/** Sem times, vence o terço de cima do placar, entre quem jogou o bastante. */
+/** Sem time fixo, vence o terço de cima do placar, entre quem jogou o bastante. Na Mutação, a mesma pessoa joga nos dois lados. */
 function consequenciasDoCadaUm(jogadores: JogadorRecebido[]): Map<string, ConsequenciaDaPartida> {
   const elegiveis = jogadores.filter((jogador) => jogador.ateOFim && jogador.minutos >= MINUTOS_MINIMOS_NO_CADA_UM);
   const vagas = Math.ceil(elegiveis.length / 3);
@@ -61,7 +61,7 @@ function consequenciasDosTimes(recebido: ResultadoRecebido): Map<string, Consequ
 
 function consequencias(modo: ServidorDiversao['modo'], recebido: ResultadoRecebido, membros: Set<string>): Map<string, ConsequenciaDaPartida> {
   const dosMembros = { ...recebido, jogadores: recebido.jogadores.filter((jogador) => membros.has(jogador.steamid64)) };
-  return modo === 'cada_um' ? consequenciasDoCadaUm(dosMembros.jogadores) : consequenciasDosTimes(dosMembros);
+  return modo === 'cada_um' || modo === 'mutacao' ? consequenciasDoCadaUm(dosMembros.jogadores) : consequenciasDosTimes(dosMembros);
 }
 
 /** O servidor envia só os números. Quem calcula o XP é o site, para um servidor não conseguir inventar XP. */

@@ -114,7 +114,7 @@ test('a fiscalização só pergunta aos servidores ativos', async () => {
   const controlador = controladorFalso();
   await fiscalizarDiversao(bd, controlador, undefined);
   const perguntados = controlador.chamadas.flatMap((chamada) => (chamada.acao === 'jogadoresConectados' ? [chamada.host] : []));
-  expect(perguntados.sort()).toEqual(['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4', '10.0.0.6']);
+  expect(perguntados.sort()).toEqual(['10.0.0.1', '10.0.0.2', '10.0.0.3', '10.0.0.4', '10.0.0.5', '10.0.0.6']);
 });
 
 test('a fiscalização não pergunta a servidor desativado', async () => {
