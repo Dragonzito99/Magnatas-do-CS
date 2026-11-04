@@ -864,3 +864,42 @@ def test_se_a_ultima_pessoa_sai_a_partida_recomeca():
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):]
     assert "mp_restartgame 1" in trecho
     assert "rodadasDaPartida = 0" in trecho
+
+
+def test_humano_recebe_ak_ou_m4_por_sorteio():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EntregarArmaDoHumano"):]
+    assert "CsTeam.CounterTerrorist" in trecho
+    assert "Random.Shared" in trecho
+    assert '"weapon_ak47"' in CODIGO_DA_MUTACAO and '"weapon_m4a1"' in CODIGO_DA_MUTACAO
+
+
+def test_o_sorteio_da_arma_vale_para_cada_rodada():
+    # Quem sobreviveu ainda está com a arma da rodada anterior.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EntregarArmaDoHumano"):]
+    assert trecho.index(".Remove()") < trecho.index("GiveNamedItem(")
+
+
+def test_o_humano_recebe_a_arma_ao_nascer():
+    assert "EntregarArmaDoHumano(" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("AoNascer"):]
+
+
+def test_municao_de_reserva_infinita():
+    # O console recusa, e o mapa pode reverter ao carregar. Por isso o plugin liga a cada rodada.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):]
+    assert 'ConVar<int>.Find("sv_infinite_ammo")' in trecho
+    assert "MunicaoDeReservaInfinita = 2" in CODIGO_DA_MUTACAO
+
+
+def test_tiro_empurra_o_mutante():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerHurt"):]
+    assert "ForcaDoEmpurrao" in trecho
+    assert "EmpurraoMaximo" in trecho
+    assert "Teleport(" in trecho
+    assert "ForcaDoEmpurrao = 5f" in CODIGO_DA_MUTACAO
+    assert "EmpurraoMaximo = 300f" in CODIGO_DA_MUTACAO
+
+
+def test_o_diagnostico_da_mutacao_e_so_do_servidor_e_nao_mostra_contas():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_mutacao_ver"'):]
+    assert "CommandUsage.SERVER_ONLY" in trecho
+    assert "SteamID" not in trecho

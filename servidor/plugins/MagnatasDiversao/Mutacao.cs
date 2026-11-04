@@ -2,6 +2,7 @@ using System.Drawing;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
@@ -28,6 +29,10 @@ public partial class ModoDeDiversao
     private const int RodadasPorPartida = 10;
     private const int SegundosEntreRodadas = 5;
     private const float MinutosDaRodadaSeFaltarORelogio = 3;
+    private const float ForcaDoEmpurrao = 5f;
+    private const float EmpurraoMaximo = 300f;
+    private const int MunicaoDeReservaInfinita = 2;
+    private static readonly string[] ArmasDoHumano = { "weapon_ak47", "weapon_m4a1" };
 
     private readonly TipoDeMutante mutanteDaRodada = MutanteComum;
     private CounterStrikeSharp.API.Modules.Timers.Timer? relogioDoSorteio;
@@ -38,9 +43,13 @@ public partial class ModoDeDiversao
     private int rodadasDaPartida;
     private int vitoriasDosHumanos;
     private int vitoriasDosMutantes;
+    private int transformacoes;
 
     private void ComecarRodadaDaMutacao()
     {
+        // O console recusa este comando, e o mapa pode reverter ao carregar. Por isso o plugin liga a cada rodada.
+        var municao = ConVar<int>.Find("sv_infinite_ammo");
+        if (municao != null) municao.Value = MunicaoDeReservaInfinita;
         if (rodadasDaPartida == 0)
         {
             ZerarContagem();
@@ -188,6 +197,7 @@ public partial class ModoDeDiversao
         // A conferência vale também para dois golpes no mesmo instante: só o primeiro transforma e conta abate.
         if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }) return;
         jogador.SwitchTeam(CsTeam.Terrorist);
+        transformacoes++;
         AplicarAtributosDoMutante(jogador);
         jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Você virou mutante!</font>", SegundosDoAvisoDeMutante);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
@@ -226,6 +236,43 @@ public partial class ModoDeDiversao
             var corpo = mutante.PlayerPawn.Value;
             if (corpo != null) corpo.VelocityModifier = mutanteDaRodada.Velocidade;
         }
+    }
+
+    /// <summary>Quem sobreviveu ainda está com a arma da rodada anterior, e o sorteio vale para cada rodada.</summary>
+    private void EntregarArmaDoHumano(CCSPlayerController? jogador)
+    {
+        if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }) return;
+        var armas = jogador.PlayerPawn.Value?.WeaponServices?.MyWeapons;
+        if (armas == null) return;
+        foreach (var item in armas.ToList())
+        {
+            var arma = item.Value;
+            if (arma != null && ArmasDoHumano.Contains(arma.DesignerName)) arma.Remove();
+        }
+        jogador.GiveNamedItem(ArmasDoHumano[Random.Shared.Next(ArmasDoHumano.Length)]);
+        jogador.ExecuteClientCommand("slot1");
+    }
+
+    [GameEventHandler]
+    public HookResult AoAtingirMutante(EventPlayerHurt evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "mutacao") return HookResult.Continue;
+        var alvo = evento.Userid;
+        var quem = evento.Attacker;
+        if (alvo is not { IsValid: true, Team: CsTeam.Terrorist } || quem is not { IsValid: true, Team: CsTeam.CounterTerrorist }) return HookResult.Continue;
+        var corpo = alvo.PlayerPawn.Value;
+        var corpoDeQuem = quem.PlayerPawn.Value;
+        if (corpo?.AbsOrigin == null || corpoDeQuem?.AbsOrigin == null) return HookResult.Continue;
+
+        var x = corpo.AbsOrigin.X - corpoDeQuem.AbsOrigin.X;
+        var y = corpo.AbsOrigin.Y - corpoDeQuem.AbsOrigin.Y;
+        var distancia = MathF.Sqrt(x * x + y * y);
+        if (distancia < 1f) return HookResult.Continue;
+
+        var forca = Math.Min(evento.DmgHealth * ForcaDoEmpurrao, EmpurraoMaximo);
+        var velocidade = corpo.AbsVelocity;
+        corpo.Teleport(null, null, new Vector(velocidade.X + x / distancia * forca, velocidade.Y + y / distancia * forca, velocidade.Z));
+        return HookResult.Continue;
     }
 
     private void ConferirFimDaRodada()
@@ -287,5 +334,19 @@ public partial class ModoDeDiversao
             Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
         }
         return HookResult.Continue;
+    }
+
+    [ConsoleCommand("magnatas_mutacao_ver", "Mostra humanos, mutantes e a rodada, para conferir o modo")]
+    [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void VerMutacao(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        if (Config.Regra != "mutacao") return;
+        foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true }))
+        {
+            var corpo = jogador.PlayerPawn.Value;
+            var armas = corpo?.WeaponServices?.MyWeapons.Select(item => item.Value?.DesignerName ?? "?") ?? Enumerable.Empty<string>();
+            comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} vida={corpo?.Health}/{corpo?.MaxHealth} velocidade={corpo?.AbsVelocity.Length():0} modificador={corpo?.VelocityModifier:0.00} armas={string.Join(",", armas)}");
+        }
+        comando.ReplyToCommand($"em_andamento={rodadaEmAndamento} sorteio={sorteioFeito} rodadas={rodadasDaPartida} humanos={vitoriasDosHumanos} mutantes={vitoriasDosMutantes} transformacoes={transformacoes} municao={ConVar<int>.Find("sv_infinite_ammo")?.Value}");
     }
 }

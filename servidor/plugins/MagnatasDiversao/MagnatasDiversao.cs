@@ -352,6 +352,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
             AddTimer(EsperaAposNascer, () =>
             {
                 if (jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }) AplicarAtributosDoMutante(jogador);
+                EntregarArmaDoHumano(jogador);
             });
         }
         return HookResult.Continue;
