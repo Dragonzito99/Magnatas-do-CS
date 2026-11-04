@@ -77,12 +77,12 @@ export default async function Diversao({ searchParams }: { searchParams: Promise
       <div className="topo-pagina">
         <h1>Diversão</h1>
       </div>
-      <nav className="abas-diversao" aria-label="Modos de jogo">
-        <Link className="aba-diversao" href="/diversao" aria-current={modo ? undefined : 'page'}>
+      <nav className="abas-pagina" aria-label="Modos de jogo">
+        <Link className="aba-pagina" href="/diversao" aria-current={modo ? undefined : 'page'}>
           Todos
         </Link>
         {MODOS_DE_DIVERSAO.map((item) => (
-          <Link key={item.valor} className="aba-diversao" href={`/diversao?modo=${item.valor}`} aria-current={modo === item.valor ? 'page' : undefined}>
+          <Link key={item.valor} className="aba-pagina" href={`/diversao?modo=${item.valor}`} aria-current={modo === item.valor ? 'page' : undefined}>
             {item.nome}
           </Link>
         ))}

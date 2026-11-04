@@ -1644,14 +1644,14 @@ textarea {
 }
 
 /* Diversão */
-.abas-diversao {
+.abas-pagina {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 18px;
 }
 
-.aba-diversao {
+.aba-pagina {
   padding: 9px 14px;
   border-radius: 10px;
   border: 1px solid var(--linha-forte);
@@ -1662,7 +1662,7 @@ textarea {
   text-decoration: none;
 }
 
-.aba-diversao[aria-current='page'] {
+.aba-pagina[aria-current='page'] {
   border-color: var(--ouro);
   background: var(--ouro-fraco);
   color: var(--ouro);

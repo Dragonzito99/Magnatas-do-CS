@@ -1,10 +1,12 @@
-import { and, count, eq, gte, inArray, lt, min, sql, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, gte, lt, min, sql, sum } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { partidaJogadores, partidas, usuarios } from '@/bd/esquema';
 import { kdDe, porcentagem, umaCasa } from './ficha';
 import type { UsuarioPublico } from './salas';
+import { patenteDe, type Patente } from './xp';
 
 export const MINIMO_DE_PARTIDAS_NO_MES = 5;
+const LIMITE_DA_COMUNIDADE = 100;
 // O Brasil não tem horário de verão desde 2019, então o deslocamento é fixo.
 const DESLOCAMENTO_DE_BRASILIA = '-03:00';
 
@@ -61,8 +63,7 @@ export async function rankingDoMes(bd: Bd, mes: Mes): Promise<{ linhas: LinhaDoR
     .where(
       and(
         eq(partidas.estado, 'encerrada'),
-        // A Diversão não conta no competitivo.
-        inArray(partidas.tipo, ['mix', 'desafio']),
+        eq(partidas.tipo, 'mix'),
         gte(partidas.encerradaEm, inicioDoMes(mes)),
         lt(partidas.encerradaEm, inicioDoMes(proximoMes(mes))),
         // Conta suspensa ou banida não aparece como exemplo para o clube.
@@ -93,6 +94,19 @@ export async function primeiroMesComPartida(bd: Bd): Promise<Mes | null> {
   const [{ primeira }] = await bd
     .select({ primeira: min(partidas.encerradaEm) })
     .from(partidas)
-    .where(eq(partidas.estado, 'encerrada'));
+    .where(and(eq(partidas.estado, 'encerrada'), eq(partidas.tipo, 'mix')));
   return primeira ? mesDe(primeira) : null;
+}
+
+export type LinhaDaComunidade = { posicao: number; jogador: UsuarioPublico; patente: Patente; xp: number };
+
+/** Por XP de sempre: mostra quem tem a patente mais alta do clube. */
+export async function rankingDaComunidade(bd: Bd, limite: number = LIMITE_DA_COMUNIDADE): Promise<LinhaDaComunidade[]> {
+  const contas = await bd
+    .select({ id: usuarios.id, apelido: usuarios.apelido, avatarUrl: usuarios.avatarUrl, xp: usuarios.xpTotal })
+    .from(usuarios)
+    .where(and(eq(usuarios.estado, 'ativo'), gt(usuarios.xpTotal, 0)))
+    .orderBy(desc(usuarios.xpTotal), asc(usuarios.apelido))
+    .limit(limite);
+  return contas.map(({ xp, ...jogador }, indice) => ({ posicao: indice + 1, jogador, patente: patenteDe(xp), xp }));
 }

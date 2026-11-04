@@ -1,8 +1,9 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, type Usuario } from '@/bd/esquema';
+import { partidaJogadores, partidas, usuarios, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { lerMes, mesAnterior, mesDe, MINIMO_DE_PARTIDAS_NO_MES, primeiroMesComPartida, proximoMes, rankingDoMes } from './ranking';
+import { lerMes, mesAnterior, mesDe, MINIMO_DE_PARTIDAS_NO_MES, primeiroMesComPartida, proximoMes, rankingDaComunidade, rankingDoMes } from './ranking';
 
 let bd: Bd;
 const NOVEMBRO = { ano: 2026, mes: 11 };
@@ -136,4 +137,57 @@ test('primeiroMesComPartida acha a partida encerrada mais antiga', async () => {
   await jogar(conta, {}, { encerradaEm: new Date('2026-09-10T15:00:00Z') });
   await jogar(conta);
   expect(await primeiroMesComPartida(bd)).toEqual({ ano: 2026, mes: 9 });
+});
+
+test('partida de Sala não conta no ranking do Mix', async () => {
+  const conta = await membro('so_sala');
+  for (let i = 0; i < 5; i += 1) await jogar(conta, { kills: 10, deaths: 5 }, { tipo: 'desafio' });
+  const { linhas, foraDoRanking } = await rankingDoMes(bd, NOVEMBRO);
+  expect(linhas).toEqual([]);
+  expect(foraDoRanking).toBe(0);
+});
+
+test('partida de Sala não abre mês no ranking do Mix', async () => {
+  const conta = await membro('so_sala');
+  await jogar(conta, {}, { tipo: 'desafio' });
+  expect(await primeiroMesComPartida(bd)).toBeNull();
+});
+
+async function comXp(apelido: string, xpTotal: number, estado: Usuario['estado'] = 'ativo') {
+  const conta = await membro(apelido, estado);
+  await bd.update(usuarios).set({ xpTotal }).where(eq(usuarios.id, conta.id));
+  return conta;
+}
+
+test('a comunidade ordena por XP total, com a patente de cada um', async () => {
+  await comXp('pouco', 5_000);
+  await comXp('muito', 70_000);
+  const linhas = await rankingDaComunidade(bd);
+  expect(linhas.map((linha) => [linha.posicao, linha.jogador.apelido, linha.xp, linha.patente.nome])).toEqual([
+    [1, 'muito', 70_000, 'Empresário'],
+    [2, 'pouco', 5_000, 'Magnata Jr.'],
+  ]);
+});
+
+test('na comunidade, o empate de XP vai por apelido', async () => {
+  await comXp('zeca', 100);
+  await comXp('ana', 100);
+  expect((await rankingDaComunidade(bd)).map((linha) => linha.jogador.apelido)).toEqual(['ana', 'zeca']);
+});
+
+test('na comunidade, quem tem 0 XP não aparece', async () => {
+  await comXp('novato', 0);
+  expect(await rankingDaComunidade(bd)).toEqual([]);
+});
+
+test.each([['banido'], ['suspenso']] as const)('na comunidade, conta %s não aparece', async (estado) => {
+  await comXp('fora', 500, estado);
+  expect(await rankingDaComunidade(bd)).toEqual([]);
+});
+
+test('a comunidade respeita o limite', async () => {
+  await comXp('a', 300);
+  await comXp('b', 200);
+  await comXp('c', 100);
+  expect((await rankingDaComunidade(bd, 2)).map((linha) => linha.jogador.apelido)).toEqual(['a', 'b']);
 });
