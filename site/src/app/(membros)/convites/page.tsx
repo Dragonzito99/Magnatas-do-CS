@@ -3,7 +3,7 @@ import type { Convite } from '@/bd/esquema';
 import { exigirAcesso } from '@/auth/guarda';
 import { listarConvites } from '@/dominio/convites';
 import { gerar, revogar } from './acoes';
-import { BotaoCopiar } from './botao-copiar';
+import { BotaoCopiar } from '../botao-copiar';
 
 const ERROS: Record<string, string> = {
   'sem-convites': 'Você não tem convites disponíveis.',

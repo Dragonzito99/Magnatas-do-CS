@@ -1644,87 +1644,100 @@ textarea {
 }
 
 /* Diversão */
-.modos {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.modo {
-  position: relative;
-  overflow: hidden;
-  align-content: space-between;
-  gap: 22px;
-  min-height: 240px;
-  padding: 18px;
-}
-
-.modo > * {
-  position: relative;
-}
-
-.modo .arte {
-  position: absolute;
-  top: 12px;
-  right: -14px;
-  width: 160px;
-  height: 160px;
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.3);
-  stroke-width: 0.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.ao-vivo.fora-do-ar::before {
-  background: var(--tinta-3);
-}
-
-.modo.mata-mata {
-  min-height: 200px;
-  background: radial-gradient(circle at 80% 10%, rgba(245, 179, 1, 0.3), transparent 55%), radial-gradient(circle at 15% 100%, rgba(168, 85, 247, 0.45), transparent 55%), var(--escuro);
-}
-
-.mata-mata-texto {
+.abas-diversao {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.aba-diversao {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--linha-forte);
+  background: var(--painel);
+  color: var(--tinta-2);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.aba-diversao[aria-current='page'] {
+  border-color: var(--ouro);
+  background: var(--ouro-fraco);
+  color: var(--ouro);
+}
+
+.lista-servidores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 14px;
 }
 
-.mata-mata-texto small {
+.cartao-servidor {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--linha);
+  background: var(--painel);
+}
+
+.foto-servidor {
   display: block;
-  margin-top: 4px;
-  color: var(--ouro);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.corpo-servidor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px 14px;
+}
+
+.corpo-servidor h2 {
+  color: var(--tinta);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.corpo-servidor p {
+  color: var(--tinta-2);
+  font-size: 14px;
+}
+
+.corpo-servidor small {
+  color: var(--tinta-3);
+  font-size: 13px;
+}
+
+.rodape-servidor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.vagas-servidor {
+  margin-right: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--painel-2);
+  color: var(--tinta);
   font-size: 13px;
   font-weight: 600;
 }
 
-.modo.fantasma {
-  background: radial-gradient(circle at 75% 15%, rgba(56, 189, 248, 0.42), transparent 58%), var(--escuro);
-}
-
-.modo.mutacao {
-  background: radial-gradient(circle at 75% 15%, rgba(239, 68, 68, 0.6), transparent 58%),
-    radial-gradient(circle at 12% 95%, rgba(132, 204, 22, 0.2), transparent 50%), var(--escuro);
-}
-
-.proximo-modo {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 120px;
-  padding: 18px;
-  border-radius: 14px;
-  border: 1px dashed var(--linha-forte);
-  color: var(--tinta-3);
-}
-
-.proximo-modo h3 {
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: -0.03em;
+@media (max-width: 480px) {
+  .lista-servidores {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 1100px) {
