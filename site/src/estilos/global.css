@@ -630,10 +630,14 @@ textarea {
 }
 
 .patente-perfil {
+  margin-bottom: 14px;
+}
+
+.patente-resumo {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 14px;
+  padding: 16px;
 }
 
 .patente-topo {

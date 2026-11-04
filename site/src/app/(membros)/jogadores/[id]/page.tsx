@@ -103,54 +103,62 @@ export default async function FichaDoJogador({
       </div>
       {patenteNova && <MarcarPatenteVista />}
       <section className="painel patente-perfil">
-        <div className="patente-topo">
-          <svg className="coroa-patente" viewBox="0 0 24 18" aria-hidden="true">
-            <path d="M2 16 1 4l6 5 5-8 5 8 6-5-1 12z" />
-          </svg>
-          <div>
-            <strong>{progresso.patente.nome}</strong>
-            <span className="apoio">
-              Nível {progresso.patente.nivel} de {PATENTES.length}
-            </span>
+        <div className="patente-resumo">
+          <div className="patente-topo">
+            <svg className="coroa-patente" viewBox="0 0 24 18" aria-hidden="true">
+              <path d="M2 16 1 4l6 5 5-8 5 8 6-5-1 12z" />
+            </svg>
+            <div>
+              <strong>{progresso.patente.nome}</strong>
+              <span className="apoio">
+                Nível {progresso.patente.nivel} de {PATENTES.length}
+              </span>
+            </div>
           </div>
+          <div className="barra-xp" role="progressbar" aria-label="Progresso até a próxima patente" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progresso.porcentagem}>
+            <i style={{ width: `${progresso.porcentagem}%` }} />
+          </div>
+          <span className="apoio">
+            {progresso.proxima
+              ? `${numero.format(xpTotal)} de ${numero.format(progresso.proxima.xp)} XP para ${progresso.proxima.nome}`
+              : `${numero.format(xpTotal)} XP. Patente máxima`}
+          </span>
         </div>
-        <div className="barra-xp" role="progressbar" aria-label="Progresso até a próxima patente" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progresso.porcentagem}>
-          <i style={{ width: `${progresso.porcentagem}%` }} />
-        </div>
-        <span className="apoio">
-          {progresso.proxima
-            ? `${numero.format(xpTotal)} de ${numero.format(progresso.proxima.xp)} XP para ${progresso.proxima.nome}`
-            : `${numero.format(xpTotal)} XP. Patente máxima`}
-        </span>
         {ultimosXp.length > 0 && (
-          <table className="tabela">
-            <thead>
-              <tr>
-                <th scope="col">Data</th>
-                <th scope="col">Partida</th>
-                <th scope="col" className="so-computador">
-                  Resultado
-                </th>
-                <th scope="col" className="so-computador">
-                  Abates
-                </th>
-                <th scope="col">XP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ultimosXp.map((linha, indice) => (
-                <tr key={indice}>
-                  <td>{dataCurta.format(linha.criadoEm)}</td>
-                  <td>{NOME_DA_ORIGEM[linha.origem]}</td>
-                  <td className="so-computador">{NOME_DO_RESULTADO[linha.resultado]}</td>
-                  <td className="so-computador">{linha.abates}</td>
-                  <td>
-                    <b>+{numero.format(linha.xp)}</b>
-                  </td>
+          <>
+            <div className="cabeca-painel">
+              <h2>Últimas partidas</h2>
+              <span>As 10 mais recentes</span>
+            </div>
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col">Partida</th>
+                  <th scope="col" className="so-computador">
+                    Resultado
+                  </th>
+                  <th scope="col" className="so-computador">
+                    Abates
+                  </th>
+                  <th scope="col">XP</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {ultimosXp.map((linha, indice) => (
+                  <tr key={indice}>
+                    <th scope="row">{dataCurta.format(linha.criadoEm)}</th>
+                    <td>{NOME_DA_ORIGEM[linha.origem]}</td>
+                    <td className="so-computador">{NOME_DO_RESULTADO[linha.resultado]}</td>
+                    <td className="so-computador">{linha.abates}</td>
+                    <td>
+                      <b>+{numero.format(linha.xp)}</b>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </section>
       <div className="grade">
