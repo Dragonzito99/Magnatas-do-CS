@@ -50,11 +50,13 @@ como_cs2 "$STEAMCMD/steamcmd.sh" +force_install_dir "$SERVIDOR" +login anonymous
 
 como_cs2 ln -sf "$STEAMCMD/linux64/steamclient.so" "$CASA/.steam/sdk64/steamclient.so"
 
-install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$ORIGEM/scripts/conferir_cs2.sh" "$ORIGEM/scripts/atualizar_lista.sh" "$ORIGEM/scripts/iniciar_mata_mata.sh" "$CASA/bin/"
-install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$ORIGEM/config/mata_mata.cfg" "$CASA/bin/"
+install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$ORIGEM/scripts/conferir_cs2.sh" "$ORIGEM/scripts/atualizar_lista.sh" "$ORIGEM/scripts/iniciar_diversao.sh" "$CASA/bin/"
+install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$CASA/bin/"
+runuser -u "$USUARIO" -- mkdir -p "$CASA/bin/diversao"
+install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM"/config/diversao/* "$CASA/bin/diversao/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/config/server.cfg" "$SERVIDOR/game/csgo/cfg/server.cfg"
 
-# O plugin da AK do modo Cada um por si só compila com o CounterStrikeSharp instalado.
+# O plugin dos servidores da Diversão só compila com o CounterStrikeSharp instalado.
 if [ -f "$SERVIDOR/game/csgo/addons/counterstrikesharp/api/CounterStrikeSharp.API.dll" ]; then
   bash "$ORIGEM/scripts/compilar_plugin.sh"
 else

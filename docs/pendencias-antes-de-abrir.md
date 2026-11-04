@@ -14,19 +14,19 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
   - uma conta de fora entra no modo Cada um por si e é derrubada em até 15 segundos, e o placar zera depois de 20 minutos completos.
 - Conferir no CS2 os comandos `demoui` e `demo_gototick`, que a tela do Olho de Águia ensina a usar.
 
-## Modo Cada um por si no servidor novo
+## Servidores da aba Diversão no servidor novo
 
-- O modo é um segundo CS2 rodando na mesma máquina, então o servidor precisa de mais que 4 núcleos e 8 GB.
-- `instalar_cs2.sh` só compila o plugin da AK se o CounterStrikeSharp já estiver instalado. Se não estiver, rode `compilar_plugin.sh` depois. Ele baixa o .NET SDK na primeira vez (229 MB) e confere a assinatura.
-- Liberar a porta `27016/udp` no firewall. O instalador e o aviso dele ainda falam só da `27015/udp`.
-- Criar um segundo token de servidor da Steam e guardar como `GSLT_MATA_MATA` no `cs2.env`.
-- Definir `DIVERSAO_HOST` e `DIVERSAO_PORTA` no ambiente do site. Sem isso, o cartão aparece como fora do ar.
+- Cada cartão é um CS2 rodando na mesma máquina. Vazio, cada um usa cerca de 1,1 GB. Ligar todos com `iniciar_diversao.sh todos`.
+- `instalar_cs2.sh` só compila o plugin se o CounterStrikeSharp já estiver instalado. Se não estiver, rode `compilar_plugin.sh` depois. Ele baixa o .NET SDK na primeira vez (229 MB) e confere a assinatura.
+- Liberar as portas `27016/udp` a `27018/udp` no firewall. O instalador e o aviso dele ainda falam só da `27015/udp`.
+- Criar um token de servidor da Steam para cada um e guardar no `cs2.env`: `GSLT_AK_DESERT`, `GSLT_PISTOLA` e `GSLT_AWP`.
+- Definir `DIVERSAO_HOST` no ambiente do site. Sem isso, os cartões aparecem fora do ar.
 
 ## Antes de abrir o site de verdade
 
 - Tirar `PARTIDA_MIN_PRONTOS` do ambiente: é só de teste, e faria a partida começar com poucas pessoas.
 - Apagar as contas `ficticio_` e `teste_`, com a conta do dono já como Adm. Hoje, as contas `teste_adm` também seguram o cargo de Adm, então o site deixa o dono tirar o próprio cargo.
-- Falar com o advogado sobre documentos, o nome e o logo. O logo traz o símbolo CS2 e soldados parecidos com os do jogo.
+- Falar com o advogado sobre documentos, o nome e o logo. O logo traz o símbolo CS2 e soldados parecidos com os do jogo. Levar também as fotos de `site/public/mapas`, tiradas do jogo e da Oficina, e os mapas e áudios recriados do CrossFire.
 - Definir o servidor do Discord, se houver, em `DISCORD_URL`.
 - Restringir a porta TCP do RCON ao endereço do site. Fora da máquina, a senha e o token viajam em texto puro, e um único campo guarda o endereço de jogadores e de RCON.
 - Rodar os testes de concorrência em um PostgreSQL de verdade, descartável. O banco de teste tem uma conexão só, então não consegue provar as travas.
