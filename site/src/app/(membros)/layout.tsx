@@ -5,8 +5,11 @@ import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
 import { contarCasos } from '@/dominio/denuncias';
 import { enderecoDoDiscord } from '@/dominio/discord';
+import { notificacoesDe } from '@/dominio/notificacoes';
+import { Atualizar } from './atualizar';
 import { Banner } from './banner';
 import { Menu } from './menu';
+import { Sino } from './sino';
 
 export default async function LayoutDeMembros({ children }: { children: React.ReactNode }) {
   const usuario = await usuarioAtual();
@@ -14,10 +17,12 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
 
   const mostrarEquipe = pode(usuario, 'ver_equipe');
   const casos = pode(usuario, 'moderar') ? await contarCasos(obterBd(), usuario) : 0;
+  const notificacoes = await notificacoesDe(obterBd(), usuario);
 
   return (
     <div className="app">
-      <Banner usuario={usuario} discord={enderecoDoDiscord(process.env.DISCORD_URL)} />
+      <Atualizar segundos={15} />
+      <Banner usuario={usuario} discord={enderecoDoDiscord(process.env.DISCORD_URL)} sino={<Sino notificacoes={notificacoes} />} />
       <div className="app-corpo">
         <aside className="lateral">
           <Menu mostrarEquipe={mostrarEquipe} casos={casos} />

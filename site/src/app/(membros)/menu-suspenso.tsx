@@ -48,7 +48,17 @@ export function MenuSuspenso({
       >
         {rotulo}
       </button>
-      {aberto && <div className="suspenso">{children}</div>}
+      {aberto && (
+        <div
+          className="suspenso"
+          onClick={(evento) => {
+            // Link para a página atual não muda o caminho, então fecha aqui.
+            if ((evento.target as Element).closest('a')) setAbertoEm(null);
+          }}
+        >
+          {children}
+        </div>
+      )}
     </div>
   );
 }
