@@ -150,9 +150,9 @@ def test_equipe_sem_compra_e_sem_bomba():
 
 
 def test_equipe_quem_encerra_a_partida_e_o_plugin():
-    # O tempo do jogo fica um minuto acima dos 10 minutos do plugin, para quem encerra ser ele.
+    # O relógio da tela mostra os 10 minutos, e o jogo não encerra a rodada sozinho ao chegar em zero.
     assert valor("mp_ignore_round_win_conditions", "equipe") == "1"
-    assert valor("mp_roundtime", "equipe") == "11"
+    assert valor("mp_roundtime", "equipe") == "10"
     assert valor("mp_roundtime_defuse", "equipe") == "0"
     assert valor("mp_maxrounds", "equipe") == "1"
     assert valor("mp_timelimit", "equipe") == "0"
