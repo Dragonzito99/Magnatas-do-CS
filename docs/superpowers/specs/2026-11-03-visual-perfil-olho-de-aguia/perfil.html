@@ -1,0 +1,127 @@
+<link rel="stylesheet" href="/files/mg.css">
+<style>
+  .pf-cabeca { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border-radius: 14px; background: linear-gradient(90deg, rgba(168,85,247,.28), rgba(245,179,1,.07)); border: 1px solid var(--linha-forte); }
+  .pf-foto { flex: none; display: grid; place-items: center; width: 68px; height: 68px; border-radius: 14px; background: #2a1648; border: 2px solid var(--ouro); box-shadow: 0 0 18px rgba(245,179,1,.3); font-size: 21px; font-weight: 700; font-style: normal; }
+  .pf-cabeca h4 { margin: 0; color: var(--texto); font-size: 23px; font-weight: 700; letter-spacing: -.02em; }
+  .pf-cabeca small { display: block; margin-top: 2px; color: var(--apagado); font-size: 12px; }
+  .pf-selo { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 6px; background: var(--ouro); color: var(--sobre); font-size: 10px; font-weight: 700; letter-spacing: .05em; vertical-align: 3px; }
+  .pf-cabeca .mg-botao { margin-left: auto; }
+  .pf-principais { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr; gap: 10px; }
+  .pf-numero { padding: 13px 15px; border-radius: 12px; background: var(--painel); border: 1px solid var(--linha); color: var(--apagado); font-size: 11px; }
+  .pf-numero b { display: block; color: var(--texto); font: 700 26px/1.15 ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: -.03em; }
+  .pf-numero small { display: block; color: var(--apagado); font-size: 10px; }
+  .pf-numero.destaque { border-color: rgba(245,179,1,.6); background: linear-gradient(135deg, rgba(245,179,1,.18), rgba(168,85,247,.12)); box-shadow: 0 0 16px rgba(245,179,1,.13); }
+  .pf-numero.destaque b { font-size: 34px; }
+  .pf-menores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .pf-menor { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 9px 13px; border-radius: 10px; background: var(--painel-2); border: 1px solid var(--linha); color: var(--apagado); font-size: 11px; }
+  .pf-menor b { color: var(--texto); font: 700 14px ui-monospace, Consolas, monospace; }
+  .pf-duas { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(250px, 1fr); gap: 12px; align-items: start; }
+  .pf-painel { background: var(--painel); border: 1px solid var(--linha); border-radius: 14px; overflow: hidden; }
+  .pf-painel header { display: flex; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid var(--linha); font-size: 12px; font-weight: 600; }
+  .pf-painel header span { color: var(--apagado); font-size: 11px; font-weight: 400; }
+  .pf-painel table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pf-painel th { padding: 8px 14px 6px; color: var(--apagado); font-size: 10px; font-weight: 500; text-align: right; }
+  .pf-painel td { padding: 8px 14px; border-top: 1px solid rgba(168,85,247,.13); text-align: right; font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
+  .pf-painel th:first-child, .pf-painel td:first-child { text-align: left; font-family: inherit; }
+  .pf-painel td small { display: block; color: var(--apagado); font-size: 10px; font-family: Inter, system-ui, sans-serif; }
+  .pf-resultado { display: inline-flex; align-items: center; gap: 4px; font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 11px; }
+  .pf-resultado svg { width: 12px; height: 12px; stroke-width: 2.6; }
+  .pf-resultado.ganhou { color: var(--ouro); }
+  .pf-resultado.perdeu { color: #c5b8da; }
+  .pf-melhor { display: flex; align-items: center; gap: 12px; padding: 12px 14px; color: var(--apagado); font-size: 11px; }
+  .pf-melhor svg { width: 24px; height: 24px; color: var(--ouro); }
+  .pf-melhor b { display: block; color: var(--texto); font-size: 13px; }
+  .pf-coluna { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  @media (max-width: 1050px) { .pf-principais, .pf-menores { grid-template-columns: 1fr 1fr; } .pf-duas { grid-template-columns: 1fr; } }
+</style>
+
+<div class="mg">
+  <header class="mg-banner">
+    <img class="mg-heroi" src="/files/personagem-recortado.webp" alt="">
+    <img class="mg-logo" src="/files/logo.webp" alt="Magnatas do CS">
+    <div class="mg-frase">JOGUE<b>·</b>VENÇA<b>·</b>FAÇA PARTE</div>
+    <div class="mg-barra">
+      <div class="mg-redondo"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+      <div class="mg-redondo"><svg viewBox="0 0 24 24"><path d="M8.5 7.5c2.3-.7 4.7-.7 7 0"/><path d="M8.5 16.5c2.3.7 4.7.7 7 0"/><path d="M15.5 17.5 17 20c2.5-.8 4-2 4-2 .4-4.7-.7-8.5-2.5-12-1.5-.7-3-1.2-4.5-1.5L13.5 6"/><path d="M8.5 17.5 7 20c-2.5-.8-4-2-4-2-.4-4.7.7-8.5 2.5-12C7 5.3 8.5 4.8 10 4.5L10.5 6"/><circle cx="9.5" cy="12" r="1"/><circle cx="14.5" cy="12" r="1"/></svg></div>
+      <div class="mg-conta" style="border-color:rgba(245,179,1,.65)"><i class="mg-foto mini">DR</i><span>Dragonzito</span><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></div>
+    </div>
+  </header>
+
+  <div class="mg-grade">
+    <aside class="mg-menu">
+      <div class="mg-item casa"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>MAGNATAS</div>
+      <div class="mg-item"><svg viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/></svg>Salas</div>
+      <div class="mg-item"><svg viewBox="0 0 24 24"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></svg>Mix</div>
+      <div class="mg-item"><svg viewBox="0 0 24 24"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>Diversão</div>
+      <div class="mg-item"><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>Convites</div>
+      <div class="mg-item"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Equipe</div>
+      <div class="mg-item"><svg viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Olho de Águia<b>3</b></div>
+      <div class="mg-seja">
+        <svg viewBox="0 0 24 18"><path d="M2 16 1 4l6 5 5-8 5 8 6-5-1 12z"/></svg>
+        <p>Seja um <em>Magnata!</em></p>
+      </div>
+    </aside>
+
+    <main class="mg-corpo">
+      <div class="pf-cabeca">
+        <i class="pf-foto">DR</i>
+        <div>
+          <h4>Dragonzito<span class="pf-selo">ADM</span></h4>
+          <small>Na Magnatas desde 03/11/2026. Dados de exemplo.</small>
+        </div>
+        <button class="mg-botao cinza">Ver na Steam</button>
+      </div>
+
+      <div class="pf-principais">
+        <div class="pf-numero destaque"><b>1.42</b>K/D</div>
+        <div class="pf-numero"><b>58%</b>Vitórias<small>22 de 38 partidas</small></div>
+        <div class="pf-numero"><b>88</b>Dano por rodada</div>
+        <div class="pf-numero"><b>48%</b>Abates na cabeça</div>
+      </div>
+
+      <div class="pf-menores">
+        <div class="pf-menor">Abates<b>702</b></div>
+        <div class="pf-menor">Mortes<b>494</b></div>
+        <div class="pf-menor">Assistências<b>151</b></div>
+        <div class="pf-menor">Abates por partida<b>18.5</b></div>
+      </div>
+
+      <div class="pf-duas">
+        <section class="pf-painel">
+          <header>Histórico<span>Só partidas encerradas</span></header>
+          <table>
+            <thead><tr><th>Partida</th><th>Resultado</th><th>Placar</th><th>K/D/A</th><th>ADR</th></tr></thead>
+            <tbody>
+              <tr><td>Mix #7<small>Anubis, 03/11</small></td><td><span class="pf-resultado ganhou"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Vitória</span></td><td>13 x 16</td><td>21/11/4</td><td>98</td></tr>
+              <tr><td>Desafio #5<small>Mirage, 02/11</small></td><td><span class="pf-resultado ganhou"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Vitória</span></td><td>16 x 9</td><td>24/13/6</td><td>112</td></tr>
+              <tr><td>Mix #4<small>Inferno, 02/11</small></td><td><span class="pf-resultado perdeu"><svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Derrota</span></td><td>16 x 12</td><td>14/18/3</td><td>71</td></tr>
+              <tr><td>Mix #3<small>Nuke, 01/11</small></td><td><span class="pf-resultado perdeu"><svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Derrota</span></td><td>13 x 16</td><td>17/19/5</td><td>79</td></tr>
+              <tr><td>Desafio #2<small>Mirage, 01/11</small></td><td><span class="pf-resultado ganhou"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Vitória</span></td><td>16 x 14</td><td>26/15/2</td><td>104</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <div class="pf-coluna">
+          <section class="pf-painel">
+            <header>Por mapa</header>
+            <table>
+              <thead><tr><th>Mapa</th><th>Partidas</th><th>Vitórias</th><th>K/D</th></tr></thead>
+              <tbody>
+                <tr><td>Mirage</td><td>14</td><td>64%</td><td>1.58</td></tr>
+                <tr><td>Inferno</td><td>10</td><td>50%</td><td>1.31</td></tr>
+                <tr><td>Anubis</td><td>8</td><td>63%</td><td>1.47</td></tr>
+                <tr><td>Nuke</td><td>6</td><td>50%</td><td>1.22</td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="pf-painel">
+            <div class="pf-melhor">
+              <svg viewBox="0 0 24 24"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4"/><path d="M17 6h3a3 3 0 0 1-3 4"/></svg>
+              <div>Melhor partida<b>31 abates, K/D 2.82</b>Desafio #4, Mirage</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
