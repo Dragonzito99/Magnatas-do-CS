@@ -10,7 +10,7 @@ COMPILAR = (RAIZ / "scripts" / "compilar_plugin.sh").read_text(encoding="utf-8")
 CODIGO_DO_PLUGIN = (RAIZ / "plugins" / "MagnatasDiversao" / "MagnatasDiversao.cs").read_text(encoding="utf-8")
 CODIGO_DO_FANTASMA = (RAIZ / "plugins" / "MagnatasDiversao" / "Fantasma.cs").read_text(encoding="utf-8")
 CADA_UM_POR_SI = ["ak-desert", "pistola", "awp"]
-SERVIDORES = [*CADA_UM_POR_SI, "equipe"]
+SERVIDORES = [*CADA_UM_POR_SI, "equipe", "fantasma"]
 
 
 def conf(servidor):
@@ -86,7 +86,7 @@ def test_cada_servidor_tem_nome_proprio(servidor):
 
 def test_portas_diferentes():
     portas = [conf(servidor)["PORTA"] for servidor in SERVIDORES]
-    assert portas == ["27016", "27017", "27018", "27019"]
+    assert portas == ["27016", "27017", "27018", "27019", "27021"]
 
 
 @pytest.mark.parametrize("servidor", CADA_UM_POR_SI)
@@ -587,3 +587,62 @@ def test_o_diagnostico_e_so_do_servidor_e_nao_mostra_contas():
     trecho = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index('"magnatas_fantasma_ver"'):]
     assert "CommandUsage.SERVER_ONLY" in trecho
     assert "SteamID" not in trecho
+
+
+def test_fantasma_no_mapa_certo_e_no_modo_do_teste():
+    campos = conf("fantasma")
+    assert campos["PORTA"] == "27021"
+    assert campos["VAGAS"] == "16"
+    assert campos["OFICINA"] == "3582464448"
+    assert campos["GAME_TYPE"] == "0"
+    assert campos["GAME_MODE"] == "1"
+    assert campos["REGRAS_DO_JOGO"] == "gamemode_competitive_server.cfg"
+    assert campos["REGRA"] == "fantasma"
+    assert campos["ARMA_PRINCIPAL"] == ""
+
+
+def test_fantasma_treze_rodadas_com_troca_e_sete_vitorias():
+    assert valor("mp_maxrounds", "fantasma") == "13"
+    assert valor("mp_halftime", "fantasma") == "1"
+    assert valor("mp_match_can_clinch", "fantasma") == "1"
+    assert valor("mp_overtime_enable", "fantasma") == "0"
+
+
+def test_fantasma_recomeca_sozinho_com_tempo_de_ler_o_resultado():
+    assert valor("mp_match_end_restart", "fantasma") == "1"
+    assert valor("mp_match_restart_delay", "fantasma") == "15"
+    assert valor("mp_endmatch_votenextmap", "fantasma") == "0"
+    assert valor("mp_match_end_changelevel", "fantasma") == "0"
+
+
+def test_fantasma_ct_com_kit_fixo():
+    assert valor("mp_ct_default_primary", "fantasma") == "weapon_m4a1_silencer"
+    assert valor("mp_ct_default_secondary", "fantasma") == "weapon_usp_silencer"
+    assert valor("mp_ct_default_grenades", "fantasma") == '"weapon_smokegrenade weapon_flashbang weapon_hegrenade"'
+
+
+def test_fantasma_tr_so_com_faca():
+    assert valor("mp_t_default_primary", "fantasma") == '""'
+    assert valor("mp_t_default_secondary", "fantasma") == "null"
+    assert valor("mp_t_default_grenades", "fantasma") == '""'
+    assert valor("mp_t_default_melee", "fantasma") == "weapon_knife"
+
+
+def test_fantasma_ninguem_compra():
+    assert valor("sv_buy_status_override", "fantasma") == "3"
+    assert valor("mp_weapons_allow_map_placed", "fantasma") == "0"
+
+
+def test_fantasma_arma_de_quem_morre_nao_vai_para_o_chao():
+    assert valor("mp_death_drop_gun", "fantasma") == "0"
+    assert valor("mp_death_drop_grenade", "fantasma") == "0"
+
+
+def test_fantasma_tem_bomba():
+    assert valor("mp_give_player_c4", "fantasma") == "1"
+
+
+def test_fantasma_oito_de_cada_lado():
+    assert valor("mp_autoteambalance", "fantasma") == "1"
+    assert valor("mp_limitteams", "fantasma") == "1"
+    assert valor("mp_friendlyfire", "fantasma") == "0"

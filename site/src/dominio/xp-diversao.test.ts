@@ -8,7 +8,7 @@ import { respostaDoResultado } from './xp-diversao';
 const TOKEN = 'token-de-teste';
 const EQUIPE = 27019;
 const CADA_UM = 27016;
-const FANTASMA_INATIVO = 27021;
+const MUTACAO_INATIVO = 27020;
 
 let bd: Bd;
 
@@ -74,12 +74,24 @@ test('mais de 32 jogadores é recusado', async () => {
 
 test.each([
   ['sem servidor', 27999],
-  ['de servidor inativo', FANTASMA_INATIVO],
+  ['de servidor inativo', MUTACAO_INATIVO],
 ])('porta %s não grava nada', async (_nome, porta) => {
   const conta = await membro();
   const resposta = await respostaDoResultado(bd, pedido(resultado([jogador(conta)], { porta })), TOKEN);
   expect(resposta.status).toBe(404);
   expect(await bd.select().from(xpPartidas)).toEqual([]);
+});
+
+test('no Fantasma, o XP sai do time, e quem jogou menos da metade não ganha', async () => {
+  const ct = await membro();
+  const tr = await membro();
+  const atrasado = await membro();
+  const ganhos = await enviar(
+    resultado([jogador(ct, { minutos: 20 }), jogador(tr, { minutos: 20, time: 'tr' }), jogador(atrasado, { minutos: 2 })], { porta: 27021, duracaoMinutos: 20, vencedor: 'ct' }),
+  );
+  expect(ganhos.find((g) => g.steamid64 === ct.steamid64)).toMatchObject({ xp: 840 });
+  expect(ganhos.find((g) => g.steamid64 === tr.steamid64)).toMatchObject({ xp: 540 });
+  expect(ganhos.find((g) => g.steamid64 === atrasado.steamid64)).toMatchObject({ xp: 0 });
 });
 
 test('no Equipe x Equipe, vencedor e perdedor ganham o XP da fórmula', async () => {

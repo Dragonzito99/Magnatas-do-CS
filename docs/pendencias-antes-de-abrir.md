@@ -18,8 +18,8 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
 
 - Cada cartão é um CS2 rodando na mesma máquina. Vazio, cada um usa cerca de 1,1 GB. Ligar todos com `iniciar_diversao.sh todos`.
 - `instalar_cs2.sh` só compila o plugin se o CounterStrikeSharp já estiver instalado. Se não estiver, rode `compilar_plugin.sh` depois. Ele baixa o .NET SDK na primeira vez (229 MB) e confere a assinatura.
-- Liberar as portas `27016/udp` a `27019/udp` no firewall. O instalador e o aviso dele ainda falam só da `27015/udp`.
-- Criar um token de servidor da Steam para cada um e guardar no `cs2.env`: `GSLT_AK_DESERT`, `GSLT_PISTOLA`, `GSLT_AWP` e `GSLT_EQUIPE`.
+- Liberar as portas `27016/udp` a `27019/udp` e a `27021/udp` no firewall. O instalador e o aviso dele ainda falam só da `27015/udp`.
+- Criar um token de servidor da Steam para cada um e guardar no `cs2.env`: `GSLT_AK_DESERT`, `GSLT_PISTOLA`, `GSLT_AWP`, `GSLT_EQUIPE` e `GSLT_FANTASMA`.
 - Definir `DIVERSAO_HOST` no ambiente do site. Sem isso, os cartões aparecem fora do ar.
 - Conferir no servidor real se os 5 minutos do Equipe x Equipe duram 5 minutos de relógio. No Linux dentro do Windows, o tempo do jogo anda cerca de 10% mais devagar que o real, e a partida dura cerca de 5 minutos e meio.
 
