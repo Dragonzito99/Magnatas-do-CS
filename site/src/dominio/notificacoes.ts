@@ -5,9 +5,10 @@ import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala } from './desafios';
 import { partidaAtualDe } from './partidas';
 import { minhaSala } from './salas';
+import { patenteDe } from './xp';
 
 export type Notificacao = {
-  tipo: 'desafio' | 'partida' | 'chamados' | 'denuncias' | 'propostas';
+  tipo: 'desafio' | 'partida' | 'patente' | 'chamados' | 'denuncias' | 'propostas';
   texto: string;
   href: string;
   quantidade: number;
@@ -36,6 +37,11 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
   const partida = await partidaAtualDe(bd, usuario.id);
   if (partida?.estado === 'aguardando_jogadores') {
     lista.push({ tipo: 'partida', texto: 'Sua partida está pronta. Entre no servidor.', href: `/partidas/${partida.id}`, quantidade: 1 });
+  }
+
+  const patente = patenteDe(usuario.xpTotal);
+  if (patente.nivel > usuario.patenteVista) {
+    lista.push({ tipo: 'patente', texto: `Você subiu para ${patente.nome}`, href: `/jogadores/${usuario.id}`, quantidade: 1 });
   }
 
   // Só a equipe recebe isto: nunca avisar alguém de que foi denunciado.

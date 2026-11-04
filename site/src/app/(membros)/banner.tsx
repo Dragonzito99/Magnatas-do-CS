@@ -17,7 +17,7 @@ function IconeDoDiscord() {
   );
 }
 
-export function Banner({ usuario, discord, sino }: { usuario: UsuarioPublico; discord: string | null; sino?: React.ReactNode }) {
+export function Banner({ usuario, patente, discord, sino }: { usuario: UsuarioPublico; patente: string; discord: string | null; sino?: React.ReactNode }) {
   return (
     <header className="banner">
       <div className="banner-arte">
@@ -47,7 +47,10 @@ export function Banner({ usuario, discord, sino }: { usuario: UsuarioPublico; di
           rotulo={
             <>
               <Avatar usuario={usuario} />
-              <span className="conta-nome">{usuario.apelido}</span>
+              <span className="conta-texto">
+                <span className="conta-nome">{usuario.apelido}</span>
+                <small className="conta-patente">{patente}</small>
+              </span>
               <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m6 9 6 6 6-6" />
               </svg>

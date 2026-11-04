@@ -1,10 +1,12 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, usuarios, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
+import { progressoDe } from './xp';
 
 const ESPERA_DA_GRAVACAO_MS = 10 * 60_000;
 const TAMANHO_DO_HISTORICO = 30;
+const ULTIMOS_XP = 10;
 
 export type SituacaoDaGravacao = 'disponivel' | 'aguardando' | 'sem' | 'apagada';
 
@@ -168,7 +170,16 @@ export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogado
   }));
 
   const equipe = ehEquipe ? await dadosDaEquipe(bd, jogador) : undefined;
+  const ultimosXp = await bd
+    .select({ origem: xpPartidas.origem, abates: xpPartidas.abates, resultado: xpPartidas.resultado, xp: xpPartidas.xp, criadoEm: xpPartidas.criadoEm })
+    .from(xpPartidas)
+    .where(eq(xpPartidas.usuarioId, jogador.id))
+    .orderBy(desc(xpPartidas.criadoEm), desc(xpPartidas.id))
+    .limit(ULTIMOS_XP);
   return {
+    xpTotal: jogador.xpTotal,
+    progresso: progressoDe(jogador.xpTotal),
+    ultimosXp,
     jogador: {
       id: jogador.id,
       apelido: jogador.apelido,

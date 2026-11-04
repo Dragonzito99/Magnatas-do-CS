@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, notInArray } from 'drizzle-orm';
 import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
-import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Papel, type Partida, type Servidor } from '@/bd/esquema';
+import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, xpPartidas, type Papel, type Partida, type Servidor } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 import { lancarXp } from './xp';
@@ -230,6 +230,7 @@ export type JogadorDaPartida = {
   assists: number;
   damage: number;
   rodadas: number;
+  xp: number | null;
 };
 
 export async function detalheDaPartida(
@@ -250,9 +251,11 @@ export async function detalheDaPartida(
       assists: partidaJogadores.assists,
       damage: partidaJogadores.damage,
       rodadas: partidaJogadores.rodadas,
+      xp: xpPartidas.xp,
     })
     .from(partidaJogadores)
     .innerJoin(usuarios, eq(partidaJogadores.usuarioId, usuarios.id))
+    .leftJoin(xpPartidas, and(eq(xpPartidas.usuarioId, usuarios.id), eq(xpPartidas.referencia, id)))
     .where(eq(partidaJogadores.partidaId, id))
     .orderBy(desc(partidaJogadores.kills), asc(usuarios.apelido));
   return { partida, servidor: servidor ?? null, jogadores };

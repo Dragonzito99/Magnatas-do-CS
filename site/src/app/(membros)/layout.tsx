@@ -5,6 +5,7 @@ import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
 import { enderecoDoDiscord } from '@/dominio/discord';
 import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
+import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
 import { Banner } from './banner';
 import { Menu } from './menu';
@@ -21,7 +22,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
   return (
     <div className="app">
       <Atualizar segundos={15} />
-      <Banner usuario={usuario} discord={enderecoDoDiscord(process.env.DISCORD_URL)} sino={<Sino notificacoes={notificacoes} />} />
+      <Banner usuario={usuario} patente={patenteDe(usuario.xpTotal).nome} discord={enderecoDoDiscord(process.env.DISCORD_URL)} sino={<Sino notificacoes={notificacoes} />} />
       <div className="app-corpo">
         <aside className="lateral">
           <Menu mostrarEquipe={mostrarEquipe} casos={casos} />

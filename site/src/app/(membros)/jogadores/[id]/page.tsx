@@ -7,12 +7,17 @@ import { obterBd } from '@/bd/conexao';
 import { fichaDoJogador } from '@/dominio/ficha';
 import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
+import { PATENTES, patenteDe } from '@/dominio/xp';
 import { Avatar } from '../../avatar';
+import { MarcarPatenteVista } from './marcar-patente-vista';
 import { Punicoes } from './punicoes';
 
 const NOME_DA_DENUNCIA = { aberta: 'Aberta', em_analise: 'Em análise', encerrada: 'Encerrada' };
 
 const dataCurta = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'America/Sao_Paulo' });
+const numero = new Intl.NumberFormat('pt-BR');
+const NOME_DA_ORIGEM = { partida: 'Mix ou Sala', diversao: 'Diversão' };
+const NOME_DO_RESULTADO = { vitoria: 'Vitória', empate: 'Empate', derrota: 'Derrota' };
 
 const ERROS: Record<string, string> = {
   motivo: 'Escreva o motivo, com até 500 caracteres.',
@@ -36,7 +41,8 @@ export default async function FichaDoJogador({
   if (!z.uuid().safeParse(id).success) notFound();
   const ficha = await fichaDoJogador(obterBd(), usuario, id);
   if (!ficha) notFound();
-  const { jogador, estatisticas, historico, porMapa, melhorPartida, steamid64, equipe } = ficha;
+  const { jogador, estatisticas, historico, porMapa, melhorPartida, steamid64, equipe, xpTotal, progresso, ultimosXp } = ficha;
+  const patenteNova = usuario.id === jogador.id && patenteDe(usuario.xpTotal).nivel > usuario.patenteVista;
 
   return (
     <>
@@ -95,6 +101,58 @@ export default async function FichaDoJogador({
           Abates por partida<b className="mono">{estatisticas.abatesPorPartida}</b>
         </div>
       </div>
+      {patenteNova && <MarcarPatenteVista />}
+      <section className="painel patente-perfil">
+        <div className="patente-topo">
+          <svg className="coroa-patente" viewBox="0 0 24 18" aria-hidden="true">
+            <path d="M2 16 1 4l6 5 5-8 5 8 6-5-1 12z" />
+          </svg>
+          <div>
+            <strong>{progresso.patente.nome}</strong>
+            <span className="apoio">
+              Nível {progresso.patente.nivel} de {PATENTES.length}
+            </span>
+          </div>
+        </div>
+        <div className="barra-xp" role="progressbar" aria-label="Progresso até a próxima patente" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progresso.porcentagem}>
+          <i style={{ width: `${progresso.porcentagem}%` }} />
+        </div>
+        <span className="apoio">
+          {progresso.proxima
+            ? `${numero.format(xpTotal)} de ${numero.format(progresso.proxima.xp)} XP para ${progresso.proxima.nome}`
+            : `${numero.format(xpTotal)} XP. Patente máxima`}
+        </span>
+        {ultimosXp.length > 0 && (
+          <table className="tabela">
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Partida</th>
+                <th scope="col" className="so-computador">
+                  Resultado
+                </th>
+                <th scope="col" className="so-computador">
+                  Abates
+                </th>
+                <th scope="col">XP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ultimosXp.map((linha, indice) => (
+                <tr key={indice}>
+                  <td>{dataCurta.format(linha.criadoEm)}</td>
+                  <td>{NOME_DA_ORIGEM[linha.origem]}</td>
+                  <td className="so-computador">{NOME_DO_RESULTADO[linha.resultado]}</td>
+                  <td className="so-computador">{linha.abates}</td>
+                  <td>
+                    <b>+{numero.format(linha.xp)}</b>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
       <div className="grade">
         <section className="painel">
           <div className="cabeca-painel">

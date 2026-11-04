@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
+import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import {
@@ -20,6 +21,7 @@ import {
   suspender,
 } from '@/dominio/banimentos';
 import { SemPermissao } from '@/dominio/equipe';
+import { marcarPatenteVista } from '@/dominio/xp';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 
 function codigoDoErro(erro: unknown): string | null {
@@ -76,4 +78,13 @@ export async function recusarBan(dados: FormData) {
 export async function reverterBan(dados: FormData) {
   const banimentoId = idDe(dados, 'banimentoId');
   await executar(dados, (ator, _jogadorId, motivo) => reverterBanimento(obterBd(), ator, banimentoId, motivo));
+}
+
+/** Ao abrir o próprio perfil, o aviso de patente nova sai do sino. */
+export async function marcarMinhaPatenteVista(): Promise<void> {
+  // exigirAcesso redirecionaria a página aberta. Aqui basta saber quem é a pessoa.
+  const usuario = await usuarioAtual();
+  if (!usuario) return;
+  await marcarPatenteVista(obterBd(), usuario.id);
+  revalidatePath('/', 'layout');
 }

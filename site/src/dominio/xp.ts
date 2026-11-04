@@ -1,4 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
+import type { Bd } from '@/bd/conexao';
 import { usuarios, xpPartidas } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
 
@@ -53,6 +54,12 @@ export function progressoDe(xpTotal: number): { patente: Patente; proxima: Paten
   if (!proxima) return { patente, proxima: null, faltam: 0, porcentagem: 100 };
   const porcentagem = Math.floor(((xpTotal - patente.xp) / (proxima.xp - patente.xp)) * 100);
   return { patente, proxima, faltam: proxima.xp - xpTotal, porcentagem };
+}
+
+export async function marcarPatenteVista(bd: Bd, usuarioId: string): Promise<void> {
+  const [conta] = await bd.select({ xpTotal: usuarios.xpTotal }).from(usuarios).where(eq(usuarios.id, usuarioId));
+  if (!conta) return;
+  await bd.update(usuarios).set({ patenteVista: patenteDe(conta.xpTotal).nivel }).where(eq(usuarios.id, usuarioId));
 }
 
 /** Quem já tem linha para a referência fica de fora da resposta: o mesmo resultado nunca conta duas vezes. */

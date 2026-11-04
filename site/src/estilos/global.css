@@ -613,6 +613,60 @@ textarea {
   background: var(--verde);
 }
 
+/* Patente */
+.conta-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.conta-patente {
+  color: var(--ouro);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.patente-perfil {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.patente-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.patente-topo strong {
+  display: block;
+  color: var(--ouro);
+  font-size: 20px;
+}
+
+.coroa-patente {
+  width: 34px;
+  height: 26px;
+  fill: var(--ouro);
+}
+
+.barra-xp {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--painel-2);
+}
+
+.barra-xp i {
+  display: block;
+  height: 100%;
+  background: var(--ouro);
+}
+
 /* Cartão escuro */
 .cartao-escuro {
   display: grid;
@@ -1842,7 +1896,7 @@ textarea {
   .banner-frase,
   .seja-magnata,
   .item-menu.casa,
-  .conta-nome {
+  .conta-texto {
     display: none;
   }
 

@@ -51,6 +51,7 @@ function Time({ titulo, jogadores }: { titulo: string; jogadores: JogadorDaParti
             <th scope="col" title="Dano por rodada">
               ADR
             </th>
+            <th scope="col">XP</th>
           </tr>
         </thead>
         <tbody>
@@ -68,6 +69,7 @@ function Time({ titulo, jogadores }: { titulo: string; jogadores: JogadorDaParti
               <td>{jogador.deaths}</td>
               <td>{jogador.assists}</td>
               <td>{jogador.rodadas > 0 ? Math.round(jogador.damage / jogador.rodadas) : 0}</td>
+              <td>{jogador.xp ?? '—'}</td>
             </tr>
           ))}
         </tbody>
