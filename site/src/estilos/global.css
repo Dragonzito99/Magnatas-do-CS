@@ -511,6 +511,15 @@ textarea {
   color: var(--ouro);
 }
 
+.perfil {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--tinta-2);
+}
+
 .avatar {
   display: grid;
   place-items: center;

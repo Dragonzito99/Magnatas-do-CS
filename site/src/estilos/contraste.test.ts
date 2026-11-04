@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from 'vitest';
 
@@ -39,6 +39,16 @@ test('o ouro se destaca em página e painel', () => {
   for (const fundo of ['--pagina', '--painel']) {
     expect(contraste(cor('--ouro'), cor(fundo))).toBeGreaterThanOrEqual(4.5);
   }
+});
+
+test('toda classe usada nas telas tem estilo', () => {
+  const definidas = new Set([...css.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)].map((achado) => achado[1]));
+  const telas = readdirSync(path.join(process.cwd(), 'src/app'), { recursive: true, encoding: 'utf8' }).filter((nome) => nome.endsWith('.tsx'));
+  const semEstilo = telas.flatMap((nome) => {
+    const texto = readFileSync(path.join(process.cwd(), 'src/app', nome), 'utf8');
+    return [...texto.matchAll(/className="([^"]+)"/g)].flatMap((achado) => achado[1].split(/\s+/)).filter((classe) => !definidas.has(classe));
+  });
+  expect([...new Set(semEstilo)]).toEqual([]);
 });
 
 test('nenhum fundo claro sobrou', () => {
