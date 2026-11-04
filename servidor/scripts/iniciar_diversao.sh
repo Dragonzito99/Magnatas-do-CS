@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Inicia os servidores da aba Diversão, cada um na própria sessão tmux, ao lado do servidor de partidas.
-# Uso: sudo -u cs2 bash /home/cs2/bin/iniciar_diversao.sh <ak-desert|pistola|awp|todos>
+# Uso: sudo -u cs2 bash /home/cs2/bin/iniciar_diversao.sh <ak-desert|pistola|awp|equipe|todos>
 set -euo pipefail
 
 CASA=/home/cs2
@@ -41,8 +41,11 @@ if [ "${2:-}" = "--executar" ]; then
   CONTA=()
   [ -n "${!VARIAVEL_DO_TOKEN:-}" ] && CONTA=(+sv_setsteamaccount "${!VARIAVEL_DO_TOKEN}")
   [ -n "${RCON_PASSWORD:-}" ] && CONTA+=(-usercon -ip "${CS2_IP:-0.0.0.0}" +rcon_password "$RCON_PASSWORD")
+  # Só com host_workshop_map o servidor liga e fica parado: ele precisa abrir um mapa do jogo antes.
+  MAPA_DA_OFICINA=()
+  [ -n "${OFICINA:-}" ] && MAPA_DA_OFICINA=(+host_workshop_map "$OFICINA")
   exec game/cs2.sh -dedicated -condebug -port "$PORTA" -maxplayers "$VAGAS" \
-    +game_type 1 +game_mode 2 +map "$MAPA" \
+    +game_type "$GAME_TYPE" +game_mode "$GAME_MODE" +map "$MAPA" "${MAPA_DA_OFICINA[@]}" \
     "${CONTA[@]}" +sv_password "$SV_PASSWORD" \
     +tv_enable 0 +exec magnatas_diversao.cfg
 fi
@@ -69,6 +72,11 @@ mkdir -p "$PASTA/csgo/cfg"
 # Ligações em vez de cópia: não ocupa espaço duplicado, e refazer pega a versão nova depois de uma atualização do CS2.
 rm -rf "$PASTA/bin"
 cp -al "$SERVIDOR/bin" "$PASTA/"
+# Os mapas da Oficina ficam fora da pasta do programa, para não baixar de novo a cada início nem uma vez por servidor.
+OFICINA_COMPARTILHADA=$CASA/diversao/oficina
+mkdir -p "$OFICINA_COMPARTILHADA"
+rm -rf "$PASTA/bin/linuxsteamrt64/steamapps"
+ln -sfn "$OFICINA_COMPARTILHADA" "$PASTA/bin/linuxsteamrt64/steamapps"
 cp -a "$SERVIDOR/cs2.sh" "$PASTA/"
 for item in "$SERVIDOR"/*; do
   nome=$(basename "$item")
@@ -88,11 +96,11 @@ mkdir -p "$PASTA_DOS_PLUGINS/MagnatasDiversao"
 cp "$PLUGIN" "$PASTA_DOS_PLUGINS/MagnatasDiversao/MagnatasDiversao.dll"
 CONFIG_DO_PLUGIN=$PASTA/csgo/addons/counterstrikesharp/configs/plugins/MagnatasDiversao
 mkdir -p "$CONFIG_DO_PLUGIN"
-printf '{ "ArmaPrincipal": "%s", "ConfigVersion": 1 }\n' "$ARMA_PRINCIPAL" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "ConfigVersion": 1 }\n' "$ARMA_PRINCIPAL" "$REGRA" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
 cp "$SERVIDOR/csgo/gameinfo.gi" "$PASTA/csgo/gameinfo.gi"
-cat "$CONFIGS/cada_um_por_si.cfg" "$CONFIGS/$NOME.cfg" > "$PASTA/csgo/cfg/magnatas_diversao.cfg"
-# O jogo aplica as regras padrão do mata-mata ao carregar o mapa, e só este arquivo vem depois delas.
-cp "$PASTA/csgo/cfg/magnatas_diversao.cfg" "$PASTA/csgo/cfg/gamemode_deathmatch_server.cfg"
+cat "$CONFIGS/$BASE" "$CONFIGS/$NOME.cfg" > "$PASTA/csgo/cfg/magnatas_diversao.cfg"
+# O jogo aplica as regras padrão do modo ao carregar o mapa, e só este arquivo vem depois delas.
+cp "$PASTA/csgo/cfg/magnatas_diversao.cfg" "$PASTA/csgo/cfg/$REGRAS_DO_JOGO"
 
 tmux new-session -d -x 200 -y 50 -s "diversao-$NOME" "bash $(printf %q "${BASH_SOURCE[0]}") $(printf %q "$NOME") --executar"
 echo "$NOME iniciado na porta $PORTA. Console: tmux attach -t diversao-$NOME. Para sair sem desligar: Ctrl+B e depois D."
