@@ -54,6 +54,13 @@ install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$OR
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$ORIGEM/config/mata_mata.cfg" "$CASA/bin/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/config/server.cfg" "$SERVIDOR/game/csgo/cfg/server.cfg"
 
+# O plugin da AK do modo Cada um por si só compila com o CounterStrikeSharp instalado.
+if [ -f "$SERVIDOR/game/csgo/addons/counterstrikesharp/api/CounterStrikeSharp.API.dll" ]; then
+  bash "$ORIGEM/scripts/compilar_plugin.sh"
+else
+  echo "Depois de instalar o CounterStrikeSharp, rode: sudo bash $ORIGEM/scripts/compilar_plugin.sh"
+fi
+
 # O MatchZy só deixa entrar quem está nesta lista: sem o agendamento, membro novo fica de fora.
 cat > /etc/cron.d/magnatas-lista <<AGENDA
 * * * * * $USUARIO bash $CASA/bin/atualizar_lista.sh >/dev/null 2>>$CASA/atualizar_lista.log

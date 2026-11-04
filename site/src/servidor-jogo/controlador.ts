@@ -29,10 +29,11 @@ export function comandoDeExpulsar(steamid64: string): string {
   return `kickid "[U:1:${BigInt(steamid64) - BASE_DO_STEAMID64}]" "Removido pela equipe"`;
 }
 
-/** Lê o texto em vez de converter o JSON, porque um SteamID em forma de número perderia os últimos dígitos. */
-function pessoasDoStatus(resposta: string): string[] {
-  if (!resposta.includes('"server"')) throw new Error('O servidor não mandou o status.');
-  return [...resposta.matchAll(/"steamid64"\s*:\s*"?(7656\d{13})"?/g)].map((achado) => achado[1]);
+/** Vem do plugin do modo Cada um por si, porque o `status_json` do CS2 só olha as primeiras vagas do servidor. */
+function pessoasDaLista(resposta: string): string[] {
+  const lista = resposta.match(/magnatas_jogadores=\[([^\]]*)\]/);
+  if (!lista) throw new Error('O servidor não mandou a lista de jogadores.');
+  return lista[1].match(/7656\d{13}/g) ?? [];
 }
 
 /** A varredura e as punições esperam esta resposta, então um servidor travado não pode prender ninguém. */
@@ -80,7 +81,7 @@ export function controladorRcon(
     async expulsar(servidor, steamid64) {
       await comConexao(servidor, (conexao) => conexao.send(comandoDeExpulsar(steamid64)));
     },
-    jogadoresConectados: (servidor) => comConexao(servidor, async (conexao) => pessoasDoStatus(await conexao.send('status_json'))),
+    jogadoresConectados: (servidor) => comConexao(servidor, async (conexao) => pessoasDaLista(await conexao.send('magnatas_jogadores'))),
   };
 }
 

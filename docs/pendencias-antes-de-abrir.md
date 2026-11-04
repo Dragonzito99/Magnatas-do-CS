@@ -10,8 +10,17 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
   - o tempo de 10 minutos para entrar, preparar e jogar a rodada de faca é suficiente;
   - uma conta suspensa tenta voltar para a partida e é derrubada de novo em até 15 segundos;
   - duas partidas em fila no mesmo servidor: a segunda espera a gravação da primeira, e as duas gravações chegam;
-  - o mix fechando com 10 pessoas no visual novo.
+  - o mix fechando com 10 pessoas no visual novo;
+  - uma conta de fora entra no modo Cada um por si e é derrubada em até 15 segundos, e o placar zera depois de 20 minutos completos.
 - Conferir no CS2 os comandos `demoui` e `demo_gototick`, que a tela do Olho de Águia ensina a usar.
+
+## Modo Cada um por si no servidor novo
+
+- O modo é um segundo CS2 rodando na mesma máquina, então o servidor precisa de mais que 4 núcleos e 8 GB.
+- `instalar_cs2.sh` só compila o plugin da AK se o CounterStrikeSharp já estiver instalado. Se não estiver, rode `compilar_plugin.sh` depois. Ele baixa o .NET SDK na primeira vez (229 MB) e confere a assinatura.
+- Liberar a porta `27016/udp` no firewall. O instalador e o aviso dele ainda falam só da `27015/udp`.
+- Criar um segundo token de servidor da Steam e guardar como `GSLT_MATA_MATA` no `cs2.env`.
+- Definir `DIVERSAO_HOST` e `DIVERSAO_PORTA` no ambiente do site. Sem isso, o cartão aparece como fora do ar.
 
 ## Antes de abrir o site de verdade
 

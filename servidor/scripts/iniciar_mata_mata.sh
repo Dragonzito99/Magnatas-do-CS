@@ -7,6 +7,8 @@ CASA=/home/cs2
 SERVIDOR=$CASA/server/game
 MATA_MATA=$CASA/mata-mata/game
 SEGREDOS=$CASA/cs2.env
+PLUGIN=$CASA/bin/MagnatasMataMata.dll
+PASTA_DOS_PLUGINS=$MATA_MATA/csgo/addons/counterstrikesharp/plugins
 
 if [ "$(id -un)" != "cs2" ]; then
   echo "Rode como o usuário cs2." >&2
@@ -36,8 +38,14 @@ if [ ! -f "$SEGREDOS" ] || [ "$(stat -c %a "$SEGREDOS")" != "600" ]; then
   exit 1
 fi
 
-# Os plugins das partidas ficam em addons, e o MatchZy forçaria o aquecimento e expulsaria quem não está em uma partida.
-# Por isso este modo roda em uma pasta própria: os mapas são os mesmos, e só o programa, a configuração e o gameinfo são separados.
+# Sem o plugin o modo sobe, mas todo mundo nasce só com a Desert.
+if [ ! -f "$PLUGIN" ]; then
+  echo "Falta o plugin da AK em $PLUGIN. Rode: sudo bash compilar_plugin.sh" >&2
+  exit 1
+fi
+
+# O MatchZy forçaria o aquecimento e expulsaria quem não está em uma partida.
+# Por isso este modo roda em uma pasta própria: os mapas são os mesmos, e o programa, a configuração e os plugins são separados.
 mkdir -p "$MATA_MATA/csgo/cfg"
 cp -au "$SERVIDOR/bin" "$MATA_MATA/"
 cp -a "$SERVIDOR/cs2.sh" "$MATA_MATA/"
@@ -53,7 +61,11 @@ for item in "$SERVIDOR"/csgo/*; do
 done
 cp -au "$SERVIDOR/csgo/cfg/." "$MATA_MATA/csgo/cfg/"
 rm -rf "$MATA_MATA/csgo/cfg/MatchZy"
-grep -v 'csgo/addons/metamod' "$SERVIDOR/csgo/gameinfo.gi" > "$MATA_MATA/csgo/gameinfo.gi"
+cp -au "$SERVIDOR/csgo/addons" "$MATA_MATA/csgo/"
+rm -rf "$MATA_MATA/csgo/addons/counterstrikesharp/plugins/MatchZy"
+mkdir -p "$PASTA_DOS_PLUGINS/MagnatasMataMata"
+cp "$PLUGIN" "$PASTA_DOS_PLUGINS/MagnatasMataMata/MagnatasMataMata.dll"
+cp "$SERVIDOR/csgo/gameinfo.gi" "$MATA_MATA/csgo/gameinfo.gi"
 cp "$CASA/bin/mata_mata.cfg" "$MATA_MATA/csgo/cfg/mata_mata.cfg"
 # O jogo aplica as regras padrão do mata-mata ao carregar o mapa, e só este arquivo vem depois delas.
 cp "$CASA/bin/mata_mata.cfg" "$MATA_MATA/csgo/cfg/gamemode_deathmatch_server.cfg"
