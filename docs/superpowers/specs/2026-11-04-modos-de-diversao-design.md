@@ -39,6 +39,7 @@ Renascimento espalhado e sem compra de outras armas, como o atual. Os mapas muda
 - Humano com AK ou M4, pistola e munição de reserva infinita.
 - Rodada de 3 minutos, até 16 pessoas, e a seguinte começa sozinha. Mutantes vencem se ninguém continuar humano. Humanos vencem se sobreviverem até o fim.
 - No futuro, haverá mutantes diferentes com poderes diferentes. Agora, um tipo só, com a construção preparada para receber os outros.
+- Até haver arte, o mutante ataca com a faca do jogo e fica esverdeado, porque o CS2 não troca o modelo da faca sem baixar conteúdo para cada jogador.
 
 **Fantasma**
 - Mapa: [gm_laboratory](https://steamcommunity.com/sharedfiles/filedetails/?id=3582464448), que já traz o modo em script próprio. O dono testou com bots e aprovou: "muito bom".
@@ -70,6 +71,7 @@ Estes testes usaram plugins descartáveis, que não fazem parte do projeto. O c�
 - **O modo mata-mata do CS2 (`game_type 1`, `game_mode 2`) ignora `mp_*_default_primary`.** Só ele espalha quem renasce. Por isso a arma principal vem do plugin.
 - **O modo personalizado (`game_type 3`, `game_mode 0`) entrega a arma principal e renasce na base.** Com `mp_timelimit 0` e `mp_maxrounds 0` juntos, ele congela todo mundo como partida encerrada. Com `mp_maxrounds 1`, `mp_timelimit 0`, `mp_roundtime` definido e `mp_match_end_restart 1`, a partida termina e recomeça sozinha.
 - **Fim de partida no modo mata-mata** deixa todo mundo sem time e nada recomeça. Por isso o plugin atual reinicia com `mp_restartgame` antes.
+- **Na Mutação, ficou provado com bots:** o golpe transforma sem dano, com `Listeners.OnEntityTakeDamagePre`; `SwitchTeam` troca de time sem matar; `VelocityModifier` leva a corrida de 250 a 275; `ConVar<int>` liga `sv_infinite_ammo`, que o console recusa; 10 rodadas fecham com 15 segundos de espera, sem travar.
 - **`status_json` do CS2 só olha as primeiras vagas** do servidor. A lista de contas vem do comando `magnatas_jogadores` do plugin.
 - **`host_workshop_map`** carregou os três mapas da Oficina em servidor dedicado sem GSLT.
 - **Cada CS2 vazio usa cerca de 1,1 GB de memória.** O uso com jogadores não foi medido.
@@ -105,7 +107,7 @@ Estas escolhas são minhas. O dono não as revisou uma a uma.
 **Acesso.** Continua como hoje: só membro ativo vê a aba, todos os servidores usam a mesma senha de entrada, e os botões entregam essa senha. Servidor cheio mostra "Servidor cheio" no lugar de Entrar.
 
 **Valores que escolhi e o dono pode mudar:**
-- Mutação: mutante com 2.000 de vida, 10% mais rápido e renascendo em 3 segundos. Cada humano recebe AK ou M4 por sorteio no início da rodada.
+- Mutação: mutante com 2.000 de vida, 10% mais rápido e renascendo em 3 segundos. Cada humano recebe AK ou M4 por sorteio no início da rodada. O sorteio arredonda para baixo, nunca menos de 1, e com menos de 2 pessoas ninguém vira mutante. O tiro empurra 5 por ponto de dano, até 300. Sem colete. Quem entra depois do sorteio nasce mutante, e o humano que morre por queda vira mutante. Os 20 segundos contam dentro dos 3 minutos.
 - Equipe x Equipe: times equilibrados automaticamente, e abates iguais terminam em empate. M4 é a M4A4.
 - Fantasma: o dono pediu 13 rodadas no total. Escolhi trocar de lados depois da 6ª e encerrar quando um time chegar a 7 vitórias. O restante da configuração do mapa fica como veio: velocidade, pulo e radar desligado. O dinheiro e o tempo de compra do mapa deixam de valer, porque ninguém compra.
 
@@ -123,7 +125,8 @@ Cada etapa termina com o dono testando no jogo.
 - **Mapas da Oficina podem mudar ou sumir.** O autor pode atualizar ou apagar o mapa, e o servidor baixa a versão nova sozinho. O `gm_laboratory` é o mais sensível, porque o modo depende do script dele e dos hashes dos sons. Se os hashes mudarem, a respiração volta a ficar presa ao corpo.
 - **Limitações que o autor do `gm_laboratory` avisa.** Com vários fantasmas por perto, toca no máximo uma respiração por vez. O fantasma pode aparecer um instante ao aterrissar de um pulo. As mãos do próprio fantasma continuam visíveis para ele.
 - **Fantasma ainda sem várias pessoas ao mesmo tempo.** O dono jogou uma partida inteira dos dois lados com bots, com XP no site. Faltam várias pessoas juntas, o volume da respiração com elas e o equilíbrio com o shift e o bhop invisíveis.
-- **Mapas ainda não jogados.** O `zm_biochemical_hotel` e o Transport Ship só foram carregados. Podem trazer regras ou scripts próprios que atrapalhem os modos, e isso só aparece ao jogar.
+- **`zm_biochemical_hotel` ainda não jogado.** Ele não traz script nem regra própria, mas também não tem a navegação de que os bots precisam, então bot nenhum entra nele. As regras da Mutação foram provadas com bots no `de_dust2`, no mesmo servidor. Faltam pessoas no mapa real.
+- **Mutação com pessoas.** O dono entrou no fim de uma partida com bots, matou mutantes e viu o resultado chegar ao site, com 0 XP porque jogou menos de 5 minutos. Faltam a partida inteira com XP, ser transformado e transformar outra pessoa, a força do empurrão e a regra real que põe todo humano em CT, que barra os bots e por isso ficou desligada no teste.
 - **Direito de uso.** Os mapas recriam conteúdo do CrossFire, e o `gm_laboratory` traz os áudios originais. Isso entra na conversa com o advogado, antes de abrir para fora.
 - **Máquina.** São 6 servidores de Diversão mais o de partidas. Sete CS2 vazios já somam cerca de 8 GB. Sugiro partir de 8 núcleos dedicados e 32 GB, e confirmar medindo com o servidor cheio. A máquina ainda não foi contratada.
 - **Meta de 100 pessoas.** Os seis servidores somam 96 vagas, sem contar as partidas.

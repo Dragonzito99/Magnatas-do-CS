@@ -57,7 +57,7 @@ Os nomes são do dono. Os valores saíram de uma proposta minha, e o dono pediu 
 
 - Quem já jogou começa como Recruta, com 0 XP. Partidas antigas não contam.
 - **Cada um por si:** cada ciclo de 20 minutos é uma partida. O terço de cima do placar conta como vencedor, arredondando para cima. É preciso ter jogado pelo menos 5 minutos do ciclo.
-- **Mutação:** cada mapa com 10 rodadas é uma partida.
+- **Mutação:** cada mapa com 10 rodadas é uma partida. A mesma pessoa joga nos dois lados, então vence o terço de cima do placar, como no Cada um por si. Transformar um humano e matar um mutante contam 1 abate cada.
 - **Ranking do Mix:** continua o mínimo de 5 partidas no mês.
 
 ## Fora desta entrega
