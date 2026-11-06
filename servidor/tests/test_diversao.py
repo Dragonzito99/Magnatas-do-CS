@@ -738,7 +738,7 @@ def test_ao_ligar_o_servidor_nao_procura_o_script_antes_do_mapa():
 
 def test_mutacao_so_liga_na_regra_dela():
     assert 'Config.Regra == "mutacao"' in CODIGO_DO_PLUGIN
-    assert "LigarMutacao()" in CODIGO_DO_PLUGIN
+    assert "LigarMutacao(hotReload)" in CODIGO_DO_PLUGIN
 
 
 def test_os_atributos_do_mutante_ficam_em_um_lugar_so():
@@ -965,3 +965,18 @@ def test_antes_do_sorteio_ninguem_nasce_mutante():
     # O jogo pode colocar quem entra em TR. Antes do sorteio, todo mundo é humano.
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ColocarNaRodada"):]
     assert trecho.index("SwitchTeam(CsTeam.CounterTerrorist)") < trecho.index("jogador.Respawn()")
+
+
+def test_mutacao_recarregada_no_meio_recomeca_a_partida():
+    # Sem a rodada em andamento nem o relógio, o servidor ficaria travado até todos saírem.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void LigarMutacao"):CODIGO_DA_MUTACAO.index("HookResult AoReceberDano")]
+    assert "if (hotReload)" in trecho
+    assert "rodadasDaPartida = 0" in trecho
+    assert "mp_restartgame 1" in trecho
+
+
+def test_equipe_recomeca_quando_a_ultima_pessoa_sai():
+    # Quem chegar depois não pode herdar o placar e o relógio de uma partida que ninguém mais está jogando.
+    trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("EventPlayerDisconnect"):]
+    assert 'Config.Regra != "equipe"' in trecho
+    assert "mp_restartgame 1" in trecho

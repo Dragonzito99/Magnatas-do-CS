@@ -128,7 +128,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         }
         else if (Config.Regra == "mutacao")
         {
-            LigarMutacao();
+            LigarMutacao(hotReload);
         }
     }
 
@@ -370,6 +370,16 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         if (armas.Any(item => item.Value?.DesignerName == arma)) return;
 
         jogador.GiveNamedItem(arma);
+    }
+
+    [GameEventHandler]
+    public HookResult AoSairDaEquipe(EventPlayerDisconnect evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "equipe") return HookResult.Continue;
+        var quem = evento.Userid;
+        // Quem chegar depois não pode herdar o placar e o relógio de uma partida que ninguém mais está jogando.
+        if (!Pessoas().Any(pessoa => pessoa.Slot != quem?.Slot)) Server.ExecuteCommand("mp_restartgame 1");
+        return HookResult.Continue;
     }
 
     /// <summary>O status_json do CS2 só olha as primeiras vagas, e quem está em uma vaga alta ficaria de fora.</summary>

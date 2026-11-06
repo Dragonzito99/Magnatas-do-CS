@@ -65,10 +65,16 @@ test('abates negativos são recusados', async () => {
   expect(await xpDe(conta)).toBe(0);
 });
 
-test('mais de 32 jogadores é recusado', async () => {
+test('mais de 128 jogadores é recusado', async () => {
   const conta = await membro();
-  const muitos = Array.from({ length: 33 }, () => jogador(conta));
+  const muitos = Array.from({ length: 129 }, () => jogador(conta));
   expect((await respostaDoResultado(bd, pedido(resultado(muitos)), TOKEN)).status).toBe(400);
+});
+
+test('uma partida longa com 40 pessoas passando pelo servidor é aceita', async () => {
+  // Quem saiu no meio continua no resultado, então uma partida de 16 vagas pode ter muito mais de 16 nomes.
+  const passantes = Array.from({ length: 40 }, (_, i) => ({ steamid64: `7656119${String(i).padStart(10, '0')}`, abates: 0, minutos: 1, ateOFim: false }));
+  expect((await respostaDoResultado(bd, pedido(resultado(passantes)), TOKEN)).status).toBe(200);
 });
 
 test.each([
@@ -131,6 +137,21 @@ test('no empate, os dois times ganham a metade do bônus', async () => {
   expect(await xpDe(tr)).toBe(690);
 });
 
+test('sozinho no servidor ninguém ganha XP, nem no empate', async () => {
+  // Sem isso, ficar parado num servidor vazio daria 450 XP a cada 5 minutos.
+  const conta = await membro();
+  const ganhos = await enviar(resultado([jogador(conta)], { vencedor: 'empate' }));
+  expect(ganhos).toMatchObject([{ steamid64: conta.steamid64, xp: 0 }]);
+  expect(await xpDe(conta)).toBe(0);
+});
+
+test('quem saiu antes do fim não conta como companhia', async () => {
+  const conta = await membro();
+  const saiu = await membro();
+  await enviar(resultado([jogador(conta), jogador(saiu, { ateOFim: false, time: 'tr' })]));
+  expect(await xpDe(conta)).toBe(0);
+});
+
 test('no Equipe x Equipe, quem jogou menos da metade do tempo fica com 0', async () => {
   const conta = await membro();
   await enviar(resultado([jogador(conta, { minutos: 2 })]));
@@ -174,7 +195,7 @@ test('no Cada um por si, o terço arredonda para cima', async () => {
 
 test('no Cada um por si, quem tem 0 abates nunca vence', async () => {
   const conta = await membro();
-  await enviar({ porta: CADA_UM, partida: 'ciclo-1', duracaoMinutos: 20, vencedor: null, jogadores: [{ steamid64: conta.steamid64, abates: 0, minutos: 20, ateOFim: true }] });
+  await enviar({ porta: CADA_UM, partida: 'ciclo-1', duracaoMinutos: 20, vencedor: null, jogadores: [{ steamid64: conta.steamid64, abates: 0, minutos: 20, ateOFim: true }, { steamid64: (await membro()).steamid64, abates: 5, minutos: 20, ateOFim: true }] });
   expect(await xpDe(conta)).toBe(300);
 });
 
@@ -194,7 +215,7 @@ test('conta de fora e conta suspensa não ganham nem aparecem na resposta', asyn
 
 test('reenviar o mesmo resultado devolve a mesma resposta, sem somar', async () => {
   const conta = await membro();
-  const corpo = resultado([jogador(conta)]);
+  const corpo = resultado([jogador(conta), jogador(await membro(), { time: 'tr' })]);
   const primeira = await enviar(corpo);
   const segunda = await enviar(corpo);
   expect(segunda).toEqual(primeira);
@@ -203,14 +224,15 @@ test('reenviar o mesmo resultado devolve a mesma resposta, sem somar', async () 
 
 test('um número absurdo de abates não passa do teto', async () => {
   const conta = await membro();
-  await enviar(resultado([jogador(conta, { abates: 9999 })]));
+  await enviar(resultado([jogador(conta, { abates: 9999 }), jogador(await membro(), { time: 'tr' })]));
   expect(await xpDe(conta)).toBe(1100);
 });
 
 test('a resposta avisa quando a pessoa sobe de patente', async () => {
   const conta = await membro();
   await bd.update(usuarios).set({ xpTotal: 4000 }).where(eq(usuarios.id, conta.id));
-  const [ganho] = await enviar(resultado([jogador(conta)]));
+  const ganhos = await enviar(resultado([jogador(conta), jogador(await membro(), { time: 'tr' })]));
+  const ganho = ganhos.find((g) => g.steamid64 === conta.steamid64);
   expect(ganho).toMatchObject({ patente: 'Magnata Jr.', subiu: true });
 });
 

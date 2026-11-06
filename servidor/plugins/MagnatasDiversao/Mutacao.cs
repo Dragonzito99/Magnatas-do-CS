@@ -156,10 +156,16 @@ public partial class ModoDeDiversao
         return HookResult.Continue;
     }
 
-    private void LigarMutacao()
+    private void LigarMutacao(bool hotReload)
     {
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
+        // Recarregado no meio da rodada, o plugin não teria a rodada em andamento nem o relógio, e o servidor travaria.
+        if (hotReload)
+        {
+            rodadasDaPartida = 0;
+            Server.ExecuteCommand("mp_restartgame 1");
+        }
     }
 
     /// <summary>

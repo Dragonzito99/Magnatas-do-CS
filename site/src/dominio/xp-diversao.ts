@@ -7,7 +7,9 @@ import { lerAte } from './eventos';
 import { lancarXp, patenteDe, type GanhoDePartida } from './xp';
 
 const LIMITE_DO_RESULTADO_BYTES = 1024 * 1024;
-const MAXIMO_DE_JOGADORES = 32;
+/** Quem saiu no meio continua no resultado, então uma partida de 16 vagas pode trazer muito mais nomes. */
+const MAXIMO_DE_JOGADORES = 128;
+const MINIMO_DE_PESSOAS_NO_FIM = 2;
 const MINUTOS_MINIMOS_NO_CADA_UM = 5;
 const PRAZO_MAXIMO_EM_MINUTOS = 240;
 
@@ -61,7 +63,13 @@ function consequenciasDosTimes(recebido: ResultadoRecebido): Map<string, Consequ
 
 function consequencias(modo: ServidorDiversao['modo'], recebido: ResultadoRecebido, membros: Set<string>): Map<string, ConsequenciaDaPartida> {
   const dosMembros = { ...recebido, jogadores: recebido.jogadores.filter((jogador) => membros.has(jogador.steamid64)) };
-  return modo === 'cada_um' || modo === 'mutacao' ? consequenciasDoCadaUm(dosMembros.jogadores) : consequenciasDosTimes(dosMembros);
+  const decididas = modo === 'cada_um' || modo === 'mutacao' ? consequenciasDoCadaUm(dosMembros.jogadores) : consequenciasDosTimes(dosMembros);
+  // Sozinho não há partida: ficar parado num servidor vazio não pode render XP.
+  const noFim = new Set(dosMembros.jogadores.filter((jogador) => jogador.ateOFim).map((jogador) => jogador.steamid64));
+  if (noFim.size < MINIMO_DE_PESSOAS_NO_FIM) {
+    for (const [steamid64, decidida] of decididas) decididas.set(steamid64, { ...decidida, jogouAteOFim: false });
+  }
+  return decididas;
 }
 
 /** O servidor envia só os números. Quem calcula o XP é o site, para um servidor não conseguir inventar XP. */
