@@ -4,7 +4,23 @@ import { servidoresDiversao, usuarios, type ServidorDiversao } from '@/bd/esquem
 import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
 
 export type ModoDeDiversao = ServidorDiversao['modo'];
-export type SituacaoDoServidor = { ligado: boolean; jogando: number };
+export type SituacaoDoServidor = { ligado: boolean; jogando: number; mapa?: string };
+
+/** Nome e foto dos mapas que já rodam na Diversão, pelo nome interno que o jogo informa. */
+const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string }> = {
+  de_dust2: { nome: 'Dust 2', foto: '/mapas/dust2.webp' },
+  de_mirage: { nome: 'Mirage', foto: '/mapas/mirage.webp' },
+  transportship: { nome: 'Transport Ship', foto: '/mapas/transport-ship.webp' },
+  luxville: { nome: 'Luxville', foto: '/mapas/luxville.webp' },
+  zm_biochemical_hotel: { nome: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp' },
+  gm_laboratory: { nome: 'Laboratory', foto: '/mapas/laboratory.webp' },
+};
+
+/** Com vários mapas sorteados, o cartão mostra o que está rodando agora. Mapa novo sem foto usa a do cadastro. */
+export function mapaDoCartao(servidor: { mapa: string; foto: string }, situacao: SituacaoDoServidor): { nome: string; foto: string } {
+  if (!situacao.ligado || !situacao.mapa) return { nome: servidor.mapa, foto: servidor.foto };
+  return MAPAS_CONHECIDOS[situacao.mapa] ?? { nome: situacao.mapa, foto: servidor.foto };
+}
 export type EstadoDoCartao = 'em_breve' | 'fora_do_ar' | 'cheio' | 'aberto';
 
 export const MODOS_DE_DIVERSAO: readonly { valor: ModoDeDiversao; nome: string }[] = [
@@ -110,8 +126,10 @@ export async function situacaoDoServidor(
   const chave = `${alvo.host}:${alvo.porta}`;
   const guardada = guardadas.get(chave);
   if (guardada && agora.getTime() < guardada.ate) return guardada.situacao;
-  const conectados = await aguardarNoMaximo(controlador.jogadoresConectados(alvo).catch(() => null), prazoMs, null);
-  const situacao = { ligado: conectados !== null, jogando: conectados?.length ?? 0 };
+  const estado = await aguardarNoMaximo(controlador.estadoDoServidor(alvo).catch(() => null), prazoMs, null);
+  const situacao: SituacaoDoServidor = estado
+    ? { ligado: true, jogando: estado.contas.length, ...(estado.mapa ? { mapa: estado.mapa } : {}) }
+    : { ligado: false, jogando: 0 };
   guardadas.set(chave, { ate: agora.getTime() + TEMPO_GUARDADA_MS, situacao });
   return situacao;
 }

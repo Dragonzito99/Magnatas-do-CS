@@ -102,8 +102,8 @@ source "$SEGREDOS"
 : "${SITE_URL:=}" "${SERVIDOR_TOKEN:=}"
 touch "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
 chmod 600 "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
-printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "Porta": %s, "SiteUrl": "%s", "Token": "%s", "ConfigVersion": 1 }\n' \
-  "$ARMA_PRINCIPAL" "$REGRA" "$PORTA" "$SITE_URL" "$SERVIDOR_TOKEN" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "Porta": %s, "SiteUrl": "%s", "Token": "%s", "Rotacao": "%s", "ConfigVersion": 1 }\n' \
+  "$ARMA_PRINCIPAL" "$REGRA" "$PORTA" "$SITE_URL" "$SERVIDOR_TOKEN" "${ROTACAO:-}" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
 cp "$SERVIDOR/csgo/gameinfo.gi" "$PASTA/csgo/gameinfo.gi"
 cat "$CONFIGS/$BASE" "$CONFIGS/$NOME.cfg" > "$PASTA/csgo/cfg/magnatas_diversao.cfg"
 # O jogo aplica as regras padrão do modo ao carregar o mapa, e só este arquivo vem depois delas.

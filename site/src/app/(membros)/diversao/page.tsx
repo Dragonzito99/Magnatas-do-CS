@@ -10,6 +10,7 @@ import {
   lerModo,
   linkDeEntrar,
   listarServidoresDaDiversao,
+  mapaDoCartao,
   MODOS_DE_DIVERSAO,
   situacaoDoServidor,
   type SituacaoDoServidor,
@@ -88,19 +89,22 @@ export default async function Diversao({ searchParams }: { searchParams: Promise
         ))}
       </nav>
       <div className="lista-servidores">
-        {servidores.map((servidor, indice) => (
-          <article key={servidor.id} className="cartao-servidor">
-            <Image className="foto-servidor" src={servidor.foto} alt={`Mapa ${servidor.mapa}`} width={480} height={270} />
-            <div className="corpo-servidor">
-              <h2>{nomeDoModo(servidor.modo)}</h2>
-              <p>{servidor.armas}</p>
-              <small>{servidor.mapa}</small>
-              <div className="rodape-servidor">
-                <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} />
+        {servidores.map((servidor, indice) => {
+          const mapa = mapaDoCartao(servidor, situacoes[indice]);
+          return (
+            <article key={servidor.id} className="cartao-servidor">
+              <Image className="foto-servidor" src={mapa.foto} alt={`Mapa ${mapa.nome}`} width={480} height={270} />
+              <div className="corpo-servidor">
+                <h2>{nomeDoModo(servidor.modo)}</h2>
+                <p>{servidor.armas}</p>
+                <small>{mapa.nome}</small>
+                <div className="rodape-servidor">
+                  <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} />
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </>
   );

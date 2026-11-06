@@ -9,7 +9,11 @@ export type ControladorServidor = {
   expulsar(servidor: ServidorAlvo, steamid64: string): Promise<void>;
   /** Os SteamIDs das pessoas no servidor, sem os bots. */
   jogadoresConectados(servidor: ServidorAlvo): Promise<string[]>;
+  /** As pessoas e o mapa que está rodando, numa pergunta só. */
+  estadoDoServidor(servidor: ServidorAlvo): Promise<EstadoDoServidor>;
 };
+
+export type EstadoDoServidor = { contas: string[]; mapa?: string };
 
 type AmbienteDoControlador = { RCON_SENHA?: string; SITE_URL?: string; SERVIDOR_TOKEN?: string };
 type Conexao = { send(comando: string): Promise<string>; end(): Promise<void> };
@@ -82,7 +86,15 @@ export function controladorRcon(
       await comConexao(servidor, (conexao) => conexao.send(comandoDeExpulsar(steamid64)));
     },
     jogadoresConectados: (servidor) => comConexao(servidor, async (conexao) => pessoasDaLista(await conexao.send('magnatas_jogadores'))),
+    estadoDoServidor: (servidor) => comConexao(servidor, async (conexao) => estadoDaResposta(await conexao.send('magnatas_jogadores'))),
   };
+}
+
+/** O plugin manda o mapa depois da lista. Um servidor antigo, sem o mapa, continua valendo. */
+function estadoDaResposta(resposta: string): EstadoDoServidor {
+  const contas = pessoasDaLista(resposta);
+  const mapa = resposta.match(/ mapa=([A-Za-z0-9_-]{1,64})/)?.[1];
+  return mapa ? { contas, mapa } : { contas };
 }
 
 export function controladorDoAmbiente(): ControladorServidor {
@@ -98,7 +110,7 @@ type ChamadaFalsa =
 
 /** Só para testes: anota as chamadas, e os hosts da lista falham como se estivessem fora do ar. */
 export function controladorFalso(
-  opcoes: { hostsComFalha?: string[]; conectados?: Record<string, string[]> } = {},
+  opcoes: { hostsComFalha?: string[]; conectados?: Record<string, string[]>; mapas?: Record<string, string> } = {},
 ): ControladorServidor & { chamadas: ChamadaFalsa[] } {
   const chamadas: ChamadaFalsa[] = [];
   const conferir = (servidor: ServidorAlvo) => {
@@ -122,6 +134,12 @@ export function controladorFalso(
       conferir(servidor);
       chamadas.push({ acao: 'jogadoresConectados', host: servidor.host });
       return opcoes.conectados?.[servidor.host] ?? [];
+    },
+    // Passa pelo jogadoresConectados do próprio objeto, para os testes que o trocam valerem aqui também.
+    async estadoDoServidor(this: ControladorServidor, servidor) {
+      const contas = await this.jogadoresConectados(servidor);
+      const mapa = opcoes.mapas?.[servidor.host];
+      return mapa ? { contas, mapa } : { contas };
     },
   };
 }

@@ -989,3 +989,35 @@ def test_placar_das_pessoas_zera_a_cada_partida_nova():
         assert campo in trecho
     assert "ZerarPlacarDasPessoas()" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("private void ComecarPartida"):]
     assert "ZerarPlacarDasPessoas()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("rodadasDaPartida == 0"):]
+
+
+def test_equipe_roda_varios_mapas():
+    # O dono preferiu um servidor com vários mapas a vários servidores, para gastar a memória de um só.
+    rotacao = conf("equipe")["ROTACAO"].split(",")
+    assert rotacao[0] == conf("equipe")["OFICINA"]
+    assert "3122345065" in rotacao and "3070259469" in rotacao
+
+
+def test_o_script_entrega_a_rotacao_ao_plugin():
+    assert '"Rotacao"' in INICIAR
+    assert "${ROTACAO:-}" in INICIAR
+
+
+def test_o_proximo_mapa_e_sorteado_depois_do_resultado():
+    trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void TrocarDeMapa"):]
+    assert "Random.Shared" in trecho
+    assert "host_workshop_map" in trecho
+    # Nunca repete o mapa que acabou de ser jogado.
+    assert "!= mapaAtualDaOficina" in trecho
+    assert "TrocarDeMapa" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void EncerrarPartidaDeEquipe"):]
+    assert "SegundosMostrandoOVencedor" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void EncerrarPartidaDeEquipe"):]
+
+
+def test_com_um_mapa_so_nao_troca():
+    trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void TrocarDeMapa"):]
+    assert "Count < 2" in trecho
+
+
+def test_o_plugin_conta_ao_site_o_mapa_atual():
+    trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index('"magnatas_jogadores"'):]
+    assert "mapa={Server.MapName}" in trecho

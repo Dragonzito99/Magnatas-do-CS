@@ -34,6 +34,10 @@ public class ConfiguracaoDoModo : BasePluginConfig
 
     [JsonPropertyName("Token")]
     public string Token { get; set; } = "";
+
+    /// <summary>Números da Oficina separados por vírgula. Com dois ou mais, o próximo é sorteado ao fim de cada partida.</summary>
+    [JsonPropertyName("Rotacao")]
+    public string Rotacao { get; set; } = "";
 }
 
 public class GanhoDoSite
@@ -96,6 +100,8 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private int abatesCt, abatesTr;
     private bool partidaEncerrada;
     private string avisoDoFim = "";
+    // O servidor liga no primeiro mapa da rotação, que é o mesmo do OFICINA no .conf.
+    private string? mapaAtualDaOficina;
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
@@ -112,6 +118,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
 
     public override void Load(bool hotReload)
     {
+        mapaAtualDaOficina = MapasDaRotacao(Config.Rotacao).FirstOrDefault();
         if (Config.Regra == "cada_um")
         {
             // Se a partida acabar pelo tempo do jogo, este modo não recomeça e deixa todo mundo sem time.
@@ -207,6 +214,24 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         AvisarFimDaPartida(vencedor == "ct" ? "CT venceu" : vencedor == "tr" ? "TR venceu" : "Empate");
         FecharPartida(vencedor, minutos);
         RegrasDoJogo()?.TerminateRound(SegundosMostrandoOVencedor, motivo);
+        // Troca um pouco antes da rodada seguinte, para ninguém começar uma partida que seria interrompida.
+        AddTimer(SegundosMostrandoOVencedor - 1, TrocarDeMapa);
+    }
+
+    private static List<string> MapasDaRotacao(string rotacao) =>
+        rotacao.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(mapa => mapa.All(char.IsDigit))
+            .ToList();
+
+    /// <summary>O dono preferiu um servidor com vários mapas, sorteados, sem repetir o que acabou de ser jogado.</summary>
+    private void TrocarDeMapa()
+    {
+        var mapas = MapasDaRotacao(Config.Rotacao);
+        if (mapas.Count < 2) return;
+        var opcoes = mapas.Where(mapa => mapa != mapaAtualDaOficina).ToList();
+        var proximo = opcoes[Random.Shared.Next(opcoes.Count)];
+        mapaAtualDaOficina = proximo;
+        Server.ExecuteCommand($"host_workshop_map {proximo}");
     }
 
     private void EncerrarCicloDoCadaUm()
@@ -408,6 +433,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     public void ListarJogadores(CCSPlayerController? chamador, CommandInfo comando)
     {
         var contas = Pessoas().Select(jogador => jogador.SteamID.ToString());
-        comando.ReplyToCommand($"magnatas_jogadores=[{string.Join(",", contas)}]");
+        // O mapa vai junto para o cartão do site mostrar o que está rodando agora.
+        comando.ReplyToCommand($"magnatas_jogadores=[{string.Join(",", contas)}] mapa={Server.MapName}");
     }
 }

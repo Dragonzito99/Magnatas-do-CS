@@ -141,3 +141,13 @@ test('sem senha ou token configurados, recusa antes de conectar', async () => {
   await expect(controladorRcon({ ...AMBIENTE, SERVIDOR_TOKEN: '' }, conectar).carregarPartida(SERVIDOR, 1)).rejects.toThrow(/SERVIDOR_TOKEN/);
   expect(conectou).toBe(false);
 });
+
+test('o mapa atual vem junto da lista do plugin', async () => {
+  const { conexao } = conexaoFalsa('magnatas_jogadores=[76561198000000001] mapa=luxville');
+  expect(await controladorRcon(AMBIENTE, async () => conexao).estadoDoServidor(SERVIDOR)).toEqual({ contas: ['76561198000000001'], mapa: 'luxville' });
+});
+
+test('sem o mapa na resposta, o estado vem só com as contas', async () => {
+  const { conexao } = conexaoFalsa('magnatas_jogadores=[76561198000000001]');
+  expect(await controladorRcon(AMBIENTE, async () => conexao).estadoDoServidor(SERVIDOR)).toEqual({ contas: ['76561198000000001'] });
+});
