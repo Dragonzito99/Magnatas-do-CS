@@ -15,7 +15,7 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
 - Provar com os amigos nos modos da Diversão:
   - Mutação no `zm_biochemical_hotel`, onde bots não entram: todos entram como humanos, o golpe transforma outra pessoa, a força do empurrão, a cor do mutante e a partida inteira de 10 rodadas com XP;
   - Fantasma: o volume da respiração e o equilíbrio com o shift e o bhop invisíveis;
-  - sair e voltar no meio da partida em qualquer modo.
+  - sair e voltar no meio da partida nos outros modos. No Equipe x Equipe, o dono saiu e voltou na VPS e continuou com os abates.
 - Conferir no CS2 os comandos `demoui` e `demo_gototick`, que a tela do Olho de Águia ensina a usar.
 
 ## Servidores da aba Diversão no servidor novo
