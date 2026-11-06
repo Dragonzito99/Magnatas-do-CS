@@ -1021,3 +1021,9 @@ def test_com_um_mapa_so_nao_troca():
 def test_o_plugin_conta_ao_site_o_mapa_atual():
     trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index('"magnatas_jogadores"'):]
     assert "mapa={Server.MapName}" in trecho
+
+
+def test_equipe_nunca_dorme_com_varios_mapas():
+    # Ao acordar do modo de espera, o jogo recarrega o pacote da Oficina e pode abrir o mapa auxiliar
+    # que vem junto (o de_luxville_skybox), e o servidor cai. Acordado, só o plugin troca de mapa.
+    assert valor("sv_hibernate_when_empty", "equipe") == "0"
