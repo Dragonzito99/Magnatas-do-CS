@@ -30,6 +30,7 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
 ## Antes de abrir o site de verdade
 
 - Tirar `PARTIDA_MIN_PRONTOS` do ambiente: é só de teste, e faria a partida começar com poucas pessoas.
+- Tirar `VERIFICADOR_SIMULADOR_EM_PRODUCAO=sim` do `.env.local` da VPS e ligar o verificador de identidade de verdade. Enquanto ele estiver lá, a verificação aprova qualquer pessoa. O dono liberou só para a fase de teste com os amigos.
 - Apagar as contas `ficticio_` e `teste_`, com a conta do dono já como Adm. Hoje, as contas `teste_adm` também seguram o cargo de Adm, então o site deixa o dono tirar o próprio cargo.
 - Falar com o advogado sobre documentos, o nome e o logo. O logo traz o símbolo CS2 e soldados parecidos com os do jogo. Levar também as fotos de `site/public/mapas`, tiradas do jogo e da Oficina, e os mapas e áudios recriados do CrossFire.
 - Definir o servidor do Discord, se houver, em `DISCORD_URL`.

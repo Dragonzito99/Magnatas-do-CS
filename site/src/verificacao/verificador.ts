@@ -18,7 +18,8 @@ const simulador: Verificador = {
 export function criarVerificador(ambiente: Record<string, string | undefined>): Verificador {
   const nome = ambiente.VERIFICADOR;
   if (nome === 'simulador') {
-    if (ambiente.NODE_ENV === 'production') {
+    // Só na fase de teste com convidados, e com liberação escrita por extenso. Sai antes de abrir o clube.
+    if (ambiente.NODE_ENV === 'production' && ambiente.VERIFICADOR_SIMULADOR_EM_PRODUCAO !== 'sim') {
       throw new Error('O simulador de verificação não pode rodar em produção, porque aprovaria qualquer pessoa.');
     }
     return simulador;

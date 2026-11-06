@@ -7,6 +7,12 @@ test('simulador não inicia em produção', () => {
   expect(() => criarVerificador({ NODE_ENV: 'production', VERIFICADOR: 'simulador' })).toThrow(/produção/);
 });
 
+test('simulador em produção só com a liberação explícita da fase de teste', () => {
+  expect(() => criarVerificador({ NODE_ENV: 'production', VERIFICADOR: 'simulador', VERIFICADOR_SIMULADOR_EM_PRODUCAO: 'talvez' })).toThrow(/produção/);
+  const verificador = criarVerificador({ NODE_ENV: 'production', VERIFICADOR: 'simulador', VERIFICADOR_SIMULADOR_EM_PRODUCAO: 'sim' });
+  expect(verificador.nome).toBe('simulador');
+});
+
 test('produção sem verificador configurado não inicia', () => {
   expect(() => criarVerificador({ NODE_ENV: 'production' })).toThrow();
 });
