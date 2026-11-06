@@ -11,7 +11,7 @@ const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string }> = {
   de_dust2: { nome: 'Dust 2', foto: '/mapas/dust2.webp' },
   de_mirage: { nome: 'Mirage', foto: '/mapas/mirage.webp' },
   transportship: { nome: 'Transport Ship', foto: '/mapas/transport-ship.webp' },
-  luxville: { nome: 'Luxville', foto: '/mapas/luxville.webp' },
+  de_luxville: { nome: 'Luxville', foto: '/mapas/luxville.webp' },
   zm_biochemical_hotel: { nome: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp' },
   gm_laboratory: { nome: 'Laboratory', foto: '/mapas/laboratory.webp' },
 };

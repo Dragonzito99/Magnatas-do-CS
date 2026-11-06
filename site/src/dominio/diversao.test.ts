@@ -184,13 +184,13 @@ test('servidor que não responde a tempo conta como desligado, para a página n�
 });
 
 test('a situação traz o mapa que está rodando', async () => {
-  const controlador = controladorFalso({ conectados: { '10.0.0.7': [STEAM_A] }, mapas: { '10.0.0.7': 'luxville' } });
-  expect(await situacaoDoServidor(controlador, SERVIDOR, AGORA)).toEqual({ ligado: true, jogando: 1, mapa: 'luxville' });
+  const controlador = controladorFalso({ conectados: { '10.0.0.7': [STEAM_A] }, mapas: { '10.0.0.7': 'de_luxville' } });
+  expect(await situacaoDoServidor(controlador, SERVIDOR, AGORA)).toEqual({ ligado: true, jogando: 1, mapa: 'de_luxville' });
 });
 
 test('o cartão mostra o mapa atual, e o cadastrado quando não o conhece ou o servidor está fora', () => {
   const servidor = { mapa: 'Transport Ship', foto: '/mapas/transport-ship.webp' };
-  expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'luxville' })).toEqual({ nome: 'Luxville', foto: '/mapas/luxville.webp' });
+  expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'de_luxville' })).toEqual({ nome: 'Luxville', foto: '/mapas/luxville.webp' });
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'de_estranho' })).toEqual({ nome: 'de_estranho', foto: '/mapas/transport-ship.webp' });
   expect(mapaDoCartao(servidor, { ligado: false, jogando: 0 })).toEqual({ nome: 'Transport Ship', foto: '/mapas/transport-ship.webp' });
 });
