@@ -145,6 +145,18 @@ test('sozinho no servidor ninguém ganha XP, nem no empate', async () => {
   expect(await xpDe(conta)).toBe(0);
 });
 
+test('com a liberação da fase de teste, quem joga sozinho ganha XP', async () => {
+  // Só para o dono ver o XP jogando com bots. Sai antes de abrir o clube.
+  process.env.XP_SOZINHO_PARA_TESTE = 'sim';
+  try {
+    const conta = await membro();
+    await enviar(resultado([jogador(conta)]));
+    expect(await xpDe(conta)).toBe(840);
+  } finally {
+    delete process.env.XP_SOZINHO_PARA_TESTE;
+  }
+});
+
 test('quem saiu antes do fim não conta como companhia', async () => {
   const conta = await membro();
   const saiu = await membro();

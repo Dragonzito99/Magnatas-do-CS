@@ -66,7 +66,9 @@ function consequencias(modo: ServidorDiversao['modo'], recebido: ResultadoRecebi
   const decididas = modo === 'cada_um' || modo === 'mutacao' ? consequenciasDoCadaUm(dosMembros.jogadores) : consequenciasDosTimes(dosMembros);
   // Sozinho não há partida: ficar parado num servidor vazio não pode render XP.
   const noFim = new Set(dosMembros.jogadores.filter((jogador) => jogador.ateOFim).map((jogador) => jogador.steamid64));
-  if (noFim.size < MINIMO_DE_PESSOAS_NO_FIM) {
+  // A liberação é só para o dono ver o XP jogando com bots na fase de teste. Sai antes de abrir o clube.
+  const liberadoParaTeste = process.env.XP_SOZINHO_PARA_TESTE === 'sim';
+  if (noFim.size < MINIMO_DE_PESSOAS_NO_FIM && !liberadoParaTeste) {
     for (const [steamid64, decidida] of decididas) decididas.set(steamid64, { ...decidida, jogouAteOFim: false });
   }
   return decididas;
