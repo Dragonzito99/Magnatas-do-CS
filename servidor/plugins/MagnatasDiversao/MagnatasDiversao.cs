@@ -154,9 +154,29 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         foreach (var pessoa in Pessoas()) Registrar(pessoa);
     }
 
+    /// <summary>O dono pediu a tabela do zero em cada partida. Equipe e Mutação emendam partidas sem reiniciar o jogo.</summary>
+    private static void ZerarPlacarDasPessoas()
+    {
+        foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true }))
+        {
+            var estatisticas = jogador.ActionTrackingServices?.MatchStats;
+            if (estatisticas != null)
+            {
+                estatisticas.Kills = 0;
+                estatisticas.Deaths = 0;
+                estatisticas.Assists = 0;
+                estatisticas.Damage = 0;
+                Utilities.SetStateChanged(jogador, "CCSPlayerController", "m_pActionTrackingServices");
+            }
+            jogador.Score = 0;
+            Utilities.SetStateChanged(jogador, "CCSPlayerController", "m_iScore");
+        }
+    }
+
     private void ComecarPartida()
     {
         ZerarContagem();
+        ZerarPlacarDasPessoas();
         abatesCt = 0;
         abatesTr = 0;
         MostrarNoPlacar();

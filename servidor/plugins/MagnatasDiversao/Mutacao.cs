@@ -53,6 +53,7 @@ public partial class ModoDeDiversao
         if (rodadasDaPartida == 0)
         {
             ZerarContagem();
+            ZerarPlacarDasPessoas();
             inicioDaPartida = DateTime.UtcNow;
             vitoriasDosHumanos = 0;
             vitoriasDosMutantes = 0;

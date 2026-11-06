@@ -980,3 +980,12 @@ def test_equipe_recomeca_quando_a_ultima_pessoa_sai():
     trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("EventPlayerDisconnect"):]
     assert 'Config.Regra != "equipe"' in trecho
     assert "mp_restartgame 1" in trecho
+
+
+def test_placar_das_pessoas_zera_a_cada_partida_nova():
+    # O dono pediu: K/D da tabela começa do zero em cada partida. Equipe e Mutação emendam partidas sem reiniciar o jogo.
+    trecho = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void ZerarPlacarDasPessoas"):]
+    for campo in ["Kills = 0", "Deaths = 0", "Assists = 0", '"m_pActionTrackingServices"', '"m_iScore"']:
+        assert campo in trecho
+    assert "ZerarPlacarDasPessoas()" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("private void ComecarPartida"):]
+    assert "ZerarPlacarDasPessoas()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("rodadasDaPartida == 0"):]
