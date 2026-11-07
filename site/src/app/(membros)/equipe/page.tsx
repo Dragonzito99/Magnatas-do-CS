@@ -15,7 +15,7 @@ const ERROS: Record<string, string> = {
 
 export default async function Equipe({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
   const usuario = await exigirAcesso('/equipe');
-  if (!pode(usuario, 'ver_equipe')) redirect('/salas');
+  if (!pode(usuario, 'ver_equipe')) redirect('/inicio');
   const { erro } = await searchParams;
   const membros = await listarMembros(obterBd());
   const podeMudarPapel = pode(usuario, 'mudar_papel');

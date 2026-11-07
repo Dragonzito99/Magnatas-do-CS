@@ -36,48 +36,48 @@ function codigoDoErro(erro: unknown): string | null {
 }
 
 async function executar<T>(acao: (ator: Usuario) => Promise<T>): Promise<T> {
-  const ator = await exigirAcesso('/salas');
+  const ator = await exigirAcesso('/jogar');
   try {
     return await acao(ator);
   } catch (erro) {
     const codigo = codigoDoErro(erro);
-    if (codigo) redirect(`/salas?erro=${codigo}`);
+    if (codigo) redirect(`/jogar?modo=competitivo&erro=${codigo}`);
     throw erro;
   }
 }
 
 function idDe(dados: FormData, campo: string): string {
   const lido = z.uuid().safeParse(dados.get(campo));
-  if (!lido.success) redirect('/salas?erro=inexistente');
+  if (!lido.success) redirect('/jogar?modo=competitivo&erro=inexistente');
   return lido.data;
 }
 
 export async function criar() {
   await executar((ator) => criarSala(obterBd(), ator));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function entrar(dados: FormData) {
   const salaId = idDe(dados, 'salaId');
   await executar((ator) => entrarNaSala(obterBd(), ator, salaId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function sair() {
   await executar((ator) => sairDaSala(obterBd(), ator));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function expulsar(dados: FormData) {
   const usuarioId = idDe(dados, 'usuarioId');
   await executar((ator) => expulsarDaSala(obterBd(), ator, usuarioId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function chamarParaDesafio(dados: FormData) {
   const salaId = idDe(dados, 'salaId');
   await executar((ator) => desafiar(obterBd(), ator, salaId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function aceitar(dados: FormData) {
@@ -91,35 +91,35 @@ export async function aceitar(dados: FormData) {
 export async function juntar(dados: FormData) {
   const salaId = idDe(dados, 'salaId');
   await executar((ator) => pedirJuncao(obterBd(), ator, salaId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function aceitarJuntar(dados: FormData) {
   const juncaoId = idDe(dados, 'juncaoId');
   await executar((ator) => aceitarJuncao(obterBd(), ator, juncaoId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function recusarJuntar(dados: FormData) {
   const juncaoId = idDe(dados, 'juncaoId');
   await executar((ator) => recusarJuncao(obterBd(), ator, juncaoId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function cancelarJuntar(dados: FormData) {
   const juncaoId = idDe(dados, 'juncaoId');
   await executar((ator) => cancelarJuncao(obterBd(), ator, juncaoId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function recusar(dados: FormData) {
   const desafioId = idDe(dados, 'desafioId');
   await executar((ator) => recusarDesafio(obterBd(), ator, desafioId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }
 
 export async function cancelar(dados: FormData) {
   const desafioId = idDe(dados, 'desafioId');
   await executar((ator) => cancelarDesafio(obterBd(), ator, desafioId));
-  revalidatePath('/salas');
+  revalidatePath('/jogar');
 }

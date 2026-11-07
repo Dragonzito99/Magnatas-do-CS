@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
@@ -73,6 +73,24 @@ async function dadosDaEquipe(bd: Bd, jogador: Usuario) {
     convidadoPor: padrinho ?? null,
     convidados,
   };
+}
+
+/** O K/D de várias pessoas de uma vez, para os cartões das salas. Quem nunca terminou partida fica com zero. */
+export async function kdDosJogadores(bd: Bd, ids: string[]): Promise<Map<string, number>> {
+  if (ids.length === 0) return new Map();
+  const linhas = await bd
+    .select({
+      usuarioId: partidaJogadores.usuarioId,
+      abates: sql<number>`coalesce(sum(${partidaJogadores.kills}), 0)::int`,
+      mortes: sql<number>`coalesce(sum(${partidaJogadores.deaths}), 0)::int`,
+    })
+    .from(partidaJogadores)
+    .innerJoin(partidas, eq(partidaJogadores.partidaId, partidas.id))
+    .where(and(inArray(partidaJogadores.usuarioId, ids), eq(partidas.estado, 'encerrada')))
+    .groupBy(partidaJogadores.usuarioId);
+  const kd = new Map(ids.map((id) => [id, 0]));
+  for (const linha of linhas) kd.set(linha.usuarioId, kdDe(linha.abates, linha.mortes));
+  return kd;
 }
 
 export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogadorId: string, agora: Date = new Date()) {

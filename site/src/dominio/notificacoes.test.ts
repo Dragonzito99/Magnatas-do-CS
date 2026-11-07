@@ -38,7 +38,7 @@ test('líder vê o desafio recebido, com link para as salas', async () => {
   const alvo = await salaCompleta('Bravo');
   await desafiar(bd, origem.lider, alvo.id, AGORA);
   expect(await notificacoesDe(bd, alvo.lider, AGORA)).toEqual([
-    { tipo: 'desafio', texto: 'A sala Alfa desafiou a sua.', href: '/salas', quantidade: 1 },
+    { tipo: 'desafio', texto: 'A sala Alfa desafiou a sua.', href: '/jogar?modo=competitivo', quantidade: 1 },
   ]);
 });
 

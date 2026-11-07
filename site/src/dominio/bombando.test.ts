@@ -41,14 +41,14 @@ test('a sala mais cheia vem primeiro; sala completa e sala em partida ficam de f
     ['Sala do Quase', '4/5'],
     ['Sala do Pequena', '2/5'],
   ]);
-  expect(cartoes[0]).toMatchObject({ tipo: 'sala', href: '/salas', jogando: 4 });
+  expect(cartoes[0]).toMatchObject({ tipo: 'sala', href: '/jogar?modo=competitivo', jogando: 4 });
 });
 
 test('o Mix aparece só com gente na fila', async () => {
   expect((await bombandoAgora(bd, controladorFalso(), undefined)).cartoes).toEqual([]);
   for (let i = 0; i < 7; i += 1) await entrarNoMix(bd, await membro());
   const { cartoes } = await bombandoAgora(bd, controladorFalso(), undefined);
-  expect(cartoes).toEqual([{ tipo: 'mix', titulo: 'Mix', ocupacao: '7/10', jogando: 7, href: '/mix' }]);
+  expect(cartoes).toEqual([{ tipo: 'mix', titulo: 'Mix', ocupacao: '7/10', jogando: 7, href: '/jogar?modo=mix' }]);
 });
 
 test('servidor da Diversão com gente aparece com o link de entrar; fora do ar ou vazio some', async () => {

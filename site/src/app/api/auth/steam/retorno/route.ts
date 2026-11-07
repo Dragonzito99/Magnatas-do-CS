@@ -32,5 +32,5 @@ export async function GET(pedido: NextRequest) {
   lista.delete(COOKIE_CONVITE);
 
   await guardarSessao(await criarSessao(bd, conta.id));
-  return NextResponse.redirect(`${site}/salas`);
+  return NextResponse.redirect(`${site}/inicio`);
 }

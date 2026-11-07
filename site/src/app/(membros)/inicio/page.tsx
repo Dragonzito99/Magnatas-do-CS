@@ -66,7 +66,7 @@ export default async function Inicio() {
         {bombando.cartoes.length === 0 ? (
           <div className="bombando-vazio">
             <p className="apoio">Ninguém jogando agora. Que tal abrir uma sala?</p>
-            <Link href="/salas" className="botao ouro pequeno">
+            <Link href="/jogar" className="botao ouro pequeno">
               Abrir uma sala
             </Link>
           </div>

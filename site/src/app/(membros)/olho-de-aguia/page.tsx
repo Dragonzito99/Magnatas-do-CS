@@ -124,7 +124,7 @@ function DetalheDoCaso({ caso }: { caso: CasoDeDenuncia }) {
 
 export default async function OlhoDeAguia({ searchParams }: { searchParams: Promise<{ caso?: string; erro?: string }> }) {
   const usuario = await exigirAcesso('/olho-de-aguia');
-  if (!pode(usuario, 'moderar')) redirect('/salas');
+  if (!pode(usuario, 'moderar')) redirect('/inicio');
   const { caso: chave, erro } = await searchParams;
   const bd = obterBd();
   const [chamados, casos, propostas] = await Promise.all([

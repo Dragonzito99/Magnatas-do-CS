@@ -30,7 +30,7 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
     const recebidos = (await desafiosDaSala(bd, sala.id, agora)).filter((desafio) => desafio.recebido);
     if (recebidos.length > 0) {
       const texto = recebidos.length === 1 ? `A sala ${recebidos[0].outraSalaNome} desafiou a sua.` : `${recebidos.length} salas desafiaram a sua.`;
-      lista.push({ tipo: 'desafio', texto, href: '/salas', quantidade: recebidos.length });
+      lista.push({ tipo: 'desafio', texto, href: '/jogar?modo=competitivo', quantidade: recebidos.length });
     }
   }
 

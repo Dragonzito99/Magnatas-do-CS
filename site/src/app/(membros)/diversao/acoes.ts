@@ -15,11 +15,11 @@ function voltar(modo: string | null, erro?: string): string {
   if (modo) parametros.set('modo', modo);
   if (erro) parametros.set('erro', erro);
   const texto = parametros.toString();
-  return texto ? `/diversao?${texto}` : '/diversao';
+  return texto ? `/jogar?${texto}` : '/jogar';
 }
 
 export async function ligar(dados: FormData): Promise<void> {
-  const ator = await exigirAcesso('/diversao');
+  const ator = await exigirAcesso('/jogar');
   const modo = lerModo(String(dados.get('modo') ?? ''));
   const servidorId = z.uuid().safeParse(dados.get('servidor'));
   if (!servidorId.success) redirect(voltar(modo, 'indisponivel'));
@@ -32,13 +32,13 @@ export async function ligar(dados: FormData): Promise<void> {
     else if (falha instanceof ServidorIndisponivel) erro = 'indisponivel';
     else throw falha;
   }
-  revalidatePath('/diversao');
+  revalidatePath('/jogar');
   redirect(voltar(modo, erro));
 }
 
 /** Chamado ao clicar em Entrar ou Copiar: a pessoa ainda vai conectar, então o servidor ganha mais 5 minutos. */
 export async function avisarEntrada(servidorId: string): Promise<void> {
-  await exigirAcesso('/diversao');
+  await exigirAcesso('/jogar');
   const id = z.uuid().safeParse(servidorId);
   if (id.success) await adiarDesligamento(obterBd(), id.data);
 }

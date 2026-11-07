@@ -3,7 +3,7 @@ import type { Bd } from '@/bd/conexao';
 import { gravacoes, partidaJogadores, partidas, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { denunciar } from './denuncias';
-import { fichaDoJogador, situacaoDaGravacao } from './ficha';
+import { fichaDoJogador, kdDosJogadores, situacaoDaGravacao } from './ficha';
 
 let bd: Bd;
 let jogador: Usuario;
@@ -205,4 +205,17 @@ test('situação da gravação: aguardando até 10 minutos depois do fim, e depo
   expect(situacaoDaGravacao({ encerradaEm }, { apagadaEm: null }, AGORA)).toBe('disponivel');
   expect(situacaoDaGravacao({ encerradaEm }, { apagadaEm: AGORA }, AGORA)).toBe('apagada');
   expect(situacaoDaGravacao({ encerradaEm: null }, null, AGORA)).toBe('aguardando');
+});
+
+test('o K/D de cada pessoa da sala vem numa consulta só, e quem nunca jogou fica com zero', async () => {
+  await jogada(jogador, numeros(20, 10));
+  await jogada(jogador, numeros(10, 10));
+  await jogada(outro, numeros(7, 0));
+  await jogada(outro, numeros(50, 1), { estado: 'cancelada' });
+  const novato = await criarUsuario(bd, { estado: 'ativo' });
+  const kd = await kdDosJogadores(bd, [jogador.id, outro.id, novato.id]);
+  expect(kd.get(jogador.id)).toBe(1.5);
+  expect(kd.get(outro.id)).toBe(7);
+  expect(kd.get(novato.id)).toBe(0);
+  expect((await kdDosJogadores(bd, [])).size).toBe(0);
 });

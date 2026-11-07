@@ -3,17 +3,14 @@ export type ItemDoMenu = { nome: string; href?: string; emBreve?: boolean; desta
 
 // As áreas da equipe ficam no Painel ADM, e o convite vai para o menu da conta.
 export const ITENS_DO_MENU: ItemDoMenu[] = [
-  { nome: 'Salas', href: '/salas' },
-  { nome: 'Mix', href: '/mix' },
-  { nome: 'Diversão', href: '/diversao' },
   { nome: 'Ranking', href: '/ranking' },
   { nome: 'Convites', href: '/convites' },
   { nome: 'Clãs', emBreve: true },
   { nome: 'Magnata Shop', emBreve: true, destaque: true },
 ];
 
-// Muda para /jogar quando a tela que junta salas, mix e Diversão ficar pronta.
-export const DESTINO_DO_JOGAR = '/salas';
+// Salas, mix e Diversão ficam juntos na tela Jogar, com filtros.
+export const DESTINO_DO_JOGAR = '/jogar';
 
 export function itemAtivo(caminho: string, href: string): boolean {
   return caminho === href || caminho.startsWith(`${href}/`);
@@ -21,7 +18,7 @@ export function itemAtivo(caminho: string, href: string): boolean {
 
 export type ResumoDaSala = { nome: string; membros: number; emPartida: boolean };
 
-/** Fora da tela das salas, quem está numa sala vê um aviso para voltar. Em partida, o aviso da partida já cuida disso. */
+/** Fora da tela Jogar, quem está numa sala vê um aviso para voltar. Em partida, o aviso da partida já cuida disso. */
 export function mostrarAvisoDeSala(caminho: string, sala: ResumoDaSala | null): boolean {
   return sala !== null && !sala.emPartida && !itemAtivo(caminho, DESTINO_DO_JOGAR);
 }

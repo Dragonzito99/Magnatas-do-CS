@@ -28,7 +28,7 @@ export default async function BemVindo() {
             <b>O que acontece aqui fica aqui.</b> A equipe assiste às partidas e analisa as denúncias.
           </li>
         </ul>
-        <Link className="botao ouro" href="/salas">
+        <Link className="botao ouro" href="/jogar">
           Entrar no clube
         </Link>
       </main>

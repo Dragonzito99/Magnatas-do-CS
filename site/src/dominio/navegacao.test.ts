@@ -16,21 +16,23 @@ test('Clãs e Magnata Shop ficam no menu como "em breve", sem levar a lugar nenh
   }
 });
 
-test('enquanto a tela Jogar não existe, o botão JOGAR leva para as salas', () => {
-  expect(DESTINO_DO_JOGAR).toBe('/salas');
+test('o botão JOGAR leva para a tela que junta salas, mix e Diversão', () => {
+  expect(DESTINO_DO_JOGAR).toBe('/jogar');
+  const nomes = ITENS_DO_MENU.map((item) => item.nome);
+  for (const modo of ['Salas', 'Mix', 'Diversão']) expect(nomes).not.toContain(modo);
 });
 
 test('o item do menu acende na própria página e nas de dentro dela', () => {
   expect(itemAtivo('/ranking', '/ranking')).toBe(true);
-  expect(itemAtivo('/salas/123', '/salas')).toBe(true);
-  expect(itemAtivo('/salasx', '/salas')).toBe(false);
+  expect(itemAtivo('/jogar/123', '/jogar')).toBe(true);
+  expect(itemAtivo('/jogarx', '/jogar')).toBe(false);
   expect(itemAtivo('/inicio', '/ranking')).toBe(false);
 });
 
-test('o aviso de sala aparece fora da tela das salas, e some quando a sala está em partida', () => {
+test('o aviso de sala aparece fora da tela Jogar, e some quando a sala está em partida', () => {
   const sala = { nome: 'Sala do Alfa', membros: 3, emPartida: false };
   expect(mostrarAvisoDeSala('/ranking', sala)).toBe(true);
-  expect(mostrarAvisoDeSala('/salas', sala)).toBe(false);
+  expect(mostrarAvisoDeSala('/jogar', sala)).toBe(false);
   expect(mostrarAvisoDeSala('/ranking', null)).toBe(false);
   expect(mostrarAvisoDeSala('/ranking', { ...sala, emPartida: true })).toBe(false);
 });

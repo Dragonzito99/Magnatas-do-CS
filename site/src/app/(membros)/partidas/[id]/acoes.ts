@@ -73,7 +73,7 @@ export async function elogiarJogador(dados: FormData) {
 
 function idDe(dados: FormData, campo: string): string {
   const lido = z.uuid().safeParse(dados.get(campo));
-  if (!lido.success) redirect('/salas');
+  if (!lido.success) redirect('/jogar');
   return lido.data;
 }
 

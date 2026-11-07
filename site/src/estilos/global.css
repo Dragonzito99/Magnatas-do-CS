@@ -2518,3 +2518,328 @@ a.item-principal:hover > span,
     bottom: 12px;
   }
 }
+
+/* Tela Jogar: salas, mix e Diversão juntos, com filtros */
+.topo-jogar h1,
+.titulo-grande {
+  font: italic 700 54px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.topo-jogar .apoio {
+  margin-top: 4px;
+}
+
+.tela-jogar {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.filtros-jogar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtro-jogar {
+  padding: 8px 18px;
+  color: var(--tinta);
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  font: italic 600 18px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.filtro-jogar:hover {
+  box-shadow: inset 0 0 0 1px var(--roxo);
+}
+
+.filtro-jogar[aria-current='page'] {
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+  box-shadow: none;
+}
+
+.grade-jogar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.cartao-jogar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.cartao-jogar:hover {
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+}
+
+.foto-jogar {
+  position: relative;
+  height: 130px;
+  background: linear-gradient(135deg, #3b1a63, var(--painel));
+}
+
+.foto-jogar.vazia {
+  background: radial-gradient(circle at 30% 40%, rgba(245, 179, 1, 0.25), transparent 60%), linear-gradient(135deg, #3b1a63, var(--painel));
+}
+
+.foto-jogar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.foto-jogar .selo-modo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.selo-modo {
+  display: inline-block;
+  padding: 2px 8px;
+  color: #fff;
+  background: var(--roxo);
+  font: italic 600 15px/1.2 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.selo-modo.ouro {
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+}
+
+.selo-modo.verde {
+  color: #062b14;
+  background: var(--verde);
+}
+
+.corpo-jogar {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+}
+
+.corpo-jogar h2 {
+  font: italic 700 26px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.corpo-jogar p {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.rodape-jogar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.ocupacao {
+  color: var(--ouro);
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+}
+
+.barra-ocupacao {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.barra-ocupacao i {
+  display: block;
+  height: 100%;
+  background: var(--ouro);
+}
+
+.vagas-sala {
+  display: flex;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+
+.vaga-sala {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 42px;
+}
+
+.vaga-sala .avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+}
+
+.vaga-sala small {
+  color: var(--tinta-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.avatar.vaga-livre {
+  color: var(--tinta-2);
+  background: none;
+  box-shadow: inset 0 0 0 2px rgba(171, 159, 194, 0.35);
+  outline: 1px dashed rgba(171, 159, 194, 0.5);
+  outline-offset: -1px;
+}
+
+/* A sala de quem está numa: barra presa na esquerda, abaixo do cabeçalho */
+.barra-sala {
+  position: fixed;
+  top: 100px;
+  bottom: 0;
+  left: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 270px;
+  padding: 18px 16px;
+  overflow-y: auto;
+  border-right: 2px solid var(--ouro);
+  background: linear-gradient(180deg, #2a1d05 0%, var(--painel) 30%);
+  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.45);
+}
+
+.barra-sala-topo {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.barra-sala-topo h2 {
+  font: italic 700 26px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.barra-sala-topo small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.barra-sala-lista {
+  display: grid;
+  padding: 0;
+  list-style: none;
+}
+
+.barra-sala-lista li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.12);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.barra-sala-lista .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.barra-sala-lista .lider .avatar {
+  box-shadow: 0 0 0 2px var(--ouro);
+}
+
+.barra-sala-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barra-sala-nome small {
+  display: block;
+  color: var(--tinta-2);
+  font-size: 11px;
+}
+
+.barra-sala-lista .lider small {
+  color: var(--ouro);
+}
+
+.barra-sala-lista .livre {
+  color: var(--tinta-2);
+  font-weight: 400;
+}
+
+.botao-expulsar {
+  padding: 0 4px;
+  border: 0;
+  color: #f87171;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pedido-sala {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--ouro-fraco);
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.55);
+  font-size: 13px;
+}
+
+.pedido-sala small {
+  color: var(--ouro);
+  font-weight: 700;
+}
+
+.barra-sala-botoes {
+  display: grid;
+  margin-top: auto;
+}
+
+/* O conteúdo só anda para a direita o quanto a barra cobriria. */
+.tela-jogar.com-sala {
+  padding-left: max(0px, 286px - max(16px, (100vw - 1200px) / 2));
+}
+
+@media (max-width: 860px) {
+  .barra-sala {
+    position: static;
+    width: auto;
+    margin-bottom: 14px;
+    border: 0;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px var(--ouro);
+  }
+
+  .tela-jogar.com-sala {
+    padding-left: 0;
+  }
+
+  .topo-jogar h1,
+  .titulo-grande {
+    font-size: 40px;
+  }
+}

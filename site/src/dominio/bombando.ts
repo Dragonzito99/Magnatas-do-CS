@@ -25,10 +25,10 @@ export async function bombandoAgora(
   for (const sala of salas) {
     const total = sala.membros.length;
     if (sala.partidaId || total >= TAMANHO_DA_SALA) continue;
-    cartoes.push({ tipo: 'sala', titulo: `Sala do ${sala.nome}`, ocupacao: `${total}/${TAMANHO_DA_SALA}`, jogando: total, href: '/salas' });
+    cartoes.push({ tipo: 'sala', titulo: `Sala do ${sala.nome}`, ocupacao: `${total}/${TAMANHO_DA_SALA}`, jogando: total, href: '/jogar?modo=competitivo' });
   }
 
-  if (mix.total > 0) cartoes.push({ tipo: 'mix', titulo: 'Mix', ocupacao: `${mix.total}/${TOTAL_DO_MIX}`, jogando: mix.total, href: '/mix' });
+  if (mix.total > 0) cartoes.push({ tipo: 'mix', titulo: 'Mix', ocupacao: `${mix.total}/${TOTAL_DO_MIX}`, jogando: mix.total, href: '/jogar?modo=mix' });
 
   // Cada servidor tem seu prazo de resposta: um fora do ar não segura a página.
   const situacoes = await Promise.all(

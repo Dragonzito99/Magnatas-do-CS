@@ -9,26 +9,26 @@ import { entrarNoMix, sairDoMix } from '@/dominio/mix';
 import { alocarEmSegundoPlano } from '@/servidor-jogo/alocar';
 
 export async function entrar() {
-  const ator = await exigirAcesso('/mix');
+  const ator = await exigirAcesso('/jogar');
   const bd = obterBd();
   let partidaId: string | undefined;
   try {
     ({ partidaId } = await entrarNoMix(bd, ator));
   } catch (erro) {
-    if (erro instanceof Bloqueado) redirect('/mix?erro=bloqueado');
-    if (erro instanceof JaOcupado) redirect('/mix?erro=ocupado');
-    if (erro instanceof ContaSemAcesso) redirect('/mix?erro=sem-acesso');
+    if (erro instanceof Bloqueado) redirect('/jogar?modo=mix&erro=bloqueado');
+    if (erro instanceof JaOcupado) redirect('/jogar?modo=mix&erro=ocupado');
+    if (erro instanceof ContaSemAcesso) redirect('/jogar?modo=mix&erro=sem-acesso');
     throw erro;
   }
   if (partidaId) {
     alocarEmSegundoPlano(bd);
     redirect(`/partidas/${partidaId}`);
   }
-  revalidatePath('/mix');
+  revalidatePath('/jogar');
 }
 
 export async function sair() {
-  const ator = await exigirAcesso('/mix');
+  const ator = await exigirAcesso('/jogar');
   await sairDoMix(obterBd(), ator);
-  revalidatePath('/mix');
+  revalidatePath('/jogar');
 }
