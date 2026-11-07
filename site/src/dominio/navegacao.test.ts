@@ -36,3 +36,23 @@ test('o aviso de sala aparece fora da tela Jogar, e some quando a sala está em 
   expect(mostrarAvisoDeSala('/ranking', null)).toBe(false);
   expect(mostrarAvisoDeSala('/ranking', { ...sala, emPartida: true })).toBe(false);
 });
+
+test('o menu começa por Notícias e Jogo, e o Jogo abre Como funciona, Modos, Mapas e Patentes', () => {
+  expect(ITENS_DO_MENU.slice(0, 2).map((item) => [item.nome, item.href])).toEqual([
+    ['Notícias', '/noticias'],
+    ['Jogo', '/jogo'],
+  ]);
+  const jogo = ITENS_DO_MENU.find((item) => item.nome === 'Jogo');
+  expect(jogo?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
+    ['Como funciona', '/jogo#como-funciona'],
+    ['Modos', '/jogo#modos'],
+    ['Mapas', '/jogo#mapas'],
+    ['Patentes', '/patentes'],
+  ]);
+});
+
+test('o Jogo acende também na página das patentes', () => {
+  const jogo = ITENS_DO_MENU.find((item) => item.nome === 'Jogo')!;
+  expect(itemAtivo('/patentes', jogo.href!, jogo.filhos)).toBe(true);
+  expect(itemAtivo('/ranking', jogo.href!, jogo.filhos)).toBe(false);
+});

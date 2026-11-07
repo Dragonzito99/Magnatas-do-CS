@@ -5,7 +5,7 @@ import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
 import { usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { lancarXp, PATENTES, patenteDe, progressoDe, xpDaPartida, type GanhoDePartida } from './xp';
+import { COMO_GANHAR_XP, lancarXp, PATENTES, patenteDe, patentesPorGrupo, progressoDe, xpDaPartida, type GanhoDePartida } from './xp';
 
 let bd: Bd;
 
@@ -145,4 +145,21 @@ test('a migração das patentes usa a mesma escada e deixa como vista a patente 
   await bd.execute(sql.raw(migracao));
   const vistas = await Promise.all(contas.map(async (conta) => (await bd.select().from(usuarios).where(eq(usuarios.id, conta.id)))[0].patenteVista));
   expect(vistas).toEqual([patenteDe(0).nivel, patenteDe(9000).nivel, patenteDe(700_000).nivel]);
+});
+
+test('a página das patentes mostra os 6 grupos, cada patente com os seus níveis e a faixa de XP', () => {
+  const grupos = patentesPorGrupo();
+  expect(grupos.map((grupo) => grupo.grupo)).toEqual(['Rua', 'Família', 'Negócios', 'Poder', 'Elite', 'Topo']);
+  expect(grupos[0].patentes.map((patente) => [patente.base, patente.niveis, patente.xpInicial, patente.xpFinal])).toEqual([
+    ['Recruta', 1, 0, 0],
+    ['Novato', 3, 600, 1900],
+    ['Olheiro', 3, 2600, 4050],
+  ]);
+  expect(grupos[5].patentes.map((patente) => patente.base)).toEqual(['Magnata', 'Ministro Mafioso', 'Magnata Supremo', 'Magnata Lendário']);
+  expect(grupos.flatMap((grupo) => grupo.patentes).reduce((total, patente) => total + patente.niveis, 0)).toBe(83);
+});
+
+test('o "como ganhar XP" da página usa os mesmos valores da conta', () => {
+  expect(COMO_GANHAR_XP).toEqual({ jogar: 300, vitoria: 300, empate: 150, abate: 20, maximoPorAbates: 500, maximoPorPartida: 1100 });
+  expect(xpDaPartida({ jogouAteOFim: true, resultado: 'vitoria', abates: 1 })).toBe(COMO_GANHAR_XP.jogar + COMO_GANHAR_XP.vitoria + COMO_GANHAR_XP.abate);
 });

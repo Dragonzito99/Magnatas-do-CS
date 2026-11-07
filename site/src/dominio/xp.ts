@@ -10,6 +10,16 @@ const XP_POR_EMPATE = 150;
 const XP_POR_ABATE = 20;
 const XP_MAXIMO_POR_ABATES = 500;
 
+/** Para a página das patentes explicar a conta com os mesmos números. */
+export const COMO_GANHAR_XP = {
+  jogar: XP_POR_JOGAR,
+  vitoria: XP_POR_VITORIA,
+  empate: XP_POR_EMPATE,
+  abate: XP_POR_ABATE,
+  maximoPorAbates: XP_MAXIMO_POR_ABATES,
+  maximoPorPartida: XP_MAXIMO_POR_PARTIDA,
+} as const;
+
 export type GrupoDePatente = 'Rua' | 'Família' | 'Negócios' | 'Poder' | 'Elite' | 'Topo';
 
 /** Um degrau da escada: "Empresário 3" é o terceiro nível do Empresário. `nivel` conta os degraus de 1 a 83. */
@@ -123,4 +133,26 @@ export async function lancarXp(tx: Transacao, ganhos: GanhoDePartida[]): Promise
     lancados.push({ usuarioId: ganho.usuarioId, xp, xpTotal: conta.xpTotal, subiuPara: depois.nivel > antes.nivel ? depois : null });
   }
   return lancados;
+}
+
+export type PatenteDoGrupo = { base: string; ordemNoGrupo: number; niveis: number; xpInicial: number; xpFinal: number };
+
+/** A escada em grupos, para a página das patentes: cada patente uma vez, com quantos níveis tem e a faixa de XP. */
+export function patentesPorGrupo(): { grupo: GrupoDePatente; patentes: PatenteDoGrupo[] }[] {
+  const grupos: { grupo: GrupoDePatente; patentes: PatenteDoGrupo[] }[] = [];
+  for (const degrau of PATENTES) {
+    let grupo = grupos.at(-1);
+    if (grupo?.grupo !== degrau.grupo) {
+      grupo = { grupo: degrau.grupo, patentes: [] };
+      grupos.push(grupo);
+    }
+    const ultima = grupo.patentes.at(-1);
+    if (ultima?.base === degrau.base) {
+      ultima.niveis += 1;
+      ultima.xpFinal = degrau.xp;
+    } else {
+      grupo.patentes.push({ base: degrau.base, ordemNoGrupo: degrau.ordemNoGrupo, niveis: 1, xpInicial: degrau.xp, xpFinal: degrau.xp });
+    }
+  }
+  return grupos;
 }

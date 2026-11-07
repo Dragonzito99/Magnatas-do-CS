@@ -3018,3 +3018,338 @@ a.cartao-destaque:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Submenu do menu de cima: abre ao passar o mouse ou ao focar com o teclado */
+.item-com-submenu {
+  position: relative;
+  display: flex;
+}
+
+.submenu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 25;
+  display: none;
+  min-width: 190px;
+  padding: 8px 0;
+  border-top: 2px solid var(--roxo);
+  background: var(--painel);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--linha);
+  transform: translateX(-50%);
+}
+
+.item-com-submenu:hover .submenu,
+.item-com-submenu:focus-within .submenu {
+  display: grid;
+}
+
+.submenu a {
+  padding: 8px 18px;
+  color: var(--tinta-2);
+  font: italic 600 17px/1 var(--fonte-titulo), sans-serif;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.submenu a:hover {
+  color: var(--ouro);
+}
+
+@media (min-width: 861px) {
+  .menu-itens {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 860px) {
+  .submenu {
+    display: none !important;
+  }
+}
+
+/* Patentes */
+.patente-e-xp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+}
+
+.patente-resumo-largo {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  min-width: 240px;
+}
+
+.patente-resumo-largo strong {
+  color: var(--ouro);
+  font: italic 700 30px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.como-ganhar {
+  display: grid;
+  gap: 3px;
+  padding-left: 20px;
+  border-left: 1px solid var(--linha);
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.como-ganhar b {
+  color: var(--tinta);
+}
+
+.grupo-de-patentes {
+  display: grid;
+  gap: 14px;
+}
+
+.titulo-grupo {
+  margin-top: 16px;
+  font: italic 700 34px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.titulo-grupo.grupo-rua {
+  color: #c08a5a;
+}
+
+.titulo-grupo.grupo-familia {
+  color: #c9d1dc;
+}
+
+.titulo-grupo.grupo-negocios {
+  color: var(--verde);
+}
+
+.titulo-grupo.grupo-poder {
+  color: var(--roxo);
+}
+
+.titulo-grupo.grupo-elite,
+.titulo-grupo.grupo-topo {
+  color: var(--ouro);
+}
+
+.patentes-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.patente-cartao {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 22px 12px 16px;
+  border-radius: 8px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  text-align: center;
+}
+
+.patente-cartao.minha {
+  background: linear-gradient(180deg, rgba(245, 179, 1, 0.14), var(--painel));
+  box-shadow: inset 0 0 0 1px var(--ouro);
+}
+
+.patente-cartao b {
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.patente-cartao span {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.patente-cartao small {
+  color: var(--ouro);
+  font-size: 12px;
+}
+
+.patente-cartao .voce-aqui {
+  position: absolute;
+  top: -10px;
+  color: var(--sobre-ouro);
+  font-size: 13px;
+}
+
+.insignia-grande {
+  width: 72px;
+  height: 72px;
+}
+
+/* Notícias */
+.noticia-topo {
+  min-height: 340px;
+}
+
+.noticia-topo h2 {
+  max-width: 640px;
+  font-size: 48px;
+}
+
+.noticia-topo p {
+  max-width: 560px;
+  font-size: 15px;
+}
+
+.noticias-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.noticia-cartao {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  color: var(--tinta);
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  text-decoration: none;
+}
+
+.noticia-cartao:hover {
+  box-shadow: inset 0 0 0 1px var(--ouro);
+}
+
+.noticia-foto {
+  position: relative;
+  height: 150px;
+}
+
+.noticia-foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.noticia-foto .selo-modo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.noticia-corpo {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+}
+
+.noticia-corpo small {
+  color: var(--tinta-2);
+}
+
+.noticia-corpo h3 {
+  font: italic 700 24px/1.05 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.noticia-corpo p {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+/* O jogo */
+.secao-titulo {
+  margin-top: 26px;
+  font: italic 700 42px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
+  scroll-margin-top: 110px;
+}
+
+.secao-titulo b {
+  color: var(--ouro);
+}
+
+.passos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.passo {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 22px 18px;
+  border-radius: 8px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.passo b {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+  font: italic 700 28px/1 var(--fonte-titulo), sans-serif;
+}
+
+.passo h3 {
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.passo p {
+  color: var(--tinta-2);
+  font-size: 14px;
+}
+
+.modos-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.cartao-destaque.modo-info {
+  min-height: 190px;
+}
+
+.mapas-jogo {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cartao-destaque.mapa-info {
+  min-height: 150px;
+  gap: 2px;
+}
+
+.cartao-destaque.mapa-info h3 {
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .passos,
+  .modos-info,
+  .mapas-jogo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .como-ganhar {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .noticia-topo h2 {
+    font-size: 34px;
+  }
+}
