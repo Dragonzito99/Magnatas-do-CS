@@ -420,11 +420,19 @@ textarea {
 }
 
 /* Menu lateral */
+/* Fica parada no topo enquanto a página rola, do tamanho da tela abaixo do banner, para o menu e o
+   "Seja um Magnata" não descerem junto em páginas compridas. */
 .lateral {
+  position: sticky;
+  top: 14px;
+  align-self: start;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: calc(100vh - 224px);
+  height: calc(100vh - 224px);
+  min-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: none;
   padding: 10px;
   border-radius: 14px;
   background: var(--painel);
@@ -1899,7 +1907,6 @@ textarea {
 
   .banner-frase,
   .seja-magnata,
-  .item-menu.casa,
   .conta-texto {
     display: none;
   }
@@ -1924,7 +1931,10 @@ textarea {
   }
 
   .lateral {
+    position: static;
+    height: auto;
     min-height: 0;
+    overflow: visible;
     padding: 6px;
   }
 
