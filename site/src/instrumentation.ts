@@ -13,13 +13,15 @@ export async function register() {
   const { obterBd } = await import('@/bd/conexao');
   const { varrer } = await import('@/dominio/varredura');
   const { controladorDoAmbiente } = await import('@/servidor-jogo/controlador');
+  const { diversaoDoAmbiente } = await import('@/servidor-jogo/diversao-do-ambiente');
   let varrendo = false;
   setInterval(async () => {
     // Uma varredura lenta não pode encostar na seguinte.
     if (varrendo) return;
     varrendo = true;
     try {
-      await varrer(obterBd(), controladorDoAmbiente(), process.env.GRAVACOES_PASTA, new Date(), process.env.DIVERSAO_HOST);
+      const controlador = controladorDoAmbiente();
+      await varrer(obterBd(), controlador, process.env.GRAVACOES_PASTA, new Date(), process.env.DIVERSAO_HOST, diversaoDoAmbiente(controlador));
     } catch (erro) {
       console.error('Falha na varredura:', erro);
     } finally {

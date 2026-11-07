@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { servidoresDiversao } from '@/bd/esquema';
+import { estadosDaDiversao, servidoresDiversao } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, STEAM_A, STEAM_B, STEAM_C, STEAM_D } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
 import {
@@ -14,6 +14,7 @@ import {
   linkDeEntrar,
   listarServidoresDaDiversao,
   mapaDoCartao,
+  perguntarAoServidor,
   situacaoDoServidor,
   zerarSituacoesGuardadas,
 } from './diversao';
@@ -193,4 +194,46 @@ test('o cartão mostra o mapa atual, e o cadastrado quando não o conhece ou o s
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'de_luxville' })).toEqual({ nome: 'Luxville', foto: '/mapas/luxville.webp' });
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'de_estranho' })).toEqual({ nome: 'de_estranho', foto: '/mapas/transport-ship.webp' });
   expect(mapaDoCartao(servidor, { ligado: false, jogando: 0 })).toEqual({ nome: 'Transport Ship', foto: '/mapas/transport-ship.webp' });
+});
+
+test('servidor sob demanda desligado mostra o botão de ligar; ligando mostra a espera', () => {
+  const servidor = { ativo: true, vagas: 16, sobDemanda: true, nomeNoServidor: 'awp' };
+  const desligado = { ligado: false, jogando: 0 };
+  expect(estadoDoCartao(servidor, desligado, 'desligado')).toBe('desligado_sob_demanda');
+  expect(estadoDoCartao(servidor, desligado)).toBe('desligado_sob_demanda');
+  expect(estadoDoCartao(servidor, desligado, 'ligando')).toBe('ligando');
+  // Se o servidor já responde, vale o que ele diz, mesmo antes de a varredura confirmar.
+  expect(estadoDoCartao(servidor, { ligado: true, jogando: 2 }, 'ligando')).toBe('aberto');
+});
+
+test('sem nome na VPS ou fora do sob demanda, desligado continua fora do ar', () => {
+  const desligado = { ligado: false, jogando: 0 };
+  expect(estadoDoCartao({ ativo: true, vagas: 16, sobDemanda: false, nomeNoServidor: 'awp' }, desligado, 'desligado')).toBe('fora_do_ar');
+  expect(estadoDoCartao({ ativo: true, vagas: 16, sobDemanda: true, nomeNoServidor: null }, desligado, 'desligado')).toBe('fora_do_ar');
+});
+
+test('a fiscalização não pergunta a servidor que o site sabe estar desligado', async () => {
+  await darHostsDiferentes();
+  const linhas = await bd.select().from(servidoresDiversao);
+  const porOrdem = (ordem: number) => linhas.find((linha) => linha.ordem === ordem)!.id;
+  await bd.insert(estadosDaDiversao).values([
+    { servidorId: porOrdem(1), estado: 'desligado' },
+    { servidorId: porOrdem(2), estado: 'ligando' },
+    { servidorId: porOrdem(3), estado: 'ligado' },
+  ]);
+  await bd.update(servidoresDiversao).set({ ativo: true });
+  const controlador = controladorFalso();
+  await fiscalizarDiversao(bd, controlador, undefined);
+  const perguntados = controlador.chamadas.flatMap((chamada) => (chamada.acao === 'jogadoresConectados' ? [chamada.host] : []));
+  // Sem estado ainda (4, 5 e 6), pergunta: pode estar ligado desde antes de o site acompanhar.
+  expect(perguntados.sort()).toEqual(['10.0.0.2', '10.0.0.3', '10.0.0.4', '10.0.0.5', '10.0.0.6']);
+});
+
+test('perguntarAoServidor não guarda a resposta: a varredura sempre recebe a de agora', async () => {
+  const controlador = controladorFalso({ conectados: { [SERVIDOR.host]: [STEAM_A] } });
+  expect(await perguntarAoServidor(controlador, SERVIDOR)).toEqual({ ligado: true, jogando: 1 });
+  expect(await perguntarAoServidor(controladorFalso({ hostsComFalha: [SERVIDOR.host] }), SERVIDOR)).toEqual({ ligado: false, jogando: 0 });
+  expect(await perguntarAoServidor(controlador, null)).toEqual({ ligado: false, jogando: 0 });
+  await perguntarAoServidor(controlador, SERVIDOR);
+  expect(controlador.chamadas.filter((chamada) => chamada.acao === 'jogadoresConectados')).toHaveLength(2);
 });

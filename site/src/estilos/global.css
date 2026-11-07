@@ -2337,3 +2337,23 @@ textarea {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Diversão sob demanda */
+.ligar-servidor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.etiqueta.falha {
+  color: var(--tinta-2);
+  white-space: normal;
+}
+
+.tempo-ligando {
+  margin-right: auto;
+  color: var(--tinta-3);
+  font-size: 13px;
+}

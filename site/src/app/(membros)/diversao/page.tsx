@@ -12,22 +12,65 @@ import {
   listarServidoresDaDiversao,
   mapaDoCartao,
   MODOS_DE_DIVERSAO,
-  situacaoDoServidor,
   type SituacaoDoServidor,
 } from '@/dominio/diversao';
+import { estadosDaTela, type EstadoNaTela } from '@/dominio/sob-demanda';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
+import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
+import { Atualizar } from '../atualizar';
 import { BotaoCopiar } from '../botao-copiar';
+import { ligar } from './acoes';
+import { BotaoLigar, EntrarQuandoLigar, EsperarEEntrar, TempoLigando } from './esperar-e-entrar';
 
 const SEM_RESPOSTA: SituacaoDoServidor = { ligado: false, jogando: 0 };
+/** Depois disso o aviso de falha some e o cartão volta só com o botão. */
+const AVISO_DE_FALHA_MS = 2 * 60_000;
+
+const ERROS: Record<string, string> = {
+  limite: 'Todos os servidores estão cheios de gente agora. Tente de novo em alguns minutos.',
+  indisponivel: 'Este modo não pode ser ligado agora.',
+};
 
 function nomeDoModo(modo: ServidorDiversao['modo']) {
   return MODOS_DE_DIVERSAO.find((item) => item.valor === modo)?.nome;
 }
 
-function RodapeDoCartao({ servidor, situacao }: { servidor: ServidorDiversao; situacao: SituacaoDoServidor }) {
-  const estado = estadoDoCartao(servidor, situacao);
+function RodapeDoCartao({
+  servidor,
+  situacao,
+  guardado,
+  modo,
+  agora,
+}: {
+  servidor: ServidorDiversao;
+  situacao: SituacaoDoServidor;
+  guardado: EstadoNaTela | undefined;
+  modo: string | null;
+  agora: number;
+}) {
+  const estado = estadoDoCartao(servidor, situacao, guardado?.estado);
   if (estado === 'em_breve') return <span className="etiqueta">Em breve</span>;
   if (estado === 'fora_do_ar') return <span className="etiqueta">Fora do ar</span>;
+  if (estado === 'ligando') {
+    return (
+      <>
+        <span className="etiqueta">Ligando... cerca de 1 minuto</span>
+        {guardado && <TempoLigando desde={guardado.desde.toISOString()} />}
+        <EntrarQuandoLigar servidorId={servidor.id} />
+      </>
+    );
+  }
+  if (estado === 'desligado_sob_demanda') {
+    const falhou = guardado?.erro && agora - guardado.desde.getTime() < AVISO_DE_FALHA_MS;
+    return (
+      <form action={ligar} className="ligar-servidor">
+        {falhou && <span className="etiqueta falha">Não consegui ligar agora. Tente de novo em instantes.</span>}
+        <input type="hidden" name="servidor" value={servidor.id} />
+        {modo && <input type="hidden" name="modo" value={modo} />}
+        <BotaoLigar servidorId={servidor.id} />
+      </form>
+    );
+  }
 
   const vagas = (
     <span className="vagas-servidor">
@@ -47,31 +90,39 @@ function RodapeDoCartao({ servidor, situacao }: { servidor: ServidorDiversao; si
   if (!alvo) return null;
   const senha = process.env.SERVIDOR_SENHA ?? '';
   const comando = comandoDeConectar(alvo, senha);
+  const link = linkDeEntrar(alvo, senha);
   return (
     <>
       {vagas}
       {comando && <BotaoCopiar texto={comando} />}
-      <a className="botao ouro pequeno" href={linkDeEntrar(alvo, senha)}>
+      <a className="botao ouro pequeno" href={link}>
         Entrar
       </a>
+      <EsperarEEntrar servidorId={servidor.id} link={link} />
     </>
   );
 }
 
-export default async function Diversao({ searchParams }: { searchParams: Promise<{ modo?: string }> }) {
+export default async function Diversao({ searchParams }: { searchParams: Promise<{ modo?: string; erro?: string }> }) {
   await exigirAcesso('/diversao');
-  const { modo: texto } = await searchParams;
+  const { modo: texto, erro } = await searchParams;
   const modo = lerModo(texto);
 
-  const todos = await listarServidoresDaDiversao(obterBd());
+  const bd = obterBd();
+  const todos = await listarServidoresDaDiversao(bd);
   const servidores = modo ? todos.filter((servidor) => servidor.modo === modo) : todos;
 
-  const controlador = controladorDoAmbiente();
-  const situacoes = await Promise.all(
-    servidores.map((servidor) =>
-      servidor.ativo ? situacaoDoServidor(controlador, alvoDoServidor(servidor, process.env.DIVERSAO_HOST)) : SEM_RESPOSTA,
+  const diversao = diversaoDoAmbiente(controladorDoAmbiente());
+  const [situacoes, guardados] = await Promise.all([
+    Promise.all(servidores.map((servidor) => (servidor.ativo ? diversao.situacaoDaTela(servidor) : SEM_RESPOSTA))),
+    estadosDaTela(
+      bd,
+      servidores.map((servidor) => servidor.id),
     ),
-  );
+  ]);
+  const algumLigando = servidores.some((servidor, indice) => estadoDoCartao(servidor, situacoes[indice], guardados.get(servidor.id)?.estado) === 'ligando');
+  // eslint-disable-next-line react-hooks/purity -- página do servidor: a hora é lida uma vez por pedido.
+  const agora = Date.now();
 
   return (
     <>
@@ -88,6 +139,12 @@ export default async function Diversao({ searchParams }: { searchParams: Promise
           </Link>
         ))}
       </nav>
+      {erro && ERROS[erro] && (
+        <p role="alert" className="aviso">
+          {ERROS[erro]}
+        </p>
+      )}
+      {algumLigando && <Atualizar segundos={3} />}
       <div className="lista-servidores">
         {servidores.map((servidor, indice) => {
           const mapa = mapaDoCartao(servidor, situacoes[indice]);
@@ -99,7 +156,7 @@ export default async function Diversao({ searchParams }: { searchParams: Promise
                 <p>{servidor.armas}</p>
                 <small>{mapa.nome}</small>
                 <div className="rodape-servidor">
-                  <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} />
+                  <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modo} agora={agora} />
                 </div>
               </div>
             </article>

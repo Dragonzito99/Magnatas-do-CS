@@ -2,12 +2,13 @@ import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { and, eq, inArray, isNotNull, isNull, lte, ne, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, denuncias, desafios, gravacoes, partidaJogadores, partidas, servidores, usuarios, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, denuncias, desafios, gravacoes, partidaJogadores, partidas, servidores, usuarios, type Partida, type ServidorDiversao, type Usuario } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { converterChamadosSemResposta } from './denuncias';
 import { resolverAceitesVencidos } from './aceites';
 import { ESTADOS_ATIVOS_DE_PARTIDA } from './disponibilidade';
 import { fiscalizarDiversao } from './diversao';
+import { acompanharDiversao, type ControleDaDiversao, type RespostaDoServidor } from './sob-demanda';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
 import { expirarJuncoes } from './juncoes';
@@ -197,8 +198,11 @@ export async function varrer(
   pasta: string | undefined,
   agora: Date = new Date(),
   hostDaDiversao: string | undefined = undefined,
+  diversao?: { controle: ControleDaDiversao; perguntar: (servidor: ServidorDiversao) => Promise<RespostaDoServidor> },
 ): Promise<void> {
   const etapas = [
+    // Antes da fiscalização: ela só pergunta a quem o site sabe estar ligado.
+    () => (diversao ? acompanharDiversao(bd, diversao.controle, diversao.perguntar, agora) : Promise.resolve()),
     () => fiscalizarDiversao(bd, controlador, hostDaDiversao),
     () => fecharSalasAbandonadas(bd, agora),
     () => expirarDesafios(bd, agora),

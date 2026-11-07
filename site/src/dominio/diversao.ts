@@ -1,6 +1,6 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { servidoresDiversao, usuarios, type ServidorDiversao } from '@/bd/esquema';
+import { estadosDaDiversao, servidoresDiversao, usuarios, type EstadoDaDiversao, type ServidorDiversao } from '@/bd/esquema';
 import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
 
 export type ModoDeDiversao = ServidorDiversao['modo'];
@@ -21,7 +21,7 @@ export function mapaDoCartao(servidor: { mapa: string; foto: string }, situacao:
   if (!situacao.ligado || !situacao.mapa) return { nome: servidor.mapa, foto: servidor.foto };
   return MAPAS_CONHECIDOS[situacao.mapa] ?? { nome: situacao.mapa, foto: servidor.foto };
 }
-export type EstadoDoCartao = 'em_breve' | 'fora_do_ar' | 'cheio' | 'aberto';
+export type EstadoDoCartao = 'em_breve' | 'fora_do_ar' | 'desligado_sob_demanda' | 'ligando' | 'cheio' | 'aberto';
 
 export const MODOS_DE_DIVERSAO: readonly { valor: ModoDeDiversao; nome: string }[] = [
   { valor: 'cada_um', nome: 'Cada um por si' },
@@ -58,10 +58,16 @@ export function comandoDeConectar(alvo: ServidorAlvo, senha: string): string | n
   return `password "${senha}"; connect ${alvo.host}:${alvo.porta}`;
 }
 
-export function estadoDoCartao(servidor: { ativo: boolean; vagas: number }, situacao: SituacaoDoServidor): EstadoDoCartao {
+/** O que o servidor responde vale mais que o estado guardado; desligado sob demanda mostra o botão de ligar. */
+export function estadoDoCartao(
+  servidor: { ativo: boolean; vagas: number; sobDemanda?: boolean; nomeNoServidor?: string | null },
+  situacao: SituacaoDoServidor,
+  estado?: EstadoDaDiversao['estado'],
+): EstadoDoCartao {
   if (!servidor.ativo) return 'em_breve';
-  if (!situacao.ligado) return 'fora_do_ar';
-  return situacao.jogando >= servidor.vagas ? 'cheio' : 'aberto';
+  if (situacao.ligado) return situacao.jogando >= servidor.vagas ? 'cheio' : 'aberto';
+  if (estado === 'ligando') return 'ligando';
+  return servidor.sobDemanda && servidor.nomeNoServidor ? 'desligado_sob_demanda' : 'fora_do_ar';
 }
 
 function aguardarNoMaximo<T>(promessa: Promise<T>, prazoMs: number, seEsgotar: T): Promise<T> {
@@ -100,7 +106,12 @@ export async function fiscalizarDiversao(
   hostPadrao: string | undefined,
   prazoMs: number = PRAZO_DA_FISCALIZACAO_MS,
 ): Promise<void> {
-  const ativos = await bd.select().from(servidoresDiversao).where(eq(servidoresDiversao.ativo, true));
+  // Desligado pelo site não tem ninguém para fiscalizar. Sem estado ainda, pergunta: pode estar ligado desde antes.
+  const ativos = await bd
+    .select({ host: servidoresDiversao.host, porta: servidoresDiversao.porta })
+    .from(servidoresDiversao)
+    .leftJoin(estadosDaDiversao, eq(estadosDaDiversao.servidorId, servidoresDiversao.id))
+    .where(and(eq(servidoresDiversao.ativo, true), or(isNull(estadosDaDiversao.estado), inArray(estadosDaDiversao.estado, ['ligando', 'ligado']))));
   await Promise.all(
     ativos.map(async (servidor) => {
       const alvo = alvoDoServidor(servidor, hostPadrao);
@@ -115,6 +126,17 @@ export function zerarSituacoesGuardadas(): void {
   guardadas.clear();
 }
 
+/** Pergunta agora, sem guardar: a varredura decide ligar e desligar pela resposta de agora. */
+export async function perguntarAoServidor(
+  controlador: ControladorServidor,
+  alvo: ServidorAlvo | null,
+  prazoMs: number = PRAZO_DA_PERGUNTA_MS,
+): Promise<SituacaoDoServidor> {
+  if (!alvo) return { ligado: false, jogando: 0 };
+  const estado = await aguardarNoMaximo(controlador.estadoDoServidor(alvo).catch(() => null), prazoMs, null);
+  return estado ? { ligado: true, jogando: estado.contas.length, ...(estado.mapa ? { mapa: estado.mapa } : {}) } : { ligado: false, jogando: 0 };
+}
+
 /** Guarda a resposta por alguns segundos, para não perguntar ao servidor a cada página aberta. */
 export async function situacaoDoServidor(
   controlador: ControladorServidor,
@@ -126,10 +148,7 @@ export async function situacaoDoServidor(
   const chave = `${alvo.host}:${alvo.porta}`;
   const guardada = guardadas.get(chave);
   if (guardada && agora.getTime() < guardada.ate) return guardada.situacao;
-  const estado = await aguardarNoMaximo(controlador.estadoDoServidor(alvo).catch(() => null), prazoMs, null);
-  const situacao: SituacaoDoServidor = estado
-    ? { ligado: true, jogando: estado.contas.length, ...(estado.mapa ? { mapa: estado.mapa } : {}) }
-    : { ligado: false, jogando: 0 };
+  const situacao = await perguntarAoServidor(controlador, alvo, prazoMs);
   guardadas.set(chave, { ate: agora.getTime() + TEMPO_GUARDADA_MS, situacao });
   return situacao;
 }

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { auditoria, banimentos, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
+import { auditoria, banimentos, estadosDaDiversao, servidoresDiversao, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, STEAM_D } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
 import { SemPermissao } from './equipe';
@@ -363,4 +363,15 @@ test('a varredura tira da sala quem fechou o site', async () => {
   await bd.update(usuarios).set({ vistoEm: new Date(AGORA.getTime() - TEMPO_FORA_DO_SITE_NA_SALA_MS - 1000) }).where(eq(usuarios.id, lider.id));
   await varrer(bd, controladorFalso(), pasta, AGORA);
   expect(await bd.select().from(salas).where(eq(salas.id, salaId))).toHaveLength(0);
+});
+
+test('a varredura acompanha a Diversão: servidor que não subiu em 3 minutos é desligado', async () => {
+  const [fantasma] = await bd.select().from(servidoresDiversao).where(eq(servidoresDiversao.porta, 27021));
+  await bd.update(servidoresDiversao).set({ ativo: true });
+  await bd.insert(estadosDaDiversao).values({ servidorId: fantasma.id, estado: 'ligando', desde: atras(4) });
+  const desligados: string[] = [];
+  const controle = { ligar: async () => {}, desligar: async (nome: string) => void desligados.push(nome) };
+  await varrer(bd, controladorFalso(), pasta, AGORA, undefined, { controle, perguntar: async () => ({ ligado: false, jogando: 0 }) });
+  expect(desligados).toEqual(['fantasma']);
+  expect((await bd.select().from(estadosDaDiversao).where(eq(estadosDaDiversao.servidorId, fantasma.id)))[0]).toMatchObject({ estado: 'desligado', erro: 'não respondeu' });
 });
