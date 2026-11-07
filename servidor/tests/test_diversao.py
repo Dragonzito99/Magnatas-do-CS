@@ -1027,3 +1027,52 @@ def test_equipe_nunca_dorme_com_varios_mapas():
     # Ao acordar do modo de espera, o jogo recarrega o pacote da Oficina e pode abrir o mapa auxiliar
     # que vem junto (o de_luxville_skybox), e o servidor cai. Acordado, só o plugin troca de mapa.
     assert valor("sv_hibernate_when_empty", "equipe") == "0"
+
+
+SONS_DE_ABATE = RAIZ / "plugins" / "MagnatasDiversao" / "SonsDeAbate.cs"
+PACOTE_DE_SONS = "3835000213"
+
+
+def codigo_dos_sons():
+    return SONS_DE_ABATE.read_text(encoding="utf-8")
+
+
+def test_o_som_segue_a_sequencia_e_o_time_de_quem_matou():
+    codigo = codigo_dos_sons()
+    trecho = codigo[codigo.index("string? SomDoAbate"):]
+    # De 2 a 7 abates sem morrer. Do 8 em diante fica em silêncio, a pedido do dono.
+    assert "sequencia > MaiorSequenciaComSom) return null" in trecho
+    assert "MaiorSequenciaComSom = 7;" in codigo
+    assert "sequencia >= 2" in trecho
+    assert '"magnatas.killmark_' in trecho
+    # O tiro na cabeça só toca no primeiro abate: a sequência tem a vez.
+    assert '"magnatas.headshot_' in trecho
+    assert '? "ct" : "tr"' in trecho
+
+
+def test_so_quem_matou_ouve_o_som():
+    codigo = codigo_dos_sons()
+    assert "new RecipientFilter" in codigo
+    assert "EmitSound(" in codigo
+
+
+def test_a_sequencia_zera_ao_morrer_e_em_partida_nova():
+    codigo = codigo_dos_sons()
+    trecho = codigo[codigo.index("HookResult TocarSomDoAbate"):]
+    assert "sequencias.Remove(alvo.SteamID)" in trecho
+    # Morte pela bomba, por queda ou de alguém do próprio time não conta para a sequência.
+    assert 'Contains("c4")' in trecho
+    assert "quem.Team == alvo.Team" in trecho
+    assert "sequencias.Clear()" in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void ZerarContagem"):]
+
+
+def test_o_servidor_carrega_os_sons_do_pacote():
+    assert "OnServerPrecacheResources" in codigo_dos_sons()
+    assert "soundevents/soundevents_addon.vsndevts" in codigo_dos_sons()
+
+
+@pytest.mark.parametrize("servidor", SERVIDORES)
+def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
+    assert valor("mm_extra_addons", servidor) == f'"{PACOTE_DE_SONS}"'
+    # Sem isso, cada troca de mapa do Equipe x Equipe faria todo mundo reconectar para conferir o pacote.
+    assert valor("mm_cache_clients_with_addons", servidor) == "1"

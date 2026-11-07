@@ -105,7 +105,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.3.0";
+    public override string ModuleVersion => "1.4.0";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -119,6 +119,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     public override void Load(bool hotReload)
     {
         mapaAtualDaOficina = MapasDaRotacao(Config.Rotacao).FirstOrDefault();
+        LigarSonsDeAbate();
         if (Config.Regra == "cada_um")
         {
             // Se a partida acabar pelo tempo do jogo, este modo não recomeça e deixa todo mundo sem time.
@@ -158,6 +159,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         idDaPartida = NovoId();
         partidaEncerrada = false;
         naPartida.Clear();
+        sequencias.Clear();
         foreach (var pessoa in Pessoas()) Registrar(pessoa);
     }
 
