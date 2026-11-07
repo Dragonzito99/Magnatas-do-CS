@@ -13,7 +13,7 @@ import { ESTADOS_ATIVOS_DE_PARTIDA } from '@/dominio/disponibilidade';
 import { entrarNoMix } from '@/dominio/mix';
 import { finalizarPartida } from '@/dominio/partidas';
 import { criarSala, entrarNaSala, minhaSala, TAMANHO_DA_SALA } from '@/dominio/salas';
-import { carregarAmbiente } from './ambiente';
+import { carregarAmbiente, exigirBancoLocal } from './ambiente';
 
 async function contaFicticia(bd: Bd, apelido?: string): Promise<Usuario> {
   const sufixo = String(randomInt(1e9)).padStart(9, '0');
@@ -26,8 +26,8 @@ async function contaFicticia(bd: Bd, apelido?: string): Promise<Usuario> {
 }
 
 async function principal() {
-  if (process.env.NODE_ENV === 'production') throw new Error('Este script não roda em produção.');
   carregarAmbiente();
+  exigirBancoLocal();
   const bd = obterBd();
   const [modo, ...resto] = process.argv.slice(2);
 

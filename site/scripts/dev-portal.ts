@@ -6,13 +6,13 @@ import { cacheExterno } from '@/bd/esquema';
 import { criarNoticia } from '@/dominio/noticias';
 import { atualizarNoticiasSteam } from '@/dominio/noticias-steam';
 import { atualizarTierS } from '@/dominio/tier-s';
-import { carregarAmbiente } from './ambiente';
+import { carregarAmbiente, exigirBancoLocal } from './ambiente';
 
 const amostra = (nome: string) => JSON.parse(readFileSync(`src/dominio/exemplos/${nome}`, 'utf8'));
 
 async function principal() {
-  if (process.env.NODE_ENV === 'production') throw new Error('Este script não roda em produção.');
   carregarAmbiente();
+  exigirBancoLocal();
   const bd = obterBd();
   // A data das amostras: o IEM Beijing está em andamento em 07/11/2026.
   const agora = new Date('2026-11-07T15:00:00Z');

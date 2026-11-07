@@ -5,7 +5,7 @@
 //      npx tsx scripts/dev-fluxo.ts vetar-auto                         (um veto automático pelo time da vez)
 //      npx tsx scripts/dev-fluxo.ts encerrar                           (fecha a partida com números de mentira)
 //      npx tsx scripts/dev-fluxo.ts sessao <apelido>                   (imprime uma sessão da conta)
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { criarSessao } from '@/auth/sessoes';
 import { obterBd } from '@/bd/conexao';
 import { partidaJogadores, partidas, salas, usuarios } from '@/bd/esquema';
@@ -14,11 +14,11 @@ import { aceitarDesafio, desafiar } from '@/dominio/desafios';
 import { ESTADOS_ATIVOS_DE_PARTIDA } from '@/dominio/disponibilidade';
 import { finalizarPartida } from '@/dominio/partidas';
 import { resolverVetosVencidos } from '@/dominio/vetos';
-import { carregarAmbiente } from './ambiente';
+import { carregarAmbiente, exigirBancoLocal } from './ambiente';
 
 async function principal() {
-  if (process.env.NODE_ENV === 'production') throw new Error('Este script não roda em produção.');
   carregarAmbiente();
+  exigirBancoLocal();
   const bd = obterBd();
   const [modo, ...resto] = process.argv.slice(2);
   const ativa = async () => {
@@ -63,7 +63,7 @@ async function principal() {
       await bd
         .update(partidaJogadores)
         .set({ kills: 10 + i * 2, deaths: 25 - i, assists: i, damage: 1200 + i * 150, headshotKills: 3 + i, rodadas: 24, mvps: i % 4, kast: 12 + i, k1: 6, k2: 2, k3: i % 3, k4: 0, k5: 0 })
-        .where(eq(partidaJogadores.usuarioId, jogador.usuarioId));
+        .where(and(eq(partidaJogadores.partidaId, partida.id), eq(partidaJogadores.usuarioId, jogador.usuarioId)));
     }
     await bd.transaction((tx) => finalizarPartida(tx, partida.id, { estado: 'encerrada', vencedor: 1 }));
     await bd.update(partidas).set({ placar1: 13, placar2: 9 }).where(eq(partidas.id, partida.id));
@@ -71,6 +71,8 @@ async function principal() {
   } else if (modo === 'sessao') {
     const [conta] = await bd.select().from(usuarios).where(eq(usuarios.apelido, resto[0] ?? ''));
     if (!conta) throw new Error('Conta não encontrada.');
+    // Só contas fictícias do dev-preencher (SteamID que começa com 76561190) e só jogador.
+    if (!conta.steamid64.startsWith('76561190') || conta.papel !== 'jogador') throw new Error('Só dá sessão para conta fictícia de jogador.');
     console.log(await criarSessao(bd, conta.id));
   } else {
     throw new Error('Modo desconhecido.');
