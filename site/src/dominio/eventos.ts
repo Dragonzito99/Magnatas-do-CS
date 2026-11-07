@@ -20,6 +20,14 @@ const jogador = z.object({
     damage: inteiro,
     headshot_kills: inteiro,
     rounds_played: inteiro,
+    // Um servidor antigo pode não mandar estes; aí ficam em 0.
+    mvp: inteiro.default(0),
+    kast: inteiro.default(0),
+    '1k': inteiro.default(0),
+    '2k': inteiro.default(0),
+    '3k': inteiro.default(0),
+    '4k': inteiro.default(0),
+    '5k': inteiro.default(0),
   }),
 });
 
@@ -78,6 +86,13 @@ async function gravarEstatisticas(tx: Transacao, partida: Partida, recebidos: z.
         damage: stats.damage,
         headshotKills: stats.headshot_kills,
         rodadas: stats.rounds_played,
+        mvps: stats.mvp,
+        kast: stats.kast,
+        k1: stats['1k'],
+        k2: stats['2k'],
+        k3: stats['3k'],
+        k4: stats['4k'],
+        k5: stats['5k'],
       })
       .where(
         and(

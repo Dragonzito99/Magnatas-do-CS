@@ -94,6 +94,19 @@ test('round_end grava kills, deaths, assists, dano, tiros na cabeça e rodadas d
   expect(await linhaDe(time2[0])).toMatchObject({ kills: 1, deaths: 3, damage: 90, rodadas: 4 });
 });
 
+test('round_end grava MVPs, KAST e os multi-kills, com os nomes que o MatchZy usa', async () => {
+  await aplicarEvento(bd, fimDeRodada(1, 0, [estatisticas(time1[0], { mvp: 3, kast: 15, '1k': 6, '2k': 2, '3k': 1, '4k': 0, '5k': 1, rounds_played: 16 })]));
+  expect(await linhaDe(time1[0])).toMatchObject({ mvps: 3, kast: 15, k1: 6, k2: 2, k3: 1, k4: 0, k5: 1 });
+});
+
+test('round_end sem os campos novos continua valendo, e eles ficam em 0', async () => {
+  const { mvp, kast, '1k': k1, '2k': k2, '3k': k3, '4k': k4, '5k': k5, ...antigos } = round_end.team1.players[0].stats;
+  void [mvp, kast, k1, k2, k3, k4, k5];
+  const jogador = { steamid: time1[0].steamid64, name: time1[0].apelido, stats: { ...antigos, kills: 4, rounds_played: 5 } };
+  await aplicarEvento(bd, fimDeRodada(1, 0, [jogador]));
+  expect(await linhaDe(time1[0])).toMatchObject({ kills: 4, rodadas: 5, mvps: 0, kast: 0, k1: 0, k5: 0 });
+});
+
 test('round_end repetido ou fora de ordem não soma de novo nem reduz o total', async () => {
   const depois = fimDeRodada(5, 4, [estatisticas(time1[0], { kills: 7, rounds_played: 9 })]);
   const antes = fimDeRodada(2, 1, [estatisticas(time1[0], { kills: 2, rounds_played: 3 })]);

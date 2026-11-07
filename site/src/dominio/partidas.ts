@@ -243,6 +243,14 @@ export type JogadorDaPartida = {
   assists: number;
   damage: number;
   rodadas: number;
+  headshotKills: number;
+  mvps: number;
+  kast: number;
+  k1: number;
+  k2: number;
+  k3: number;
+  k4: number;
+  k5: number;
   xp: number | null;
 };
 
@@ -264,6 +272,14 @@ export async function detalheDaPartida(
       assists: partidaJogadores.assists,
       damage: partidaJogadores.damage,
       rodadas: partidaJogadores.rodadas,
+      headshotKills: partidaJogadores.headshotKills,
+      mvps: partidaJogadores.mvps,
+      kast: partidaJogadores.kast,
+      k1: partidaJogadores.k1,
+      k2: partidaJogadores.k2,
+      k3: partidaJogadores.k3,
+      k4: partidaJogadores.k4,
+      k5: partidaJogadores.k5,
       xp: xpPartidas.xp,
     })
     .from(partidaJogadores)
