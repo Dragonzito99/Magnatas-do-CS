@@ -105,7 +105,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.4.0";
+    public override string ModuleVersion => "1.4.1";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -118,7 +118,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
 
     public override void Load(bool hotReload)
     {
-        mapaAtualDaOficina = MapasDaRotacao(Config.Rotacao).FirstOrDefault();
+        LembrarDoMapaAtual(hotReload);
         LigarSonsDeAbate();
         if (Config.Regra == "cada_um")
         {
@@ -232,8 +232,42 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         if (mapas.Count < 2) return;
         var opcoes = mapas.Where(mapa => mapa != mapaAtualDaOficina).ToList();
         var proximo = opcoes[Random.Shared.Next(opcoes.Count)];
-        mapaAtualDaOficina = proximo;
+        GuardarMapaAtual(proximo);
         Server.ExecuteCommand($"host_workshop_map {proximo}");
+    }
+
+    private string ArquivoDoMapaAtual => Path.Combine(ModuleDirectory, "mapa_atual.txt");
+
+    /// <summary>
+    /// O servidor liga no primeiro mapa da rotação. Recarregado no meio do jogo, o plugin lê o mapa do arquivo:
+    /// sem isso ele poderia sortear o mesmo pacote, e recarregar o Luxville abre o mapa auxiliar dele e derruba o servidor.
+    /// </summary>
+    private void LembrarDoMapaAtual(bool hotReload)
+    {
+        var mapas = MapasDaRotacao(Config.Rotacao);
+        string? guardado = null;
+        try
+        {
+            if (hotReload && File.Exists(ArquivoDoMapaAtual)) guardado = File.ReadAllText(ArquivoDoMapaAtual).Trim();
+        }
+        catch (Exception erro) when (erro is IOException or UnauthorizedAccessException)
+        {
+        }
+        GuardarMapaAtual(guardado != null && mapas.Contains(guardado) ? guardado : mapas.FirstOrDefault());
+    }
+
+    private void GuardarMapaAtual(string? mapa)
+    {
+        mapaAtualDaOficina = mapa;
+        if (mapa == null) return;
+        try
+        {
+            File.WriteAllText(ArquivoDoMapaAtual, mapa);
+        }
+        catch (Exception erro) when (erro is IOException or UnauthorizedAccessException)
+        {
+            Console.WriteLine($"[Magnatas] Não deu para guardar o mapa atual: {erro.Message}");
+        }
     }
 
     private void EncerrarCicloDoCadaUm()

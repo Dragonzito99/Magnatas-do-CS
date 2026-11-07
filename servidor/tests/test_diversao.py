@@ -1076,3 +1076,15 @@ def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
     assert valor("mm_extra_addons", servidor) == f'"{PACOTE_DE_SONS}"'
     # Sem isso, cada troca de mapa do Equipe x Equipe faria todo mundo reconectar para conferir o pacote.
     assert valor("mm_cache_clients_with_addons", servidor) == "1"
+
+
+def test_o_plugin_lembra_o_mapa_atual_depois_de_recarregar():
+    # Recarregado no Luxville, o plugin achava que estava no primeiro mapa da lista e sorteava o Luxville
+    # de novo. Recarregar o mesmo pacote abre o mapa auxiliar dele, e o servidor cai.
+    carregar = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("public override void Load"):]
+    assert "LembrarDoMapaAtual(hotReload)" in carregar
+    lembrar = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void LembrarDoMapaAtual"):]
+    assert "File.ReadAllText" in lembrar
+    assert "mapas.Contains(" in lembrar
+    trocar = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void TrocarDeMapa"):]
+    assert "GuardarMapaAtual(" in trocar[:trocar.index("host_workshop_map")]
