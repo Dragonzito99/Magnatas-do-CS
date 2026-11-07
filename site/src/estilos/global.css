@@ -3353,3 +3353,75 @@ a.cartao-destaque:hover {
     font-size: 34px;
   }
 }
+
+/* Visual novo em todas as páginas: títulos e números na letra do site do CrossFire */
+.conteudo h1 {
+  font: italic 700 46px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.cabeca-painel h2 {
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.painel {
+  border-radius: 8px;
+}
+
+.numeros b,
+.numero-grande,
+.lugar > b {
+  font-family: var(--fonte-titulo), sans-serif;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.numeros b {
+  font-size: 32px;
+  line-height: 1.05;
+}
+
+/* Perfil: topo com foto de mapa ao fundo, avatar e nome grandes */
+.ficha-topo {
+  padding: 26px 22px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(7, 4, 13, 0.94) 35%, rgba(7, 4, 13, 0.55)), url('/mapas/mirage.webp') center / cover;
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+}
+
+.ficha-topo .avatar {
+  width: 96px;
+  height: 96px;
+  font-size: 32px;
+}
+
+.conteudo .ficha-topo h1 {
+  font-size: 52px;
+}
+
+.lugar {
+  border-radius: 8px;
+}
+
+.lugar.primeiro {
+  box-shadow: inset 0 0 0 1px var(--ouro), 0 0 24px rgba(245, 179, 1, 0.18);
+}
+
+@media (max-width: 860px) {
+  .conteudo h1 {
+    font-size: 36px;
+  }
+
+  .conteudo .ficha-topo h1 {
+    font-size: 38px;
+  }
+
+  .ficha-topo .avatar {
+    width: 68px;
+    height: 68px;
+  }
+}

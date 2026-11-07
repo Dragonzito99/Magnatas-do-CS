@@ -1,7 +1,7 @@
-import Link from 'next/link';
-import { exigirAcesso } from '@/auth/guarda';
-import { obterBd } from '@/bd/conexao';
-import type { Usuario } from '@/bd/esquema';
+import Link from "next/link";
+import { exigirAcesso } from "@/auth/guarda";
+import { obterBd } from "@/bd/conexao";
+import type { Usuario } from "@/bd/esquema";
 import {
   lerMes,
   mesAnterior,
@@ -14,17 +14,22 @@ import {
   textoDoMes,
   type LinhaDoRanking,
   type Mes,
-} from '@/dominio/ranking';
-import { Avatar } from '../avatar';
-import { InsigniaDaPatente } from '../insignia-da-patente';
+} from "@/dominio/ranking";
+import { Avatar } from "../avatar";
+import { InsigniaDaPatente } from "../insignia-da-patente";
 
-const nomeDoMes = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const nomeDoMes = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 const tituloDoMes = ({ ano, mes }: Mes) => {
   const texto = nomeDoMes.format(new Date(Date.UTC(ano, mes - 1, 15)));
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 };
-const antes = (a: Mes, b: Mes) => a.ano < b.ano || (a.ano === b.ano && a.mes < b.mes);
-const numero = new Intl.NumberFormat('pt-BR');
+const antes = (a: Mes, b: Mes) =>
+  a.ano < b.ano || (a.ano === b.ano && a.mes < b.mes);
+const numero = new Intl.NumberFormat("pt-BR");
 
 function Coroa({ className }: { className: string }) {
   return (
@@ -37,7 +42,7 @@ function Coroa({ className }: { className: string }) {
 function LugarDoPodio({ linha }: { linha: LinhaDoRanking }) {
   const primeiro = linha.posicao === 1;
   return (
-    <div className={primeiro ? 'lugar primeiro' : 'lugar'}>
+    <div className={primeiro ? "lugar primeiro" : "lugar"}>
       {primeiro ? (
         <>
           <Coroa className="coroa" />
@@ -52,66 +57,130 @@ function LugarDoPodio({ linha }: { linha: LinhaDoRanking }) {
       </Link>
       <b className="mono">{linha.kd.toFixed(2)}</b>
       <small>
-        {linha.partidas} {linha.partidas === 1 ? 'partida' : 'partidas'}
+        {linha.partidas} {linha.partidas === 1 ? "partida" : "partidas"}
       </small>
     </div>
   );
 }
 
-async function RankingDaComunidade({ usuario }: { usuario: Pick<Usuario, 'id'> }) {
+async function RankingDaComunidade({
+  usuario,
+}: {
+  usuario: Pick<Usuario, "id">;
+}) {
   const linhas = await rankingDaComunidade(obterBd());
+  // Os três primeiros também ganham o pódio, com o 1º no meio, como no Mix do mês.
+  const podio = [linhas[1], linhas[0], linhas[2]].filter(Boolean);
   return (
-    <section className="painel">
-      {linhas.length === 0 && <p className="vazio">Ainda ninguém ganhou XP. A primeira partida encerrada abre o ranking.</p>}
-      {linhas.length > 0 && (
-        <table className="tabela tabela-ranking">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Jogador</th>
-              <th scope="col">Patente</th>
-              <th scope="col">XP</th>
-            </tr>
-          </thead>
-          <tbody>
-            {linhas.map((linha) => (
-              <tr key={linha.jogador.id} className={linha.jogador.id === usuario.id ? 'minha-linha' : undefined}>
-                <td>{linha.posicao}</td>
-                <th scope="row">
-                  <span className="perfil">
-                    <Avatar usuario={linha.jogador} />
-                    <Link className="nome" href={`/jogadores/${linha.jogador.id}`}>
-                      {linha.jogador.apelido}
-                    </Link>
-                  </span>
-                </th>
-                <td>
-                  <span className="patente-na-tabela">
-                    <InsigniaDaPatente patente={linha.patente} classe="insignia-mini" />
-                    {linha.patente.nome}
-                  </span>
-                </td>
-                <td>
-                  <b>{numero.format(linha.xp)}</b>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <>
+      {podio.length > 0 && (
+        <div className={`podio com-${podio.length}`}>
+          {podio.map((linha) => (
+            <div
+              key={linha.jogador.id}
+              className={linha.posicao === 1 ? "lugar primeiro" : "lugar"}
+            >
+              {linha.posicao === 1 ? (
+                <>
+                  <Coroa className="coroa" />
+                  <strong>O MAIS MAGNATA</strong>
+                </>
+              ) : (
+                <small>{linha.posicao}º lugar</small>
+              )}
+              <Avatar usuario={linha.jogador} />
+              <Link className="nome" href={`/jogadores/${linha.jogador.id}`}>
+                {linha.jogador.apelido}
+              </Link>
+              <span className="patente-na-tabela">
+                <InsigniaDaPatente
+                  patente={linha.patente}
+                  classe="insignia-mini"
+                />
+                {linha.patente.nome}
+              </span>
+              <small>{numero.format(linha.xp)} XP</small>
+            </div>
+          ))}
+        </div>
       )}
-      <div className="rodape-do-ranking">
-        <span>Todas as partidas dão XP, e ele não zera.</span>
-      </div>
-    </section>
+      <section className="painel">
+        {linhas.length === 0 && (
+          <p className="vazio">
+            Ainda ninguém ganhou XP. A primeira partida encerrada abre o
+            ranking.
+          </p>
+        )}
+        {linhas.length > 0 && (
+          <table className="tabela tabela-ranking">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Jogador</th>
+                <th scope="col">Patente</th>
+                <th scope="col">XP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {linhas.map((linha) => (
+                <tr
+                  key={linha.jogador.id}
+                  className={
+                    linha.jogador.id === usuario.id ? "minha-linha" : undefined
+                  }
+                >
+                  <td>{linha.posicao}</td>
+                  <th scope="row">
+                    <span className="perfil">
+                      <Avatar usuario={linha.jogador} />
+                      <Link
+                        className="nome"
+                        href={`/jogadores/${linha.jogador.id}`}
+                      >
+                        {linha.jogador.apelido}
+                      </Link>
+                    </span>
+                  </th>
+                  <td>
+                    <span className="patente-na-tabela">
+                      <InsigniaDaPatente
+                        patente={linha.patente}
+                        classe="insignia-mini"
+                      />
+                      {linha.patente.nome}
+                    </span>
+                  </td>
+                  <td>
+                    <b>{numero.format(linha.xp)}</b>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div className="rodape-do-ranking">
+          <span>Todas as partidas dão XP, e ele não zera.</span>
+        </div>
+      </section>
+    </>
   );
 }
 
-async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; texto: string | undefined }) {
+async function RankingDoMix({
+  usuario,
+  texto,
+}: {
+  usuario: Pick<Usuario, "id">;
+  texto: string | undefined;
+}) {
   const bd = obterBd();
   const atual = mesDe(new Date());
   const pedido = lerMes(texto);
   const mes = pedido && !antes(atual, pedido) ? pedido : atual;
-  const [{ linhas, foraDoRanking }, primeiro] = await Promise.all([rankingDoMes(bd, mes), primeiroMesComPartida(bd)]);
+  const [{ linhas, foraDoRanking }, primeiro] = await Promise.all([
+    rankingDoMes(bd, mes),
+    primeiroMesComPartida(bd),
+  ]);
 
   const podeVoltar = !!primeiro && antes(primeiro, mes);
   const podeAvancar = antes(mes, atual);
@@ -122,7 +191,11 @@ async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; 
     <>
       <nav className="escolha-do-mes" aria-label="Mês do ranking">
         {podeVoltar ? (
-          <Link className="seta-do-mes" href={`/ranking?aba=mix&mes=${textoDoMes(mesAnterior(mes))}`} aria-label="Mês anterior">
+          <Link
+            className="seta-do-mes"
+            href={`/ranking?aba=mix&mes=${textoDoMes(mesAnterior(mes))}`}
+            aria-label="Mês anterior"
+          >
             ‹
           </Link>
         ) : (
@@ -132,7 +205,11 @@ async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; 
         )}
         <span>{tituloDoMes(mes)}</span>
         {podeAvancar ? (
-          <Link className="seta-do-mes" href={`/ranking?aba=mix&mes=${textoDoMes(proximoMes(mes))}`} aria-label="Próximo mês">
+          <Link
+            className="seta-do-mes"
+            href={`/ranking?aba=mix&mes=${textoDoMes(proximoMes(mes))}`}
+            aria-label="Próximo mês"
+          >
             ›
           </Link>
         ) : (
@@ -151,7 +228,12 @@ async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; 
       )}
 
       <section className="painel">
-        {linhas.length === 0 && <p className="vazio">Ainda ninguém chegou a {MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix neste mês.</p>}
+        {linhas.length === 0 && (
+          <p className="vazio">
+            Ainda ninguém chegou a {MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix
+            neste mês.
+          </p>
+        )}
         {linhas.length > 0 && (
           <table className="tabela tabela-ranking">
             <thead>
@@ -176,12 +258,20 @@ async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; 
             </thead>
             <tbody>
               {linhas.map((linha) => (
-                <tr key={linha.jogador.id} className={linha.jogador.id === usuario.id ? 'minha-linha' : undefined}>
+                <tr
+                  key={linha.jogador.id}
+                  className={
+                    linha.jogador.id === usuario.id ? "minha-linha" : undefined
+                  }
+                >
                   <td>{linha.posicao}</td>
                   <th scope="row">
                     <span className="perfil">
                       <Avatar usuario={linha.jogador} />
-                      <Link className="nome" href={`/jogadores/${linha.jogador.id}`}>
+                      <Link
+                        className="nome"
+                        href={`/jogadores/${linha.jogador.id}`}
+                      >
                         {linha.jogador.apelido}
                       </Link>
                     </span>
@@ -201,11 +291,17 @@ async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; 
         )}
         <div className="rodape-do-ranking">
           <span>
-            Entra no ranking quem jogou pelo menos <b>{MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix</b> no mês.
+            Entra no ranking quem jogou pelo menos{" "}
+            <b>{MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix</b> no mês.
           </span>
           {foraDoRanking > 0 && (
             <span>
-              Fora do ranking: <b>{foraDoRanking === 1 ? '1 magnata' : `${foraDoRanking} magnatas`}</b>
+              Fora do ranking:{" "}
+              <b>
+                {foraDoRanking === 1
+                  ? "1 magnata"
+                  : `${foraDoRanking} magnatas`}
+              </b>
             </span>
           )}
         </div>
@@ -214,10 +310,14 @@ async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; 
   );
 }
 
-export default async function Ranking({ searchParams }: { searchParams: Promise<{ aba?: string; mes?: string }> }) {
-  const usuario = await exigirAcesso('/ranking');
+export default async function Ranking({
+  searchParams,
+}: {
+  searchParams: Promise<{ aba?: string; mes?: string }>;
+}) {
+  const usuario = await exigirAcesso("/ranking");
   const { aba, mes } = await searchParams;
-  const noMix = aba === 'mix';
+  const noMix = aba === "mix";
 
   return (
     <>
@@ -232,14 +332,26 @@ export default async function Ranking({ searchParams }: { searchParams: Promise<
         <h1>Ranking</h1>
       </div>
       <nav className="abas-pagina" aria-label="Tipo de ranking">
-        <Link className="aba-pagina" href="/ranking" aria-current={noMix ? undefined : 'page'}>
+        <Link
+          className="aba-pagina"
+          href="/ranking"
+          aria-current={noMix ? undefined : "page"}
+        >
           Comunidade
         </Link>
-        <Link className="aba-pagina" href="/ranking?aba=mix" aria-current={noMix ? 'page' : undefined}>
+        <Link
+          className="aba-pagina"
+          href="/ranking?aba=mix"
+          aria-current={noMix ? "page" : undefined}
+        >
           Mix do mês
         </Link>
       </nav>
-      {noMix ? <RankingDoMix usuario={usuario} texto={mes} /> : <RankingDaComunidade usuario={usuario} />}
+      {noMix ? (
+        <RankingDoMix usuario={usuario} texto={mes} />
+      ) : (
+        <RankingDaComunidade usuario={usuario} />
+      )}
     </>
   );
 }
