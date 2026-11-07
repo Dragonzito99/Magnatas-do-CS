@@ -1245,3 +1245,13 @@ def test_o_relogio_do_mata_mata_nao_encerra_o_alaska():
     # O relógio da partida anterior do Equipe continuaria correndo e trocaria de mapa no meio do Alaska.
     inicio = codigo_do_alaska()[codigo_do_alaska().index("void ComecarRodadaDeAlaska"):]
     assert "fimDaPartida?.Kill()" in inicio
+
+
+def test_alaska_tira_o_jogador_da_escada_falsa_das_portas():
+    # As portas das bases do Alaska prendem o jogador como se fosse escada: o tiro sai torto e ele não passa.
+    codigo = codigo_do_alaska()
+    assert "Listeners.OnTick" in codigo
+    trecho = codigo[codigo.index("void SoltarDaEscada"):]
+    assert "MoveType_t.MOVETYPE_LADDER" in trecho
+    assert "MoveType_t.MOVETYPE_WALK" in trecho
+    assert '"m_MoveType"' in trecho

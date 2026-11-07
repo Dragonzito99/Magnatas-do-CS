@@ -49,11 +49,42 @@ public partial class ModoDeDiversao
 
     private void LigarMapasDeRodadas()
     {
-        RegisterListener<Listeners.OnMapStart>(_ =>
+        RegisterListener<Listeners.OnMapStart>(mapa =>
         {
+            mapaDeRodadasAtivo = MapasDeRodadas.Contains(mapa);
+            soltosDaEscada.Clear();
             regrasDoAlaskaAplicadas = false;
             ZerarPartidaDeAlaska();
         });
+        mapaDeRodadasAtivo = NoMapaDeRodadas;
+        RegisterListener<Listeners.OnTick>(SoltarDaEscada);
+    }
+
+    // Guardado na troca de mapa: perguntar o nome do mapa a cada quadro do servidor sairia caro.
+    private bool mapaDeRodadasAtivo;
+    private readonly HashSet<int> soltosDaEscada = new();
+
+    /// <summary>
+    /// As portas das bases do Alaska prendem quem passa como se fosse escada: o jogador sobe no lugar, o tiro sai
+    /// torto e só às vezes agachar solta. O Alaska não tem escada de verdade, então ninguém fica no modo escada.
+    /// </summary>
+    private void SoltarDaEscada()
+    {
+        if (!mapaDeRodadasAtivo) return;
+        foreach (var jogador in Utilities.GetPlayers())
+        {
+            if (jogador is not { IsValid: true, PawnIsAlive: true }) continue;
+            var corpo = jogador.PlayerPawn.Value;
+            if (corpo == null || corpo.MoveType != MoveType_t.MOVETYPE_LADDER) continue;
+            corpo.MoveType = MoveType_t.MOVETYPE_WALK;
+            corpo.ActualMoveType = MoveType_t.MOVETYPE_WALK;
+            Utilities.SetStateChanged(corpo, "CBaseEntity", "m_MoveType");
+            if (soltosDaEscada.Add(jogador.Slot))
+            {
+                var onde = corpo.AbsOrigin;
+                Console.WriteLine($"[Magnatas] escada falsa: vaga {jogador.Slot} em {onde?.X:0} {onde?.Y:0} {onde?.Z:0}");
+            }
+        }
     }
 
     private void ZerarPartidaDeAlaska()
