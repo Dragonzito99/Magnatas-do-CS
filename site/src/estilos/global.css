@@ -254,8 +254,10 @@ textarea {
 }
 
 /* Banner e barra do topo */
+/* O cabeçalho fica parado no topo, e a barra lateral logo abaixo dele: só o conteúdo rola. */
 .banner {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 10;
   height: 196px;
   border-bottom: 1px solid var(--linha-forte);
@@ -424,7 +426,7 @@ textarea {
    "Seja um Magnata" não descerem junto em páginas compridas. */
 .lateral {
   position: sticky;
-  top: 14px;
+  top: 210px;
   align-self: start;
   display: flex;
   flex-direction: column;
@@ -1895,6 +1897,7 @@ textarea {
   }
 
   .banner {
+    position: relative;
     height: 132px;
   }
 
