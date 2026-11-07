@@ -43,9 +43,18 @@ public partial class ModoDeDiversao
     private string erroDoSom = "nenhum";
     private bool invisibilidadeNoPlugin;
 
-    // A tela das regras que o mapa mostra está em chinês. O plugin apaga a do mapa e mostra a do Magnatas, que fica no site.
+    // A tela das regras que o mapa mostra está em chinês. O plugin apaga a do mapa e escreve as regras em português,
+    // com as frases da arte do dono: o jogo não mostrou a imagem dela vinda do site.
     private const string RegrasDoMapa = "crossfire_ghost_rule00";
-    private const string ImagemDasRegras = "https://magnatasdocs.com.br/regras-fantasma.jpg";
+    private const string Roxo = "#c88cff";
+    private const string Dourado = "#ffc828";
+    private static readonly string RegrasDoMagnatas =
+        $"<font class='fontSize-l' color='{Roxo}'>MODO FANTASMA</font><br>" +
+        $"<font color='{Dourado}'>A:</font> Se mova e se aproxime para que seu resultado não seja visto.<br>" +
+        $"<font color='{Dourado}'>B:</font> Atire para marcar os inimigos e mantenha o modo fantasma.<br>" +
+        $"<font class='fontSize-l' color='{Roxo}'>PROTEJA-SE</font><br>" +
+        $"<font color='{Dourado}'>A:</font> Se mantenha em movimento para não ser detectado pelos inimigos.<br>" +
+        $"<font color='{Dourado}'>B:</font> Atire para sair do modo fantasma e revele sua posição.";
     private const float SegundosDasRegras = 8f;
     private const float IntervaloParaApagarAsRegras = 0.1f;
     private CParticleSystem? regrasDoMapa;
@@ -75,7 +84,7 @@ public partial class ModoDeDiversao
 
     private void MostrarRegrasDoMagnatas()
     {
-        foreach (var pessoa in Pessoas()) pessoa.PrintToCenterHtml($"<img src='{ImagemDasRegras}'/>", (int)SegundosDasRegras);
+        foreach (var pessoa in Pessoas()) pessoa.PrintToCenterHtml(RegrasDoMagnatas, (int)SegundosDasRegras);
     }
 
     private static bool ChamarScriptDoMapa(string entrada)
