@@ -34,6 +34,20 @@ public partial class ModoDeDiversao
     private const int MunicaoDeReservaInfinita = 2;
     private static readonly string[] ArmasDoHumano = { "weapon_ak47", "weapon_m4a1" };
 
+    // O mutante usa o boneco blindado que já vem no jogo, um pouco maior que os humanos: ninguém precisa baixar nada.
+    private const string ModeloDoMutante = "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl";
+    private const float TamanhoDoMutante = 1.15f;
+    private const float TamanhoDoHumano = 1f;
+
+    // Um humano por rodada ganha a super Negev: não acaba a munição e empurra o mutante bem mais longe.
+    private const string ArmaEspecial = "weapon_negev";
+    private const int PenteDaSuperArma = 150;
+    private const float EmpurraoDaSuperArma = 3f;
+    private const float EmpurraoMaximoDaSuperArma = 600f;
+    private static readonly Color CorDoPortador = Color.FromArgb(255, 255, 200, 40);
+    private int? portadorDaSuperArma;
+    private bool superArmaSorteada;
+
     private readonly TipoDeMutante mutanteDaRodada = MutanteComum;
     private CounterStrikeSharp.API.Modules.Timers.Timer? relogioDoSorteio;
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaRodada;
@@ -62,6 +76,8 @@ public partial class ModoDeDiversao
         rodadaEmAndamento = true;
         sorteioFeito = false;
         tempoDeEspalharAcabou = false;
+        superArmaSorteada = false;
+        portadorDaSuperArma = null;
 
         relogioDoSorteio?.Kill();
         relogioDoSorteio = AddTimer(SegundosParaEspalhar, () =>
@@ -88,6 +104,56 @@ public partial class ModoDeDiversao
         var quantos = Math.Max(1, vivos.Count / JogadoresPorMutante);
         foreach (var sorteado in vivos.OrderBy(_ => Random.Shared.Next()).Take(quantos)) TransformarEmMutante(sorteado, null);
         foreach (var pessoa in Pessoas()) pessoa.PrintToChat(" [Magnatas] O mutante apareceu. Fujam!");
+        SortearSuperArma();
+    }
+
+    /// <summary>Uma vez por rodada, entre os humanos que sobraram do sorteio dos mutantes.</summary>
+    private void SortearSuperArma()
+    {
+        if (superArmaSorteada || !rodadaEmAndamento) return;
+        var humanos = Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }).ToList();
+        if (humanos.Count == 0) return;
+        superArmaSorteada = true;
+        var sorteado = humanos[Random.Shared.Next(humanos.Count)];
+        EntregarSuperArma(sorteado);
+        var nome = System.Net.WebUtility.HtmlEncode(sorteado.PlayerName);
+        foreach (var pessoa in Pessoas())
+        {
+            pessoa.PrintToCenterHtml($"<font color='#ffc828' class='fontSize-l'>{nome} pegou a super Negev!</font>", SegundosDoAvisoDeMutante);
+        }
+    }
+
+    private void EntregarSuperArma(CCSPlayerController jogador)
+    {
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo?.WeaponServices?.MyWeapons == null) return;
+        foreach (var item in corpo.WeaponServices.MyWeapons.ToList())
+        {
+            var arma = item.Value;
+            if (arma != null && ArmasDoHumano.Contains(arma.DesignerName)) arma.Remove();
+        }
+        jogador.GiveNamedItem(ArmaEspecial);
+        jogador.ExecuteClientCommand("slot1");
+        portadorDaSuperArma = jogador.Slot;
+        corpo.Render = CorDoPortador;
+        Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
+    }
+
+    /// <summary>A cada tiro do portador o pente volta a ficar cheio: a super Negev nunca recarrega.</summary>
+    [GameEventHandler]
+    public HookResult AoAtirarNaMutacao(EventWeaponFire evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "mutacao") return HookResult.Continue;
+        var jogador = evento.Userid;
+        if (jogador is not { IsValid: true } || jogador.Slot != portadorDaSuperArma || !evento.Weapon.Contains("negev")) return HookResult.Continue;
+        Server.NextFrame(() =>
+        {
+            var arma = jogador.IsValid ? jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value : null;
+            if (arma is not { IsValid: true } || arma.DesignerName != ArmaEspecial) return;
+            arma.Clip1 = PenteDaSuperArma;
+            Utilities.SetStateChanged(arma, "CBasePlayerWeapon", "m_iClip1");
+        });
+        return HookResult.Continue;
     }
 
     private void EncerrarRodadaDaMutacao(RoundEndReason motivo)
@@ -161,6 +227,7 @@ public partial class ModoDeDiversao
     {
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
+        RegisterListener<Listeners.OnServerPrecacheResources>(manifesto => manifesto.AddResource(ModeloDoMutante));
         // Recarregado no meio da rodada, o plugin não teria a rodada em andamento nem o relógio, e o servidor travaria.
         if (hotReload)
         {
@@ -205,6 +272,12 @@ public partial class ModoDeDiversao
     {
         // A conferência vale também para dois golpes no mesmo instante: só o primeiro transforma e conta abate.
         if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }) return;
+        // A super Negev se perde com quem vira mutante, e ninguém mais ganha nesta rodada.
+        if (jogador.Slot == portadorDaSuperArma)
+        {
+            portadorDaSuperArma = null;
+            foreach (var pessoa in Pessoas()) pessoa.PrintToChat(" [Magnatas] A super Negev caiu!");
+        }
         jogador.SwitchTeam(CsTeam.Terrorist);
         transformacoes++;
         AplicarAtributosDoMutante(jogador);
@@ -232,9 +305,19 @@ public partial class ModoDeDiversao
         corpo.Health = mutanteDaRodada.Vida;
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
+        corpo.SetModel(ModeloDoMutante);
+        MudarTamanho(corpo, TamanhoDoMutante);
         corpo.Render = mutanteDaRodada.Cor;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
         corpo.VelocityModifier = mutanteDaRodada.Velocidade;
+    }
+
+    private static void MudarTamanho(CCSPlayerPawn corpo, float tamanho)
+    {
+        var esqueleto = corpo.CBodyComponent?.SceneNode?.GetSkeletonInstance();
+        if (esqueleto == null) return;
+        esqueleto.Scale = tamanho;
+        Utilities.SetStateChanged(corpo, "CBaseEntity", "m_CBodyComponent");
     }
 
     /// <summary>O dano pode zerar o modificador de velocidade, por isso ele é reaplicado de tempos em tempos.</summary>
@@ -256,7 +339,7 @@ public partial class ModoDeDiversao
         foreach (var item in armas.ToList())
         {
             var arma = item.Value;
-            if (arma != null && ArmasDoHumano.Contains(arma.DesignerName)) arma.Remove();
+            if (arma != null && (ArmasDoHumano.Contains(arma.DesignerName) || arma.DesignerName == ArmaEspecial)) arma.Remove();
         }
         jogador.GiveNamedItem(ArmasDoHumano[Random.Shared.Next(ArmasDoHumano.Length)]);
         jogador.ExecuteClientCommand("slot1");
@@ -278,7 +361,10 @@ public partial class ModoDeDiversao
         var distancia = MathF.Sqrt(x * x + y * y);
         if (distancia < 1f) return HookResult.Continue;
 
-        var forca = Math.Min(evento.DmgHealth * ForcaDoEmpurrao, EmpurraoMaximo);
+        var daSuperArma = quem.Slot == portadorDaSuperArma && evento.Weapon.Contains("negev");
+        var forca = daSuperArma
+            ? Math.Min(evento.DmgHealth * ForcaDoEmpurrao * EmpurraoDaSuperArma, EmpurraoMaximoDaSuperArma)
+            : Math.Min(evento.DmgHealth * ForcaDoEmpurrao, EmpurraoMaximo);
         var velocidade = corpo.AbsVelocity;
         corpo.Teleport(null, null, new Vector(velocidade.X + x / distancia * forca, velocidade.Y + y / distancia * forca, velocidade.Z));
         return HookResult.Continue;
@@ -333,14 +419,17 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "mutacao") return HookResult.Continue;
         rodadaEmAndamento = false;
-        foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.Terrorist }))
+        portadorDaSuperArma = null;
+        // O portador da rodada anterior é humano e continua dourado: todos voltam à cor e ao tamanho normais.
+        foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist }))
         {
-            jogador.SwitchTeam(CsTeam.CounterTerrorist);
+            if (jogador.Team == CsTeam.Terrorist) jogador.SwitchTeam(CsTeam.CounterTerrorist);
             var corpo = jogador.PlayerPawn.Value;
             if (corpo == null) continue;
             corpo.MaxHealth = VidaDoHumano;
             corpo.Render = CorDoHumano;
             Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
+            MudarTamanho(corpo, TamanhoDoHumano);
         }
         return HookResult.Continue;
     }

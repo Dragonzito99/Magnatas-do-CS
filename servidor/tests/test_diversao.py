@@ -1139,3 +1139,45 @@ def test_ligar_nao_cria_o_tmux_do_cs2_de_dentro_do_site():
     texto = LIGAR.read_text(encoding="utf-8")
     assert "tmux list-sessions" in texto
     assert texto.index("tmux list-sessions") < texto.index('bash /home/cs2/bin/iniciar_diversao.sh "$NOME"')
+
+
+def test_um_humano_sorteado_ganha_a_super_negev_junto_com_o_sorteio_dos_mutantes():
+    assert 'ArmaEspecial = "weapon_negev"' in CODIGO_DA_MUTACAO
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void SortearMutantes"):CODIGO_DA_MUTACAO.index("void EncerrarRodadaDaMutacao")]
+    assert "SortearSuperArma()" in trecho
+    sorteio = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void SortearSuperArma"):]
+    # Uma vez por rodada: se o mutante sai e outro é sorteado, a arma não sai de novo.
+    assert "superArmaSorteada" in sorteio
+    assert "pegou a super Negev" in sorteio
+
+
+def test_a_super_negev_nao_acaba_a_municao_e_empurra_mais():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventWeaponFire"):]
+    assert '"m_iClip1"' in trecho
+    empurrao = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("HookResult AoAtingirMutante"):]
+    assert "EmpurraoDaSuperArma" in empurrao
+
+
+def test_o_portador_brilha_e_perde_a_arma_ao_virar_mutante():
+    entrega = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EntregarSuperArma"):]
+    assert "CorDoPortador" in entrega
+    transforma = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TransformarEmMutante"):]
+    assert "portadorDaSuperArma = null" in transforma
+
+
+def test_a_super_negev_some_na_rodada_seguinte():
+    prepara = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
+    assert "portadorDaSuperArma = null" in prepara
+    assert "superArmaSorteada = false" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):]
+    humano = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EntregarArmaDoHumano"):]
+    assert "ArmaEspecial" in humano
+
+
+def test_o_mutante_usa_o_boneco_blindado_e_fica_maior():
+    assert 'ModeloDoMutante = "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl"' in CODIGO_DA_MUTACAO
+    assert "AddResource(ModeloDoMutante)" in CODIGO_DA_MUTACAO
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
+    assert "SetModel(ModeloDoMutante)" in trecho
+    assert "TamanhoDoMutante" in trecho
+    prepara = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
+    assert "TamanhoDoHumano" in prepara
