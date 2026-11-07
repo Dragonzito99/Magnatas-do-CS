@@ -25,7 +25,8 @@ public partial class ModoDeDiversao
     private const float IntervaloDaVelocidade = 0.5f;
     private const int SegundosDoAvisoDeMutante = 3;
     private const float SegundosParaEspalhar = 20f;
-    private const int JogadoresPorMutante = 8;
+    // 1 mutante para cada 4 jogadores, arredondando para cima: 2 a 4 jogadores, 1; 5 a 8, 2; e assim por diante.
+    private const int JogadoresPorMutante = 4;
     private const int RodadasPorPartida = 10;
     private const int SegundosEntreRodadas = 5;
     private const float MinutosDaRodadaSeFaltarORelogio = 3;
@@ -101,7 +102,7 @@ public partial class ModoDeDiversao
         if (vivos.Count < 2) return;
 
         sorteioFeito = true;
-        var quantos = Math.Max(1, vivos.Count / JogadoresPorMutante);
+        var quantos = (vivos.Count + JogadoresPorMutante - 1) / JogadoresPorMutante;
         foreach (var sorteado in vivos.OrderBy(_ => Random.Shared.Next()).Take(quantos)) TransformarEmMutante(sorteado, null);
         foreach (var pessoa in Pessoas()) pessoa.PrintToChat(" [Magnatas] O mutante apareceu. Fujam!");
         SortearSuperArma();

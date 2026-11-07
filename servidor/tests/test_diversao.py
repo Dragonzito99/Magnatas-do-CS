@@ -800,9 +800,12 @@ def test_vinte_segundos_para_espalhar():
     assert "SegundosParaEspalhar = 20f" in CODIGO_DA_MUTACAO
 
 
-def test_um_mutante_para_cada_oito():
-    assert "JogadoresPorMutante = 8" in CODIGO_DA_MUTACAO
-    assert "Math.Max(1, vivos.Count / JogadoresPorMutante)" in CODIGO_DA_MUTACAO
+def test_um_mutante_para_cada_quatro_arredondando_para_cima():
+    # 2 a 4 jogadores: 1 mutante; 5 a 8: 2; 9 a 12: 3; 13 a 16: 4.
+    assert "JogadoresPorMutante = 4" in CODIGO_DA_MUTACAO
+    assert "(vivos.Count + JogadoresPorMutante - 1) / JogadoresPorMutante" in CODIGO_DA_MUTACAO
+    tabela = {n: (n + 4 - 1) // 4 for n in range(2, 17)}
+    assert [tabela[n] for n in (2, 4, 5, 8, 9, 12, 13, 16)] == [1, 1, 2, 2, 3, 3, 4, 4]
 
 
 def test_sozinho_ninguem_vira_mutante():
