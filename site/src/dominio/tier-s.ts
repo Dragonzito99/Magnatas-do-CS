@@ -39,7 +39,11 @@ export function lerDatas(texto: string): { inicio: string; fim: string } | null 
 // O dia de hoje no horário de Brasília, para comparar com as datas da tabela.
 const hojeEmBrasilia = (agora: Date) => new Date(agora.getTime() - 3 * 60 * 60_000).toISOString().slice(0, 10);
 const somarDias = (diaIso: string, dias: number) => new Date(Date.parse(`${diaIso}T00:00:00Z`) + dias * 86_400_000).toISOString().slice(0, 10);
-const paginaSemAncora = (href: string | undefined) => (href ?? '').split('#')[0];
+/** Só links da própria wiki do CS: o link vira https://liquipedia.net + página, e não pode apontar para outro site. */
+const paginaSemAncora = (href: string | undefined) => {
+  const pagina = (href ?? '').split('#')[0];
+  return /^\/counterstrike\/[^/]/.test(pagina) ? pagina : '';
+};
 
 /** Torneios Tier S em andamento e os que começam nos próximos 7 dias, em andamento primeiro. */
 export function lerTorneiosSTier(html: string, agora: Date): TorneioSTier[] {
@@ -145,13 +149,21 @@ const Guardado = z.object({
   ),
 });
 
-export async function tierSDaTela(bd: Bd): Promise<TierS | null> {
+/** Recalcula na leitura: numa queda longa da Liquipedia, torneio que acabou some e o que começou vira "rolando agora". */
+export async function tierSDaTela(bd: Bd, agora: Date = new Date()): Promise<TierS | null> {
   const [guardado] = await bd.select().from(cacheExterno).where(eq(cacheExterno.chave, CHAVE_DO_CACHE));
   const lido = Guardado.safeParse(guardado?.dados);
   if (!guardado || !lido.success) return null;
+  const hoje = hojeEmBrasilia(agora);
+  const torneios = lido.data.torneios
+    .filter((torneio) => torneio.fim >= hoje)
+    .map((torneio) => ({ ...torneio, situacao: torneio.inicio <= hoje ? ('andamento' as const) : ('em_breve' as const) }))
+    .sort((a, b) => (a.situacao === b.situacao ? a.inicio.localeCompare(b.inicio) : a.situacao === 'andamento' ? -1 : 1));
   return {
-    torneios: lido.data.torneios,
-    jogos: lido.data.jogos.map((jogo) => ({ ...jogo, quando: jogo.quando ? new Date(jogo.quando) : null })),
+    torneios,
+    jogos: lido.data.jogos
+      .filter((jogo) => torneios.some((torneio) => doTorneio(jogo.pagina, torneio)))
+      .map((jogo) => ({ ...jogo, quando: jogo.quando ? new Date(jogo.quando) : null })),
     atualizadoEm: guardado.atualizadoEm,
   };
 }

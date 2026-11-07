@@ -124,3 +124,21 @@ test('se a Liquipedia mudar o HTML, o último dado bom fica e nada é apagado', 
   expect(tela?.jogos.length).toBeGreaterThan(0);
   expect(tela?.atualizadoEm).toEqual(AGORA);
 });
+
+test('na leitura, torneio que já acabou some e o que começou passa a "rolando agora"', async () => {
+  const { pedir } = pedidoFalso([amostraDeTorneios, amostraDeJogos]);
+  await atualizarTierS(bd, pedir, AGORA);
+  const dias = (n: number) => new Date(AGORA.getTime() + n * 86_400_000);
+  const depois = await tierSDaTela(bd, dias(5));
+  expect(depois?.torneios.some((torneio) => torneio.pagina === '/counterstrike/Intel_Extreme_Masters/2026/Beijing')).toBe(false);
+  expect(depois?.torneios.find((torneio) => torneio.pagina === '/counterstrike/BLAST/Rivals/2026/Fall')?.situacao).toBe('andamento');
+  expect(depois?.jogos.some((jogo) => jogo.pagina === '/counterstrike/Intel_Extreme_Masters/2026/Beijing')).toBe(false);
+});
+
+test('só aceita links da própria wiki do CS na Liquipedia', () => {
+  const html = `<table class="tournaments-listing"><tr><td></td><td></td><td><a href="@outro.site/x">Falso</a></td><td>Nov 02–08, 2026</td><td>$1</td></tr>
+    <tr><td></td><td></td><td><a href="/counterstrike/Bom">Bom</a></td><td>Nov 02–08, 2026</td><td>$1</td></tr></table>`;
+  expect(lerTorneiosSTier(html, AGORA).map((torneio) => torneio.nome)).toEqual(['Bom']);
+  const jogos = `<div class="match-info"><div class="match-info-header-opponent"><span class="name">FURIA</span></div><div class="match-info-header-opponent"><span class="name">NAVI</span></div><div class="match-info-tournament"><a href="//outro.site/x">T</a></div></div>`;
+  expect(lerJogos(jogos)).toEqual([]);
+});
