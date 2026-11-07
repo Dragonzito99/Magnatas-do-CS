@@ -43,14 +43,39 @@ public partial class ModoDeDiversao
     private string erroDoSom = "nenhum";
     private bool invisibilidadeNoPlugin;
 
+    // A tela das regras que o mapa mostra está em chinês. O plugin apaga a do mapa e mostra a do Magnatas, que fica no site.
+    private const string RegrasDoMapa = "crossfire_ghost_rule00";
+    private const string ImagemDasRegras = "https://magnatasdocs.com.br/regras-fantasma.jpg";
+    private const float SegundosDasRegras = 8f;
+    private const float IntervaloParaApagarAsRegras = 0.1f;
+    private CParticleSystem? regrasDoMapa;
+
     private void LigarFantasma(bool hotReload)
     {
+        AddTimer(IntervaloParaApagarAsRegras, ApagarRegrasDoMapa, TimerFlags.REPEAT);
         AddTimer(IntervaloDaRespiracao, TocarCopiasDaRespiracao, TimerFlags.REPEAT);
         HookUserMessage(InicioDeSom, AoComecarSom, HookMode.Pre);
         AddTimer(IntervaloDaInvisibilidade, AjustarInvisibilidade, TimerFlags.REPEAT);
         // Recarregado no meio da partida, o plugin só assume de novo na próxima rodada.
         // Ao ligar o servidor o mapa ainda não abriu, e procurar uma entidade nessa hora derrubaria o plugin.
         if (hotReload) ChamarScriptDoMapa("invisTeamModifyTTrue");
+    }
+
+    /// <summary>Só apaga a partícula, sem remover a entidade do mapa.</summary>
+    private void ApagarRegrasDoMapa()
+    {
+        if (regrasDoMapa is not { IsValid: true })
+        {
+            regrasDoMapa = Utilities.FindAllEntitiesByDesignerName<CParticleSystem>("info_particle_system")
+                .FirstOrDefault(particula => particula.Entity?.Name == RegrasDoMapa);
+            if (regrasDoMapa == null) return;
+        }
+        if (regrasDoMapa.Active) regrasDoMapa.AcceptInput("DestroyImmediately");
+    }
+
+    private void MostrarRegrasDoMagnatas()
+    {
+        foreach (var pessoa in Pessoas()) pessoa.PrintToCenterHtml($"<img src='{ImagemDasRegras}'/>", (int)SegundosDasRegras);
     }
 
     private static bool ChamarScriptDoMapa(string entrada)
@@ -196,6 +221,8 @@ public partial class ModoDeDiversao
             ZerarContagem();
             inicioDaPartida = DateTime.UtcNow;
         }
+        ApagarRegrasDoMapa();
+        MostrarRegrasDoMagnatas();
         // Espera todos nascerem, para o sorteio não deixar ninguém de fora, e o script criar a respiração da rodada.
         AddTimer(EsperaDepoisDeComecarARodada, () =>
         {

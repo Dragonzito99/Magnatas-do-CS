@@ -469,6 +469,15 @@ def test_fantasma_nao_zera_a_contagem_a_cada_rodada():
     assert 'Config.Regra == "fantasma"' in CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("AoComecarRodada"):]
 
 
+def test_fantasma_troca_a_tela_chinesa_das_regras_pela_do_magnatas():
+    # A tela em chinês é uma partícula do mapa; o plugin a apaga e mostra a imagem do site no lugar.
+    assert '"crossfire_ghost_rule00"' in CODIGO_DO_FANTASMA
+    assert '"DestroyImmediately"' in CODIGO_DO_FANTASMA
+    assert "https://magnatasdocs.com.br/regras-fantasma.jpg" in CODIGO_DO_FANTASMA
+    assert "<img src=" in CODIGO_DO_FANTASMA
+    assert (RAIZ.parent / "site" / "public" / "regras-fantasma.jpg").exists()
+
+
 def test_fantasma_fecha_a_partida_uma_vez_quando_o_jogo_acaba():
     assert "EventCsWinPanelMatch" in CODIGO_DO_FANTASMA
     assert "partidaEncerrada" in CODIGO_DO_FANTASMA
