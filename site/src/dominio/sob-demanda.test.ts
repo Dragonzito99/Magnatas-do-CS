@@ -5,6 +5,7 @@ import { estadosDaDiversao, servidoresDiversao, type ServidorDiversao, type Usua
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import {
   acompanharDiversao,
+  adiarDesligamento,
   estadosDaTela,
   LimiteDeServidores,
   pedirParaLigar,
@@ -220,4 +221,23 @@ test('estadosDaTela traz o estado de cada servidor', async () => {
   await pedirParaLigar(bd, controle, servidores.fantasma.id, jogador, 3, AGORA);
   const tela = await estadosDaTela(bd);
   expect(tela.get(servidores.fantasma.id)).toMatchObject({ estado: 'ligando', desde: AGORA, pedidoPor: jogador.id, erro: null });
+});
+
+test('quem clica em Entrar ganha 5 minutos: o servidor não cai enquanto a pessoa ainda está conectando', async () => {
+  await jaLigados({ awp: AGORA });
+  respondendo = { awp: 0 };
+  await adiarDesligamento(bd, servidores.awp.id, depois(TEMPO_VAZIO_MS - 10_000));
+  // A pessoa ainda baixa o mapa: o servidor responde 0 jogadores.
+  await acompanharDiversao(bd, controle, perguntar, depois(TEMPO_VAZIO_MS));
+  expect((await estadoDe('awp')).estado).toBe('ligado');
+  await acompanharDiversao(bd, controle, perguntar, depois(2 * TEMPO_VAZIO_MS - 10_000));
+  expect((await estadoDe('awp')).estado).toBe('desligado');
+});
+
+test('adiar não liga nem mexe em servidor desligado ou com gente', async () => {
+  await jaLigados({ equipe: null });
+  await adiarDesligamento(bd, servidores.equipe.id, AGORA);
+  await adiarDesligamento(bd, servidores.fantasma.id, AGORA);
+  expect((await estadoDe('equipe')).vazioDesde).toBeNull();
+  expect((await estadoDe('fantasma'))?.estado ?? 'desligado').toBe('desligado');
 });

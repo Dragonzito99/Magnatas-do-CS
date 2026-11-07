@@ -2357,3 +2357,7 @@ textarea {
   color: var(--tinta-3);
   font-size: 13px;
 }
+
+.avisar-ao-entrar {
+  display: contents;
+}

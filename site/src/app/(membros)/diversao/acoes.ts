@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { lerModo } from '@/dominio/diversao';
-import { LimiteDeServidores, maximoDeLigados, pedirParaLigar, ServidorIndisponivel } from '@/dominio/sob-demanda';
+import { adiarDesligamento, LimiteDeServidores, maximoDeLigados, pedirParaLigar, ServidorIndisponivel } from '@/dominio/sob-demanda';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
 
@@ -34,4 +34,11 @@ export async function ligar(dados: FormData): Promise<void> {
   }
   revalidatePath('/diversao');
   redirect(voltar(modo, erro));
+}
+
+/** Chamado ao clicar em Entrar ou Copiar: a pessoa ainda vai conectar, então o servidor ganha mais 5 minutos. */
+export async function avisarEntrada(servidorId: string): Promise<void> {
+  await exigirAcesso('/diversao');
+  const id = z.uuid().safeParse(servidorId);
+  if (id.success) await adiarDesligamento(obterBd(), id.data);
 }

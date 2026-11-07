@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
+import { avisarEntrada } from './acoes';
 
 const CHAVE = 'magnatas:diversao-esperando';
 /** Depois disso a espera vence: o jogo não abre sozinho horas depois de um pedido que falhou. */
@@ -57,6 +58,15 @@ export function EntrarQuandoLigar({ servidorId }: { servidorId: string }) {
   );
 }
 
+/** Envolve Entrar e Copiar: o clique avisa o site, que segura o servidor ligado enquanto a pessoa conecta. */
+export function AvisarAoEntrar({ servidorId, children }: { servidorId: string; children: ReactNode }) {
+  return (
+    <span className="avisar-ao-entrar" onClickCapture={() => void avisarEntrada(servidorId).catch(() => undefined)}>
+      {children}
+    </span>
+  );
+}
+
 /** No cartão aberto: se esta aba estava esperando este servidor, abre o jogo uma vez. */
 export function EsperarEEntrar({ servidorId, link }: { servidorId: string; link: string }) {
   useEffect(() => {
@@ -66,6 +76,7 @@ export function EsperarEEntrar({ servidorId, link }: { servidorId: string; link:
     } catch {
       return;
     }
+    void avisarEntrada(servidorId).catch(() => undefined);
     window.location.href = link;
   }, [servidorId, link]);
   return null;

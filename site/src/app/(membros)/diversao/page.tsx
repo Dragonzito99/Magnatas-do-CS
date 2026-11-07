@@ -20,7 +20,7 @@ import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
 import { Atualizar } from '../atualizar';
 import { BotaoCopiar } from '../botao-copiar';
 import { ligar } from './acoes';
-import { BotaoLigar, EntrarQuandoLigar, EsperarEEntrar, TempoLigando } from './esperar-e-entrar';
+import { AvisarAoEntrar, BotaoLigar, EntrarQuandoLigar, EsperarEEntrar, TempoLigando } from './esperar-e-entrar';
 
 const SEM_RESPOSTA: SituacaoDoServidor = { ligado: false, jogando: 0 };
 /** Depois disso o aviso de falha some e o cartão volta só com o botão. */
@@ -94,10 +94,12 @@ function RodapeDoCartao({
   return (
     <>
       {vagas}
-      {comando && <BotaoCopiar texto={comando} />}
-      <a className="botao ouro pequeno" href={link}>
-        Entrar
-      </a>
+      <AvisarAoEntrar servidorId={servidor.id}>
+        {comando && <BotaoCopiar texto={comando} />}
+        <a className="botao ouro pequeno" href={link}>
+          Entrar
+        </a>
+      </AvisarAoEntrar>
       <EsperarEEntrar servidorId={servidor.id} link={link} />
     </>
   );

@@ -1131,3 +1131,11 @@ def test_instalador_poe_os_scripts_e_valida_o_sudoers_antes_de_instalar():
     assert "visudo -cf" in INSTALADOR
     assert "/etc/sudoers.d/magnatas-diversao" in INSTALADOR
     assert INSTALADOR.index("visudo -cf") < INSTALADOR.index("/etc/sudoers.d/magnatas-diversao")
+
+
+def test_ligar_nao_cria_o_tmux_do_cs2_de_dentro_do_site():
+    # Se o site criasse o servidor tmux do cs2, ele ficaria no grupo do serviço do site,
+    # e reiniciar o site derrubaria todos os servidores, inclusive o de partidas.
+    texto = LIGAR.read_text(encoding="utf-8")
+    assert "tmux list-sessions" in texto
+    assert texto.index("tmux list-sessions") < texto.index('bash /home/cs2/bin/iniciar_diversao.sh "$NOME"')

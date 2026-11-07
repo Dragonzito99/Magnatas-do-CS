@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { estadosDaDiversao, servidoresDiversao, type EstadoDaDiversao, type ServidorDiversao } from '@/bd/esquema';
 
@@ -180,6 +180,17 @@ export async function acompanharDiversao(
       });
     }
   }
+}
+
+/**
+ * Quem clica em Entrar ainda está conectando, e o servidor só conta quem já entrou.
+ * O relógio de vazio recomeça, para o servidor não cair enquanto a pessoa baixa o mapa.
+ */
+export async function adiarDesligamento(bd: Bd, servidorId: string, agora: Date = new Date()): Promise<void> {
+  await bd
+    .update(estadosDaDiversao)
+    .set({ vazioDesde: agora })
+    .where(and(eq(estadosDaDiversao.servidorId, servidorId), eq(estadosDaDiversao.estado, 'ligado'), isNotNull(estadosDaDiversao.vazioDesde)));
 }
 
 export type EstadoNaTela = Pick<EstadoDaDiversao, 'estado' | 'desde' | 'erro' | 'pedidoPor'>;
