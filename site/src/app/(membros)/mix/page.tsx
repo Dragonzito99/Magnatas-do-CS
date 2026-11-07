@@ -4,7 +4,9 @@ import { obterBd } from '@/bd/conexao';
 import { verMix } from '@/dominio/mix';
 import { partidaAtualDe, partidasEmAndamento } from '@/dominio/partidas';
 import { nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
+import { situacaoDasFaltas } from '@/dominio/faltas';
 import { Atualizar } from '../atualizar';
+import { AvisoDeBloqueio } from '../aviso-de-bloqueio';
 import { Avatar } from '../avatar';
 import { OnlineAgora } from '../online-agora';
 import { entrar, sair } from './acoes';
@@ -13,6 +15,7 @@ const TOTAL = 10;
 
 const ERROS: Record<string, string> = {
   ocupado: 'Você já está em uma sala ou em uma partida. Saia antes de entrar no mix.',
+  bloqueado: 'Você está sem jogar por não ter aceitado uma partida.',
   'sem-acesso': 'Sua conta não pode fazer isso agora.',
 };
 
@@ -20,13 +23,19 @@ export default async function Mix({ searchParams }: { searchParams: Promise<{ er
   const usuario = await exigirAcesso('/mix');
   const { erro } = await searchParams;
   const bd = obterBd();
-  const [mix, partida, andamento] = await Promise.all([verMix(bd), partidaAtualDe(bd, usuario.id), partidasEmAndamento(bd)]);
+  const [mix, partida, andamento, faltas] = await Promise.all([
+    verMix(bd),
+    partidaAtualDe(bd, usuario.id),
+    partidasEmAndamento(bd),
+    situacaoDasFaltas(bd, usuario.id),
+  ]);
   const estouNaFila = mix.jogadores.some((jogador) => jogador.id === usuario.id);
   const faltam = TOTAL - mix.total;
 
   return (
     <>
       <Atualizar segundos={3} />
+      <AvisoDeBloqueio situacao={faltas} />
       <div className="topo-pagina">
         <h1>Mix</h1>
         {!partida &&

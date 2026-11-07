@@ -5,6 +5,7 @@ import { banimentos, cpfsBanidos, filaMix, salaMembros, salas, servidores, sesso
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import type { Transacao } from './disponibilidade';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
+import { anularFaltas } from './faltas';
 import { removerDaSala } from './salas';
 
 export class MotivoDaPunicaoInvalido extends Error {
@@ -190,6 +191,8 @@ export async function reverterBanimento(bd: Bd, adm: Pick<Usuario, 'id'>, banime
         .where(and(eq(banimentos.cpfHmac, banimento.cpfHmac), eq(banimentos.estado, 'confirmado'), ne(banimentos.id, banimentoId)));
       if (!outro) await tx.delete(cpfsBanidos).where(eq(cpfsBanidos.cpfHmac, banimento.cpfHmac));
     }
+    // A pessoa volta limpa: se faltar de novo, a escada de punições recomeça.
+    await anularFaltas(tx, banimento.usuarioId);
     await registrarAuditoria(tx, { atorId: ator.id, acao: 'reverter_banimento', alvoId: banimento.usuarioId, detalhes: { banimentoId, motivo: texto } });
   });
 }

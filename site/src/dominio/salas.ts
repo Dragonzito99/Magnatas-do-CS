@@ -40,23 +40,23 @@ async function travarSala(tx: Transacao, salaId: string): Promise<Sala | undefin
 }
 
 /** A sala não tem nome escolhido: leva o nick do líder (e, quando existir, o nome do clã). */
-export async function criarSala(bd: Bd, ator: Pick<Usuario, 'id'>): Promise<Sala> {
+export async function criarSala(bd: Bd, ator: Pick<Usuario, 'id'>, agora: Date = new Date()): Promise<Sala> {
   return bd.transaction(async (tx) => {
     const lider = await exigirAtivo(tx, ator);
-    await exigirLivre(tx, ator.id);
+    await exigirLivre(tx, ator.id, agora);
     const [sala] = await tx.insert(salas).values({ nome: lider.apelido, liderId: ator.id }).returning();
     await tx.insert(salaMembros).values({ salaId: sala.id, usuarioId: ator.id });
     return sala;
   });
 }
 
-export async function entrarNaSala(bd: Bd, ator: Pick<Usuario, 'id'>, salaId: string): Promise<void> {
+export async function entrarNaSala(bd: Bd, ator: Pick<Usuario, 'id'>, salaId: string, agora: Date = new Date()): Promise<void> {
   await bd.transaction(async (tx) => {
     await exigirAtivo(tx, ator);
     const sala = await travarSala(tx, salaId);
     if (!sala) throw new SalaInexistente();
     if (sala.partidaId) throw new SalaEmPartida();
-    await exigirLivre(tx, ator.id);
+    await exigirLivre(tx, ator.id, agora);
     const [{ total }] = await tx.select({ total: count() }).from(salaMembros).where(eq(salaMembros.salaId, salaId));
     if (total >= TAMANHO_DA_SALA) throw new SalaCheia();
     await tx.insert(salaMembros).values({ salaId, usuarioId: ator.id });

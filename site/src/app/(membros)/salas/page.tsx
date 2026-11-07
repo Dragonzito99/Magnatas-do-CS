@@ -4,7 +4,9 @@ import { obterBd } from '@/bd/conexao';
 import { desafiosDaSala, type DesafioDaSala } from '@/dominio/desafios';
 import { partidaAtualDe } from '@/dominio/partidas';
 import { listarSalas, minhaSala, TAMANHO_DA_SALA, type SalaComMembros } from '@/dominio/salas';
+import { situacaoDasFaltas } from '@/dominio/faltas';
 import { Atualizar } from '../atualizar';
+import { AvisoDeBloqueio } from '../aviso-de-bloqueio';
 import { Avatar } from '../avatar';
 import { OnlineAgora } from '../online-agora';
 import { aceitar, cancelar, chamarParaDesafio, criar, entrar, expulsar, recusar, sair } from './acoes';
@@ -15,6 +17,7 @@ const ERROS: Record<string, string> = {
   inexistente: 'Esta sala não existe mais.',
   'so-lider': 'Só o líder pode fazer isso.',
   ocupado: 'Você já está em uma sala, no mix ou em uma partida.',
+  bloqueado: 'Você está sem jogar por não ter aceitado uma partida.',
   'sem-acesso': 'Sua conta não pode fazer isso agora.',
   incompleta: 'As duas salas precisam estar completas e com todos liberados para jogar.',
   desafio: 'Este desafio não está mais disponível.',
@@ -112,7 +115,12 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
   const usuario = await exigirAcesso('/salas');
   const { erro } = await searchParams;
   const bd = obterBd();
-  const [salas, minha, partida] = await Promise.all([listarSalas(bd), minhaSala(bd, usuario.id), partidaAtualDe(bd, usuario.id)]);
+  const [salas, minha, partida, faltas] = await Promise.all([
+    listarSalas(bd),
+    minhaSala(bd, usuario.id),
+    partidaAtualDe(bd, usuario.id),
+    situacaoDasFaltas(bd, usuario.id),
+  ]);
   const [desafio] = minha ? await desafiosDaSala(bd, minha.id) : [];
   const possoDesafiar = minha?.liderId === usuario.id && minha.membros.length === TAMANHO_DA_SALA && !minha.partidaId && !desafio;
   const outras = salas.filter((sala) => sala.id !== minha?.id);
@@ -146,6 +154,7 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       <Atualizar segundos={3} />
+      <AvisoDeBloqueio situacao={faltas} />
       <div className="topo-pagina">
         <h1>Salas</h1>
         {!minha && !partida && (

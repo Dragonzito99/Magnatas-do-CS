@@ -1,6 +1,7 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { filaMix, partidaJogadores, partidas, salaMembros, usuarios, type Usuario } from '@/bd/esquema';
+import { bloqueioDe } from './faltas';
 
 export type Transacao = Parameters<Parameters<Bd['transaction']>[0]>[0];
 
@@ -18,6 +19,13 @@ export class JaOcupado extends Error {
   }
 }
 
+/** Quem não aceitou uma partida fica sem jogar até a hora marcada. */
+export class Bloqueado extends Error {
+  constructor(public readonly ate: Date) {
+    super('Você não aceitou uma partida e está sem jogar por enquanto.');
+  }
+}
+
 /** Confere no banco, porque o objeto da sessão pode estar desatualizado. */
 export async function exigirAtivo(tx: Transacao, usuario: Pick<Usuario, 'id'>): Promise<Usuario> {
   const [atual] = await tx.select().from(usuarios).where(eq(usuarios.id, usuario.id));
@@ -25,10 +33,13 @@ export async function exigirAtivo(tx: Transacao, usuario: Pick<Usuario, 'id'>): 
   return atual;
 }
 
-/** Uma pessoa só pode estar em uma sala, no mix ou em uma partida de cada vez. */
-export async function exigirLivre(tx: Transacao, usuarioId: string): Promise<void> {
+/** Uma pessoa só pode estar em uma sala, no mix ou em uma partida de cada vez, e não pode estar bloqueada por falta. */
+export async function exigirLivre(tx: Transacao, usuarioId: string, agora: Date = new Date()): Promise<void> {
   // Trava a linha da pessoa: dois pedidos juntos dela passam um de cada vez, e o segundo já vê o primeiro.
   await tx.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.id, usuarioId)).for('no key update');
+
+  const bloqueadoAte = await bloqueioDe(tx, usuarioId, agora);
+  if (bloqueadoAte) throw new Bloqueado(bloqueadoAte);
 
   const [naSala] = await tx.select({ id: salaMembros.usuarioId }).from(salaMembros).where(eq(salaMembros.usuarioId, usuarioId));
   if (naSala) throw new JaOcupado();

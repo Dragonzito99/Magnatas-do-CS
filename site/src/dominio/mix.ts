@@ -29,7 +29,7 @@ function embaralhar<T>(lista: T[], semente: number): T[] {
 export async function entrarNoMix(
   bd: Bd,
   ator: Pick<Usuario, 'id'>,
-  opcoes: { semente?: number } = {},
+  opcoes: { semente?: number; agora?: Date } = {},
 ): Promise<{ partidaId?: string }> {
   return bd.transaction(async (tx) => {
     // Só um pedido por vez mexe na fila, para o décimo fechar uma partida só.
@@ -37,7 +37,7 @@ export async function entrarNoMix(
     await exigirAtivo(tx, ator);
     const [jaNaFila] = await tx.select().from(filaMix).where(eq(filaMix.usuarioId, ator.id));
     if (jaNaFila) return {};
-    await exigirLivre(tx, ator.id);
+    await exigirLivre(tx, ator.id, opcoes.agora ?? new Date());
     await tx.insert(filaMix).values({ usuarioId: ator.id });
 
     const fila = await tx

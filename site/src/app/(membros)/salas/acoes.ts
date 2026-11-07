@@ -7,7 +7,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import { aceitarDesafio, cancelarDesafio, DesafioIndisponivel, desafiar, recusarDesafio, SalaIncompleta } from '@/dominio/desafios';
-import { ContaSemAcesso, JaOcupado } from '@/dominio/disponibilidade';
+import { Bloqueado, ContaSemAcesso, JaOcupado } from '@/dominio/disponibilidade';
 import {
   criarSala,
   entrarNaSala,
@@ -25,6 +25,7 @@ function codigoDoErro(erro: unknown): string | null {
   if (erro instanceof SalaEmPartida) return 'em-partida';
   if (erro instanceof SalaInexistente) return 'inexistente';
   if (erro instanceof SemPermissaoNaSala) return 'so-lider';
+  if (erro instanceof Bloqueado) return 'bloqueado';
   if (erro instanceof JaOcupado) return 'ocupado';
   if (erro instanceof ContaSemAcesso) return 'sem-acesso';
   if (erro instanceof SalaIncompleta) return 'incompleta';
