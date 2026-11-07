@@ -66,7 +66,26 @@ nasce na hora com um mapa sorteado, e quem saiu do computador trava os outros no
   do site** mostra no topo um aviso **"Você está em uma partida — Voltar para a partida"**, que leva à
   página da partida. Assim, quem fechou a aba e abriu o site de novo acha o caminho de volta na hora.
 
-### 6. Aviso de que a partida apareceu
+### 6. Tela pós-partida
+
+Quando a partida termina, a mesma página mostra o resultado (vale para desafio e Mix):
+
+- **MVP da partida** em destaque no topo: quem ganhou mais estrelas de MVP nas rodadas (o número que o
+  servidor já manda nos eventos); empate → mais kills.
+- **Placar no estilo HLTV** (decisão do dono), um quadro por time:
+  Jogador | K-D | +/- | ADR | KAST | HS% | Rating | XP ganho.
+  - ADR = dano ÷ rodadas. KAST = % de rodadas com kill, assistência, sobrevivência ou troca
+    (o MatchZy manda `kast` nos números do jogador). HS% = kills com headshot ÷ kills.
+  - Rating: a fórmula pública do **HLTV Rating 1.0** (a do 2.0 não é pública), com kills, mortes,
+    rodadas e multi-kills (1k a 5k), que o servidor também manda. Hoje o site guarda só kills, mortes,
+    assistências, dano, headshots e rodadas; os campos que faltam (MVP, KAST, multi-kills) passam a ser guardados.
+- **Denunciar**: continua o que já existe na página da partida.
+- **Elogiar** (novo): cada jogador pode elogiar outro da partida apontando uma coisa boa do Magnata,
+  escolhendo um tipo. Tipos (decisão minha): **Bom de mira**, **Gente boa**, **Líder**, **Bom de equipe**.
+  - Um elogio por pessoa elogiada por partida; não pode elogiar a si mesmo; só quem jogou a partida elogia.
+  - O perfil mostra o total de cada tipo (ex.: "Bom de mira ×12"). Elogio não dá XP (decisão minha).
+
+### 7. Aviso de que a partida apareceu
 
 - Igual à GC (decisão do dono): quando os 30 s começam, cada um dos 10 recebe o aviso mesmo com o site
   numa aba escondida ou o navegador minimizado — **som**, **notificação do Windows** (pedindo permissão
