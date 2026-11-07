@@ -9,6 +9,7 @@ import { ESTADOS_ATIVOS_DE_PARTIDA } from './disponibilidade';
 import { fiscalizarDiversao } from './diversao';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
+import { fecharSalasAbandonadas } from './salas';
 
 const MINUTO_MS = 60_000;
 const LIMITE_CARREGANDO_MS = 2 * MINUTO_MS;
@@ -196,6 +197,7 @@ export async function varrer(
 ): Promise<void> {
   const etapas = [
     () => fiscalizarDiversao(bd, controlador, hostDaDiversao),
+    () => fecharSalasAbandonadas(bd, agora),
     () => expirarDesafios(bd, agora),
     () => reabrirCarregamentosPresos(bd, agora),
     () => cancelarPartidasAbandonadas(bd, controlador, agora),

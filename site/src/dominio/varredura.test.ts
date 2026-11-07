@@ -10,6 +10,7 @@ import { criarBancoDeTeste, criarUsuario, STEAM_D } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
 import { SemPermissao } from './equipe';
 import { fichaDoJogador } from './ficha';
+import { criarSala, TEMPO_FORA_DO_SITE_NA_SALA_MS } from './salas';
 import { cancelarPartidaPelaEquipe, PartidaIndisponivel, varrer } from './varredura';
 
 let bd: Bd;
@@ -354,4 +355,12 @@ test('sem pasta de gravações configurada, o resto continua', async () => {
   const { partida } = await partidaComServidor('aguardando_jogadores', atras(11));
   await expect(varrer(bd, controladorFalso(), undefined, AGORA)).resolves.toBeUndefined();
   expect((await estadoDe(partida.id)).estado).toBe('cancelada');
+});
+
+test('a varredura tira da sala quem fechou o site', async () => {
+  const lider = await criarUsuario(bd, { estado: 'ativo' });
+  const { id: salaId } = await criarSala(bd, lider, 'Sumiu');
+  await bd.update(usuarios).set({ vistoEm: new Date(AGORA.getTime() - TEMPO_FORA_DO_SITE_NA_SALA_MS - 1000) }).where(eq(usuarios.id, lider.id));
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect(await bd.select().from(salas).where(eq(salas.id, salaId))).toHaveLength(0);
 });

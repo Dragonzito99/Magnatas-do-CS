@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { desafios, salaMembros, salas, usuarios, type Sala, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, exigirLivre, type Transacao } from './disponibilidade';
@@ -29,6 +29,8 @@ export class SalaInexistente extends Error {
 
 export const TAMANHO_DA_SALA = 5;
 export const TAMANHO_MAXIMO_DO_NOME = 30;
+/** O dono pediu pouco tempo: ninguém fica esperando quem criou a sala e saiu do computador. */
+export const TEMPO_FORA_DO_SITE_NA_SALA_MS = 5 * 60_000;
 
 export class NomeDeSalaInvalido extends Error {
   constructor() {
@@ -92,6 +94,23 @@ export async function removerDaSala(tx: Transacao, sala: Sala, usuarioId: string
     .limit(1);
   if (proximo) await tx.update(salas).set({ liderId: proximo.usuarioId }).where(eq(salas.id, sala.id));
   else await tx.delete(salas).where(eq(salas.id, sala.id));
+}
+
+/** Tira das salas quem fechou o site. Sala em partida fica como está, porque o pessoal está jogando. */
+export async function fecharSalasAbandonadas(bd: Bd, agora: Date = new Date()): Promise<void> {
+  const limite = new Date(agora.getTime() - TEMPO_FORA_DO_SITE_NA_SALA_MS);
+  const ausentes = await bd
+    .select({ salaId: salaMembros.salaId, usuarioId: salaMembros.usuarioId })
+    .from(salaMembros)
+    .innerJoin(usuarios, eq(usuarios.id, salaMembros.usuarioId))
+    .where(or(isNull(usuarios.vistoEm), lt(usuarios.vistoEm, limite)));
+  for (const ausente of ausentes) {
+    await bd.transaction(async (tx) => {
+      const sala = await travarSala(tx, ausente.salaId);
+      if (!sala || sala.partidaId) return;
+      await removerDaSala(tx, sala, ausente.usuarioId);
+    });
+  }
 }
 
 export async function sairDaSala(bd: Bd, ator: Pick<Usuario, 'id'>): Promise<void> {

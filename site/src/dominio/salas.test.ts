@@ -1,10 +1,22 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { filaMix, partidaJogadores, partidas, salaMembros, salas, type Usuario } from '@/bd/esquema';
+import { filaMix, partidaJogadores, partidas, salaMembros, salas, usuarios, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { ContaSemAcesso, JaOcupado } from './disponibilidade';
-import { criarSala, entrarNaSala, expulsarDaSala, listarSalas, minhaSala, SalaCheia, SalaEmPartida, SemPermissaoNaSala, sairDaSala } from './salas';
+import {
+  criarSala,
+  entrarNaSala,
+  expulsarDaSala,
+  fecharSalasAbandonadas,
+  listarSalas,
+  minhaSala,
+  SalaCheia,
+  SalaEmPartida,
+  SemPermissaoNaSala,
+  sairDaSala,
+  TEMPO_FORA_DO_SITE_NA_SALA_MS,
+} from './salas';
 
 let bd: Bd;
 
@@ -181,4 +193,54 @@ test('minhaSala traz a sala da pessoa, ou null', async () => {
   const { salaId, contas } = await salaCom(1);
   expect((await minhaSala(bd, contas[0].id))?.id).toBe(salaId);
   expect(await minhaSala(bd, (await membro()).id)).toBeNull();
+});
+
+const AGORA = new Date('2026-11-06T22:00:00Z');
+
+async function vistoHa(conta: Usuario, ms: number | null): Promise<void> {
+  await bd.update(usuarios).set({ vistoEm: ms === null ? null : new Date(AGORA.getTime() - ms) }).where(eq(usuarios.id, conta.id));
+}
+
+test('o dono pediu 5 minutos fora do site para sair da sala', () => {
+  expect(TEMPO_FORA_DO_SITE_NA_SALA_MS).toBe(5 * 60_000);
+});
+
+test('quem saiu do site há mais de 5 minutos sai da sala, e a sala vazia some', async () => {
+  const { salaId, contas } = await salaCom(1);
+  await vistoHa(contas[0], TEMPO_FORA_DO_SITE_NA_SALA_MS + 1000);
+  await fecharSalasAbandonadas(bd, AGORA);
+  expect(await bd.select().from(salas).where(eq(salas.id, salaId))).toHaveLength(0);
+});
+
+test('o líder que sumiu passa a liderança para quem ainda está no site', async () => {
+  const { salaId, contas } = await salaCom(2);
+  await vistoHa(contas[0], TEMPO_FORA_DO_SITE_NA_SALA_MS + 1000);
+  await vistoHa(contas[1], 10_000);
+  await fecharSalasAbandonadas(bd, AGORA);
+  expect(await membrosDe(salaId)).toEqual([contas[1].id]);
+  const [sala] = await bd.select().from(salas).where(eq(salas.id, salaId));
+  expect(sala.liderId).toBe(contas[1].id);
+});
+
+test('quem esteve no site nos últimos 5 minutos continua na sala', async () => {
+  const { salaId, contas } = await salaCom(1);
+  await vistoHa(contas[0], TEMPO_FORA_DO_SITE_NA_SALA_MS - 1000);
+  await fecharSalasAbandonadas(bd, AGORA);
+  expect(await membrosDe(salaId)).toEqual([contas[0].id]);
+});
+
+test('conta que nunca foi vista no site sai da sala', async () => {
+  const { salaId, contas } = await salaCom(1);
+  await vistoHa(contas[0], null);
+  await fecharSalasAbandonadas(bd, AGORA);
+  expect(await membrosDe(salaId)).toEqual([]);
+});
+
+test('sala em partida não perde ninguém, porque o pessoal está jogando', async () => {
+  const { salaId, contas } = await salaCom(2);
+  const [partida] = await bd.insert(partidas).values({ tipo: 'desafio', estado: 'ao_vivo', mapa: 'de_mirage' }).returning();
+  await bd.update(salas).set({ partidaId: partida.id }).where(eq(salas.id, salaId));
+  for (const conta of contas) await vistoHa(conta, TEMPO_FORA_DO_SITE_NA_SALA_MS * 10);
+  await fecharSalasAbandonadas(bd, AGORA);
+  expect(await membrosDe(salaId)).toHaveLength(2);
 });
