@@ -4,8 +4,8 @@ import type { Bd } from '@/bd/conexao';
 import { filaMix, partidaJogadores, partidas, salaMembros, usuarios, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { ContaSemAcesso, JaOcupado } from './disponibilidade';
-import { entrarNoMix, sairDoMix, verMix } from './mix';
-import { criarSala, entrarNaSala } from './salas';
+import { entrarNoMix, sairDoMix, tirarDaFilaQuemSaiuDoSite, verMix } from './mix';
+import { criarSala, entrarNaSala, TEMPO_FORA_DO_SITE_NA_SALA_MS } from './salas';
 
 let bd: Bd;
 
@@ -107,6 +107,7 @@ test('com 12 pedidos, os 10 mais antigos jogam e 2 ficam na fila', async () => {
   const antigos: Usuario[] = [];
   for (let i = 0; i < 11; i += 1) {
     const conta = await membro();
+    await bd.update(usuarios).set({ vistoEm: new Date() }).where(eq(usuarios.id, conta.id));
     await bd.insert(filaMix).values({ usuarioId: conta.id, entrouEm: new Date(Date.UTC(2026, 0, 1, 0, i)) });
     antigos.push(conta);
   }
@@ -151,4 +152,41 @@ test('conta suspensa enquanto estava na fila não entra na partida e deixa a vag
   expect(jogadores).toHaveLength(10);
   expect(jogadores.map((j) => j.usuarioId)).not.toContain(contas[2].id);
   expect(jogadores.map((j) => j.usuarioId)).toContain(proximo.id);
+});
+
+async function vistoHa(conta: Usuario, ms: number | null, agora = new Date()): Promise<void> {
+  await bd.update(usuarios).set({ vistoEm: ms === null ? null : new Date(agora.getTime() - ms) }).where(eq(usuarios.id, conta.id));
+}
+
+test('quem fechou o site há mais de 5 minutos sai da fila do mix, como nas salas', async () => {
+  const [saiu, ficou] = await encherFila(2);
+  const agora = new Date();
+  await vistoHa(saiu, TEMPO_FORA_DO_SITE_NA_SALA_MS + 1000, agora);
+  await vistoHa(ficou, TEMPO_FORA_DO_SITE_NA_SALA_MS - 1000, agora);
+  await tirarDaFilaQuemSaiuDoSite(bd, agora);
+  expect(await idsNaFila()).toEqual([ficou.id]);
+});
+
+test('quem saiu do site não é puxado para o mix, mesmo antes da varredura', async () => {
+  const contas = await encherFila(9);
+  await vistoHa(contas[0], 60 * 60_000);
+  const decimo = await membro();
+  expect(await entrarNoMix(bd, decimo)).toEqual({});
+  expect(await bd.select().from(partidas)).toHaveLength(0);
+  expect(await idsNaFila()).not.toContain(contas[0].id);
+  expect((await verMix(bd)).total).toBe(9);
+});
+
+test('a fila mostrada não conta quem já saiu do site', async () => {
+  const [saiu] = await encherFila(2);
+  await vistoHa(saiu, null);
+  expect((await verMix(bd)).total).toBe(1);
+});
+
+test('entrar no mix conta como estar no site', async () => {
+  const conta = await membro();
+  await vistoHa(conta, null);
+  await entrarNoMix(bd, conta);
+  await tirarDaFilaQuemSaiuDoSite(bd, new Date());
+  expect(await idsNaFila()).toEqual([conta.id]);
 });

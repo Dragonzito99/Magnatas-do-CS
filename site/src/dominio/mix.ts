@@ -1,13 +1,19 @@
 import { randomInt } from 'node:crypto';
-import { asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { filaMix, usuarios, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, exigirLivre, type Transacao } from './disponibilidade';
 import { criarPartida } from './partidas';
-import type { UsuarioPublico } from './salas';
+import { TEMPO_FORA_DO_SITE_NA_SALA_MS, type UsuarioPublico } from './salas';
 
 const TOTAL_DO_MIX = 10;
 const CHAVE_DA_FILA = 7_204_001;
+
+// A mesma regra das salas: com a aba escondida o site continua marcando presença, então só sai quem fechou o site.
+const TEMPO_FORA_DO_SITE_NA_FILA_MS = TEMPO_FORA_DO_SITE_NA_SALA_MS;
+
+const limiteDePresenca = (agora: Date) => new Date(agora.getTime() - TEMPO_FORA_DO_SITE_NA_FILA_MS);
+const estaNoSite = (vistoEm: Date | null, agora: Date) => vistoEm !== null && vistoEm >= limiteDePresenca(agora);
 
 /** Embaralha com gerador simples e reproduzível, para os testes poderem fixar o sorteio. */
 function embaralhar<T>(lista: T[], semente: number): T[] {
@@ -39,6 +45,8 @@ export async function entrarNoMix(
     if (jaNaFila) return {};
     const agora = opcoes.agora ?? new Date();
     await exigirLivre(tx, ator.id, agora);
+    // Quem clica em entrar está no site agora.
+    await tx.update(usuarios).set({ vistoEm: agora }).where(eq(usuarios.id, ator.id));
     await tx.insert(filaMix).values({ usuarioId: ator.id, entrouEm: agora });
 
     return fecharMixSePossivel(tx, agora, opcoes.semente);
@@ -53,15 +61,17 @@ export async function travarFila(tx: Transacao): Promise<void> {
 /** Com 10 na fila, tira os 10 primeiros e cria a partida esperando o aceite. */
 export async function fecharMixSePossivel(tx: Transacao, agora: Date, semente?: number): Promise<{ partidaId?: string }> {
   const fila = await tx
-    .select({ id: usuarios.id, estado: usuarios.estado, entrouEm: filaMix.entrouEm })
+    .select({ id: usuarios.id, estado: usuarios.estado, vistoEm: usuarios.vistoEm, entrouEm: filaMix.entrouEm })
     .from(filaMix)
     .innerJoin(usuarios, eq(filaMix.usuarioId, usuarios.id))
     .orderBy(asc(filaMix.entrouEm), asc(filaMix.usuarioId));
 
-  const semAcesso = fila.filter((linha) => linha.estado !== 'ativo').map((linha) => linha.id);
-  if (semAcesso.length > 0) await tx.delete(filaMix).where(inArray(filaMix.usuarioId, semAcesso));
+  // Sem acesso ou fora do site: sai da fila em vez de ser puxado para uma partida que não vai jogar.
+  const podeJogar = (linha: (typeof fila)[number]) => linha.estado === 'ativo' && estaNoSite(linha.vistoEm, agora);
+  const removidos = fila.filter((linha) => !podeJogar(linha)).map((linha) => linha.id);
+  if (removidos.length > 0) await tx.delete(filaMix).where(inArray(filaMix.usuarioId, removidos));
 
-  const ativos = fila.filter((linha) => linha.estado === 'ativo').map((linha) => linha.id);
+  const ativos = fila.filter(podeJogar).map((linha) => linha.id);
   if (ativos.length < TOTAL_DO_MIX) return {};
 
   const jogadores = ativos.slice(0, TOTAL_DO_MIX);
@@ -83,12 +93,25 @@ export async function sairDoMix(bd: Bd, ator: Pick<Usuario, 'id'>): Promise<void
   await bd.delete(filaMix).where(eq(filaMix.usuarioId, ator.id));
 }
 
-export async function verMix(bd: Bd): Promise<{ jogadores: UsuarioPublico[]; total: number }> {
+/** Roda na varredura: tira da fila quem fechou o site, como nas salas. */
+export async function tirarDaFilaQuemSaiuDoSite(bd: Bd, agora: Date = new Date()): Promise<void> {
+  await bd.transaction(async (tx) => {
+    await travarFila(tx);
+    const ausentes = await tx
+      .select({ id: filaMix.usuarioId })
+      .from(filaMix)
+      .innerJoin(usuarios, eq(filaMix.usuarioId, usuarios.id))
+      .where(or(isNull(usuarios.vistoEm), lt(usuarios.vistoEm, limiteDePresenca(agora))));
+    if (ausentes.length > 0) await tx.delete(filaMix).where(inArray(filaMix.usuarioId, ausentes.map((linha) => linha.id)));
+  });
+}
+
+export async function verMix(bd: Bd, agora: Date = new Date()): Promise<{ jogadores: UsuarioPublico[]; total: number }> {
   const jogadores = await bd
     .select({ id: usuarios.id, apelido: usuarios.apelido, avatarUrl: usuarios.avatarUrl })
     .from(filaMix)
     .innerJoin(usuarios, eq(filaMix.usuarioId, usuarios.id))
-    .where(eq(usuarios.estado, 'ativo'))
+    .where(and(eq(usuarios.estado, 'ativo'), gte(usuarios.vistoEm, limiteDePresenca(agora))))
     .orderBy(asc(filaMix.entrouEm));
   return { jogadores, total: jogadores.length };
 }

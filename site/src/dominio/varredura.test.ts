@@ -5,7 +5,7 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { auditoria, banimentos, estadosDaDiversao, servidoresDiversao, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
+import { auditoria, banimentos, filaMix, estadosDaDiversao, servidoresDiversao, chamados, denuncias, desafios, gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, type Partida, type Servidor, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, STEAM_D } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
 import { SemPermissao } from './equipe';
@@ -363,6 +363,13 @@ test('a varredura tira da sala quem fechou o site', async () => {
   await bd.update(usuarios).set({ vistoEm: new Date(AGORA.getTime() - TEMPO_FORA_DO_SITE_NA_SALA_MS - 1000) }).where(eq(usuarios.id, lider.id));
   await varrer(bd, controladorFalso(), pasta, AGORA);
   expect(await bd.select().from(salas).where(eq(salas.id, salaId))).toHaveLength(0);
+});
+
+test('a varredura tira da fila do mix quem fechou o site', async () => {
+  await bd.insert(filaMix).values({ usuarioId: jogador.id, entrouEm: atras(90) });
+  await bd.update(usuarios).set({ vistoEm: atras(60) }).where(eq(usuarios.id, jogador.id));
+  await varrer(bd, controladorFalso(), pasta, AGORA);
+  expect(await bd.select().from(filaMix)).toHaveLength(0);
 });
 
 test('a varredura acompanha a Diversão: servidor que não subiu em 3 minutos é desligado', async () => {

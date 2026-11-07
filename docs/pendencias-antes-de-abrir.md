@@ -50,7 +50,6 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
 - Um Adm pode recusar uma proposta de banimento contra si mesmo.
 - Botões que sempre falham: Aceitar e Recusar para quem não lidera a sala; Suspender e Propor para quem é o acusado, ou para um GM diante de um Adm.
 - Configuração errada passa em silêncio: `.env.example` incompleto, `SITE_URL` vazio e senha vazia.
-- A fila do mix nunca expira, então quem saiu há horas pode ser puxado para uma partida.
 - A trava do `dev-preencher` não vale ao rodar com `npx tsx` em produção.
 - Dois envios paralelos da mesma gravação podem sobrescrever o arquivo.
 - A lista "Online agora" para em 30 pessoas e conta errado com muita gente.

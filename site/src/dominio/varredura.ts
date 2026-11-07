@@ -12,6 +12,7 @@ import { acompanharDiversao, type ControleDaDiversao, type RespostaDoServidor } 
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
 import { expirarJuncoes } from './juncoes';
+import { tirarDaFilaQuemSaiuDoSite } from './mix';
 import { fecharSalasAbandonadas } from './salas';
 import { resolverVetosVencidos } from './vetos';
 
@@ -205,6 +206,7 @@ export async function varrer(
     () => (diversao ? acompanharDiversao(bd, diversao.controle, diversao.perguntar, agora) : Promise.resolve()),
     () => fiscalizarDiversao(bd, controlador, hostDaDiversao),
     () => fecharSalasAbandonadas(bd, agora),
+    () => tirarDaFilaQuemSaiuDoSite(bd, agora),
     () => expirarDesafios(bd, agora),
     () => expirarJuncoes(bd, agora),
     () => reabrirCarregamentosPresos(bd, agora),
