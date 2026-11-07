@@ -243,3 +243,8 @@ test('servidor ligado que não respondeu à página aparece trocando de mapa', (
   expect(estadoDoCartao(servidor, { ligado: false, jogando: 0 }, 'ligado')).toBe('trocando_mapa');
   expect(estadoDoCartao(servidor, { ligado: true, jogando: 3 }, 'ligado')).toBe('aberto');
 });
+
+test('o cartão da Mutação mostra o Silent Village quando ele está rodando', () => {
+  const servidor = { mapa: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp' };
+  expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'zm_silent_village' })).toEqual({ nome: 'Silent Village', foto: '/mapas/silent-village.webp' });
+});

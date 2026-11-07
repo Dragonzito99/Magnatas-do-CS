@@ -1184,3 +1184,9 @@ def test_o_mutante_usa_o_boneco_blindado_e_fica_maior():
     assert "TamanhoDoMutante" in trecho
     prepara = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
     assert "TamanhoDoHumano" in prepara
+
+
+def test_mutacao_roda_biochemical_hotel_e_silent_village():
+    rotacao = conf("mutacao")["ROTACAO"].split(",")
+    assert rotacao[0] == conf("mutacao")["OFICINA"]
+    assert rotacao == ["3223106683", "3222984182"]
