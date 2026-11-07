@@ -52,12 +52,21 @@ nasce na hora com um mapa sorteado, e quem saiu do computador trava os outros no
   (o dono vai fazer depois um "mural da vergonha" que lista banidos com motivo e data).
   É igual ao banimento confirmado pela equipe: conta `banido`, sessões apagadas e **CPF bloqueado**
   (decisão do dono).
-- A equipe pode reverter esse banimento pelo caminho que já existe. Reverter **zera os strikes** da pessoa,
-  para a próxima falta não banir de novo na hora (decisão minha).
+- A equipe pode reverter esse banimento pelo caminho que já existe. Reverter **zera os strikes** da pessoa:
+  se ela voltar a não aceitar, a escada recomeça do 1º strike (3 minutos), e assim por diante (decisão do dono).
 - Partida cancelada por outro motivo antes de todos aceitarem (equipe suspendeu ou baniu alguém,
   ou cancelou a partida) não dá strike a ninguém (decisão minha).
 
-### 5. Aviso de que a partida apareceu
+### 5. Tela do servidor e voltar para a partida
+
+- Depois dos vetos (ou do sorteio no Mix), a mesma página da partida passa a mostrar a liberação do servidor
+  e, quando pronto, os botões de entrar e copiar o IP. A página **fica nessa tela até a partida terminar**:
+  quem cair do jogo volta por ela.
+- Enquanto a pessoa estiver numa partida em andamento (aceite, vetos, servidor ou ao vivo), **toda página
+  do site** mostra no topo um aviso **"Você está em uma partida — Voltar para a partida"**, que leva à
+  página da partida. Assim, quem fechou a aba e abriu o site de novo acha o caminho de volta na hora.
+
+### 6. Aviso de que a partida apareceu
 
 - Igual à GC (decisão do dono): quando os 30 s começam, cada um dos 10 recebe o aviso mesmo com o site
   numa aba escondida ou o navegador minimizado — **som**, **notificação do Windows** (pedindo permissão
@@ -97,7 +106,7 @@ nasce na hora com um mapa sorteado, e quem saiu do computador trava os outros no
 
 ## Decisões minhas (o dono pode mudar)
 
-- Mix com alguém que não aceitou: os que aceitaram voltam para a frente da fila, na ordem anterior.
+- Mix com alguém que não aceitou: os que aceitaram voltam para a frente da fila, na ordem anterior (o dono confirmou).
 - Lados (CT/TR) continuam como o MatchZy faz hoje.
 - O cara ou coroa é só um resultado com uma animação curta, sem ninguém escolher cara ou coroa.
 
