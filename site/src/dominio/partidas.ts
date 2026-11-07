@@ -163,7 +163,8 @@ export async function configDaPartida(bd: Bd, numero: number, minimoDeProntos: n
     .select()
     .from(partidas)
     .where(and(eq(partidas.numero, numero), inArray(partidas.estado, [...ESTADOS_ATIVOS_DE_PARTIDA])));
-  if (!partida) return null;
+  // Sem mapa a partida ainda está no aceite ou nos vetos, e o servidor não tem o que carregar.
+  if (!partida || !partida.mapa) return null;
 
   const jogadores = await bd
     .select({ id: usuarios.id, time: partidaJogadores.time, steamid64: usuarios.steamid64, apelido: usuarios.apelido })

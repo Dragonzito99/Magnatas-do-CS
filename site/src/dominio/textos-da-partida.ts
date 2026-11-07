@@ -11,12 +11,16 @@ export function nomeDaPartida(partida: Pick<Partida, 'tipo' | 'numero'>): string
   return `${partida.tipo === 'mix' ? 'Mix' : 'Desafio'} #${partida.numero}`;
 }
 
-export function nomeDoMapa(mapa: string): string {
+/** Sem mapa ainda: a partida está no aceite ou nos vetos. */
+export function nomeDoMapa(mapa: string | null): string {
+  if (!mapa) return 'Mapa a definir';
   const nome = mapa.replace(/^de_/, '');
   return nome.charAt(0).toUpperCase() + nome.slice(1);
 }
 
 export const TEXTOS_DO_ESTADO: Record<Partida['estado'], { etiqueta: string; explicacao: string }> = {
+  aguardando_aceite: { etiqueta: 'Aguardando aceite', explicacao: 'Todos têm 30 segundos para aceitar a partida.' },
+  vetando: { etiqueta: 'Vetos', explicacao: 'Os líderes estão vetando os mapas. O que sobrar é o mapa da partida.' },
   aguardando_servidor: { etiqueta: 'Aguardando servidor', explicacao: 'Assim que um servidor ficar livre, a partida começa a carregar.' },
   carregando: { etiqueta: 'Carregando', explicacao: 'O servidor está preparando a partida.' },
   aguardando_jogadores: { etiqueta: 'Aguardando jogadores', explicacao: 'O servidor está pronto. Todos precisam entrar para começar.' },

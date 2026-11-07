@@ -95,6 +95,8 @@ export const auditoria = pgTable('auditoria', {
 
 export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix']);
 export const estadoPartida = pgEnum('estado_partida', [
+  'aguardando_aceite',
+  'vetando',
   'aguardando_servidor',
   'carregando',
   'aguardando_jogadores',
@@ -141,7 +143,13 @@ export const partidas = pgTable('partidas', {
   numero: serial('numero').notNull().unique(),
   tipo: tipoPartida('tipo').notNull(),
   estado: estadoPartida('estado').notNull().default('aguardando_servidor'),
-  mapa: text('mapa').notNull(),
+  // Fica vazio até os vetos (desafio) ou o sorteio (mix) definirem o mapa.
+  mapa: text('mapa'),
+  // Prazo dos 30 segundos para todos aceitarem.
+  aceiteAte: timestamp('aceite_ate', { withTimezone: true }),
+  // Time que ganhou o cara ou coroa e veta primeiro (1 ou 2), e o prazo do veto da vez.
+  primeiroAVetar: integer('primeiro_a_vetar'),
+  vetoAte: timestamp('veto_ate', { withTimezone: true }),
   servidorId: uuid('servidor_id').references(() => servidores.id),
   vencedor: integer('vencedor'),
   placar1: integer('placar1').notNull().default(0),
@@ -169,6 +177,17 @@ export const partidaJogadores = pgTable(
     damage: integer('damage').notNull().default(0),
     headshotKills: integer('headshot_kills').notNull().default(0),
     rodadas: integer('rodadas').notNull().default(0),
+    mvps: integer('mvps').notNull().default(0),
+    // Rodadas com abate, assistência, sobrevivência ou troca, como a HLTV conta.
+    kast: integer('kast').notNull().default(0),
+    k1: integer('k1').notNull().default(0),
+    k2: integer('k2').notNull().default(0),
+    k3: integer('k3').notNull().default(0),
+    k4: integer('k4').notNull().default(0),
+    k5: integer('k5').notNull().default(0),
+    aceitouEm: timestamp('aceitou_em', { withTimezone: true }),
+    // Só no mix: a posição na fila, para quem aceitou voltar ao mesmo lugar se a partida cair.
+    entrouNaFilaEm: timestamp('entrou_na_fila_em', { withTimezone: true }),
   },
   (tabela) => [primaryKey({ columns: [tabela.partidaId, tabela.usuarioId] }), index('partida_jogadores_usuario_idx').on(tabela.usuarioId)],
 );
@@ -212,6 +231,70 @@ export const desafios = pgTable('desafios', {
   expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
   criadoEm: criadoEm(),
 });
+
+/** Pedido de uma sala para entrar inteira em outra. Mesma vida de um desafio. */
+export const juncoes = pgTable('juncoes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  salaOrigemId: uuid('sala_origem_id').notNull(),
+  salaAlvoId: uuid('sala_alvo_id').notNull(),
+  estado: estadoDesafio('estado').notNull().default('pendente'),
+  expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
+  criadoEm: criadoEm(),
+});
+
+export const vetos = pgTable(
+  'vetos',
+  {
+    partidaId: uuid('partida_id')
+      .notNull()
+      .references(() => partidas.id),
+    ordem: integer('ordem').notNull(),
+    time: integer('time').notNull(),
+    mapa: text('mapa').notNull(),
+    // Vetado pelo site quando o líder deixou os 20 segundos passarem.
+    automatico: boolean('automatico').notNull().default(false),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.partidaId, tabela.ordem] }), unique().on(tabela.partidaId, tabela.mapa)],
+);
+
+/** Quem não aceitou a partida nos 30 segundos. Anulada quando a equipe reverte um banimento. */
+export const faltas = pgTable(
+  'faltas',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    partidaId: uuid('partida_id')
+      .notNull()
+      .references(() => partidas.id),
+    bloqueadoAte: timestamp('bloqueado_ate', { withTimezone: true }),
+    anuladaEm: timestamp('anulada_em', { withTimezone: true }),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [index('faltas_usuario_idx').on(tabela.usuarioId)],
+);
+
+export const tipoElogio = pgEnum('tipo_elogio', ['bom_de_mira', 'gente_boa', 'lider', 'bom_de_equipe']);
+
+export const elogios = pgTable(
+  'elogios',
+  {
+    partidaId: uuid('partida_id')
+      .notNull()
+      .references(() => partidas.id),
+    autorId: uuid('autor_id')
+      .notNull()
+      .references(() => usuarios.id),
+    elogiadoId: uuid('elogiado_id')
+      .notNull()
+      .references(() => usuarios.id),
+    tipo: tipoElogio('tipo').notNull(),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.partidaId, tabela.autorId, tabela.elogiadoId] }), index('elogios_elogiado_idx').on(tabela.elogiadoId)],
+);
 
 export const gravacoes = pgTable('gravacoes', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -274,9 +357,8 @@ export const banimentos = pgTable('banimentos', {
   cpfHmac: text('cpf_hmac'),
   motivo: text('motivo').notNull(),
   estado: estadoBanimento('estado').notNull().default('proposto'),
-  propostoPor: uuid('proposto_por')
-    .notNull()
-    .references(() => usuarios.id),
+  // Vazio quando foi o próprio site que baniu, por faltas repetidas.
+  propostoPor: uuid('proposto_por').references(() => usuarios.id),
   confirmadoPor: uuid('confirmado_por').references(() => usuarios.id),
   revertidoPor: uuid('revertido_por').references(() => usuarios.id),
   motivoReversao: text('motivo_reversao'),
@@ -290,6 +372,10 @@ export type Denuncia = typeof denuncias.$inferSelect;
 export type Chamado = typeof chamados.$inferSelect;
 export type Gravacao = typeof gravacoes.$inferSelect;
 export type Desafio = typeof desafios.$inferSelect;
+export type Juncao = typeof juncoes.$inferSelect;
+export type Veto = typeof vetos.$inferSelect;
+export type Falta = typeof faltas.$inferSelect;
+export type Elogio = typeof elogios.$inferSelect;
 export type Sala = typeof salas.$inferSelect;
 export type Partida = typeof partidas.$inferSelect;
 export type Servidor = typeof servidores.$inferSelect;

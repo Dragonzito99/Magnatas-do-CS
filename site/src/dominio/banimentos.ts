@@ -1,4 +1,4 @@
-import { and, asc, count, eq, isNotNull, ne } from 'drizzle-orm';
+import { and, asc, count, eq, isNotNull, ne, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, cpfsBanidos, filaMix, salaMembros, salas, servidores, sessoes, usuarios, type Banimento, type Usuario } from '@/bd/esquema';
@@ -205,11 +205,11 @@ export async function listarBanimentosAbertos(bd: Bd, leitor: Pick<Usuario, 'id'
       motivo: banimentos.motivo,
       criadoEm: banimentos.criadoEm,
       alvoApelido: alvo.apelido,
-      propostoPorApelido: proponente.apelido,
+      propostoPorApelido: sql<string>`coalesce(${proponente.apelido}, 'Sistema')`,
     })
     .from(banimentos)
     .innerJoin(alvo, eq(banimentos.usuarioId, alvo.id))
-    .innerJoin(proponente, eq(banimentos.propostoPor, proponente.id))
+    .leftJoin(proponente, eq(banimentos.propostoPor, proponente.id))
     .where(eq(banimentos.estado, 'proposto'))
     .orderBy(asc(banimentos.criadoEm));
 }

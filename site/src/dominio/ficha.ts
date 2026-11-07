@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
@@ -58,10 +58,10 @@ async function dadosDaEquipe(bd: Bd, jogador: Usuario) {
       motivo: banimentos.motivo,
       motivoReversao: banimentos.motivoReversao,
       criadoEm: banimentos.criadoEm,
-      propostoPorApelido: usuarios.apelido,
+      propostoPorApelido: sql<string>`coalesce(${usuarios.apelido}, 'Sistema')`,
     })
     .from(banimentos)
-    .innerJoin(usuarios, eq(banimentos.propostoPor, usuarios.id))
+    .leftJoin(usuarios, eq(banimentos.propostoPor, usuarios.id))
     .where(eq(banimentos.usuarioId, jogador.id))
     .orderBy(desc(banimentos.criadoEm));
 
@@ -121,6 +121,8 @@ export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogado
 
   const mapas = new Map<string, { partidas: number; vitorias: number; abates: number; mortes: number }>();
   for (const linha of linhas) {
+    // Partida encerrada sempre tem mapa; o tipo só não sabe disso.
+    if (!linha.partida.mapa) continue;
     const mapa = mapas.get(linha.partida.mapa) ?? { partidas: 0, vitorias: 0, abates: 0, mortes: 0 };
     mapa.partidas += 1;
     mapa.vitorias += venceu(linha) ? 1 : 0;
