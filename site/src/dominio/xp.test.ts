@@ -1,4 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { eq, sql } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
 import { usuarios, xpPartidas } from '@/bd/esquema';
@@ -34,44 +36,69 @@ test('abates negativos valem zero', () => {
   expect(xpDaPartida({ jogouAteOFim: true, resultado: 'derrota', abates: -5 })).toBe(300);
 });
 
-test('as patentes são as dez aprovadas, em ordem', () => {
-  expect(PATENTES.map(({ nivel, nome, xp }) => [nivel, nome, xp])).toEqual([
-    [1, 'Recruta', 0],
-    [2, 'Magnata Jr.', 4500],
-    [3, 'Associado', 13500],
-    [4, 'Mafioso', 31500],
-    [5, 'Empresário', 63000],
-    [6, 'Consigliere', 112500],
-    [7, 'Ministro', 180000],
-    [8, 'Milionário', 270000],
-    [9, 'Don', 405000],
-    [10, 'Magnata Supremo', 630000],
+test('são 83 degraus em 6 grupos, como o dono aprovou, do Recruta ao Magnata Lendário', () => {
+  expect(PATENTES).toHaveLength(83);
+  expect(PATENTES.map((patente) => patente.nivel)).toEqual(PATENTES.map((_, indice) => indice + 1));
+  expect([...new Set(PATENTES.map((patente) => patente.grupo))]).toEqual(['Rua', 'Família', 'Negócios', 'Poder', 'Elite', 'Topo']);
+  expect([...new Set(PATENTES.map((patente) => patente.base))]).toEqual([
+    'Recruta', 'Novato', 'Olheiro',
+    'Associado', 'Soldado', 'Mafioso',
+    'Magnata Jr.', 'Empresário', 'Investidor',
+    'Consigliere', 'Caporegime', 'Ministro',
+    'Milionário', 'Bilionário', 'Don',
+    'Magnata', 'Ministro Mafioso', 'Magnata Supremo', 'Magnata Lendário',
   ]);
+});
+
+test('cada patente tem os níveis aprovados, e o nome mostra o nível só quando há mais de um', () => {
+  const niveis = (base: string) => PATENTES.filter((patente) => patente.base === base).map((patente) => patente.nome);
+  expect(niveis('Recruta')).toEqual(['Recruta']);
+  expect(niveis('Novato')).toEqual(['Novato 1', 'Novato 2', 'Novato 3']);
+  expect(niveis('Soldado')).toHaveLength(4);
+  expect(niveis('Investidor')).toHaveLength(6);
+  expect(niveis('Caporegime')).toHaveLength(6);
+  expect(niveis('Don')).toEqual(['Don 1', 'Don 2', 'Don 3', 'Don 4', 'Don 5', 'Don 6', 'Don 7', 'Don 8']);
+  expect(niveis('Ministro Mafioso')).toEqual(['Ministro Mafioso']);
+});
+
+test('o XP sobe a cada degrau, rápido no começo e devagar no fim', () => {
+  const xp = (nome: string) => PATENTES.find((patente) => patente.nome === nome)?.xp;
+  expect(xp('Recruta')).toBe(0);
+  expect(xp('Novato 1')).toBe(600);
+  expect(xp('Novato 2')).toBe(1250);
+  expect(xp('Don 8')).toBe(399_650);
+  expect(xp('Magnata')).toBe(459_650);
+  expect(xp('Ministro Mafioso')).toBe(549_650);
+  expect(xp('Magnata Supremo')).toBe(699_650);
+  expect(xp('Magnata Lendário')).toBe(1_099_650);
+  const passos = PATENTES.slice(1).map((patente, indice) => patente.xp - PATENTES[indice].xp);
+  expect(passos.every((passo, indice) => passo > 0 && (indice === 0 || passo >= passos[indice - 1]))).toBe(true);
 });
 
 test.each([
   [0, 'Recruta'],
-  [4499, 'Recruta'],
-  [4500, 'Magnata Jr.'],
-  [629999, 'Don'],
-  [630000, 'Magnata Supremo'],
-  [9999999, 'Magnata Supremo'],
+  [599, 'Recruta'],
+  [600, 'Novato 1'],
+  [699_649, 'Ministro Mafioso'],
+  [699_650, 'Magnata Supremo'],
+  [99_999_999, 'Magnata Lendário'],
 ])('com %i XP a patente é %s', (xp, nome) => {
   expect(patenteDe(xp).nome).toBe(nome);
 });
 
-test('o progresso mostra quanto falta para a próxima patente', () => {
-  expect(progressoDe(9000)).toMatchObject({ patente: { nome: 'Magnata Jr.' }, proxima: { nome: 'Associado' }, faltam: 4500, porcentagem: 50 });
+test('o progresso mostra quanto falta para o próximo degrau', () => {
+  expect(progressoDe(1000)).toMatchObject({ patente: { nome: 'Novato 1' }, proxima: { nome: 'Novato 2' }, faltam: 250, porcentagem: 61 });
 });
 
-test('na última patente não há próxima, e a barra fica cheia', () => {
-  expect(progressoDe(700000)).toMatchObject({ patente: { nome: 'Magnata Supremo' }, proxima: null, faltam: 0, porcentagem: 100 });
+test('no último degrau não há próximo, e a barra fica cheia', () => {
+  expect(progressoDe(2_000_000)).toMatchObject({ patente: { nome: 'Magnata Lendário' }, proxima: null, faltam: 0, porcentagem: 100 });
 });
 
 test('lançar grava a linha e soma no total da conta', async () => {
   const conta = await criarUsuario(bd, { estado: 'ativo' });
   const [lancado] = await bd.transaction((tx) => lancarXp(tx, [ganho(conta.id)]));
-  expect(lancado).toEqual({ usuarioId: conta.id, xp: 800, xpTotal: 800, subiuPara: null });
+  // Com os níveis, a primeira partida já sobe para Novato 1.
+  expect(lancado).toMatchObject({ usuarioId: conta.id, xp: 800, xpTotal: 800, subiuPara: { nome: 'Novato 1' } });
   const [linha] = await bd.select().from(xpPartidas).where(eq(xpPartidas.usuarioId, conta.id));
   expect(linha).toMatchObject({ origem: 'partida', referencia: 'partida-1', abates: 10, resultado: 'vitoria', xp: 800 });
   const [atual] = await bd.select().from(usuarios).where(eq(usuarios.id, conta.id));
@@ -98,11 +125,24 @@ test('ao cruzar o limite, avisa a patente nova', async () => {
   const conta = await criarUsuario(bd, { estado: 'ativo' });
   await bd.update(usuarios).set({ xpTotal: 4000 }).where(eq(usuarios.id, conta.id));
   const [lancado] = await bd.transaction((tx) => lancarXp(tx, [ganho(conta.id)]));
-  expect(lancado.subiuPara?.nome).toBe('Magnata Jr.');
+  expect(lancado.subiuPara?.nome).toBe('Olheiro 3');
 });
 
 test('quem não jogou até o fim fica com linha de 0 XP, e nada muda no total', async () => {
   const conta = await criarUsuario(bd, { estado: 'ativo' });
   const [lancado] = await bd.transaction((tx) => lancarXp(tx, [ganho(conta.id, { jogouAteOFim: false })]));
   expect(lancado).toEqual({ usuarioId: conta.id, xp: 0, xpTotal: 0, subiuPara: null });
+});
+
+test('a migração das patentes usa a mesma escada e deixa como vista a patente atual de cada um', async () => {
+  const migracao = readFileSync(path.resolve(__dirname, '../../drizzle/0019_patentes_com_niveis.sql'), 'utf8');
+  const degraus = [...migracao.matchAll(/\((\d+)\)/g)].map((achado) => Number(achado[1]));
+  expect(degraus).toEqual(PATENTES.map((patente) => patente.xp));
+  const contas = await Promise.all([0, 9000, 700_000].map(() => criarUsuario(bd, { estado: 'ativo' })));
+  for (const [indice, xpTotal] of [0, 9000, 700_000].entries()) {
+    await bd.update(usuarios).set({ xpTotal, patenteVista: 3 }).where(eq(usuarios.id, contas[indice].id));
+  }
+  await bd.execute(sql.raw(migracao));
+  const vistas = await Promise.all(contas.map(async (conta) => (await bd.select().from(usuarios).where(eq(usuarios.id, conta.id)))[0].patenteVista));
+  expect(vistas).toEqual([patenteDe(0).nivel, patenteDe(9000).nivel, patenteDe(700_000).nivel]);
 });

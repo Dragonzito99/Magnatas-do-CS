@@ -16,6 +16,7 @@ import {
   type Mes,
 } from '@/dominio/ranking';
 import { Avatar } from '../avatar';
+import { InsigniaDaPatente } from '../insignia-da-patente';
 
 const nomeDoMes = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const tituloDoMes = ({ ano, mes }: Mes) => {
@@ -84,7 +85,12 @@ async function RankingDaComunidade({ usuario }: { usuario: Pick<Usuario, 'id'> }
                     </Link>
                   </span>
                 </th>
-                <td>{linha.patente.nome}</td>
+                <td>
+                  <span className="patente-na-tabela">
+                    <InsigniaDaPatente patente={linha.patente} classe="insignia-mini" />
+                    {linha.patente.nome}
+                  </span>
+                </td>
                 <td>
                   <b>{numero.format(linha.xp)}</b>
                 </td>

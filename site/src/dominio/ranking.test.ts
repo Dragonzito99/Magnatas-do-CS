@@ -164,8 +164,8 @@ test('a comunidade ordena por XP total, com a patente de cada um', async () => {
   await comXp('muito', 70_000);
   const linhas = await rankingDaComunidade(bd);
   expect(linhas.map((linha) => [linha.posicao, linha.jogador.apelido, linha.xp, linha.patente.nome])).toEqual([
-    [1, 'muito', 70_000, 'Empresário'],
-    [2, 'pouco', 5_000, 'Magnata Jr.'],
+    [1, 'muito', 70_000, 'Consigliere 5'],
+    [2, 'pouco', 5_000, 'Associado 1'],
   ]);
 });
 

@@ -34,7 +34,7 @@ test('a ficha traz o XP total e o progresso da patente', async () => {
   await comXp(9000);
   const ficha = await fichaDoJogador(bd, conta, conta.id);
   expect(ficha?.xpTotal).toBe(9000);
-  expect(ficha?.progresso).toMatchObject({ patente: { nome: 'Magnata Jr.' }, proxima: { nome: 'Associado' }, faltam: 4500, porcentagem: 50 });
+  expect(ficha?.progresso).toMatchObject({ patente: { nome: 'Soldado 1' }, proxima: { nome: 'Soldado 2' }, faltam: 300, porcentagem: 68 });
 });
 
 test('a ficha traz as últimas 10 partidas com XP, da mais recente para a mais antiga', async () => {
@@ -50,17 +50,17 @@ test('outro membro também vê a patente', async () => {
   await comXp(9000);
   const outro = await criarUsuario(bd, { estado: 'ativo' });
   const ficha = await fichaDoJogador(bd, outro, conta.id);
-  expect(ficha?.progresso.patente.nome).toBe('Magnata Jr.');
+  expect(ficha?.progresso.patente.nome).toBe('Soldado 1');
 });
 
 test('o sino avisa da patente nova', async () => {
   await comXp(5000);
   const avisos = await notificacoesDe(bd, await atual());
-  expect(avisos).toContainEqual(expect.objectContaining({ tipo: 'patente', texto: 'Você subiu para Magnata Jr.', href: `/jogadores/${conta.id}` }));
+  expect(avisos).toContainEqual(expect.objectContaining({ tipo: 'patente', texto: 'Você subiu para Associado 1', href: `/jogadores/${conta.id}` }));
 });
 
 test('o sino não avisa de patente que a pessoa já viu', async () => {
-  await comXp(5000, 2);
+  await comXp(5000, 8);
   expect((await notificacoesDe(bd, await atual())).map((aviso) => aviso.tipo)).not.toContain('patente');
 });
 
@@ -79,7 +79,7 @@ test('abrir o próprio perfil marca a patente como vista, só nessa conta', asyn
   await bd.update(usuarios).set({ xpTotal: 5000 }).where(eq(usuarios.id, outra.id));
   await comXp(5000);
   await marcarPatenteVista(bd, conta.id);
-  expect((await atual()).patenteVista).toBe(2);
+  expect((await atual()).patenteVista).toBe(8);
   const [segunda] = await bd.select().from(usuarios).where(eq(usuarios.id, outra.id));
   expect(segunda.patenteVista).toBe(1);
 });

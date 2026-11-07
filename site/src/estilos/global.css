@@ -662,10 +662,84 @@ textarea {
   font-size: 20px;
 }
 
-.coroa-patente {
-  width: 34px;
-  height: 26px;
-  fill: var(--ouro);
+/* Símbolo da patente: a cor diz o grupo, as divisas dizem a posição da patente no grupo. */
+.insignia {
+  --cor-insignia: var(--ouro);
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+.insignia-escudo {
+  fill: color-mix(in srgb, var(--cor-insignia) 16%, var(--escuro));
+  stroke: var(--cor-insignia);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.insignia-divisa {
+  fill: none;
+  stroke: var(--cor-insignia);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.insignia-coroa,
+.insignia-ponto {
+  fill: var(--cor-insignia);
+}
+
+.insignia-rua {
+  --cor-insignia: #c08a5a;
+}
+
+.insignia-familia {
+  --cor-insignia: #c9d1dc;
+}
+
+.insignia-negocios {
+  --cor-insignia: var(--verde);
+}
+
+.insignia-poder {
+  --cor-insignia: var(--roxo);
+}
+
+.insignia-elite,
+.insignia-topo {
+  --cor-insignia: var(--ouro);
+}
+
+.insignia-topo {
+  filter: drop-shadow(0 0 6px rgba(245, 179, 1, 0.55));
+}
+
+.insignia-perfil {
+  width: 48px;
+  height: 48px;
+}
+
+.insignia-mini {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+}
+
+.conta-patente .insignia-mini {
+  margin-right: 4px;
+}
+
+.patente-na-tabela {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.patente-na-tabela .insignia-mini {
+  width: 20px;
+  height: 20px;
 }
 
 .barra-xp {

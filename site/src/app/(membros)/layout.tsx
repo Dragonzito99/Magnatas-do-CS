@@ -27,7 +27,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
     <div className="app">
       <Atualizar segundos={15} />
       <ManterPresenca />
-      <Banner usuario={usuario} patente={patenteDe(usuario.xpTotal).nome} discord={enderecoDoDiscord(process.env.DISCORD_URL)} sino={<Sino notificacoes={notificacoes} />} />
+      <Banner usuario={usuario} patente={patenteDe(usuario.xpTotal)} discord={enderecoDoDiscord(process.env.DISCORD_URL)} sino={<Sino notificacoes={notificacoes} />} />
       <div className="app-corpo">
         <aside className="lateral">
           <Menu mostrarEquipe={mostrarEquipe} casos={casos} />

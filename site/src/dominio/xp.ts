@@ -10,21 +10,61 @@ const XP_POR_EMPATE = 150;
 const XP_POR_ABATE = 20;
 const XP_MAXIMO_POR_ABATES = 500;
 
-/** A patente é sempre calculada a partir do XP, para mudar esta tabela não mexer na história de ninguém. */
-export const PATENTES = [
-  { nivel: 1, nome: 'Recruta', xp: 0 },
-  { nivel: 2, nome: 'Magnata Jr.', xp: 4_500 },
-  { nivel: 3, nome: 'Associado', xp: 13_500 },
-  { nivel: 4, nome: 'Mafioso', xp: 31_500 },
-  { nivel: 5, nome: 'Empresário', xp: 63_000 },
-  { nivel: 6, nome: 'Consigliere', xp: 112_500 },
-  { nivel: 7, nome: 'Ministro', xp: 180_000 },
-  { nivel: 8, nome: 'Milionário', xp: 270_000 },
-  { nivel: 9, nome: 'Don', xp: 405_000 },
-  { nivel: 10, nome: 'Magnata Supremo', xp: 630_000 },
-] as const;
+export type GrupoDePatente = 'Rua' | 'Família' | 'Negócios' | 'Poder' | 'Elite' | 'Topo';
 
-export type Patente = (typeof PATENTES)[number];
+/** Um degrau da escada: "Empresário 3" é o terceiro nível do Empresário. `nivel` conta os degraus de 1 a 83. */
+export type Patente = {
+  nivel: number;
+  nome: string;
+  base: string;
+  grau: number;
+  grupo: GrupoDePatente;
+  /** A posição da patente dentro do grupo, de 1 a 4: o símbolo mostra uma divisa para cada. */
+  ordemNoGrupo: number;
+  xp: number;
+};
+
+// Como as patentes do CrossFire, no universo do Magnatas: grupos, cada patente com os seus níveis.
+const ESCADA: { grupo: GrupoDePatente; patentes: [string, number][] }[] = [
+  { grupo: 'Rua', patentes: [['Recruta', 1], ['Novato', 3], ['Olheiro', 3]] },
+  { grupo: 'Família', patentes: [['Associado', 4], ['Soldado', 4], ['Mafioso', 4]] },
+  { grupo: 'Negócios', patentes: [['Magnata Jr.', 6], ['Empresário', 6], ['Investidor', 6]] },
+  { grupo: 'Poder', patentes: [['Consigliere', 6], ['Caporegime', 6], ['Ministro', 6]] },
+  { grupo: 'Elite', patentes: [['Milionário', 8], ['Bilionário', 8], ['Don', 8]] },
+];
+
+// O primeiro degrau sai com uma partida, e cada um custa 4,5% a mais que o anterior, em múltiplos de 50.
+const PRIMEIRO_DEGRAU = 600;
+const CRESCIMENTO_DO_DEGRAU = 1.045;
+// O topo não tem níveis: são saltos grandes, e o Magnata Lendário fica para poucos.
+const TOPO: [string, number][] = [
+  ['Magnata', 60_000],
+  ['Ministro Mafioso', 90_000],
+  ['Magnata Supremo', 150_000],
+  ['Magnata Lendário', 400_000],
+];
+
+function montarEscada(): Patente[] {
+  const escada: Patente[] = [];
+  let xp = 0;
+  const subir = (custo: number, degrau: Omit<Patente, 'nivel' | 'xp'>) => {
+    if (escada.length > 0) xp += custo;
+    escada.push({ ...degrau, nivel: escada.length + 1, xp });
+  };
+  for (const { grupo, patentes } of ESCADA) {
+    patentes.forEach(([base, graus], indice) => {
+      for (let grau = 1; grau <= graus; grau += 1) {
+        const custo = Math.round((PRIMEIRO_DEGRAU * CRESCIMENTO_DO_DEGRAU ** (escada.length - 1)) / 50) * 50;
+        subir(custo, { nome: graus > 1 ? `${base} ${grau}` : base, base, grau, grupo, ordemNoGrupo: indice + 1 });
+      }
+    });
+  }
+  TOPO.forEach(([base, custo], indice) => subir(custo, { nome: base, base, grau: 1, grupo: 'Topo', ordemNoGrupo: indice + 1 }));
+  return escada;
+}
+
+/** A patente é sempre calculada a partir do XP, para mudar esta tabela não mexer na história de ninguém. */
+export const PATENTES: readonly Patente[] = montarEscada();
 
 export type GanhoDePartida = {
   usuarioId: string;

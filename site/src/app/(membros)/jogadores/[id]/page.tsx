@@ -10,6 +10,7 @@ import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { PATENTES, patenteDe } from '@/dominio/xp';
 import { Avatar } from '../../avatar';
+import { InsigniaDaPatente } from '../../insignia-da-patente';
 import { MarcarPatenteVista } from './marcar-patente-vista';
 import { Punicoes } from './punicoes';
 
@@ -107,13 +108,11 @@ export default async function FichaDoJogador({
       <section className="painel patente-perfil">
         <div className="patente-resumo">
           <div className="patente-topo">
-            <svg className="coroa-patente" viewBox="0 0 24 18" aria-hidden="true">
-              <path d="M2 16 1 4l6 5 5-8 5 8 6-5-1 12z" />
-            </svg>
+            <InsigniaDaPatente patente={progresso.patente} classe="insignia-perfil" />
             <div>
               <strong>{progresso.patente.nome}</strong>
               <span className="apoio">
-                Nível {progresso.patente.nivel} de {PATENTES.length}
+                {progresso.patente.grupo} · degrau {progresso.patente.nivel} de {PATENTES.length}
               </span>
             </div>
           </div>

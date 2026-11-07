@@ -1,7 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { UsuarioPublico } from '@/dominio/salas';
+import type { Patente } from '@/dominio/xp';
 import { Avatar } from './avatar';
+import { InsigniaDaPatente } from './insignia-da-patente';
 import { MenuSuspenso } from './menu-suspenso';
 
 function IconeDoDiscord() {
@@ -17,7 +19,7 @@ function IconeDoDiscord() {
   );
 }
 
-export function Banner({ usuario, patente, discord, sino }: { usuario: UsuarioPublico; patente: string; discord: string | null; sino?: React.ReactNode }) {
+export function Banner({ usuario, patente, discord, sino }: { usuario: UsuarioPublico; patente: Patente; discord: string | null; sino?: React.ReactNode }) {
   return (
     <header className="banner">
       <div className="banner-arte">
@@ -49,7 +51,10 @@ export function Banner({ usuario, patente, discord, sino }: { usuario: UsuarioPu
               <Avatar usuario={usuario} />
               <span className="conta-texto">
                 <span className="conta-nome">{usuario.apelido}</span>
-                <small className="conta-patente">{patente}</small>
+                <small className="conta-patente">
+                  <InsigniaDaPatente patente={patente} classe="insignia-mini" />
+                  {patente.nome}
+                </small>
               </span>
               <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m6 9 6 6 6-6" />

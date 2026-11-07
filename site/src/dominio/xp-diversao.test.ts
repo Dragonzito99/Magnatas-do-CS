@@ -125,7 +125,7 @@ test('no Equipe x Equipe, vencedor e perdedor ganham o XP da fórmula', async ()
   const ct = await membro();
   const tr = await membro();
   const ganhos = await enviar(resultado([jogador(ct), jogador(tr, { time: 'tr' })]));
-  expect(ganhos.find((g) => g.steamid64 === ct.steamid64)).toMatchObject({ xp: 840, xpTotal: 840, patente: 'Recruta', subiu: false });
+  expect(ganhos.find((g) => g.steamid64 === ct.steamid64)).toMatchObject({ xp: 840, xpTotal: 840, patente: 'Novato 1', subiu: true });
   expect(ganhos.find((g) => g.steamid64 === tr.steamid64)).toMatchObject({ xp: 540 });
 });
 
@@ -245,7 +245,7 @@ test('a resposta avisa quando a pessoa sobe de patente', async () => {
   await bd.update(usuarios).set({ xpTotal: 4000 }).where(eq(usuarios.id, conta.id));
   const ganhos = await enviar(resultado([jogador(conta), jogador(await membro(), { time: 'tr' })]));
   const ganho = ganhos.find((g) => g.steamid64 === conta.steamid64);
-  expect(ganho).toMatchObject({ patente: 'Magnata Jr.', subiu: true });
+  expect(ganho).toMatchObject({ patente: 'Olheiro 3', subiu: true });
 });
 
 test('a mesma partida em servidores diferentes conta separada', async () => {

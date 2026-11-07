@@ -134,6 +134,13 @@
       "when": 1794040661173,
       "tag": "0018_trocando_de_mapa",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794080958029,
+      "tag": "0019_patentes_com_niveis",
+      "breakpoints": true
     }
   ]
 }
