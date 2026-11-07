@@ -1976,6 +1976,10 @@ textarea {
   text-decoration: underline;
 }
 
+.ativar-avisos {
+  margin-bottom: 16px;
+}
+
 .relogio {
   font-weight: 600;
   color: #fff;

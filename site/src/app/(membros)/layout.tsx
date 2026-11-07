@@ -8,6 +8,7 @@ import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
 import { partidaAtualDe } from '@/dominio/partidas';
 import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
+import { AvisoDePartida } from './aviso-de-partida';
 import { Banner } from './banner';
 import { ManterPresenca } from './manter-presenca';
 import { Menu } from './menu';
@@ -40,6 +41,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
           </Link>
         </aside>
         <main className="conteudo">
+          <AvisoDePartida />
           {partida && <VoltarParaAPartida partidaId={partida.id} />}
           {children}
         </main>

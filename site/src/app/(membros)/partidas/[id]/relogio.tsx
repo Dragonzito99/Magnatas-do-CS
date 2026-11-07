@@ -17,16 +17,18 @@ function assinarRelogio(aoMudar: () => void): () => void {
 export function Relogio({ ate }: { ate: string }) {
   const router = useRouter();
   const alvo = new Date(ate).getTime();
+  // No servidor (e na hidratação) o valor é um marcador fixo: o número só aparece no navegador, sem desencontro.
   const segundos = useSyncExternalStore(
     assinarRelogio,
     () => segundosAte(alvo),
-    () => segundosAte(alvo),
+    () => -1,
   );
 
   useEffect(() => {
     if (segundos === 0) router.refresh();
   }, [segundos, router]);
 
+  if (segundos < 0) return <span className="relogio mono">…</span>;
   return (
     <span className={`relogio mono${segundos <= 5 ? ' urgente' : ''}`} aria-live="polite">
       {segundos}s
