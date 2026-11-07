@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { banimentos, elogios, faltas, juncoes, partidaJogadores, partidas, usuarios, vetos } from './esquema';
+import { banimentos, cacheExterno, elogios, faltas, juncoes, noticias, noticiasSteam, partidaJogadores, partidas, usuarios, vetos } from './esquema';
 import { criarBancoDeTeste, STEAM_A, STEAM_B } from './teste';
 
 test('banco de teste aplica as migrações', async () => {
@@ -45,4 +45,20 @@ test('partida aguardando aceite, vetos, faltas, junções, elogios e banimento d
   await expect(bd.insert(elogios).values({ partidaId: partida.id, autorId: a.id, elogiadoId: b.id, tipo: 'lider' })).rejects.toThrow();
   const [banimento] = await bd.insert(banimentos).values({ usuarioId: a.id, motivo: 'Faltas', estado: 'confirmado', propostoPor: null }).returning();
   expect(banimento.propostoPor).toBeNull();
+});
+
+test('notícias do clube, da Steam e cache externo', async () => {
+  const bd = await criarBancoDeTeste();
+  const [noticia] = await bd.insert(noticias).values({ titulo: 'Oi', texto: 'Texto', autorId: null }).returning();
+  expect(noticia).toMatchObject({ fixada: false, imagem: null, autorId: null, atualizadaEm: null });
+  await bd.insert(noticiasSteam).values({ gid: '1', tituloOriginal: 'CS2 Update', url: 'u', publicadaEm: new Date(), conteudo: 'c' });
+  await expect(bd.insert(noticiasSteam).values({ gid: '1', tituloOriginal: 'x', url: 'u', publicadaEm: new Date(), conteudo: 'c' })).rejects.toThrow();
+  const [steam] = await bd.select().from(noticiasSteam);
+  expect(steam).toMatchObject({ tituloPt: null, resumoPt: null, traduzidaEm: null, tentativas: 0 });
+  await bd.insert(cacheExterno).values({ chave: 'tier-s', dados: { a: 1 }, atualizadoEm: new Date() });
+  await bd
+    .insert(cacheExterno)
+    .values({ chave: 'tier-s', dados: { a: 2 }, atualizadoEm: new Date() })
+    .onConflictDoUpdate({ target: cacheExterno.chave, set: { dados: { a: 2 } } });
+  expect((await bd.select().from(cacheExterno))[0].dados).toEqual({ a: 2 });
 });

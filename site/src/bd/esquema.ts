@@ -296,6 +296,43 @@ export const elogios = pgTable(
   (tabela) => [primaryKey({ columns: [tabela.partidaId, tabela.autorId, tabela.elogiadoId] }), index('elogios_elogiado_idx').on(tabela.elogiadoId)],
 );
 
+/** Notícias do clube, escritas por adm ou publicadas pelo script de patch de aviso (sem autor). */
+export const noticias = pgTable(
+  'noticias',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    titulo: text('titulo').notNull(),
+    // Texto puro, em parágrafos separados por linha em branco. Nunca vira HTML.
+    texto: text('texto').notNull(),
+    imagem: text('imagem'),
+    fixada: boolean('fixada').notNull().default(false),
+    autorId: uuid('autor_id').references(() => usuarios.id),
+    criadoEm: criadoEm(),
+    atualizadaEm: timestamp('atualizada_em', { withTimezone: true }),
+  },
+  (tabela) => [index('noticias_criado_em_idx').on(tabela.criadoEm)],
+);
+
+/** Atualizações oficiais do CS2 na Steam, com a tradução guardada para nunca traduzir duas vezes. */
+export const noticiasSteam = pgTable('noticias_steam', {
+  gid: text('gid').primaryKey(),
+  tituloOriginal: text('titulo_original').notNull(),
+  url: text('url').notNull(),
+  publicadaEm: timestamp('publicada_em', { withTimezone: true }).notNull(),
+  conteudo: text('conteudo').notNull(),
+  tituloPt: text('titulo_pt'),
+  resumoPt: text('resumo_pt'),
+  traduzidaEm: timestamp('traduzida_em', { withTimezone: true }),
+  tentativas: integer('tentativas').notNull().default(0),
+});
+
+/** Resultado guardado de fontes de fora (Tier S, última busca da Steam), para a página nunca esperar a rede. */
+export const cacheExterno = pgTable('cache_externo', {
+  chave: text('chave').primaryKey(),
+  dados: jsonb('dados').notNull(),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull(),
+});
+
 export const gravacoes = pgTable('gravacoes', {
   id: uuid('id').primaryKey().defaultRandom(),
   partidaId: uuid('partida_id')
@@ -373,6 +410,8 @@ export type Chamado = typeof chamados.$inferSelect;
 export type Gravacao = typeof gravacoes.$inferSelect;
 export type Desafio = typeof desafios.$inferSelect;
 export type Juncao = typeof juncoes.$inferSelect;
+export type Noticia = typeof noticias.$inferSelect;
+export type NoticiaSteam = typeof noticiasSteam.$inferSelect;
 export type Veto = typeof vetos.$inferSelect;
 export type Falta = typeof faltas.$inferSelect;
 export type Elogio = typeof elogios.$inferSelect;
