@@ -71,6 +71,9 @@ public class JogadorEnviado
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? time { get; init; }
+
+    /// <summary>Só para a tabela do perfil no site.</summary>
+    public int? mortes { get; init; }
 }
 
 /// <summary>
@@ -92,6 +95,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private sealed class JogadorNaPartida
     {
         public int Abates;
+        public int Mortes;
         public DateTime Desde = DateTime.UtcNow;
     }
 
@@ -105,7 +109,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.5.4";
+    public override string ModuleVersion => "1.5.5";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -323,13 +327,28 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
                     minutos = Math.Round((agora - par.Value.Desde).TotalMinutes, 2),
                     ateOFim = pessoa != null,
                     time = Config.Regra != "cada_um" ? time : null,
+                    mortes = par.Value.Mortes,
                 };
             })
             .ToList();
         if (jogadores.Count == 0) return;
 
-        var corpo = JsonSerializer.Serialize(new { porta = Config.Porta, partida = idDaPartida, duracaoMinutos, vencedor, jogadores });
+        var corpo = JsonSerializer.Serialize(new { porta = Config.Porta, partida = idDaPartida, duracaoMinutos, vencedor, jogadores, mapa = Server.MapName, placar = PlacarDaPartida() });
         _ = Task.Run(() => EnviarResultado(corpo));
+    }
+
+    /// <summary>
+    /// O placar do lado do CT, para a tabela do perfil: no Equipe x Equipe sem rodadas, os abates de cada time;
+    /// nos modos de rodada, as rodadas que o jogo contou. Cada um por si e Mutação não têm placar de time.
+    /// </summary>
+    private string? PlacarDaPartida()
+    {
+        if (Config.Regra == "equipe" && !NoMapaDeRodadas) return $"{abatesCt} x {abatesTr}";
+        if (Config.Regra != "fantasma" && !NoMapaDeRodadas) return null;
+        var times = Utilities.FindAllEntitiesByDesignerName<CCSTeam>("cs_team_manager").ToList();
+        var ct = times.FirstOrDefault(time => time.TeamNum == (int)CsTeam.CounterTerrorist)?.Score;
+        var tr = times.FirstOrDefault(time => time.TeamNum == (int)CsTeam.Terrorist)?.Score;
+        return ct is null || tr is null ? null : $"{ct} x {tr}";
     }
 
     /// <summary>Reenviar é seguro: o id da partida é o mesmo, e o site não conta duas vezes.</summary>
@@ -418,6 +437,8 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
 
         Registrar(quem);
         if (naPartida.TryGetValue(quem.SteamID, out var dados)) dados.Abates++;
+        Registrar(alvo);
+        if (naPartida.TryGetValue(alvo.SteamID, out var doAlvo)) doAlvo.Mortes++;
         return HookResult.Continue;
     }
 

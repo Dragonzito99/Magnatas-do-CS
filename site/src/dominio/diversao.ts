@@ -19,6 +19,11 @@ const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string; regra?: str
   gm_laboratory: { nome: 'Laboratory', foto: '/mapas/laboratory.webp' },
 };
 
+/** O nome de um mapa que o site conhece, como "Egypt" para "egypt". */
+export function nomeDoMapaConhecido(mapa: string | null): string | null {
+  return (mapa && MAPAS_CONHECIDOS[mapa]?.nome) ?? null;
+}
+
 /** A foto de um mapa que o site conhece, para os cartões do perfil. Sem foto, a tela usa um fundo. */
 export function fotoDoMapa(mapa: string | null): string | null {
   return (mapa && MAPAS_CONHECIDOS[mapa]?.foto) ?? null;

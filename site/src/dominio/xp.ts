@@ -83,6 +83,10 @@ export type GanhoDePartida = {
   abates: number;
   resultado: 'vitoria' | 'empate' | 'derrota';
   jogouAteOFim: boolean;
+  /** Só para a tabela do perfil; a Diversão manda quando o servidor souber. */
+  mortes?: number | null;
+  mapa?: string | null;
+  placar?: string | null;
 };
 
 export type XpLancado = { usuarioId: string; xp: number; xpTotal: number; subiuPara: Patente | null };
@@ -119,7 +123,17 @@ export async function lancarXp(tx: Transacao, ganhos: GanhoDePartida[]): Promise
     const xp = xpDaPartida(ganho);
     const [novo] = await tx
       .insert(xpPartidas)
-      .values({ usuarioId: ganho.usuarioId, origem: ganho.origem, referencia: ganho.referencia, abates: Math.max(ganho.abates, 0), resultado: ganho.resultado, xp })
+      .values({
+        usuarioId: ganho.usuarioId,
+        origem: ganho.origem,
+        referencia: ganho.referencia,
+        abates: Math.max(ganho.abates, 0),
+        resultado: ganho.resultado,
+        xp,
+        mortes: ganho.mortes ?? null,
+        mapa: ganho.mapa ?? null,
+        placar: ganho.placar ?? null,
+      })
       .onConflictDoNothing()
       .returning({ id: xpPartidas.id });
     if (!novo) continue;

@@ -3,7 +3,8 @@ import type { Bd } from '@/bd/conexao';
 import { gravacoes, partidaJogadores, partidas, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { denunciar } from './denuncias';
-import { fichaDoJogador, kdDosJogadores, situacaoDaGravacao } from './ficha';
+import { fichaDoJogador, kdDosJogadores, situacaoDaGravacao, ultimasPartidasDoPerfil } from './ficha';
+import { lancarXp } from './xp';
 
 let bd: Bd;
 let jogador: Usuario;
@@ -218,4 +219,29 @@ test('o K/D de cada pessoa da sala vem numa consulta só, e quem nunca jogou fic
   expect(kd.get(outro.id)).toBe(7);
   expect(kd.get(novato.id)).toBe(0);
   expect((await kdDosJogadores(bd, [])).size).toBe(0);
+});
+
+test('as últimas partidas do perfil são só 5, com modo, mapa, placar e K/M de cada uma', async () => {
+  const mix = await jogada(jogador, numeros(21, 14), { mapa: 'de_mirage', placar1: 13, placar2: 9, encerradaEm: new Date('2026-11-07T20:00:00Z') });
+  await bd.transaction((tx) => lancarXp(tx, [{ usuarioId: jogador.id, origem: 'partida', referencia: mix.id, abates: 21, resultado: 'vitoria', jogouAteOFim: true }]));
+  await bd.transaction((tx) =>
+    lancarXp(tx, [{ usuarioId: jogador.id, origem: 'diversao', referencia: 'diversao:27019:abc', abates: 18, mortes: 22, mapa: 'egypt', placar: '80 x 95', resultado: 'derrota', jogouAteOFim: true }]),
+  );
+  await bd.transaction((tx) => lancarXp(tx, [{ usuarioId: jogador.id, origem: 'diversao', referencia: 'diversao:27021:velha', abates: 3, resultado: 'derrota', jogouAteOFim: true }]));
+  for (let i = 0; i < 4; i += 1) {
+    await bd.transaction((tx) => lancarXp(tx, [{ usuarioId: jogador.id, origem: 'diversao', referencia: `diversao:27016:${i}`, abates: 1, resultado: 'derrota', jogouAteOFim: true }]));
+  }
+  const linhas = await ultimasPartidasDoPerfil(bd, jogador.id);
+  expect(linhas).toHaveLength(5);
+  const todas = await ultimasPartidasDoPerfil(bd, jogador.id, 10);
+  const doMix = todas.find((linha) => linha.abates === 21);
+  expect(doMix).toMatchObject({ modo: 'Mix', mapa: 'Mirage', placar: '13 x 9', mortes: 14, resultado: 'vitoria' });
+  expect(todas.find((linha) => linha.abates === 18)).toMatchObject({ modo: 'Equipe x Equipe', mapa: 'Egypt', placar: '80 x 95', mortes: 22 });
+  expect(todas.find((linha) => linha.abates === 3)).toMatchObject({ modo: 'Fantasma', mapa: null, placar: null, mortes: null });
+});
+
+test('na partida do site, o placar vem do lado de quem está vendo', async () => {
+  const sala = await jogada(jogador, numeros(10, 12), { tipo: 'desafio', mapa: 'de_dust2', placar1: 13, placar2: 7, vencedor: 1 }, 2);
+  await bd.transaction((tx) => lancarXp(tx, [{ usuarioId: jogador.id, origem: 'partida', referencia: sala.id, abates: 10, resultado: 'derrota', jogouAteOFim: true }]));
+  expect((await ultimasPartidasDoPerfil(bd, jogador.id))[0]).toMatchObject({ modo: 'Competitivo', mapa: 'Dust 2', placar: '7 x 13', mortes: 12 });
 });

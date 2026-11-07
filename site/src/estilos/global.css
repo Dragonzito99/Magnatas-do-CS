@@ -3601,3 +3601,23 @@ a.cartao-destaque:hover {
     height: 68px;
   }
 }
+
+.link-ouro {
+  color: var(--ouro);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.link-ouro:hover {
+  text-decoration: underline;
+}
+
+.tabela-ultimas td,
+.tabela-ultimas th {
+  white-space: nowrap;
+}
+
+.tabela-ultimas td,
+.tabela-ultimas th {
+  text-align: left;
+}

@@ -40,6 +40,10 @@ export const xpPartidas = pgTable(
     abates: integer('abates').notNull(),
     resultado: resultadoXp('resultado').notNull(),
     xp: integer('xp').notNull(),
+    // Para a tabela do perfil. Partida antiga ou da Diversão sem estes dados fica sem.
+    mapa: text('mapa'),
+    mortes: integer('mortes'),
+    placar: text('placar'),
     criadoEm: criadoEm(),
   },
   (tabela) => [unique('xp_partidas_conta_referencia').on(tabela.usuarioId, tabela.referencia), index('xp_partidas_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],

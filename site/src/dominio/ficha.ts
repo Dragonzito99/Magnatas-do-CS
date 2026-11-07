@@ -1,7 +1,10 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
+import { MODOS_DE_DIVERSAO, nomeDoMapaConhecido } from './diversao';
+import { nomeDoMapa } from './textos-da-partida';
 import { progressoDe } from './xp';
 
 const ESPERA_DA_GRAVACAO_MS = 10 * 60_000;
@@ -91,6 +94,66 @@ export async function kdDosJogadores(bd: Bd, ids: string[]): Promise<Map<string,
   const kd = new Map(ids.map((id) => [id, 0]));
   for (const linha of linhas) kd.set(linha.usuarioId, kdDe(linha.abates, linha.mortes));
   return kd;
+}
+
+export type PartidaDoPerfil = {
+  data: Date;
+  modo: string;
+  mapa: string | null;
+  resultado: 'vitoria' | 'empate' | 'derrota';
+  placar: string | null;
+  abates: number;
+  mortes: number | null;
+  xp: number;
+};
+
+const ULTIMAS_DO_PERFIL = 5;
+
+/** A tabela "Últimas partidas" do perfil: mix e salas pegam mapa, placar e mortes da partida; a Diversão, do que o servidor mandou. */
+export async function ultimasPartidasDoPerfil(bd: Bd, jogadorId: string, limite: number = ULTIMAS_DO_PERFIL): Promise<PartidaDoPerfil[]> {
+  const minhaLinha = alias(partidaJogadores, 'minha_linha');
+  const linhas = await bd
+    .select({
+      xp: xpPartidas,
+      tipo: partidas.tipo,
+      mapaDaPartida: partidas.mapa,
+      placar1: partidas.placar1,
+      placar2: partidas.placar2,
+      meuTime: minhaLinha.time,
+      mortesNaPartida: minhaLinha.deaths,
+    })
+    .from(xpPartidas)
+    .leftJoin(partidas, and(eq(xpPartidas.origem, 'partida'), sql`${partidas.id}::text = ${xpPartidas.referencia}`))
+    .leftJoin(minhaLinha, and(eq(minhaLinha.partidaId, partidas.id), eq(minhaLinha.usuarioId, xpPartidas.usuarioId)))
+    .where(eq(xpPartidas.usuarioId, jogadorId))
+    .orderBy(desc(xpPartidas.criadoEm), desc(xpPartidas.id))
+    .limit(limite);
+  const servidores = await bd.select({ porta: servidoresDiversao.porta, modo: servidoresDiversao.modo }).from(servidoresDiversao);
+  const modoDaPorta = new Map(servidores.map((servidor) => [servidor.porta, MODOS_DE_DIVERSAO.find((modo) => modo.valor === servidor.modo)?.nome ?? 'Diversão']));
+
+  return linhas.map((linha) => {
+    const base = { data: linha.xp.criadoEm, resultado: linha.xp.resultado, abates: linha.xp.abates, xp: linha.xp.xp };
+    if (linha.xp.origem === 'partida') {
+      const temPlacar = linha.placar1 !== null && linha.placar2 !== null;
+      const meu = linha.meuTime === 2 ? linha.placar2 : linha.placar1;
+      const deles = linha.meuTime === 2 ? linha.placar1 : linha.placar2;
+      return {
+        ...base,
+        modo: linha.tipo === 'desafio' ? 'Competitivo' : 'Mix',
+        mapa: linha.mapaDaPartida ? (nomeDoMapaConhecido(linha.mapaDaPartida) ?? nomeDoMapa(linha.mapaDaPartida)) : null,
+        placar: temPlacar ? `${meu} x ${deles}` : null,
+        mortes: linha.mortesNaPartida ?? linha.xp.mortes,
+      };
+    }
+    const porta = Number(linha.xp.referencia.split(':')[1]);
+    return {
+      ...base,
+      modo: modoDaPorta.get(porta) ?? 'Diversão',
+      mapa: linha.xp.mapa ? (nomeDoMapaConhecido(linha.xp.mapa) ?? linha.xp.mapa) : null,
+      placar: linha.xp.placar,
+      mortes: linha.xp.mortes,
+    };
+  });
 }
 
 export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogadorId: string, agora: Date = new Date()) {

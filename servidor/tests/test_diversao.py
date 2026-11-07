@@ -1267,3 +1267,12 @@ def test_alaska_tira_o_jogador_da_escada_falsa_das_portas():
     assert "MoveType_t.MOVETYPE_LADDER" in trecho
     assert "MoveType_t.MOVETYPE_WALK" in trecho
     assert '"m_MoveType"' in trecho
+
+
+def test_resultado_leva_mapa_placar_e_mortes_para_a_tabela_do_perfil():
+    assert "public int? mortes { get; init; }" in CODIGO_DO_PLUGIN
+    assert "doAlvo.Mortes++" in CODIGO_DO_PLUGIN
+    assert "mapa = Server.MapName" in CODIGO_DO_PLUGIN
+    assert "placar = PlacarDaPartida()" in CODIGO_DO_PLUGIN
+    # Equipe x Equipe sem rodadas soma os abates de cada time; nos modos de rodada vale o placar do jogo.
+    assert '"cs_team_manager"' in CODIGO_DO_PLUGIN

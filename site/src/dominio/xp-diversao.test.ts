@@ -254,3 +254,28 @@ test('a mesma partida em servidores diferentes conta separada', async () => {
   await enviar({ porta: CADA_UM, partida: 'partida-1', duracaoMinutos: 20, vencedor: null, jogadores: [{ steamid64: conta.steamid64, abates: 1, minutos: 20, ateOFim: true }] });
   expect(await bd.select().from(xpPartidas).where(eq(xpPartidas.usuarioId, conta.id))).toHaveLength(2);
 });
+
+test('o servidor pode mandar o mapa, o placar e as mortes; o placar fica do lado de cada um', async () => {
+  const ct = await membro();
+  const tr = await membro();
+  await enviar(resultado([jogador(ct, { mortes: 14 }), jogador(tr, { time: 'tr', mortes: 9 })], { mapa: 'egypt', placar: '95 x 80' }));
+  const [doCt] = await bd.select().from(xpPartidas).where(eq(xpPartidas.usuarioId, ct.id));
+  const [doTr] = await bd.select().from(xpPartidas).where(eq(xpPartidas.usuarioId, tr.id));
+  expect(doCt).toMatchObject({ mapa: 'egypt', placar: '95 x 80', mortes: 14 });
+  expect(doTr).toMatchObject({ mapa: 'egypt', placar: '80 x 95', mortes: 9 });
+});
+
+test('servidor antigo, sem mapa, placar e mortes, continua funcionando', async () => {
+  const conta = await membro();
+  await enviar(resultado([jogador(conta), jogador(await membro(), { time: 'tr' })]));
+  const [linha] = await bd.select().from(xpPartidas).where(eq(xpPartidas.usuarioId, conta.id));
+  expect(linha).toMatchObject({ mapa: null, placar: null, mortes: null });
+});
+
+test('mapa ou placar fora do formato são recusados', async () => {
+  const conta = await membro();
+  for (const dados of [{ mapa: 'egypt; drop' }, { placar: 'muito' }]) {
+    const resposta = await respostaDoResultado(bd, pedido(resultado([jogador(conta)], dados)), TOKEN);
+    expect(resposta.status).toBe(400);
+  }
+});

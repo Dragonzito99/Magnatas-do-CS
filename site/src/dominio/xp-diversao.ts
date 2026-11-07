@@ -19,6 +19,8 @@ const Jogador = z.object({
   minutos: z.number().min(0).max(PRAZO_MAXIMO_EM_MINUTOS),
   ateOFim: z.boolean(),
   time: z.enum(['ct', 'tr']).optional(),
+  // Opcional: o servidor antigo não manda, e a tabela do perfil mostra um traço.
+  mortes: z.number().int().min(0).max(100_000).optional(),
 });
 
 const Resultado = z.object({
@@ -27,7 +29,24 @@ const Resultado = z.object({
   duracaoMinutos: z.number().positive().max(PRAZO_MAXIMO_EM_MINUTOS),
   vencedor: z.enum(['ct', 'tr', 'empate']).nullable(),
   jogadores: z.array(Jogador).max(MAXIMO_DE_JOGADORES),
+  mapa: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,64}$/)
+    .optional(),
+  // Do lado do CT, como o placar do jogo: "CT x TR".
+  placar: z
+    .string()
+    .regex(/^\d{1,5} x \d{1,5}$/)
+    .optional(),
 });
+
+/** O placar chega do lado do CT; quem jogou de TR vê o próprio time primeiro. */
+function placarDoLado(placar: string | undefined, time: 'ct' | 'tr' | undefined): string | null {
+  if (!placar) return null;
+  if (time !== 'tr') return placar;
+  const [ct, tr] = placar.split(' x ');
+  return `${tr} x ${ct}`;
+}
 
 type ResultadoRecebido = z.infer<typeof Resultado>;
 type JogadorRecebido = z.infer<typeof Jogador>;
@@ -100,7 +119,20 @@ async function registrar(bd: Bd, recebido: ResultadoRecebido) {
       recebido.jogadores.flatMap((jogador) => {
         const usuarioId = porConta.get(jogador.steamid64);
         const decidida = decididas.get(jogador.steamid64);
-        return usuarioId && decidida ? [{ usuarioId, origem: 'diversao' as const, referencia, abates: jogador.abates, ...decidida }] : [];
+        return usuarioId && decidida
+          ? [
+              {
+                usuarioId,
+                origem: 'diversao' as const,
+                referencia,
+                abates: jogador.abates,
+                mortes: jogador.mortes ?? null,
+                mapa: recebido.mapa ?? null,
+                placar: placarDoLado(recebido.placar, jogador.time),
+                ...decidida,
+              },
+            ]
+          : [];
       }),
     );
 
