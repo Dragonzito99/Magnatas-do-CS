@@ -26,6 +26,11 @@ export default async function Equipe({ searchParams }: { searchParams: Promise<{
       <div className="topo-pagina">
         <h1>Equipe</h1>
         <span className="apoio">{membros.length} contas</span>
+        {pode(usuario, 'publicar_noticia') && (
+          <Link href="/equipe/noticias" className="botao ouro pequeno">
+            Notícias do clube
+          </Link>
+        )}
       </div>
       {erro && ERROS[erro] && (
         <p role="alert" className="aviso">

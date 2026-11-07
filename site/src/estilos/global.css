@@ -2159,3 +2159,41 @@ textarea {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
+
+/* Notícias do clube */
+.formulario-noticia {
+  padding: 4px 20px 20px;
+}
+
+.formulario-noticia textarea {
+  min-height: 160px;
+}
+
+.caixa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noticia-completa {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.noticia-completa h1 {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.noticia-completa p {
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.noticia-imagem {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}

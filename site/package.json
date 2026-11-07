@@ -11,7 +11,8 @@
     "db:gerar": "drizzle-kit generate",
     "db:migrar": "tsx scripts/migrar.ts",
     "adm:criar": "tsx scripts/criar-adm.ts",
-    "servidor:criar": "tsx scripts/criar-servidor.ts"
+    "servidor:criar": "tsx scripts/criar-servidor.ts",
+    "noticia:publicar": "tsx scripts/publicar-noticia.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
