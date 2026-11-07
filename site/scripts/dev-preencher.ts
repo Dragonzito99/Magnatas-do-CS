@@ -15,11 +15,11 @@ import { finalizarPartida } from '@/dominio/partidas';
 import { criarSala, entrarNaSala, minhaSala, TAMANHO_DA_SALA } from '@/dominio/salas';
 import { carregarAmbiente } from './ambiente';
 
-async function contaFicticia(bd: Bd): Promise<Usuario> {
+async function contaFicticia(bd: Bd, apelido?: string): Promise<Usuario> {
   const sufixo = String(randomInt(1e9)).padStart(9, '0');
   const [conta] = await bd
     .insert(usuarios)
-    .values({ steamid64: `76561190${sufixo}`, apelido: `ficticio_${sufixo.slice(-4)}`, estado: 'ativo' })
+    .values({ steamid64: `76561190${sufixo}`, apelido: apelido ?? `ficticio_${sufixo.slice(-4)}`, estado: 'ativo' })
     .returning();
   return conta;
 }
@@ -39,7 +39,8 @@ async function principal() {
     const [nome, texto] = resto;
     const quantas = Number(texto);
     if (!nome || !Number.isInteger(quantas) || quantas < 1 || quantas > 5) throw new Error('Informe o nome e de 1 a 5 contas.');
-    const sala = await criarSala(bd, await contaFicticia(bd), nome);
+    // A sala leva o nick do líder, então o líder fictício recebe o nome pedido.
+    const sala = await criarSala(bd, await contaFicticia(bd, nome));
     for (let i = 1; i < quantas; i += 1) await entrarNaSala(bd, await contaFicticia(bd), sala.id);
     console.log(`Sala ${nome} com ${quantas} contas fictícias.`);
   } else if (modo === 'completar' || modo === 'lider') {

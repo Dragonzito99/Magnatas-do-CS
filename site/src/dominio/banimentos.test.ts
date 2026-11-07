@@ -62,7 +62,7 @@ test('conta suspensa sai da fila do mix e da sala', async () => {
   const naFila = await criarUsuario(bd, { estado: 'ativo' });
   await entrarNoMix(bd, naFila);
   const lider = await criarUsuario(bd, { estado: 'ativo' });
-  const { id: salaId } = await criarSala(bd, lider, 'Sala');
+  const { id: salaId } = await criarSala(bd, lider);
   await entrarNaSala(bd, alvo, salaId);
 
   await suspender(bd, controladorFalso(), gm, naFila.id, 'x');
@@ -73,7 +73,7 @@ test('conta suspensa sai da fila do mix e da sala', async () => {
 
 test('líder suspenso passa a sala adiante', async () => {
   const membro = await criarUsuario(bd, { estado: 'ativo' });
-  const { id: salaId } = await criarSala(bd, alvo, 'Sala');
+  const { id: salaId } = await criarSala(bd, alvo);
   await entrarNaSala(bd, membro, salaId);
   await suspender(bd, controladorFalso(), gm, alvo.id, 'x');
   expect((await minhaSala(bd, membro.id))?.liderId).toBe(membro.id);

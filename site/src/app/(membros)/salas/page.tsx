@@ -3,14 +3,13 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { desafiosDaSala, type DesafioDaSala } from '@/dominio/desafios';
 import { partidaAtualDe } from '@/dominio/partidas';
-import { listarSalas, minhaSala, TAMANHO_DA_SALA, TAMANHO_MAXIMO_DO_NOME, type SalaComMembros } from '@/dominio/salas';
+import { listarSalas, minhaSala, TAMANHO_DA_SALA, type SalaComMembros } from '@/dominio/salas';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
 import { OnlineAgora } from '../online-agora';
 import { aceitar, cancelar, chamarParaDesafio, criar, entrar, expulsar, recusar, sair } from './acoes';
 
 const ERROS: Record<string, string> = {
-  nome: `O nome da sala precisa ter de 1 a ${TAMANHO_MAXIMO_DO_NOME} caracteres.`,
   cheia: 'Esta sala já está completa.',
   'em-partida': 'Esta sala está em partida.',
   inexistente: 'Esta sala não existe mais.',
@@ -151,7 +150,6 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
         <h1>Salas</h1>
         {!minha && !partida && (
           <form action={criar} className="formulario-linha">
-            <input name="nome" aria-label="Nome da sala" placeholder="Nome da sala" maxLength={TAMANHO_MAXIMO_DO_NOME} required />
             <button type="submit" className="botao ouro pequeno">
               Criar sala
             </button>

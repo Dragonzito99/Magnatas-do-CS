@@ -28,15 +28,8 @@ export class SalaInexistente extends Error {
 }
 
 export const TAMANHO_DA_SALA = 5;
-export const TAMANHO_MAXIMO_DO_NOME = 30;
 /** O dono pediu pouco tempo: ninguém fica esperando quem criou a sala e saiu do computador. */
 export const TEMPO_FORA_DO_SITE_NA_SALA_MS = 5 * 60_000;
-
-export class NomeDeSalaInvalido extends Error {
-  constructor() {
-    super(`O nome da sala precisa ter de 1 a ${TAMANHO_MAXIMO_DO_NOME} caracteres.`);
-  }
-}
 
 export type UsuarioPublico = Pick<Usuario, 'id' | 'apelido' | 'avatarUrl'>;
 export type SalaComMembros = Sala & { membros: UsuarioPublico[] };
@@ -46,15 +39,12 @@ async function travarSala(tx: Transacao, salaId: string): Promise<Sala | undefin
   return sala;
 }
 
-export async function criarSala(bd: Bd, ator: Pick<Usuario, 'id'>, nome: string): Promise<Sala> {
-  const nomeLimpo = nome.trim();
-  if (!nomeLimpo || nomeLimpo.length > TAMANHO_MAXIMO_DO_NOME) {
-    throw new NomeDeSalaInvalido();
-  }
+/** A sala não tem nome escolhido: leva o nick do líder (e, quando existir, o nome do clã). */
+export async function criarSala(bd: Bd, ator: Pick<Usuario, 'id'>): Promise<Sala> {
   return bd.transaction(async (tx) => {
-    await exigirAtivo(tx, ator);
+    const lider = await exigirAtivo(tx, ator);
     await exigirLivre(tx, ator.id);
-    const [sala] = await tx.insert(salas).values({ nome: nomeLimpo, liderId: ator.id }).returning();
+    const [sala] = await tx.insert(salas).values({ nome: lider.apelido, liderId: ator.id }).returning();
     await tx.insert(salaMembros).values({ salaId: sala.id, usuarioId: ator.id });
     return sala;
   });
@@ -92,7 +82,10 @@ export async function removerDaSala(tx: Transacao, sala: Sala, usuarioId: string
     .where(eq(salaMembros.salaId, sala.id))
     .orderBy(asc(salaMembros.entrouEm))
     .limit(1);
-  if (proximo) await tx.update(salas).set({ liderId: proximo.usuarioId }).where(eq(salas.id, sala.id));
+  if (proximo) {
+    const [novoLider] = await tx.select({ apelido: usuarios.apelido }).from(usuarios).where(eq(usuarios.id, proximo.usuarioId));
+    await tx.update(salas).set({ liderId: proximo.usuarioId, nome: novoLider.apelido }).where(eq(salas.id, sala.id));
+  }
   else await tx.delete(salas).where(eq(salas.id, sala.id));
 }
 

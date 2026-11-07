@@ -33,7 +33,7 @@ async function membrosDe(salaId: string): Promise<string[]> {
 
 async function salaCom(total: number): Promise<{ salaId: string; contas: Usuario[] }> {
   const lider = await membro();
-  const { id: salaId } = await criarSala(bd, lider, 'Sala');
+  const { id: salaId } = await criarSala(bd, lider);
   const contas = [lider];
   for (let i = 1; i < total; i += 1) {
     const conta = await membro();
@@ -43,24 +43,23 @@ async function salaCom(total: number): Promise<{ salaId: string; contas: Usuario
   return { salaId, contas };
 }
 
-test('quem cria a sala vira líder e primeiro membro', async () => {
-  const lider = await membro();
-  const sala = await criarSala(bd, lider, 'Os sem mira');
-  expect(sala).toMatchObject({ nome: 'Os sem mira', liderId: lider.id });
+test('quem cria a sala vira líder e primeiro membro, e a sala leva o nick dele', async () => {
+  const lider = await criarUsuario(bd, { estado: 'ativo', apelido: 'DraGonZit0' });
+  const sala = await criarSala(bd, lider);
+  expect(sala).toMatchObject({ nome: 'DraGonZit0', liderId: lider.id });
   expect(await membrosDe(sala.id)).toEqual([lider.id]);
 });
 
-test.each(['', '   ', 'x'.repeat(31)])('nome inválido é recusado: %j', async (nome) => {
-  await expect(criarSala(bd, await membro(), nome)).rejects.toThrow(/nome/i);
-});
-
-test('o nome é salvo sem espaços em volta', async () => {
-  expect((await criarSala(bd, await membro(), '  Time  ')).nome).toBe('Time');
+test('quando o líder sai, a sala passa a levar o nick do novo líder', async () => {
+  const { salaId, contas } = await salaCom(2);
+  await sairDaSala(bd, contas[0]);
+  const [sala] = await bd.select().from(salas).where(eq(salas.id, salaId));
+  expect(sala).toMatchObject({ liderId: contas[1].id, nome: contas[1].apelido });
 });
 
 test.each(['aguardando_verificacao', 'suspenso', 'banido'] as const)('conta %s não cria nem entra', async (estado) => {
   const conta = await criarUsuario(bd, { estado });
-  await expect(criarSala(bd, conta, 'Sala')).rejects.toThrow(ContaSemAcesso);
+  await expect(criarSala(bd, conta)).rejects.toThrow(ContaSemAcesso);
   const { salaId } = await salaCom(1);
   await expect(entrarNaSala(bd, conta, salaId)).rejects.toThrow(ContaSemAcesso);
 });
@@ -68,7 +67,7 @@ test.each(['aguardando_verificacao', 'suspenso', 'banido'] as const)('conta %s n
 test('estado é conferido no banco, não no objeto da sessão', async () => {
   const conta = await criarUsuario(bd, { estado: 'banido' });
   const daSessao: Usuario = { ...conta, estado: 'ativo' };
-  await expect(criarSala(bd, daSessao, 'Sala')).rejects.toThrow(ContaSemAcesso);
+  await expect(criarSala(bd, daSessao)).rejects.toThrow(ContaSemAcesso);
 });
 
 test('a sala aceita 5 pessoas e recusa a sexta com SalaCheia', async () => {
@@ -82,7 +81,7 @@ test('quem já está em sala não entra em outra nem cria outra', async () => {
   const { contas } = await salaCom(1);
   const { salaId: outra } = await salaCom(1);
   await expect(entrarNaSala(bd, contas[0], outra)).rejects.toThrow(JaOcupado);
-  await expect(criarSala(bd, contas[0], 'Outra')).rejects.toThrow(JaOcupado);
+  await expect(criarSala(bd, contas[0])).rejects.toThrow(JaOcupado);
 });
 
 test('entrar de novo na mesma sala é recusado', async () => {

@@ -359,7 +359,7 @@ test('sem pasta de gravações configurada, o resto continua', async () => {
 
 test('a varredura tira da sala quem fechou o site', async () => {
   const lider = await criarUsuario(bd, { estado: 'ativo' });
-  const { id: salaId } = await criarSala(bd, lider, 'Sumiu');
+  const { id: salaId } = await criarSala(bd, lider);
   await bd.update(usuarios).set({ vistoEm: new Date(AGORA.getTime() - TEMPO_FORA_DO_SITE_NA_SALA_MS - 1000) }).where(eq(usuarios.id, lider.id));
   await varrer(bd, controladorFalso(), pasta, AGORA);
   expect(await bd.select().from(salas).where(eq(salas.id, salaId))).toHaveLength(0);

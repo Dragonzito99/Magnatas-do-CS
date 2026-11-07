@@ -47,7 +47,7 @@ test('quem não está na fila sai sem erro', async () => {
 
 test('quem está em sala ou partida não entra (JaOcupado)', async () => {
   const naSala = await membro();
-  await criarSala(bd, naSala, 'Sala');
+  await criarSala(bd, naSala);
   await expect(entrarNoMix(bd, naSala)).rejects.toThrow(JaOcupado);
 
   const emPartida = await membro();
@@ -70,7 +70,7 @@ test('entrar duas vezes não duplica', async () => {
 
 test('dois pedidos juntos da mesma pessoa, sala e mix, deixam ela em um lugar só', async () => {
   const conta = await membro();
-  const { id: salaId } = await criarSala(bd, await membro(), 'Sala');
+  const { id: salaId } = await criarSala(bd, await membro());
   const resultados = await Promise.allSettled([entrarNoMix(bd, conta), entrarNaSala(bd, conta, salaId)]);
   expect(resultados.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
   const naFila = await bd.select().from(filaMix).where(eq(filaMix.usuarioId, conta.id));

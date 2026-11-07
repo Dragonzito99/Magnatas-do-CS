@@ -17,8 +17,8 @@ beforeEach(async () => {
 });
 
 async function salaCompleta(nome: string): Promise<{ id: string; lider: Usuario; outro: Usuario }> {
-  const lider = await criarUsuario(bd, { estado: 'ativo' });
-  const { id } = await criarSala(bd, lider, nome);
+  const lider = await criarUsuario(bd, { estado: 'ativo', apelido: nome });
+  const { id } = await criarSala(bd, lider);
   let outro = lider;
   for (let i = 1; i < 5; i += 1) {
     outro = await criarUsuario(bd, { estado: 'ativo' });

@@ -12,7 +12,6 @@ import {
   criarSala,
   entrarNaSala,
   expulsarDaSala,
-  NomeDeSalaInvalido,
   SalaCheia,
   SalaEmPartida,
   SalaInexistente,
@@ -22,7 +21,6 @@ import {
 import { alocarEmSegundoPlano } from '@/servidor-jogo/alocar';
 
 function codigoDoErro(erro: unknown): string | null {
-  if (erro instanceof NomeDeSalaInvalido) return 'nome';
   if (erro instanceof SalaCheia) return 'cheia';
   if (erro instanceof SalaEmPartida) return 'em-partida';
   if (erro instanceof SalaInexistente) return 'inexistente';
@@ -51,8 +49,8 @@ function idDe(dados: FormData, campo: string): string {
   return lido.data;
 }
 
-export async function criar(dados: FormData) {
-  await executar((ator) => criarSala(obterBd(), ator, String(dados.get('nome') ?? '')));
+export async function criar() {
+  await executar((ator) => criarSala(obterBd(), ator));
   revalidatePath('/salas');
 }
 

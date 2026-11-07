@@ -25,7 +25,7 @@ const membro = () => criarUsuario(bd, { estado: 'ativo' });
 
 async function salaCom(total = 5): Promise<{ id: string; contas: Usuario[] }> {
   const lider = await membro();
-  const { id } = await criarSala(bd, lider, 'Sala');
+  const { id } = await criarSala(bd, lider);
   const contas = [lider];
   for (let i = 1; i < total; i += 1) {
     const conta = await membro();
@@ -181,7 +181,7 @@ test('desafiosDaSala mostra só os pendentes e dentro do prazo, com os nomes', a
   const desafio = await desafiar(bd, a.contas[0], b.id, AGORA);
   const lista = await desafiosDaSala(bd, b.id, AGORA);
   expect(lista).toHaveLength(1);
-  expect(lista[0]).toMatchObject({ id: desafio.id, recebido: true, outraSalaNome: 'Sala' });
+  expect(lista[0]).toMatchObject({ id: desafio.id, recebido: true, outraSalaNome: a.contas[0].apelido });
   expect((await desafiosDaSala(bd, a.id, AGORA))[0].recebido).toBe(false);
   expect(await desafiosDaSala(bd, a.id, new Date(AGORA.getTime() + 61_000))).toEqual([]);
 });
