@@ -133,7 +133,8 @@ test('sementes diferentes geram times diferentes', async () => {
   const [um, outroUm, dois] = [await time1ComSemente(1), await time1ComSemente(1), await time1ComSemente(2)];
   expect(um).toEqual(outroUm);
   expect(um).not.toEqual(dois);
-});
+  // Monta dois bancos inteiros: com a suíte toda rodando junto, passa dos 20 s padrão.
+}, 60_000);
 
 test('conta suspensa enquanto estava na fila não entra na partida e deixa a vaga para o próximo', async () => {
   const contas = await encherFila(9);
