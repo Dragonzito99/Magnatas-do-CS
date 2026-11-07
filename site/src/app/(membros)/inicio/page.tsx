@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
@@ -20,6 +21,10 @@ function chamada(texto: string): string {
   const primeiro = texto.split(/\n\s*\n/)[0];
   return primeiro.length > 180 ? `${primeiro.slice(0, 177)}...` : primeiro;
 }
+
+// Notícia sem foto ganha a de um mapa, para o cartão nunca ficar vazio.
+const FOTOS_DE_RESERVA = ['/mapas/egypt.webp', '/mapas/mirage.webp', '/mapas/laboratory.webp', '/mapas/dust2.webp', '/mapas/biochemical-hotel.webp'];
+const fotoDaNoticia = (imagem: string | null, indice: number) => imagem ?? FOTOS_DE_RESERVA[indice % FOTOS_DE_RESERVA.length];
 
 function Mvp({ titulo, linha, vazio }: { titulo: string; linha?: LinhaDeMvp; vazio: string }) {
   return (
@@ -54,59 +59,102 @@ export default async function Inicio() {
     noticiasSteamDaTela(bd, 4),
     tierSDaTela(bd),
   ]);
+  const jogando = bombando.cartoes.reduce((total, cartao) => total + cartao.jogando, 0);
+  const destaque = noticias[0];
 
   return (
     <>
       <Atualizar segundos={30} />
-      <section className="painel bombando">
-        <div className="cabeca-painel">
-          <h2>🔥 Bombando agora</h2>
-          {bombando.aoVivo.length > 0 && <span>{bombando.aoVivo.length === 1 ? '1 partida ao vivo' : `${bombando.aoVivo.length} partidas ao vivo`}</span>}
+      <section className="capa-inicio">
+        <Image className="capa-personagem esquerda" src="/marca/personagem.webp" alt="" width={756} height={800} priority />
+        <Image className="capa-personagem direita" src="/marca/personagem.webp" alt="" width={756} height={800} priority />
+        <div className="capa-centro">
+          <Image className="capa-logo" src="/marca/logo.webp" alt="Magnatas do CS" width={1000} height={334} priority />
+          <p className="capa-frase">
+            Jogue <b>·</b> Vença <b>·</b> Faça parte
+          </p>
+          <Link href="/jogar" className="botao-capa">
+            JOGAR AGORA
+            <small>
+              {jogando === 0 ? 'Ninguém jogando agora: abra uma sala' : `${jogando} ${jogando === 1 ? 'pessoa jogando' : 'pessoas jogando'} agora`}
+            </small>
+          </Link>
         </div>
-        {bombando.cartoes.length === 0 ? (
-          <div className="bombando-vazio">
-            <p className="apoio">Ninguém jogando agora. Que tal abrir uma sala?</p>
-            <Link href="/jogar" className="botao ouro pequeno">
-              Abrir uma sala
-            </Link>
-          </div>
+      </section>
+
+      <section className="destaques-inicio">
+        {destaque ? (
+          <Link href={`/noticias/${destaque.id}`} className="cartao-destaque grande">
+            <Image src={fotoDaNoticia(destaque.imagem, 0)} alt="" width={960} height={540} />
+            <span className="selo-modo ouro">{destaque.fixada ? 'Fixada' : 'Notícia do clube'}</span>
+            <h2>{destaque.titulo}</h2>
+            <p>{chamada(destaque.texto)}</p>
+          </Link>
         ) : (
-          <div className="cartoes-bombando">
-            {bombando.cartoes.map((cartao) => (
-              <div className="cartao-bombando" key={`${cartao.tipo}-${cartao.titulo}-${cartao.href}`}>
-                <b>{cartao.titulo}</b>
-                <span className="apoio">{cartao.ocupacao}</span>
-                <a className="botao ouro pequeno" href={cartao.href}>
-                  Entrar
-                </a>
-              </div>
-            ))}
+          <div className="cartao-destaque grande sem-foto">
+            <span className="selo-modo ouro">Notícias do clube</span>
+            <h2>Nenhuma notícia ainda</h2>
           </div>
         )}
-        {bombando.aoVivo.length > 0 && (
-          <div className="ao-vivo-agora">
-            {bombando.aoVivo.map((partida) => (
-              <Link href={`/partidas/${partida.id}`} className="linha" key={partida.id}>
-                <span>
-                  <b>{nomeDaPartida(partida)}</b> <small>{nomeDoMapa(partida.mapa)}</small>
-                </span>
-                <span className="mono">
-                  {partida.placar1} x {partida.placar2}
-                </span>
-              </Link>
-            ))}
+        {bombando.cartoes[0] ? (
+          <a href={bombando.cartoes[0].href} className="cartao-destaque">
+            <Image src={bombando.cartoes[0].tipo === 'diversao' ? '/mapas/laboratory.webp' : '/mapas/dust2.webp'} alt="" width={480} height={540} />
+            <span className="selo-modo verde">Bombando agora</span>
+            <h2>{bombando.cartoes[0].titulo}</h2>
+            <p>{bombando.cartoes[0].ocupacao} · clique para entrar</p>
+          </a>
+        ) : (
+          <Link href="/jogar" className="cartao-destaque sem-foto">
+            <span className="selo-modo verde">Bombando agora</span>
+            <h2>Ninguém jogando</h2>
+            <p>Que tal abrir uma sala?</p>
+          </Link>
+        )}
+        {mvpsDoDia[0] ? (
+          <Link href={`/jogadores/${mvpsDoDia[0].id}`} className="cartao-destaque">
+            <Image src="/mapas/mirage.webp" alt="" width={480} height={540} />
+            <span className="selo-modo ouro">MVP do dia</span>
+            <h2>{mvpsDoDia[0].apelido}</h2>
+            <p>
+              {mvpsDoDia[0].mvps} {mvpsDoDia[0].mvps === 1 ? 'estrela' : 'estrelas'} hoje
+            </p>
+          </Link>
+        ) : (
+          <div className="cartao-destaque sem-foto">
+            <span className="selo-modo ouro">MVP do dia</span>
+            <h2>Ninguém ainda</h2>
+            <p>A primeira estrela do dia está esperando você.</p>
           </div>
         )}
       </section>
+
+      {bombando.aoVivo.length > 0 && (
+        <section className="painel">
+          <div className="cabeca-painel">
+            <h2>Ao vivo agora</h2>
+            <span>{bombando.aoVivo.length === 1 ? '1 partida' : `${bombando.aoVivo.length} partidas`}</span>
+          </div>
+          {bombando.aoVivo.map((partida) => (
+            <Link href={`/partidas/${partida.id}`} className="linha" key={partida.id}>
+              <span>
+                <b>{nomeDaPartida(partida)}</b> <small>{nomeDoMapa(partida.mapa)}</small>
+              </span>
+              <span className="mono">
+                {partida.placar1} x {partida.placar2}
+              </span>
+            </Link>
+          ))}
+        </section>
+      )}
 
       <div className="grade grade-inicio">
         <section className="painel">
           <div className="cabeca-painel">
             <h2>Notícias do clube</h2>
           </div>
-          {noticias.length === 0 && <p className="vazio">Nenhuma notícia ainda.</p>}
-          {noticias.map((noticia, indice) => (
-            <Link href={`/noticias/${noticia.id}`} className={`noticia-da-lista${indice === 0 ? ' destaque' : ''}`} key={noticia.id}>
+          {noticias.length <= 1 && <p className="vazio">As outras notícias aparecem aqui.</p>}
+          {noticias.slice(1).map((noticia) => (
+            <Link href={`/noticias/${noticia.id}`} className="noticia-da-lista" key={noticia.id}>
               <small>
                 {noticia.fixada && '📌 '}
                 {noticia.autorApelido}, {dataCurta.format(noticia.criadoEm)}
