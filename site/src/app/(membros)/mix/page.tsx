@@ -45,7 +45,7 @@ export default async function Mix({ searchParams }: { searchParams: Promise<{ er
                 Sair do mix
               </button>
             </form>
-          ) : (
+          ) : faltas.bloqueadoAte ? null : (
             <form action={entrar}>
               <button type="submit" className="botao ouro pequeno">
                 Entrar no mix

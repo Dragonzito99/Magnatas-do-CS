@@ -142,3 +142,10 @@ test('só aceita links da própria wiki do CS na Liquipedia', () => {
   const jogos = `<div class="match-info"><div class="match-info-header-opponent"><span class="name">FURIA</span></div><div class="match-info-header-opponent"><span class="name">NAVI</span></div><div class="match-info-tournament"><a href="//outro.site/x">T</a></div></div>`;
   expect(lerJogos(jogos)).toEqual([]);
 });
+
+test('a rodada agendada de 10 em 10 minutos não é pulada por alguns segundos de diferença', async () => {
+  const { pedir, pedidos } = pedidoFalso([amostraDeTorneios, amostraDeJogos, amostraDeTorneios, amostraDeJogos]);
+  await atualizarTierS(bd, pedir, AGORA);
+  await atualizarTierS(bd, pedir, new Date(AGORA.getTime() + 9 * 60_000 + 45_000));
+  expect(pedidos).toHaveLength(4);
+});

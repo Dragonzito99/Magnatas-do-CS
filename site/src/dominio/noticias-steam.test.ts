@@ -104,3 +104,9 @@ test('falha passageira (chave, crédito, limite, fora do ar) não gasta tentativ
   await atualizarNoticiasSteam(bd, buscar, tradutorFalso, minutos(200));
   expect((await noticiasSteamDaTela(bd, 1))[0].titulo).toMatch(/^PT: /);
 });
+
+test('a rodada agendada de 30 em 30 minutos não é pulada por alguns segundos de diferença', async () => {
+  await atualizarNoticiasSteam(bd, buscar, null, AGORA);
+  await atualizarNoticiasSteam(bd, buscar, null, new Date(AGORA.getTime() + 29 * 60_000 + 45_000));
+  expect(buscas).toHaveLength(2);
+});

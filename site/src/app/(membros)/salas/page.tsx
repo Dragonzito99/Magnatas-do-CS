@@ -213,7 +213,7 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
       <AvisoDeBloqueio situacao={faltas} />
       <div className="topo-pagina">
         <h1>Salas</h1>
-        {!minha && !partida && (
+        {!minha && !partida && !faltas.bloqueadoAte && (
           <form action={criar} className="formulario-linha">
             <button type="submit" className="botao ouro pequeno">
               Criar sala

@@ -9,6 +9,8 @@ export const TIMES_BRASILEIROS = ['FURIA', 'MIBR', 'paiN', 'Imperial', 'Legacy',
 export const ENDERECO_DA_LIQUIPEDIA = 'https://liquipedia.net';
 const CHAVE_DO_CACHE = 'tier-s';
 const INTERVALO_MS = 10 * 60_000;
+// A rodada agendada chega alguns segundos antes ou depois: a folga evita pular uma rodada inteira por isso.
+const FOLGA_MS = 30_000;
 const DIAS_PARA_O_PROXIMO = 7;
 
 export type TorneioSTier = { nome: string; pagina: string; inicio: string; fim: string; premiacao: string | null; situacao: 'andamento' | 'em_breve' };
@@ -118,7 +120,7 @@ const RespostaDoParse = z.object({ parse: z.object({ text: z.string() }) });
 /** Roda no servidor de tempos em tempos. Nunca lança; em falha, o último dado bom continua na tela. */
 export async function atualizarTierS(bd: Bd, pedir: (parametros: Record<string, string>) => Promise<unknown>, agora: Date = new Date()): Promise<void> {
   const [guardado] = await bd.select().from(cacheExterno).where(eq(cacheExterno.chave, CHAVE_DO_CACHE));
-  if (guardado && agora.getTime() - guardado.atualizadoEm.getTime() < INTERVALO_MS) return;
+  if (guardado && agora.getTime() - guardado.atualizadoEm.getTime() < INTERVALO_MS - FOLGA_MS) return;
   try {
     const pagina = (page: string) => pedir({ action: 'parse', page, prop: 'text', format: 'json', formatversion: '2' });
     const torneiosLidos = RespostaDoParse.safeParse(await pagina('S-Tier_Tournaments'));

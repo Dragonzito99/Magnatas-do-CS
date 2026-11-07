@@ -7,6 +7,8 @@ import { cacheExterno, noticiasSteam } from '@/bd/esquema';
 export const URL_DAS_NOTICIAS_STEAM =
   'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=730&count=10&maxlength=0&feeds=steam_community_announcements&format=json';
 const INTERVALO_DA_BUSCA_MS = 30 * 60_000;
+// A rodada agendada chega alguns segundos antes ou depois: a folga evita pular uma rodada inteira por isso.
+const FOLGA_MS = 30_000;
 const MAXIMO_DE_TENTATIVAS = 3;
 const TAMANHO_DO_CONTEUDO = 4000;
 const CHAVE_DA_ULTIMA_BUSCA = 'steam:ultima-busca';
@@ -38,7 +40,7 @@ export function limparConteudo(bruto: string): string {
 
 async function buscaRecente(bd: Bd, agora: Date): Promise<boolean> {
   const [linha] = await bd.select().from(cacheExterno).where(eq(cacheExterno.chave, CHAVE_DA_ULTIMA_BUSCA));
-  return !!linha && agora.getTime() - linha.atualizadoEm.getTime() < INTERVALO_DA_BUSCA_MS;
+  return !!linha && agora.getTime() - linha.atualizadoEm.getTime() < INTERVALO_DA_BUSCA_MS - FOLGA_MS;
 }
 
 async function marcarBusca(bd: Bd, agora: Date): Promise<void> {

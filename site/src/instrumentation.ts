@@ -53,8 +53,11 @@ export async function register() {
         rodando = false;
       }
     };
-    setTimeout(rodar, 30_000);
-    setInterval(rodar, intervaloMs);
+    // A primeira rodada 30 s depois de o site subir, e as próximas contadas a partir dela.
+    setTimeout(() => {
+      void rodar();
+      setInterval(rodar, intervaloMs);
+    }, 30_000);
   };
   repetir('notícias da Steam', INTERVALO_DA_STEAM_MS, () => atualizarNoticiasSteam(obterBd(), buscarJson, tradutor));
   if (liquipedia) repetir('Tier S', INTERVALO_DO_TIER_S_MS, () => atualizarTierS(obterBd(), liquipedia));
