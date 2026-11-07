@@ -11,6 +11,7 @@ import { fiscalizarDiversao } from './diversao';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
 import { fecharSalasAbandonadas } from './salas';
+import { resolverVetosVencidos } from './vetos';
 
 const MINUTO_MS = 60_000;
 const LIMITE_CARREGANDO_MS = 2 * MINUTO_MS;
@@ -203,6 +204,7 @@ export async function varrer(
     () => reabrirCarregamentosPresos(bd, agora),
     () => cancelarPartidasAbandonadas(bd, controlador, agora),
     () => resolverAceitesVencidos(bd, agora),
+    () => resolverVetosVencidos(bd, agora),
     () => alocarServidores(bd, controlador, agora),
     () => expulsarPunidos(bd, controlador),
     // Vem antes de apagar, porque a denúncia nova protege a gravação da partida.
