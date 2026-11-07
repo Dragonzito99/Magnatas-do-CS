@@ -83,7 +83,7 @@ export function Menu({ mostrarEquipe, casos }: { mostrarEquipe: boolean; casos: 
 
   return (
     <nav className="menu" aria-label="Áreas">
-      <Link href="/salas" className="item-menu casa">
+      <Link href="/inicio" className="item-menu casa" aria-current={caminho === '/inicio' ? 'page' : undefined}>
         <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />
         </svg>

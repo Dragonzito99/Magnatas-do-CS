@@ -22,7 +22,7 @@ export function Banner({ usuario, patente, discord, sino }: { usuario: UsuarioPu
     <header className="banner">
       <div className="banner-arte">
         <Image className="banner-personagem" src="/marca/personagem.webp" alt="" width={756} height={800} priority />
-        <Link href="/salas" className="banner-logo">
+        <Link href="/inicio" className="banner-logo">
           <Image className="logo-grande" src="/marca/logo.webp" alt="Magnatas do CS" width={1000} height={334} priority />
         </Link>
         <p className="banner-frase">

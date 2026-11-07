@@ -11,7 +11,7 @@ export function destinoPara(usuario: Pick<Usuario, 'estado' | 'papel'> | null, c
   if (usuario.estado === 'suspenso') return dentro('/suspenso') ? null : '/suspenso';
   if (usuario.estado === 'aguardando_verificacao') return dentro('/verificacao') ? null : '/verificacao';
 
-  if (caminho === '/' || dentro('/verificacao') || dentro('/banido') || dentro('/suspenso')) return '/salas';
-  if (usuario.papel === 'jogador' && SO_EQUIPE.some(dentro)) return '/salas';
+  if (caminho === '/' || dentro('/verificacao') || dentro('/banido') || dentro('/suspenso')) return '/inicio';
+  if (usuario.papel === 'jogador' && SO_EQUIPE.some(dentro)) return '/inicio';
   return null;
 }
