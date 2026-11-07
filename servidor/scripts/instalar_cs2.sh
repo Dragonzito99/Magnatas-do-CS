@@ -50,11 +50,22 @@ como_cs2 "$STEAMCMD/steamcmd.sh" +force_install_dir "$SERVIDOR" +login anonymous
 
 como_cs2 ln -sf "$STEAMCMD/linux64/steamclient.so" "$CASA/.steam/sdk64/steamclient.so"
 
-install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$ORIGEM/scripts/conferir_cs2.sh" "$ORIGEM/scripts/atualizar_lista.sh" "$ORIGEM/scripts/iniciar_diversao.sh" "$CASA/bin/"
+install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$ORIGEM/scripts/conferir_cs2.sh" "$ORIGEM/scripts/atualizar_lista.sh" "$ORIGEM/scripts/iniciar_diversao.sh" "$ORIGEM/scripts/ligar_diversao.sh" "$ORIGEM/scripts/desligar_diversao.sh" "$CASA/bin/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$CASA/bin/"
 runuser -u "$USUARIO" -- mkdir -p "$CASA/bin/diversao"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM"/config/diversao/* "$CASA/bin/diversao/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/config/server.cfg" "$SERVIDOR/game/csgo/cfg/server.cfg"
+
+# O site (usuário magnatas) liga e desliga os servidores da Diversão só por estes dois scripts.
+# Um sudoers com erro trava o sudo da máquina inteira, então a regra só entra depois de conferida.
+REGRA=$(mktemp)
+cp "$ORIGEM/config/sudoers-magnatas-diversao" "$REGRA"
+if visudo -cf "$REGRA" >/dev/null; then
+  install -o root -g root -m 440 "$REGRA" /etc/sudoers.d/magnatas-diversao
+else
+  echo "A regra do sudoers da Diversão tem erro; não foi instalada." >&2
+fi
+rm -f "$REGRA"
 
 # O plugin dos servidores da Diversão só compila com o CounterStrikeSharp instalado.
 if [ -f "$SERVIDOR/game/csgo/addons/counterstrikesharp/api/CounterStrikeSharp.API.dll" ]; then

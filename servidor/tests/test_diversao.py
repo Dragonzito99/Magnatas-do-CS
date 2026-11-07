@@ -1088,3 +1088,46 @@ def test_o_plugin_lembra_o_mapa_atual_depois_de_recarregar():
     assert "mapas.Contains(" in lembrar
     trocar = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void TrocarDeMapa"):]
     assert "GuardarMapaAtual(" in trocar[:trocar.index("host_workshop_map")]
+
+
+LIGAR = RAIZ / "scripts" / "ligar_diversao.sh"
+DESLIGAR = RAIZ / "scripts" / "desligar_diversao.sh"
+SUDOERS = RAIZ / "config" / "sudoers-magnatas-diversao"
+
+
+@pytest.mark.parametrize("script", [LIGAR, DESLIGAR], ids=["ligar", "desligar"])
+def test_scripts_do_site_conferem_usuario_nome_e_conf_antes_de_tudo(script):
+    texto = script.read_text(encoding="utf-8")
+    assert texto.startswith("#!/usr/bin/env bash\n")
+    assert "set -euo pipefail" in texto
+    assert '"$(id -un)" != "cs2"' in texto
+    assert "^[a-z0-9-]{1,32}$" in texto
+    assert '[ ! -f "/home/cs2/bin/diversao/$NOME.conf" ]' in texto
+    # As conferências vêm antes de qualquer comando que mexe no servidor.
+    primeira_acao = min(texto.index(c) for c in ("tmux kill-session", "iniciar_diversao.sh \"$NOME\"") if c in texto)
+    assert texto.index("^[a-z0-9-]{1,32}$") < primeira_acao
+    assert texto.index(".conf\" ]") < primeira_acao
+
+
+def test_ligar_nao_liga_duas_vezes_e_chama_o_iniciar():
+    texto = LIGAR.read_text(encoding="utf-8")
+    assert 'tmux has-session -t "diversao-$NOME"' in texto
+    assert 'bash /home/cs2/bin/iniciar_diversao.sh "$NOME"' in texto
+
+
+def test_desligar_fecha_so_a_sessao_do_modo_e_sem_sessao_sai_bem():
+    texto = DESLIGAR.read_text(encoding="utf-8")
+    assert 'tmux kill-session -t "diversao-$NOME"' in texto
+    assert 'tmux has-session -t "diversao-$NOME"' in texto
+
+
+def test_sudoers_deixa_o_site_rodar_so_os_dois_scripts_como_cs2():
+    linhas = [linha for linha in SUDOERS.read_text(encoding="utf-8").splitlines() if linha.strip() and not linha.startswith("#")]
+    assert linhas == ["magnatas ALL=(cs2) NOPASSWD: /home/cs2/bin/ligar_diversao.sh, /home/cs2/bin/desligar_diversao.sh"]
+
+
+def test_instalador_poe_os_scripts_e_valida_o_sudoers_antes_de_instalar():
+    assert "ligar_diversao.sh" in INSTALADOR and "desligar_diversao.sh" in INSTALADOR
+    assert "visudo -cf" in INSTALADOR
+    assert "/etc/sudoers.d/magnatas-diversao" in INSTALADOR
+    assert INSTALADOR.index("visudo -cf") < INSTALADOR.index("/etc/sudoers.d/magnatas-diversao")

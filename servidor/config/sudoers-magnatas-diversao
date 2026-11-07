@@ -1,0 +1,2 @@
+# O site roda como magnatas e os servidores como cs2: o site só pode ligar e desligar a Diversão, por estes dois scripts.
+magnatas ALL=(cs2) NOPASSWD: /home/cs2/bin/ligar_diversao.sh, /home/cs2/bin/desligar_diversao.sh
