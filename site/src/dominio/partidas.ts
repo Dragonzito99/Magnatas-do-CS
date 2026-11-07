@@ -3,6 +3,7 @@ import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
 import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, xpPartidas, type Papel, type Partida, type Servidor } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
+import { PRAZO_DO_ACEITE_MS } from './aceites';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 import { lancarXp } from './xp';
 
@@ -13,15 +14,26 @@ const MAIOR_NUMERO_DE_PARTIDA = 2_147_483_647;
 const ESPERA_DA_GRAVACAO_NO_SERVIDOR_MS = 5 * 60_000;
 const RODADAS_PERDOADAS_POR_QUEDA = 2;
 
+/**
+ * Sem mapa, a partida nasce esperando os 10 aceitarem em 30 segundos; o mapa vem dos vetos ou do sorteio.
+ * Com mapa, nasce pronta para o servidor: é o caminho dos testes e de uma partida montada pela equipe.
+ */
 export async function criarPartida(
   tx: Transacao,
-  dados: { tipo: Partida['tipo']; time1: string[]; time2: string[]; mapa?: string },
+  dados: { tipo: Partida['tipo']; time1: string[]; time2: string[]; mapa?: string; agora?: Date; filaDoMix?: Map<string, Date> },
 ): Promise<Partida> {
-  const mapa = dados.mapa ?? MAPAS[Math.floor(Math.random() * MAPAS.length)];
-  const [partida] = await tx.insert(partidas).values({ tipo: dados.tipo, mapa }).returning();
+  const agora = dados.agora ?? new Date();
+  const [partida] = await tx
+    .insert(partidas)
+    .values(
+      dados.mapa
+        ? { tipo: dados.tipo, mapa: dados.mapa, criadoEm: agora, estadoDesde: agora }
+        : { tipo: dados.tipo, mapa: null, estado: 'aguardando_aceite', aceiteAte: new Date(agora.getTime() + PRAZO_DO_ACEITE_MS), criadoEm: agora, estadoDesde: agora },
+    )
+    .returning();
   const jogadores = [
-    ...dados.time1.map((usuarioId) => ({ partidaId: partida.id, usuarioId, time: 1 })),
-    ...dados.time2.map((usuarioId) => ({ partidaId: partida.id, usuarioId, time: 2 })),
+    ...dados.time1.map((usuarioId) => ({ partidaId: partida.id, usuarioId, time: 1, entrouNaFilaEm: dados.filaDoMix?.get(usuarioId) ?? null })),
+    ...dados.time2.map((usuarioId) => ({ partidaId: partida.id, usuarioId, time: 2, entrouNaFilaEm: dados.filaDoMix?.get(usuarioId) ?? null })),
   ];
   await tx.insert(partidaJogadores).values(jogadores);
   return partida;

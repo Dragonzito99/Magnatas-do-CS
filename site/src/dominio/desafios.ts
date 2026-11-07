@@ -117,7 +117,7 @@ export async function aceitarDesafio(
 
     const time1 = await exigirCompleta(tx, desafio.salaOrigemId);
     const time2 = await exigirCompleta(tx, desafio.salaAlvoId);
-    const partida = await criarPartida(tx, { tipo: 'desafio', time1, time2 });
+    const partida = await criarPartida(tx, { tipo: 'desafio', time1, time2, agora });
     await tx.update(salas).set({ partidaId: partida.id }).where(inArray(salas.id, ids));
     return partida;
   });

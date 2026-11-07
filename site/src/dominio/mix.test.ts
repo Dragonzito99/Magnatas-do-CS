@@ -85,7 +85,7 @@ test('o décimo fecha o mix: cria a partida, esvazia a fila e sorteia dois times
   const { partidaId } = await entrarNoMix(bd, ultimo);
   expect(partidaId).toBeDefined();
   const [partida] = await bd.select().from(partidas);
-  expect(partida).toMatchObject({ id: partidaId, tipo: 'mix', estado: 'aguardando_servidor' });
+  expect(partida).toMatchObject({ id: partidaId, tipo: 'mix', estado: 'aguardando_aceite' });
   const jogadores = await bd.select().from(partidaJogadores).where(eq(partidaJogadores.partidaId, partida.id));
   expect(jogadores.filter((j) => j.time === 1)).toHaveLength(5);
   expect(jogadores.filter((j) => j.time === 2)).toHaveLength(5);

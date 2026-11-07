@@ -33,7 +33,8 @@ async function contas(total: number): Promise<Usuario[]> {
   return lista;
 }
 
-async function novaPartida(mapa?: string): Promise<{ partida: Partida; time1: Usuario[]; time2: Usuario[] }> {
+// Com mapa a partida nasce pronta para o servidor: o aceite e os vetos têm testes próprios.
+async function novaPartida(mapa: string = 'de_mirage'): Promise<{ partida: Partida; time1: Usuario[]; time2: Usuario[] }> {
   const [time1, time2] = [await contas(5), await contas(5)];
   const partida = await bd.transaction((tx) =>
     criarPartida(tx, { tipo: 'mix', time1: time1.map((c) => c.id), time2: time2.map((c) => c.id), mapa }),
@@ -51,7 +52,7 @@ async function recarregarServidor(id: string) {
   return linha;
 }
 
-test('partida nasce aguardando servidor, com 5 jogadores em cada time e mapa do conjunto', async () => {
+test('partida com mapa nasce aguardando servidor, com 5 jogadores em cada time', async () => {
   const { partida } = await novaPartida();
   expect(partida.estado).toBe('aguardando_servidor');
   expect(MAPAS).toContain(partida.mapa);

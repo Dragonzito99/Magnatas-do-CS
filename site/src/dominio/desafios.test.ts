@@ -94,7 +94,7 @@ test('aceitar cria a partida com as duas salas como times, e as salas ficam em p
   const [a, b] = [await salaCom(), await salaCom()];
   const desafio = await desafiar(bd, a.contas[0], b.id, AGORA);
   const partida = await aceitarDesafio(bd, b.contas[0], desafio.id, AGORA);
-  expect(partida).toMatchObject({ tipo: 'desafio', estado: 'aguardando_servidor' });
+  expect(partida).toMatchObject({ tipo: 'desafio', estado: 'aguardando_aceite' });
   const jogadores = await bd.select().from(partidaJogadores).where(eq(partidaJogadores.partidaId, partida.id));
   expect(jogadores.filter((j) => j.time === 1).map((j) => j.usuarioId).sort()).toEqual(a.contas.map((c) => c.id).sort());
   expect(jogadores.filter((j) => j.time === 2).map((j) => j.usuarioId).sort()).toEqual(b.contas.map((c) => c.id).sort());

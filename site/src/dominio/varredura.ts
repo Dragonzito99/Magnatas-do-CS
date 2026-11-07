@@ -5,6 +5,7 @@ import type { Bd } from '@/bd/conexao';
 import { banimentos, denuncias, desafios, gravacoes, partidaJogadores, partidas, servidores, usuarios, type Partida, type Usuario } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { converterChamadosSemResposta } from './denuncias';
+import { resolverAceitesVencidos } from './aceites';
 import { ESTADOS_ATIVOS_DE_PARTIDA } from './disponibilidade';
 import { fiscalizarDiversao } from './diversao';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
@@ -201,6 +202,7 @@ export async function varrer(
     () => expirarDesafios(bd, agora),
     () => reabrirCarregamentosPresos(bd, agora),
     () => cancelarPartidasAbandonadas(bd, controlador, agora),
+    () => resolverAceitesVencidos(bd, agora),
     () => alocarServidores(bd, controlador, agora),
     () => expulsarPunidos(bd, controlador),
     // Vem antes de apagar, porque a denúncia nova protege a gravação da partida.

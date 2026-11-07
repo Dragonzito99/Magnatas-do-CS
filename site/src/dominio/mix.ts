@@ -37,11 +37,12 @@ export async function entrarNoMix(
     await exigirAtivo(tx, ator);
     const [jaNaFila] = await tx.select().from(filaMix).where(eq(filaMix.usuarioId, ator.id));
     if (jaNaFila) return {};
-    await exigirLivre(tx, ator.id, opcoes.agora ?? new Date());
-    await tx.insert(filaMix).values({ usuarioId: ator.id });
+    const agora = opcoes.agora ?? new Date();
+    await exigirLivre(tx, ator.id, agora);
+    await tx.insert(filaMix).values({ usuarioId: ator.id, entrouEm: agora });
 
     const fila = await tx
-      .select({ id: usuarios.id, estado: usuarios.estado })
+      .select({ id: usuarios.id, estado: usuarios.estado, entrouEm: filaMix.entrouEm })
       .from(filaMix)
       .innerJoin(usuarios, eq(filaMix.usuarioId, usuarios.id))
       .orderBy(asc(filaMix.entrouEm), asc(filaMix.usuarioId));
@@ -55,10 +56,14 @@ export async function entrarNoMix(
     const jogadores = ativos.slice(0, TOTAL_DO_MIX);
     await tx.delete(filaMix).where(inArray(filaMix.usuarioId, jogadores));
     const sorteados = embaralhar(jogadores, opcoes.semente ?? randomInt(2 ** 31));
+    // Guarda a posição de cada um na fila: se alguém não aceitar, quem aceitou volta para o mesmo lugar.
+    const filaDoMix = new Map(fila.filter((linha) => jogadores.includes(linha.id)).map((linha) => [linha.id, linha.entrouEm]));
     const partida = await criarPartida(tx, {
       tipo: 'mix',
       time1: sorteados.slice(0, TOTAL_DO_MIX / 2),
       time2: sorteados.slice(TOTAL_DO_MIX / 2),
+      agora,
+      filaDoMix,
     });
     return { partidaId: partida.id };
   });
