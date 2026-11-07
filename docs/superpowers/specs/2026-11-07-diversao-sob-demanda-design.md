@@ -19,7 +19,7 @@ ligado quando alguém for jogar.
 
 ## Desligar sozinho
 
-- Um servidor da Diversão sem ninguém por **10 minutos** seguidos é desligado pelo site.
+- Um servidor da Diversão sem ninguém por **5 minutos** seguidos é desligado pelo site (decisão do dono).
 - A contagem usa a mesma pergunta que o site já faz ao servidor (`magnatas_jogadores`) na varredura.
 - O servidor de **partidas** (Mix e Salas) não entra nisso: continua sempre ligado.
 
