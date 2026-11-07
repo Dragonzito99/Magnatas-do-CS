@@ -243,8 +243,13 @@ export default async function PaginaDaPartida({
   if (!z.uuid().safeParse(id).success) notFound();
   const bd = obterBd();
   // Prazo vencido não espera a varredura: a própria página resolve, para o relógio em 0 já mostrar o passo seguinte.
-  await resolverAceitesVencidos(bd);
-  await resolverVetosVencidos(bd);
+  // Se falhar, a página mostra o estado atual e a varredura resolve depois.
+  try {
+    await resolverAceitesVencidos(bd);
+    await resolverVetosVencidos(bd);
+  } catch (erro) {
+    console.warn('Não foi possível resolver os prazos ao abrir a partida:', erro);
+  }
   const detalhe = await detalheDaPartida(bd, id);
   if (!detalhe) notFound();
 

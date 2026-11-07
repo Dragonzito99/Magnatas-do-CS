@@ -4,6 +4,7 @@ import type { Bd } from '@/bd/conexao';
 import { filaMix, partidaJogadores, partidas, salaMembros, salas, usuarios, type Partida, type Usuario } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
 import { registrarFalta } from './faltas';
+import { fecharMixSePossivel, travarFila } from './mix';
 import { finalizarPartida, MAPAS } from './partidas';
 import { removerDaSala } from './salas';
 import { PRAZO_DO_VETO_MS } from './vetos';
@@ -90,6 +91,7 @@ async function cancelarPorFaltaDeAceite(tx: Transacao, partida: Partida, agora: 
 
   if (partida.tipo === 'mix') {
     // Quem aceitou volta para a fila no lugar de antes; quem não aceitou dá a vaga para outra pessoa.
+    await travarFila(tx);
     const aceitaram = jogadores.filter((jogador) => jogador.aceitouEm && jogador.estado === 'ativo');
     if (aceitaram.length > 0) {
       await tx
@@ -97,6 +99,8 @@ async function cancelarPorFaltaDeAceite(tx: Transacao, partida: Partida, agora: 
         .values(aceitaram.map((jogador) => ({ usuarioId: jogador.usuarioId, entrouEm: jogador.entrouNaFilaEm ?? agora })))
         .onConflictDoNothing();
     }
+    // Se alguém entrou na fila durante o aceite, já dá para fechar outra partida sem esperar o próximo clique.
+    await fecharMixSePossivel(tx, agora);
     return;
   }
 

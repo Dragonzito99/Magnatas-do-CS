@@ -2,7 +2,7 @@ import { randomInt } from 'node:crypto';
 import { asc, eq, inArray, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { filaMix, usuarios, type Usuario } from '@/bd/esquema';
-import { exigirAtivo, exigirLivre } from './disponibilidade';
+import { exigirAtivo, exigirLivre, type Transacao } from './disponibilidade';
 import { criarPartida } from './partidas';
 import type { UsuarioPublico } from './salas';
 
@@ -33,7 +33,7 @@ export async function entrarNoMix(
 ): Promise<{ partidaId?: string }> {
   return bd.transaction(async (tx) => {
     // Só um pedido por vez mexe na fila, para o décimo fechar uma partida só.
-    await tx.execute(sql`select pg_advisory_xact_lock(${CHAVE_DA_FILA})`);
+    await travarFila(tx);
     await exigirAtivo(tx, ator);
     const [jaNaFila] = await tx.select().from(filaMix).where(eq(filaMix.usuarioId, ator.id));
     if (jaNaFila) return {};
@@ -41,32 +41,42 @@ export async function entrarNoMix(
     await exigirLivre(tx, ator.id, agora);
     await tx.insert(filaMix).values({ usuarioId: ator.id, entrouEm: agora });
 
-    const fila = await tx
-      .select({ id: usuarios.id, estado: usuarios.estado, entrouEm: filaMix.entrouEm })
-      .from(filaMix)
-      .innerJoin(usuarios, eq(filaMix.usuarioId, usuarios.id))
-      .orderBy(asc(filaMix.entrouEm), asc(filaMix.usuarioId));
-
-    const semAcesso = fila.filter((linha) => linha.estado !== 'ativo').map((linha) => linha.id);
-    if (semAcesso.length > 0) await tx.delete(filaMix).where(inArray(filaMix.usuarioId, semAcesso));
-
-    const ativos = fila.filter((linha) => linha.estado === 'ativo').map((linha) => linha.id);
-    if (ativos.length < TOTAL_DO_MIX) return {};
-
-    const jogadores = ativos.slice(0, TOTAL_DO_MIX);
-    await tx.delete(filaMix).where(inArray(filaMix.usuarioId, jogadores));
-    const sorteados = embaralhar(jogadores, opcoes.semente ?? randomInt(2 ** 31));
-    // Guarda a posição de cada um na fila: se alguém não aceitar, quem aceitou volta para o mesmo lugar.
-    const filaDoMix = new Map(fila.filter((linha) => jogadores.includes(linha.id)).map((linha) => [linha.id, linha.entrouEm]));
-    const partida = await criarPartida(tx, {
-      tipo: 'mix',
-      time1: sorteados.slice(0, TOTAL_DO_MIX / 2),
-      time2: sorteados.slice(TOTAL_DO_MIX / 2),
-      agora,
-      filaDoMix,
-    });
-    return { partidaId: partida.id };
+    return fecharMixSePossivel(tx, agora, opcoes.semente);
   });
+}
+
+/** Só com a trava da fila: dois pedidos juntos fechariam a mesma partida duas vezes. */
+export async function travarFila(tx: Transacao): Promise<void> {
+  await tx.execute(sql`select pg_advisory_xact_lock(${CHAVE_DA_FILA})`);
+}
+
+/** Com 10 na fila, tira os 10 primeiros e cria a partida esperando o aceite. */
+export async function fecharMixSePossivel(tx: Transacao, agora: Date, semente?: number): Promise<{ partidaId?: string }> {
+  const fila = await tx
+    .select({ id: usuarios.id, estado: usuarios.estado, entrouEm: filaMix.entrouEm })
+    .from(filaMix)
+    .innerJoin(usuarios, eq(filaMix.usuarioId, usuarios.id))
+    .orderBy(asc(filaMix.entrouEm), asc(filaMix.usuarioId));
+
+  const semAcesso = fila.filter((linha) => linha.estado !== 'ativo').map((linha) => linha.id);
+  if (semAcesso.length > 0) await tx.delete(filaMix).where(inArray(filaMix.usuarioId, semAcesso));
+
+  const ativos = fila.filter((linha) => linha.estado === 'ativo').map((linha) => linha.id);
+  if (ativos.length < TOTAL_DO_MIX) return {};
+
+  const jogadores = ativos.slice(0, TOTAL_DO_MIX);
+  await tx.delete(filaMix).where(inArray(filaMix.usuarioId, jogadores));
+  const sorteados = embaralhar(jogadores, semente ?? randomInt(2 ** 31));
+  // Guarda a posição de cada um na fila: se alguém não aceitar, quem aceitou volta para o mesmo lugar.
+  const filaDoMix = new Map(fila.filter((linha) => jogadores.includes(linha.id)).map((linha) => [linha.id, linha.entrouEm]));
+  const partida = await criarPartida(tx, {
+    tipo: 'mix',
+    time1: sorteados.slice(0, TOTAL_DO_MIX / 2),
+    time2: sorteados.slice(TOTAL_DO_MIX / 2),
+    agora,
+    filaDoMix,
+  });
+  return { partidaId: partida.id };
 }
 
 export async function sairDoMix(bd: Bd, ator: Pick<Usuario, 'id'>): Promise<void> {

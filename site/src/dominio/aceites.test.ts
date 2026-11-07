@@ -196,3 +196,17 @@ test('quem está numa partida aguardando aceite ou nos vetos não está livre pa
   await expect(entrarNoMix(bd, todos[0], { agora: AGORA })).rejects.toThrow(JaOcupado);
   expect(await partidaAtualDe(bd, todos[0].id)).toMatchObject({ id: partida.id, estado: 'vetando' });
 });
+
+test('mix cancelado por falta de aceite: quem aceitou volta e, com gente nova na fila, fecha outra partida na hora', async () => {
+  const { partida, contas } = await mixFechado();
+  for (const conta of contas.slice(1)) await aceitarPartida(bd, conta, partida.id, AGORA);
+  // Uma pessoa entrou na fila durante os 30 segundos.
+  const nova = await membro();
+  await entrarNoMix(bd, nova, { agora: new Date(AGORA.getTime() + 15_000) });
+  await resolverAceitesVencidos(bd, partida.aceiteAte!);
+  const ativas = await bd.select().from(partidas).where(eq(partidas.estado, 'aguardando_aceite'));
+  expect(ativas).toHaveLength(1);
+  const jogadores = await bd.select().from(partidaJogadores).where(eq(partidaJogadores.partidaId, ativas[0].id));
+  expect(jogadores.map((j) => j.usuarioId).sort()).toEqual([...contas.slice(1), nova].map((c) => c.id).sort());
+  expect(await bd.select().from(filaMix)).toEqual([]);
+});
