@@ -20,10 +20,11 @@ if [ "${1:-}" = "--executar" ]; then
   [ -n "${GSLT:-}" ] && CONTA=(+sv_setsteamaccount "$GSLT")
   # Sem -ip, o RCON escuta no endereço do nome da máquina, que no Linux costuma ser 127.0.1.1.
   [ -n "${RCON_PASSWORD:-}" ] && CONTA+=(-usercon -ip "${CS2_IP:-0.0.0.0}" +rcon_password "$RCON_PASSWORD")
+  # A gravação (GOTV) iria para a porta + 5, a 27020, que é a da Mutação: fica numa porta fora das da Diversão.
   exec game/cs2.sh -dedicated -condebug -port 27015 \
     +game_type 0 +game_mode 1 +map de_mirage \
     "${CONTA[@]}" +sv_password "$SV_PASSWORD" \
-    +tv_enable 1 +tv_delay 0 +tv_password "$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" +exec server.cfg
+    +tv_enable 1 +tv_port 27030 +tv_delay 0 +tv_password "$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" +exec server.cfg
 fi
 
 if tmux has-session -t cs2 2>/dev/null; then
