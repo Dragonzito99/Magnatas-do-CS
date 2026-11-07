@@ -158,7 +158,7 @@ export default async function Diversao({ searchParams }: { searchParams: Promise
               <Image className="foto-servidor" src={mapa.foto} alt={`Mapa ${mapa.nome}`} width={480} height={270} />
               <div className="corpo-servidor">
                 <h2>{nomeDoModo(servidor.modo)}</h2>
-                <p>{servidor.armas}</p>
+                <p>{mapa.regra ?? servidor.armas}</p>
                 <small>{mapa.nome}</small>
                 <div className="rodape-servidor">
                   <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modo} agora={agora} />

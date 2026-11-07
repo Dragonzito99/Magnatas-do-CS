@@ -1192,3 +1192,54 @@ def test_mutacao_roda_biochemical_hotel_e_silent_village():
     rotacao = conf("mutacao")["ROTACAO"].split(",")
     assert rotacao[0] == conf("mutacao")["OFICINA"]
     assert rotacao == ["3223106683", "3222984182"]
+
+
+ALASKA = RAIZ / "plugins" / "MagnatasDiversao" / "Alaska.cs"
+
+
+def codigo_do_alaska():
+    return ALASKA.read_text(encoding="utf-8")
+
+
+def test_alaska_tem_regra_propria_dentro_do_equipe():
+    codigo = codigo_do_alaska()
+    assert 'MapasDeRodadas = new() { "alaska" }' in codigo
+    assert 'Config.Regra == "equipe" && MapasDeRodadas.Contains(Server.MapName)' in codigo
+    # Fora do Alaska, o Equipe segue como mata-mata.
+    assert "if (NoMapaDeRodadas) ComecarRodadaDeAlaska();" in CODIGO_DO_PLUGIN
+    assert 'Config.Regra == "equipe" && !NoMapaDeRodadas' in CODIGO_DO_PLUGIN
+
+
+def test_alaska_sem_renascer_e_com_vitoria_por_eliminacao():
+    codigo = codigo_do_alaska()
+    for comando in ["mp_respawn_on_death_ct 0", "mp_respawn_on_death_t 0", "mp_ignore_round_win_conditions 0", "mp_weapons_allow_map_placed 1"]:
+        assert comando in codigo
+
+
+def test_alaska_partida_de_dez_rodadas_e_quem_faz_seis_vence():
+    codigo = codigo_do_alaska()
+    assert "RodadasDaPartidaDeRodadas = 10" in codigo
+    assert "VitoriasParaVencer = 6" in codigo
+    fim = codigo[codigo.index("HookResult AoTerminarRodadaDeAlaska"):]
+    assert "FecharPartida(" in fim and "TrocarDeMapa" in fim
+
+
+def test_alaska_tira_o_equipamento_do_mapa_e_da_faca_e_pistola():
+    codigo = codigo_do_alaska()
+    assert '"game_player_equip"' in codigo
+    kit = codigo[codigo.index("void EntregarKitDoAlaska"):]
+    assert "weapon_knife" in kit and "weapon_glock" in kit and "weapon_hkp2000" in kit
+
+
+def test_alaska_guarda_as_armas_do_mapa_e_repoe_a_cada_rodada():
+    codigo = codigo_do_alaska()
+    assert "Listeners.OnEntitySpawned" in codigo
+    repor = codigo[codigo.index("void ReporArmasDoMapa"):]
+    assert "CreateEntityByName<CBasePlayerWeapon>" in repor
+    assert "DispatchSpawn()" in repor
+
+
+def test_o_relogio_do_mata_mata_nao_encerra_o_alaska():
+    # O relógio da partida anterior do Equipe continuaria correndo e trocaria de mapa no meio do Alaska.
+    inicio = codigo_do_alaska()[codigo_do_alaska().index("void ComecarRodadaDeAlaska"):]
+    assert "fimDaPartida?.Kill()" in inicio

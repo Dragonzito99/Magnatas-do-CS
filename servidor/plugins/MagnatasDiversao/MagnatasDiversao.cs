@@ -105,7 +105,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.4.1";
+    public override string ModuleVersion => "1.5.0";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -126,9 +126,10 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
             AddTimer(SegundosAteZerarOPlacar, EncerrarCicloDoCadaUm, TimerFlags.REPEAT);
         }
         // Recarregado no meio da partida, o plugin não veria o início da rodada e o jogo nunca terminaria.
-        else if (Config.Regra == "equipe" && hotReload)
+        else if (Config.Regra == "equipe")
         {
-            ComecarPartida();
+            LigarMapasDeRodadas();
+            if (hotReload && !NoMapaDeRodadas) ComecarPartida();
         }
         else if (Config.Regra == "fantasma")
         {
@@ -384,7 +385,11 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     {
         var regras = RegrasDoJogo();
         if (regras == null || regras.WarmupPeriod) return HookResult.Continue;
-        if (Config.Regra == "equipe") ComecarPartida();
+        if (Config.Regra == "equipe")
+        {
+            if (NoMapaDeRodadas) ComecarRodadaDeAlaska();
+            else ComecarPartida();
+        }
         else if (Config.Regra == "fantasma") ComecarRodadaDoFantasma(regras);
         else if (Config.Regra == "mutacao") ComecarRodadaDaMutacao();
         else ZerarContagem();
@@ -403,7 +408,8 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
 
         if (Config.Regra != "cada_um" && quem.Team == alvo.Team) return HookResult.Continue;
 
-        if (Config.Regra == "equipe")
+        // No Alaska o placar do time é de rodadas, e o próprio jogo conta.
+        if (Config.Regra == "equipe" && !NoMapaDeRodadas)
         {
             if (quem.Team == CsTeam.CounterTerrorist) abatesCt++;
             else if (quem.Team == CsTeam.Terrorist) abatesTr++;
@@ -423,6 +429,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         if (jogador != null) Registrar(jogador);
         // No momento do evento, o jogo ainda está montando o jogador e as armas dele.
         AddTimer(EsperaAposNascer, () => EntregarArma(jogador));
+        if (NoMapaDeRodadas) AddTimer(SegundosAteEntregarKit, () => EntregarKitDoAlaska(jogador));
         if (Config.Regra == "fantasma")
         {
             AddTimer(EsperaAposNascer, () => DeixarSoAFaca(jogador));
@@ -459,7 +466,11 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         if (Config.Regra != "equipe") return HookResult.Continue;
         var quem = evento.Userid;
         // Quem chegar depois não pode herdar o placar e o relógio de uma partida que ninguém mais está jogando.
-        if (!Pessoas().Any(pessoa => pessoa.Slot != quem?.Slot)) Server.ExecuteCommand("mp_restartgame 1");
+        if (!Pessoas().Any(pessoa => pessoa.Slot != quem?.Slot))
+        {
+            ZerarPartidaDeAlaska();
+            Server.ExecuteCommand("mp_restartgame 1");
+        }
         return HookResult.Continue;
     }
 

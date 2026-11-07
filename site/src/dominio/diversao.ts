@@ -7,19 +7,20 @@ export type ModoDeDiversao = ServidorDiversao['modo'];
 export type SituacaoDoServidor = { ligado: boolean; jogando: number; mapa?: string };
 
 /** Nome e foto dos mapas que já rodam na Diversão, pelo nome interno que o jogo informa. */
-const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string }> = {
+/** `regra` troca a descrição do cartão quando o mapa muda o jeito de jogar do servidor. */
+const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string; regra?: string }> = {
   de_dust2: { nome: 'Dust 2', foto: '/mapas/dust2.webp' },
   de_mirage: { nome: 'Mirage', foto: '/mapas/mirage.webp' },
   transportship: { nome: 'Transport Ship', foto: '/mapas/transport-ship.webp' },
   de_luxville: { nome: 'Luxville', foto: '/mapas/luxville.webp' },
   zm_biochemical_hotel: { nome: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp' },
   zm_silent_village: { nome: 'Silent Village', foto: '/mapas/silent-village.webp' },
-  alaska: { nome: 'Alaska', foto: '/mapas/alaska.webp' },
+  alaska: { nome: 'Alaska', foto: '/mapas/alaska.webp', regra: 'Rodadas, armas no chão' },
   gm_laboratory: { nome: 'Laboratory', foto: '/mapas/laboratory.webp' },
 };
 
 /** Com vários mapas sorteados, o cartão mostra o que está rodando agora. Mapa novo sem foto usa a do cadastro. */
-export function mapaDoCartao(servidor: { mapa: string; foto: string }, situacao: SituacaoDoServidor): { nome: string; foto: string } {
+export function mapaDoCartao(servidor: { mapa: string; foto: string }, situacao: SituacaoDoServidor): { nome: string; foto: string; regra?: string } {
   if (!situacao.ligado || !situacao.mapa) return { nome: servidor.mapa, foto: servidor.foto };
   return MAPAS_CONHECIDOS[situacao.mapa] ?? { nome: situacao.mapa, foto: servidor.foto };
 }
