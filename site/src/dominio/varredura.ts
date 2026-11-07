@@ -10,6 +10,7 @@ import { ESTADOS_ATIVOS_DE_PARTIDA } from './disponibilidade';
 import { fiscalizarDiversao } from './diversao';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 import { alocarServidores, devolverPartida, finalizarPartida } from './partidas';
+import { expirarJuncoes } from './juncoes';
 import { fecharSalasAbandonadas } from './salas';
 import { resolverVetosVencidos } from './vetos';
 
@@ -201,6 +202,7 @@ export async function varrer(
     () => fiscalizarDiversao(bd, controlador, hostDaDiversao),
     () => fecharSalasAbandonadas(bd, agora),
     () => expirarDesafios(bd, agora),
+    () => expirarJuncoes(bd, agora),
     () => reabrirCarregamentosPresos(bd, agora),
     () => cancelarPartidasAbandonadas(bd, controlador, agora),
     () => resolverAceitesVencidos(bd, agora),

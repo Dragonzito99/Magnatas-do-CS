@@ -1,6 +1,6 @@
 import { and, asc, count, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { desafios, salaMembros, salas, usuarios, type Sala, type Usuario } from '@/bd/esquema';
+import { desafios, juncoes, salaMembros, salas, usuarios, type Sala, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, exigirLivre, type Transacao } from './disponibilidade';
 
 export class SalaCheia extends Error {
@@ -63,12 +63,16 @@ export async function entrarNaSala(bd: Bd, ator: Pick<Usuario, 'id'>, salaId: st
   });
 }
 
-/** Sala que perde alguém deixa de estar completa, então o desafio pendente cai. */
+/** Sala que perde alguém muda de tamanho, então o desafio e o pedido de junção pendentes caem. */
 async function cancelarDesafiosDaSala(tx: Transacao, salaId: string): Promise<void> {
   await tx
     .update(desafios)
     .set({ estado: 'cancelado' })
     .where(and(eq(desafios.estado, 'pendente'), or(eq(desafios.salaOrigemId, salaId), eq(desafios.salaAlvoId, salaId))));
+  await tx
+    .update(juncoes)
+    .set({ estado: 'cancelado' })
+    .where(and(eq(juncoes.estado, 'pendente'), or(eq(juncoes.salaOrigemId, salaId), eq(juncoes.salaAlvoId, salaId))));
 }
 
 /** Tira a pessoa da sala, passa a liderança adiante e apaga a sala vazia. */
