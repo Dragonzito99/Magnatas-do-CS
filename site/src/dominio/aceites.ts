@@ -87,7 +87,7 @@ async function cancelarPorFaltaDeAceite(tx: Transacao, partida: Partida, agora: 
     .from(partidaJogadores)
     .innerJoin(usuarios, eq(partidaJogadores.usuarioId, usuarios.id))
     .where(eq(partidaJogadores.partidaId, partida.id));
-  await finalizarPartida(tx, partida.id, { estado: 'cancelada', vencedor: null });
+  await finalizarPartida(tx, partida.id, { estado: 'cancelada', vencedor: null, motivoDoCancelamento: 'aceite' });
 
   if (partida.tipo === 'mix') {
     // Quem aceitou volta para a fila no lugar de antes; quem não aceitou dá a vaga para outra pessoa.

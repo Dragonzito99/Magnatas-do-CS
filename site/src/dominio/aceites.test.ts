@@ -210,3 +210,14 @@ test('mix cancelado por falta de aceite: quem aceitou volta e, com gente nova na
   expect(jogadores.map((j) => j.usuarioId).sort()).toEqual([...contas.slice(1), nova].map((c) => c.id).sort());
   expect(await bd.select().from(filaMix)).toEqual([]);
 });
+
+test('a partida do desafio guarda o nome das duas salas, que continua depois que as salas se desfazem', async () => {
+  const { partida, a, b } = await desafioAceito();
+  expect(partida).toMatchObject({ nomeTime1: a.contas[0].apelido, nomeTime2: b.contas[0].apelido });
+});
+
+test('partida cancelada por falta de aceite guarda o motivo', async () => {
+  const { partida } = await desafioAceito();
+  await resolverAceitesVencidos(bd, VENCIDO);
+  expect((await partidaDe(partida.id)).motivoDoCancelamento).toBe('aceite');
+});

@@ -20,15 +20,24 @@ const RODADAS_PERDOADAS_POR_QUEDA = 2;
  */
 export async function criarPartida(
   tx: Transacao,
-  dados: { tipo: Partida['tipo']; time1: string[]; time2: string[]; mapa?: string; agora?: Date; filaDoMix?: Map<string, Date> },
+  dados: { tipo: Partida['tipo']; time1: string[]; time2: string[]; mapa?: string; agora?: Date; filaDoMix?: Map<string, Date>; nomes?: { 1: string; 2: string } },
 ): Promise<Partida> {
   const agora = dados.agora ?? new Date();
   const [partida] = await tx
     .insert(partidas)
     .values(
       dados.mapa
-        ? { tipo: dados.tipo, mapa: dados.mapa, criadoEm: agora, estadoDesde: agora }
-        : { tipo: dados.tipo, mapa: null, estado: 'aguardando_aceite', aceiteAte: new Date(agora.getTime() + PRAZO_DO_ACEITE_MS), criadoEm: agora, estadoDesde: agora },
+        ? { tipo: dados.tipo, mapa: dados.mapa, criadoEm: agora, estadoDesde: agora, nomeTime1: dados.nomes?.[1], nomeTime2: dados.nomes?.[2] }
+        : {
+            tipo: dados.tipo,
+            mapa: null,
+            estado: 'aguardando_aceite',
+            aceiteAte: new Date(agora.getTime() + PRAZO_DO_ACEITE_MS),
+            criadoEm: agora,
+            estadoDesde: agora,
+            nomeTime1: dados.nomes?.[1],
+            nomeTime2: dados.nomes?.[2],
+          },
     )
     .returning();
   const jogadores = [
@@ -43,7 +52,7 @@ export async function criarPartida(
 export async function finalizarPartida(
   tx: Transacao,
   partidaId: string,
-  resultado: { estado: 'encerrada' | 'cancelada'; vencedor: number | null },
+  resultado: { estado: 'encerrada' | 'cancelada'; vencedor: number | null; motivoDoCancelamento?: Partida['motivoDoCancelamento'] },
 ): Promise<void> {
   const agora = new Date();
   await tx

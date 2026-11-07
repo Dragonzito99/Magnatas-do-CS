@@ -54,7 +54,7 @@ async function cancelarPartida(bd: Bd, controlador: ControladorServidor, partida
       .for('update');
     if (!atual) return null;
     const [ocupado] = atual.servidorId ? await tx.select().from(servidores).where(eq(servidores.id, atual.servidorId)) : [];
-    await finalizarPartida(tx, atual.id, { estado: 'cancelada', vencedor: null });
+    await finalizarPartida(tx, atual.id, { estado: 'cancelada', vencedor: null, motivoDoCancelamento: 'abandono' });
     return ocupado ?? null;
   });
   if (!servidor) return;
@@ -112,7 +112,7 @@ export async function cancelarPartidaPelaEquipe(
     // Quem joga a partida não pode cancelar a que está perdendo.
     if (jogando) throw new SemPermissao();
     const [ocupado] = partida.servidorId ? await tx.select().from(servidores).where(eq(servidores.id, partida.servidorId)) : [];
-    await finalizarPartida(tx, partidaId, { estado: 'cancelada', vencedor: null });
+    await finalizarPartida(tx, partidaId, { estado: 'cancelada', vencedor: null, motivoDoCancelamento: 'equipe' });
     await registrarAuditoria(tx, { atorId: gm.id, acao: 'cancelar_partida', detalhes: { partidaId, numero: partida.numero } });
     return ocupado ?? null;
   });

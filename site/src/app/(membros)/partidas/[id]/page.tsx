@@ -44,6 +44,12 @@ const AVISOS: Record<string, string> = {
 
 type Vetos = Awaited<ReturnType<typeof vetosDaPartida>>;
 
+const MOTIVO_DO_CANCELAMENTO: Record<NonNullable<Partida['motivoDoCancelamento']>, string> = {
+  aceite: 'Partida cancelada: nem todos aceitaram.',
+  equipe: 'Partida cancelada pela equipe. Ela não conta nas estatísticas.',
+  abandono: 'Partida cancelada porque ficou parada tempo demais. Ela não conta nas estatísticas.',
+};
+
 function nomeDoTime(partida: Pick<Partida, 'vencedor'>, time: 1 | 2, nomes: { 1: string; 2: string }): string {
   return partida.vencedor === time ? `${nomes[time]}, vencedor` : nomes[time];
 }
@@ -261,7 +267,10 @@ export default async function PaginaDaPartida({
   const meuTime = eu?.time === 1 || eu?.time === 2 ? eu.time : null;
   const podeChamar = jogaNaPartida && (partida.estado === 'ao_vivo' || partida.estado === 'aguardando_jogadores');
   const conexao = dadosDeConexao(partida, servidor, { papel: usuario.papel, jogaNaPartida }, process.env.SERVIDOR_SENHA ?? '');
-  const nomes = { 1: salasDaPartida[1]?.nome ?? 'Time 1', 2: salasDaPartida[2]?.nome ?? 'Time 2' } as const;
+  const nomes = {
+    1: partida.nomeTime1 ?? salasDaPartida[1]?.nome ?? 'Time 1',
+    2: partida.nomeTime2 ?? salasDaPartida[2]?.nome ?? 'Time 2',
+  } as const;
   const souLider = meuTime !== null && salasDaPartida[meuTime]?.liderId === usuario.id;
 
   const [aceites, vetos, feitos] = await Promise.all([
@@ -310,7 +319,7 @@ export default async function PaginaDaPartida({
             <small> x </small>
             {partida.placar2}
           </div>
-          <p>{partida.estado === 'cancelada' && partida.aceiteAte && !partida.mapa ? 'Partida cancelada: nem todos aceitaram.' : estado.explicacao}</p>
+          <p>{partida.estado === 'cancelada' && partida.motivoDoCancelamento ? MOTIVO_DO_CANCELAMENTO[partida.motivoDoCancelamento] : estado.explicacao}</p>
           {ativa && jogaNaPartida && <p>Esta tela fica aberta até a partida terminar. Se cair do jogo, volte por aqui.</p>}
           <div className="acoes">
             {conexao && (

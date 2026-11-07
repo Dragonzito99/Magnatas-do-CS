@@ -83,7 +83,7 @@ test('partida aguardando jogadores há mais de 10 minutos é cancelada, encerrad
   const { partida, servidor } = await partidaComServidor('aguardando_jogadores', atras(11));
   const controlador = controladorFalso();
   await varrer(bd, controlador, pasta, AGORA);
-  expect(await estadoDe(partida.id)).toMatchObject({ estado: 'cancelada', vencedor: null });
+  expect(await estadoDe(partida.id)).toMatchObject({ estado: 'cancelada', vencedor: null, motivoDoCancelamento: 'abandono' });
   expect((await servidorDe(servidor)).partidaId).toBeNull();
   expect(controlador.chamadas).toContainEqual({ acao: 'encerrarPartida', host: servidor.host });
 });
@@ -182,7 +182,7 @@ test('a equipe cancela uma partida presa, com auditoria, e libera servidor e pes
   const { partida, servidor } = await partidaComServidor('carregando', atras(1));
   const controlador = controladorFalso();
   await cancelarPartidaPelaEquipe(bd, controlador, gm, partida.id);
-  expect(await estadoDe(partida.id)).toMatchObject({ estado: 'cancelada', vencedor: null });
+  expect(await estadoDe(partida.id)).toMatchObject({ estado: 'cancelada', vencedor: null, motivoDoCancelamento: 'equipe' });
   expect((await servidorDe(servidor)).partidaId).toBeNull();
   expect(controlador.chamadas).toContainEqual({ acao: 'encerrarPartida', host: servidor.host });
   const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'cancelar_partida'));

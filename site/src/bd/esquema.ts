@@ -94,6 +94,7 @@ export const auditoria = pgTable('auditoria', {
 });
 
 export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix']);
+export const motivoDoCancelamento = pgEnum('motivo_do_cancelamento', ['aceite', 'equipe', 'abandono']);
 export const estadoPartida = pgEnum('estado_partida', [
   'aguardando_aceite',
   'vetando',
@@ -150,6 +151,10 @@ export const partidas = pgTable('partidas', {
   // Time que ganhou o cara ou coroa e veta primeiro (1 ou 2), e o prazo do veto da vez.
   primeiroAVetar: integer('primeiro_a_vetar'),
   vetoAte: timestamp('veto_ate', { withTimezone: true }),
+  // Nome das salas no desafio, guardado para o placar continuar com os nomes depois que as salas se desfazem.
+  nomeTime1: text('nome_time1'),
+  nomeTime2: text('nome_time2'),
+  motivoDoCancelamento: motivoDoCancelamento('motivo_do_cancelamento'),
   servidorId: uuid('servidor_id').references(() => servidores.id),
   vencedor: integer('vencedor'),
   placar1: integer('placar1').notNull().default(0),
