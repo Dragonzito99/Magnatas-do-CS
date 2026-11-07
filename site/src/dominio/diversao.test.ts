@@ -237,3 +237,9 @@ test('perguntarAoServidor não guarda a resposta: a varredura sempre recebe a de
   await perguntarAoServidor(controlador, SERVIDOR);
   expect(controlador.chamadas.filter((chamada) => chamada.acao === 'jogadoresConectados')).toHaveLength(2);
 });
+
+test('servidor ligado que não respondeu à página aparece trocando de mapa', () => {
+  const servidor = { ativo: true, vagas: 16, sobDemanda: true, nomeNoServidor: 'awp' };
+  expect(estadoDoCartao(servidor, { ligado: false, jogando: 0 }, 'ligado')).toBe('trocando_mapa');
+  expect(estadoDoCartao(servidor, { ligado: true, jogando: 3 }, 'ligado')).toBe('aberto');
+});

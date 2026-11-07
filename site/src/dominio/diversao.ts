@@ -21,7 +21,7 @@ export function mapaDoCartao(servidor: { mapa: string; foto: string }, situacao:
   if (!situacao.ligado || !situacao.mapa) return { nome: servidor.mapa, foto: servidor.foto };
   return MAPAS_CONHECIDOS[situacao.mapa] ?? { nome: situacao.mapa, foto: servidor.foto };
 }
-export type EstadoDoCartao = 'em_breve' | 'fora_do_ar' | 'desligado_sob_demanda' | 'ligando' | 'cheio' | 'aberto';
+export type EstadoDoCartao = 'em_breve' | 'fora_do_ar' | 'desligado_sob_demanda' | 'ligando' | 'trocando_mapa' | 'cheio' | 'aberto';
 
 export const MODOS_DE_DIVERSAO: readonly { valor: ModoDeDiversao; nome: string }[] = [
   { valor: 'cada_um', nome: 'Cada um por si' },
@@ -67,6 +67,8 @@ export function estadoDoCartao(
   if (!servidor.ativo) return 'em_breve';
   if (situacao.ligado) return situacao.jogando >= servidor.vagas ? 'cheio' : 'aberto';
   if (estado === 'ligando') return 'ligando';
+  // Ligado para o site, mas sem responder agora: quase sempre é a troca de mapa.
+  if (estado === 'ligado') return 'trocando_mapa';
   return servidor.sobDemanda && servidor.nomeNoServidor ? 'desligado_sob_demanda' : 'fora_do_ar';
 }
 

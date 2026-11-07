@@ -10,6 +10,7 @@ import {
   LimiteDeServidores,
   pedirParaLigar,
   PRAZO_PARA_LIGAR_MS,
+  PRAZO_SEM_RESPOSTA_MS,
   TEMPO_VAZIO_MS,
   type ControleDaDiversao,
 } from './sob-demanda';
@@ -181,11 +182,30 @@ test('alguém entra em 4:59: o relógio de vazio zera', async () => {
   expect(controle.chamadas).toEqual([]);
 });
 
-test('ligado que para de responder vira desligado, sem chamar o script', async () => {
+test('ligado que para de responder fica trocando de mapa; com 45 segundos sem resposta vira desligado', async () => {
   await jaLigados({ awp: null });
   await acompanharDiversao(bd, controle, perguntar, depois(15_000));
-  expect((await estadoDe('awp')).estado).toBe('desligado');
+  expect(await estadoDe('awp')).toMatchObject({ estado: 'ligado', semRespostaDesde: depois(15_000) });
+  await acompanharDiversao(bd, controle, perguntar, depois(15_000 + PRAZO_SEM_RESPOSTA_MS - 1_000));
+  expect((await estadoDe('awp')).estado).toBe('ligado');
+  await acompanharDiversao(bd, controle, perguntar, depois(15_000 + PRAZO_SEM_RESPOSTA_MS));
+  expect(await estadoDe('awp')).toMatchObject({ estado: 'desligado', semRespostaDesde: null });
   expect(controle.chamadas).toEqual([]);
+});
+
+test('voltou a responder depois da troca: segue ligado e o tempo vazio continua de onde estava', async () => {
+  await jaLigados({ awp: AGORA });
+  await acompanharDiversao(bd, controle, perguntar, depois(60_000));
+  respondendo = { awp: 0 };
+  await acompanharDiversao(bd, controle, perguntar, depois(75_000));
+  expect(await estadoDe('awp')).toMatchObject({ estado: 'ligado', semRespostaDesde: null, vazioDesde: AGORA });
+});
+
+test('servidor trocando de mapa continua contando no limite', async () => {
+  await jaLigados({ equipe: null, mutacao: null, awp: null });
+  respondendo = { equipe: 1, mutacao: 1 };
+  await acompanharDiversao(bd, controle, perguntar, depois(15_000));
+  await expect(pedirParaLigar(bd, controle, servidores.fantasma.id, jogador, 3, depois(16_000))).rejects.toThrow(LimiteDeServidores);
 });
 
 test('ligando sem resposta por 3 minutos: desliga o que sobrou e marca o erro', async () => {

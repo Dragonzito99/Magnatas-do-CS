@@ -127,6 +127,13 @@
       "when": 1794036260344,
       "tag": "0017_diversao_sob_demanda",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794040661173,
+      "tag": "0018_trocando_de_mapa",
+      "breakpoints": true
     }
   ]
 }

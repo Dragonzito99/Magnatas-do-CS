@@ -8,6 +8,8 @@ export type RespostaDoServidor = { ligado: boolean; jogando: number };
 
 export const PRAZO_PARA_LIGAR_MS = 3 * 60_000;
 export const TEMPO_VAZIO_MS = 5 * 60_000;
+/** Na troca de mapa o servidor fica alguns segundos sem responder: só depois disso conta como desligado. */
+export const PRAZO_SEM_RESPOSTA_MS = 45_000;
 export const MAXIMO_LIGADOS_PADRAO = 3;
 /** O nome vai para um comando: só letras minúsculas, números e hífen. */
 export const NOME_NO_SERVIDOR_VALIDO = /^[a-z0-9-]{1,32}$/;
@@ -93,12 +95,12 @@ export async function pedirParaLigar(
       vitima = escolhido.servidor.nomeNoServidor;
       await tx
         .update(estadosDaDiversao)
-        .set({ estado: 'desligado', desde: agora, vazioDesde: null, pedidoPor: null, erro: null })
+        .set({ estado: 'desligado', desde: agora, vazioDesde: null, semRespostaDesde: null, pedidoPor: null, erro: null })
         .where(eq(estadosDaDiversao.servidorId, escolhido.servidor.id));
     }
     await tx
       .update(estadosDaDiversao)
-      .set({ estado: 'ligando', desde: agora, vazioDesde: null, pedidoPor: ator.id, erro: null })
+      .set({ estado: 'ligando', desde: agora, vazioDesde: null, semRespostaDesde: null, pedidoPor: ator.id, erro: null })
       .where(eq(estadosDaDiversao.servidorId, servidorId));
     return { nome: pedido.servidor.nomeNoServidor, vitima };
   });
@@ -122,20 +124,24 @@ export async function pedirParaLigar(
   }
 }
 
-type Mudanca = Partial<Pick<EstadoDaDiversao, 'estado' | 'desde' | 'vazioDesde' | 'erro'>>;
+type Mudanca = Partial<Pick<EstadoDaDiversao, 'estado' | 'desde' | 'vazioDesde' | 'semRespostaDesde' | 'erro'>>;
 
 /** O que fazer com um servidor, dada a resposta dele. Devolve a mudança no estado e se é para fechar o servidor. */
 function decidir(servidor: ServidorDiversao, estado: EstadoDaDiversao, resposta: RespostaDoServidor, agora: Date): { mudanca?: Mudanca; desligar?: boolean } {
   const podeFechar = servidor.sobDemanda && nomeValido(servidor.nomeNoServidor);
   if (resposta.ligado) {
     const vazioDesde = resposta.jogando > 0 ? null : (estado.vazioDesde ?? agora);
-    if (estado.estado !== 'ligado') return { mudanca: { estado: 'ligado', desde: agora, vazioDesde, erro: null } };
+    if (estado.estado !== 'ligado') return { mudanca: { estado: 'ligado', desde: agora, vazioDesde, semRespostaDesde: null, erro: null } };
     if (vazioDesde && podeFechar && agora.getTime() - vazioDesde.getTime() >= TEMPO_VAZIO_MS) {
-      return { mudanca: { estado: 'desligado', desde: agora, vazioDesde: null }, desligar: true };
+      return { mudanca: { estado: 'desligado', desde: agora, vazioDesde: null, semRespostaDesde: null }, desligar: true };
     }
-    return { mudanca: { vazioDesde } };
+    return { mudanca: { vazioDesde, semRespostaDesde: null } };
   }
-  if (estado.estado === 'ligado') return { mudanca: { estado: 'desligado', desde: agora, vazioDesde: null } };
+  if (estado.estado === 'ligado') {
+    if (!estado.semRespostaDesde) return { mudanca: { semRespostaDesde: agora } };
+    if (agora.getTime() - estado.semRespostaDesde.getTime() < PRAZO_SEM_RESPOSTA_MS) return {};
+    return { mudanca: { estado: 'desligado', desde: agora, vazioDesde: null, semRespostaDesde: null } };
+  }
   if (estado.estado === 'ligando' && agora.getTime() - estado.desde.getTime() >= PRAZO_PARA_LIGAR_MS) {
     return { mudanca: { estado: 'desligado', desde: agora, vazioDesde: null, erro: 'não respondeu' }, desligar: podeFechar };
   }

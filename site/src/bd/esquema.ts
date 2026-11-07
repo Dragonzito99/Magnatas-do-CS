@@ -239,6 +239,8 @@ export const estadosDaDiversao = pgTable('estados_da_diversao', {
   estado: estadoDaDiversao('estado').notNull().default('desligado'),
   desde: timestamp('desde', { withTimezone: true }).notNull().defaultNow(),
   vazioDesde: timestamp('vazio_desde', { withTimezone: true }),
+  // Ligado que deixou de responder (quase sempre troca de mapa): só vira desligado depois de 45 segundos.
+  semRespostaDesde: timestamp('sem_resposta_desde', { withTimezone: true }),
   pedidoPor: uuid('pedido_por').references(() => usuarios.id, { onDelete: 'set null' }),
   erro: text('erro'),
 });

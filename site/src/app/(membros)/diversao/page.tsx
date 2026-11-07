@@ -60,6 +60,7 @@ function RodapeDoCartao({
       </>
     );
   }
+  if (estado === 'trocando_mapa') return <span className="etiqueta">Trocando de mapa...</span>;
   if (estado === 'desligado_sob_demanda') {
     const falhou = guardado?.erro && agora - guardado.desde.getTime() < AVISO_DE_FALHA_MS;
     return (
@@ -122,7 +123,9 @@ export default async function Diversao({ searchParams }: { searchParams: Promise
       servidores.map((servidor) => servidor.id),
     ),
   ]);
-  const algumLigando = servidores.some((servidor, indice) => estadoDoCartao(servidor, situacoes[indice], guardados.get(servidor.id)?.estado) === 'ligando');
+  const algumEsperando = servidores.some((servidor, indice) =>
+    ['ligando', 'trocando_mapa'].includes(estadoDoCartao(servidor, situacoes[indice], guardados.get(servidor.id)?.estado)),
+  );
   // eslint-disable-next-line react-hooks/purity -- página do servidor: a hora é lida uma vez por pedido.
   const agora = Date.now();
 
@@ -146,7 +149,7 @@ export default async function Diversao({ searchParams }: { searchParams: Promise
           {ERROS[erro]}
         </p>
       )}
-      {algumLigando && <Atualizar segundos={3} />}
+      {algumEsperando && <Atualizar segundos={3} />}
       <div className="lista-servidores">
         {servidores.map((servidor, indice) => {
           const mapa = mapaDoCartao(servidor, situacoes[indice]);

@@ -1,0 +1,1 @@
+ALTER TABLE "estados_da_diversao" ADD COLUMN "sem_resposta_desde" timestamp with time zone;
