@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DESTINO_DO_JOGAR, ITENS_DO_MENU, itemAtivo } from '@/dominio/navegacao';
 
-export function MenuPrincipal() {
+/** O Discord entra no submenu da Comunidade quando o endereço estiver configurado. */
+export function MenuPrincipal({ discord }: { discord: string | null }) {
   const caminho = usePathname();
   return (
     <nav className="menu-principal" aria-label="Áreas">
@@ -27,6 +28,11 @@ export function MenuPrincipal() {
                         {filho.nome}
                       </Link>
                     ))}
+                    {item.nome === 'Comunidade' && discord && (
+                      <a href={discord} target="_blank" rel="noreferrer">
+                        Discord
+                      </a>
+                    )}
                   </div>
                 )}
               </div>

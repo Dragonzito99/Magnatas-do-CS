@@ -3425,3 +3425,29 @@ a.cartao-destaque:hover {
     height: 68px;
   }
 }
+
+/* Cabeçalho como no rascunho: o menu da conta abre na frente do menu de cima, e a faixa não tem caixas */
+.faixa {
+  position: relative;
+  z-index: 2;
+}
+
+.menu-principal {
+  position: relative;
+  z-index: 1;
+}
+
+.faixa .botao-barra,
+.faixa .botao-conta {
+  background: none;
+  box-shadow: none;
+}
+
+.faixa .botao-barra:hover,
+.faixa .botao-conta:hover {
+  background: var(--roxo-fraco);
+}
+
+.faixa .suspenso {
+  min-width: 200px;
+}

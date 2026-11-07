@@ -56,3 +56,11 @@ test('o Jogo acende também na página das patentes', () => {
   expect(itemAtivo('/patentes', jogo.href!, jogo.filhos)).toBe(true);
   expect(itemAtivo('/ranking', jogo.href!, jogo.filhos)).toBe(false);
 });
+
+test('como no rascunho, o menu tem Comunidade no lugar de Convites, e o convite fica dentro dela', () => {
+  const nomes = ITENS_DO_MENU.map((item) => item.nome);
+  expect(nomes).toEqual(['Notícias', 'Jogo', 'Ranking', 'Comunidade', 'Clãs', 'Magnata Shop']);
+  const comunidade = ITENS_DO_MENU.find((item) => item.nome === 'Comunidade');
+  expect(comunidade).toMatchObject({ href: '/convites' });
+  expect(comunidade?.filhos?.map((filho) => filho.nome)).toEqual(['Convites']);
+});

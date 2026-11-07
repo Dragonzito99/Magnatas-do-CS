@@ -6,19 +6,6 @@ import { InsigniaDaPatente } from './insignia-da-patente';
 import { MenuPrincipal } from './menu-principal';
 import { MenuSuspenso } from './menu-suspenso';
 
-function IconeDoDiscord() {
-  return (
-    <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8.5 7.5c2.3-.7 4.7-.7 7 0" />
-      <path d="M8.5 16.5c2.3.7 4.7.7 7 0" />
-      <path d="M15.5 17.5 17 20c2.5-.8 4-2 4-2 .4-4.7-.7-8.5-2.5-12-1.5-.7-3-1.2-4.5-1.5L13.5 6" />
-      <path d="M8.5 17.5 7 20c-2.5-.8-4-2-4-2-.4-4.7.7-8.5 2.5-12C7 5.3 8.5 4.8 10 4.5L10.5 6" />
-      <circle cx="9.5" cy="12" r="1" />
-      <circle cx="14.5" cy="12" r="1" />
-    </svg>
-  );
-}
-
 /** Faixa preta com a conta, como no site do CrossFire, e o menu de cima logo abaixo. */
 export function Cabecalho({
   usuario,
@@ -52,16 +39,6 @@ export function Cabecalho({
               </Link>
             )}
             {sino}
-            {discord ? (
-              <a className="botao-barra" href={discord} target="_blank" rel="noreferrer" aria-label="Discord" title="Discord">
-                <IconeDoDiscord />
-              </a>
-            ) : (
-              <span className="botao-barra desativado" aria-disabled="true" title="Discord em breve">
-                <IconeDoDiscord />
-                <span className="so-leitor">Discord em breve</span>
-              </span>
-            )}
             <MenuSuspenso
               titulo="Minha conta"
               classe="botao-conta"
@@ -81,6 +58,9 @@ export function Cabecalho({
               <Link href={`/jogadores/${usuario.id}`} className="item-suspenso">
                 Meu perfil
               </Link>
+              <Link href="/patentes" className="item-suspenso">
+                Minha patente
+              </Link>
               <Link href="/convites" className="item-suspenso">
                 Convites
               </Link>
@@ -93,7 +73,7 @@ export function Cabecalho({
           </div>
         </div>
       </div>
-      <MenuPrincipal />
+      <MenuPrincipal discord={discord} />
     </header>
   );
 }
