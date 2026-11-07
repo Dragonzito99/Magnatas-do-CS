@@ -19,6 +19,11 @@ const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string; regra?: str
   gm_laboratory: { nome: 'Laboratory', foto: '/mapas/laboratory.webp' },
 };
 
+/** A foto de um mapa que o site conhece, para os cartões do perfil. Sem foto, a tela usa um fundo. */
+export function fotoDoMapa(mapa: string | null): string | null {
+  return (mapa && MAPAS_CONHECIDOS[mapa]?.foto) ?? null;
+}
+
 /** Com vários mapas sorteados, o cartão mostra o que está rodando agora. Mapa novo sem foto usa a do cadastro. */
 export function mapaDoCartao(servidor: { mapa: string; foto: string }, situacao: SituacaoDoServidor): { nome: string; foto: string; regra?: string } {
   if (!situacao.ligado || !situacao.mapa) return { nome: servidor.mapa, foto: servidor.foto };

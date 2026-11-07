@@ -10,6 +10,7 @@ import {
   estadoDoCartao,
   fiscalizarDiversao,
   fiscalizarServidor,
+  fotoDoMapa,
   lerModo,
   linkDeEntrar,
   listarServidoresDaDiversao,
@@ -252,4 +253,11 @@ test('o cartão da Mutação mostra o Silent Village quando ele está rodando', 
 test('o cartão do Equipe mostra o Egypt quando ele está rodando', () => {
   const servidor = { mapa: 'Transport Ship', foto: '/mapas/transport-ship.webp' };
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'egypt' })).toEqual({ nome: 'Egypt', foto: '/mapas/egypt.webp' });
+});
+
+test('a foto de um mapa conhecido vem do site; mapa sem foto fica sem', () => {
+  expect(fotoDoMapa('de_mirage')).toBe('/mapas/mirage.webp');
+  expect(fotoDoMapa('egypt')).toBe('/mapas/egypt.webp');
+  expect(fotoDoMapa('de_inferno')).toBeNull();
+  expect(fotoDoMapa(null)).toBeNull();
 });
