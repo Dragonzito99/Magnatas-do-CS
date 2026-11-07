@@ -1001,8 +1001,8 @@ def test_equipe_roda_varios_mapas():
     assert "3122345065" in rotacao and "3070259469" in rotacao
     # O Alaska saiu: as portas das bases prendem o jogador e o dono desistiu do mapa.
     assert "3258817421" not in rotacao
-    # CrossFire Egypt, no mesmo mata-mata dos outros.
-    assert "3155594017" in rotacao
+    # Egypt, do CrossFire, no mesmo mata-mata dos outros. O 3155594017 foi engano do dono.
+    assert "3138753451" in rotacao and "3155594017" not in rotacao
 
 
 def test_o_script_entrega_a_rotacao_ao_plugin():

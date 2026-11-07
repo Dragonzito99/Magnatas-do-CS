@@ -249,7 +249,7 @@ test('o cartão da Mutação mostra o Silent Village quando ele está rodando', 
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'zm_silent_village' })).toEqual({ nome: 'Silent Village', foto: '/mapas/silent-village.webp' });
 });
 
-test('o cartão do Equipe mostra o CrossFire Egypt quando ele está rodando', () => {
+test('o cartão do Equipe mostra o Egypt quando ele está rodando', () => {
   const servidor = { mapa: 'Transport Ship', foto: '/mapas/transport-ship.webp' };
-  expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'crossfire_egypt' })).toEqual({ nome: 'CrossFire Egypt', foto: '/mapas/crossfire-egypt.webp' });
+  expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'egypt' })).toEqual({ nome: 'Egypt', foto: '/mapas/egypt.webp' });
 });
