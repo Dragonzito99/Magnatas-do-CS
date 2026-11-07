@@ -3621,3 +3621,127 @@ a.cartao-destaque:hover {
 .tabela-ultimas th {
   text-align: left;
 }
+
+/* Início como no rascunho: carrossel, fileira de cartões menores e o que é o Magnatas */
+.carrossel {
+  position: relative;
+  display: grid;
+}
+
+.carrossel .cartao-destaque {
+  height: 100%;
+}
+
+.pontos-do-carrossel {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+
+.ponto {
+  width: 22px;
+  height: 4px;
+  padding: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+}
+
+.ponto.ativo {
+  background: var(--ouro);
+}
+
+.carrossel .cartao-destaque p {
+  margin-bottom: 14px;
+}
+
+.miudos-inicio {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.5fr);
+  gap: 18px;
+}
+
+.cartao-destaque.pequeno {
+  min-height: 170px;
+  padding: 14px;
+}
+
+.cartao-destaque.pequeno h3 {
+  font: italic 700 21px/1.05 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.cartao-discord {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 170px;
+  padding: 18px;
+  border-radius: 8px;
+  color: #fff;
+  background: #2b2466;
+  text-decoration: none;
+}
+
+.cartao-discord:hover {
+  background: #352d7d;
+}
+
+.cartao-discord.desligado {
+  opacity: 0.7;
+}
+
+.cartao-discord b {
+  font: italic 700 24px/1.05 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.icone-discord {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  fill: #fff;
+}
+
+.mais-novidades {
+  display: flex;
+  justify-content: center;
+}
+
+.mais-novidades a {
+  padding: 8px 26px;
+  color: var(--tinta);
+  box-shadow: inset 0 0 0 1px var(--roxo);
+  font: italic 600 19px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.mais-novidades a:hover {
+  background: var(--roxo);
+}
+
+.o-que-e {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.o-que-e .cartao-destaque {
+  min-height: 190px;
+}
+
+.o-que-e h3 {
+  font: italic 700 24px/1.05 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .miudos-inicio,
+  .o-que-e {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

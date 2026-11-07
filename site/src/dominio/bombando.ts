@@ -1,7 +1,7 @@
 import type { Bd } from '@/bd/conexao';
 import type { Partida } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
-import { alvoDoServidor, linkDeEntrar, listarServidoresDaDiversao, MODOS_DE_DIVERSAO, situacaoDoServidor } from './diversao';
+import { alvoDoServidor, linkDeEntrar, listarServidoresDaDiversao, mapaDoCartao, MODOS_DE_DIVERSAO, situacaoDoServidor } from './diversao';
 import { verMix } from './mix';
 import { partidasEmAndamento } from './partidas';
 import { listarSalas, TAMANHO_DA_SALA } from './salas';
@@ -10,7 +10,7 @@ const TOTAL_DO_MIX = 10;
 const MAXIMO_DE_CARTOES = 4;
 const MAXIMO_AO_VIVO = 3;
 
-export type CartaoBombando = { tipo: 'sala' | 'mix' | 'diversao'; titulo: string; ocupacao: string; jogando: number; href: string };
+export type CartaoBombando = { tipo: 'sala' | 'mix' | 'diversao'; titulo: string; ocupacao: string; jogando: number; href: string; foto?: string; mapa?: string };
 
 /** Os lugares com mais gente agora, para chamar quem chega a jogar. */
 export async function bombandoAgora(
@@ -18,7 +18,7 @@ export async function bombandoAgora(
   controlador: ControladorServidor,
   hostDaDiversao: string | undefined,
   senhaDosServidores: string = '',
-): Promise<{ cartoes: CartaoBombando[]; aoVivo: Partida[] }> {
+): Promise<{ cartoes: CartaoBombando[]; aoVivo: Partida[]; naFilaDoMix: number; naDiversao: number }> {
   const [salas, mix, servidores, andamento] = await Promise.all([listarSalas(bd), verMix(bd), listarServidoresDaDiversao(bd), partidasEmAndamento(bd)]);
   const cartoes: CartaoBombando[] = [];
 
@@ -37,19 +37,26 @@ export async function bombandoAgora(
       return { servidor, alvo, situacao: alvo ? await situacaoDoServidor(controlador, alvo) : null };
     }),
   );
+  let naDiversao = 0;
   for (const { servidor, alvo, situacao } of situacoes) {
     if (!alvo || !situacao?.ligado || situacao.jogando === 0) continue;
+    naDiversao += situacao.jogando;
+    const mapa = mapaDoCartao(servidor, situacao);
     cartoes.push({
       tipo: 'diversao',
       titulo: MODOS_DE_DIVERSAO.find((modo) => modo.valor === servidor.modo)?.nome ?? 'Diversão',
       ocupacao: `${situacao.jogando}/${servidor.vagas}`,
       jogando: situacao.jogando,
       href: linkDeEntrar(alvo, senhaDosServidores),
+      foto: mapa.foto,
+      mapa: mapa.nome,
     });
   }
 
   return {
     cartoes: cartoes.sort((a, b) => b.jogando - a.jogando).slice(0, MAXIMO_DE_CARTOES),
     aoVivo: andamento.filter((partida) => partida.estado === 'ao_vivo').slice(0, MAXIMO_AO_VIVO),
+    naFilaDoMix: mix.total,
+    naDiversao,
   };
 }

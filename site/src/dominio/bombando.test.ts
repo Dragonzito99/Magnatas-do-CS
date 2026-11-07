@@ -64,6 +64,17 @@ test('servidor da Diversão com gente aparece com o link de entrar; fora do ar o
   expect(diversao).toHaveLength(2);
   expect(diversao[0]).toMatchObject({ titulo: 'Equipe x Equipe', ocupacao: '3/16', jogando: 3 });
   expect(diversao[0].href.startsWith('steam://connect/diversao.local:')).toBe(true);
+  // O cartão "Ao vivo agora" da Início mostra a foto do mapa que está rodando.
+  expect(diversao[0].foto).toMatch(/^\/.+\.webp$/);
+});
+
+test('a Início sabe quantos estão na fila do mix e quantos jogam na Diversão', async () => {
+  await servidor(27019);
+  for (let i = 0; i < 6; i += 1) await entrarNoMix(bd, await membro());
+  const controlador = controladorFalso({ conectados: { 'diversao.local': [STEAM(1), STEAM(2), STEAM(3), STEAM(4), STEAM(5), STEAM(6), STEAM(7)] } });
+  const { naFilaDoMix, naDiversao } = await bombandoAgora(bd, controlador, undefined);
+  expect(naFilaDoMix).toBe(6);
+  expect(naDiversao).toBe(7);
 });
 
 test('no máximo 4 cartões, os mais cheios primeiro', async () => {
