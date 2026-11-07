@@ -72,3 +72,12 @@ test('texto com HTML é guardado como texto, sem mudar nada', async () => {
   const noticia = await criarNoticia(bd, adm, { titulo: 'HTML', texto }, AGORA);
   expect((await noticiaPorId(bd, noticia.id))?.texto).toBe(texto);
 });
+
+test.each(['https://outro.site/x.png', '//outro.site/x.png', '/\\outro.site/x.png', '/a b.png'])('imagem %s é recusada ao salvar', async (imagem) => {
+  await expect(criarNoticia(bd, adm, { titulo: 'Oi', texto: 'Oi', imagem }, AGORA)).rejects.toThrow(NoticiaInvalida);
+});
+
+test('imagem do próprio site é aceita, e vazia vira sem imagem', async () => {
+  expect((await criarNoticia(bd, adm, { titulo: 'Oi', texto: 'Oi', imagem: '/mapas/luxville.webp' }, AGORA)).imagem).toBe('/mapas/luxville.webp');
+  expect((await criarNoticia(bd, adm, { titulo: 'Oi', texto: 'Oi', imagem: '  ' }, AGORA)).imagem).toBeNull();
+});

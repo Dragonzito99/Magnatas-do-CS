@@ -10,7 +10,7 @@ export const AUTOR_DA_EQUIPE = 'Equipe Magnatas';
 
 export class NoticiaInvalida extends Error {
   constructor() {
-    super(`A notícia precisa de título (até ${LIMITES_DA_NOTICIA.titulo} caracteres) e texto (até ${LIMITES_DA_NOTICIA.texto}).`);
+    super(`A notícia precisa de título (até ${LIMITES_DA_NOTICIA.titulo} caracteres) e texto (até ${LIMITES_DA_NOTICIA.texto}), e a imagem tem de ser do próprio site.`);
   }
 }
 
@@ -22,6 +22,8 @@ function validar(dados: DadosDaNoticia) {
   const texto = dados.texto.trim();
   if (!titulo || titulo.length > LIMITES_DA_NOTICIA.titulo || !texto || texto.length > LIMITES_DA_NOTICIA.texto) throw new NoticiaInvalida();
   const imagem = dados.imagem?.trim() || null;
+  // Só imagem do próprio site: a página nunca carrega nada de fora.
+  if (imagem && !/^\/(?!\/)[\w\-./]+$/.test(imagem)) throw new NoticiaInvalida();
   return { titulo, texto, imagem, fixada: dados.fixada ?? false };
 }
 

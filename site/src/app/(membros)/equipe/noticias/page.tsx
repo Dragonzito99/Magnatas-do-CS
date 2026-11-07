@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
@@ -8,7 +9,7 @@ import { BotaoConfirmar } from '../../botao-confirmar';
 import { apagar, publicar, salvar } from './acoes';
 
 const ERROS: Record<string, string> = {
-  invalida: `A notícia precisa de título (até ${LIMITES_DA_NOTICIA.titulo} caracteres) e texto (até ${LIMITES_DA_NOTICIA.texto}).`,
+  invalida: `A notícia precisa de título (até ${LIMITES_DA_NOTICIA.titulo} caracteres) e texto (até ${LIMITES_DA_NOTICIA.texto}). A imagem, se tiver, é um caminho do próprio site, como /mapas/luxville.webp.`,
 };
 const AVISOS: Record<string, string> = {
   publicada: 'Notícia publicada na tela principal.',
@@ -57,7 +58,9 @@ export default async function NoticiasDaEquipe({ searchParams }: { searchParams:
   if (!pode(usuario, 'publicar_noticia')) redirect('/inicio');
   const { erro, aviso, editar } = await searchParams;
   const bd = obterBd();
-  const [lista, emEdicao] = await Promise.all([ultimasNoticias(bd, 50), editar ? noticiaPorId(bd, editar) : null]);
+  // Um link de edição quebrado só abre o formulário de notícia nova.
+  const idParaEditar = editar && z.uuid().safeParse(editar).success ? editar : null;
+  const [lista, emEdicao] = await Promise.all([ultimasNoticias(bd, 50), idParaEditar ? noticiaPorId(bd, idParaEditar) : null]);
 
   return (
     <>
