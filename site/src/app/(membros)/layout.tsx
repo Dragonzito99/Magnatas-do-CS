@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
@@ -6,12 +5,13 @@ import { obterBd } from '@/bd/conexao';
 import { enderecoDoDiscord } from '@/dominio/discord';
 import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
 import { partidaAtualDe } from '@/dominio/partidas';
+import { minhaSala } from '@/dominio/salas';
 import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
 import { AvisoDePartida } from './aviso-de-partida';
-import { Banner } from './banner';
+import { AvisoDeSala } from './aviso-de-sala';
+import { Cabecalho } from './cabecalho';
 import { ManterPresenca } from './manter-presenca';
-import { Menu } from './menu';
 import { Sino } from './sino';
 import { VoltarParaAPartida } from './voltar-para-a-partida';
 
@@ -19,33 +19,29 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
   const usuario = await usuarioAtual();
   if (!usuario) redirect('/');
 
-  const mostrarEquipe = pode(usuario, 'ver_equipe');
-  const [notificacoes, partida] = await Promise.all([notificacoesDe(obterBd(), usuario), partidaAtualDe(obterBd(), usuario.id)]);
-  const casos = casosDe(notificacoes);
+  const [notificacoes, partida, sala] = await Promise.all([
+    notificacoesDe(obterBd(), usuario),
+    partidaAtualDe(obterBd(), usuario.id),
+    minhaSala(obterBd(), usuario.id),
+  ]);
 
   return (
     <div className="app">
       <Atualizar segundos={15} />
       <ManterPresenca />
-      <Banner usuario={usuario} patente={patenteDe(usuario.xpTotal)} discord={enderecoDoDiscord(process.env.DISCORD_URL)} sino={<Sino notificacoes={notificacoes} />} />
-      <div className="app-corpo">
-        <aside className="lateral">
-          <Menu mostrarEquipe={mostrarEquipe} casos={casos} />
-          <Link href="/convites" className="seja-magnata">
-            <svg viewBox="0 0 24 18" aria-hidden="true">
-              <path d="M2 16 1 4l6 5 5-8 5 8 6-5-1 12z" />
-            </svg>
-            <span>
-              Seja um <em>Magnata!</em>
-            </span>
-          </Link>
-        </aside>
-        <main className="conteudo">
-          <AvisoDePartida />
-          {partida && <VoltarParaAPartida partidaId={partida.id} />}
-          {children}
-        </main>
-      </div>
+      <Cabecalho
+        usuario={usuario}
+        patente={patenteDe(usuario.xpTotal)}
+        discord={enderecoDoDiscord(process.env.DISCORD_URL)}
+        sino={<Sino notificacoes={notificacoes} />}
+        casosDaEquipe={pode(usuario, 'ver_equipe') ? casosDe(notificacoes) : null}
+      />
+      <main className="conteudo largura">
+        <AvisoDePartida />
+        {partida && <VoltarParaAPartida partidaId={partida.id} />}
+        {children}
+      </main>
+      <AvisoDeSala sala={sala ? { nome: sala.nome, membros: sala.membros.length, emPartida: sala.partidaId !== null } : null} />
     </div>
   );
 }

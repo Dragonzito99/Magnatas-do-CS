@@ -232,16 +232,14 @@ textarea {
   color: var(--tinta-2);
 }
 
-/* Estrutura com menu lateral */
+/* Estrutura: cabeçalho em cima, como no site do CrossFire, e o conteúdo centralizado */
 .app {
   min-height: 100vh;
 }
 
-.app-corpo {
-  display: grid;
-  grid-template-columns: 208px minmax(0, 1fr);
-  gap: 14px;
-  padding: 14px;
+.largura {
+  width: min(1200px, 100% - 32px);
+  margin-inline: auto;
 }
 
 .so-leitor {
@@ -251,69 +249,6 @@ textarea {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-
-/* Banner e barra do topo */
-/* O cabeçalho fica parado no topo, e a barra lateral logo abaixo dele: só o conteúdo rola. */
-.banner {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  height: 196px;
-  border-bottom: 1px solid var(--linha-forte);
-  box-shadow: 0 0 30px rgba(168, 85, 247, 0.28);
-  background: radial-gradient(circle at 62% 55%, rgba(168, 85, 247, 0.62), transparent 38%),
-    radial-gradient(circle at 92% 90%, rgba(245, 179, 1, 0.14), transparent 30%), linear-gradient(180deg, #130823, #0a0512);
-}
-
-.banner-arte {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.banner-personagem {
-  position: absolute;
-  left: max(50%, 470px);
-  top: -14px;
-  width: auto;
-  height: 318px;
-  transform: translateX(-34%);
-  filter: drop-shadow(0 0 26px rgba(168, 85, 247, 0.55));
-}
-
-.banner-logo {
-  position: absolute;
-  left: 12px;
-  top: 4px;
-  display: block;
-  width: 456px;
-}
-
-.banner-frase {
-  position: absolute;
-  left: 110px;
-  top: 158px;
-  color: #e9def8;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  white-space: nowrap;
-}
-
-.banner-frase b {
-  margin: 0 7px;
-  color: var(--ouro);
-  font-weight: 600;
-}
-
-.barra-topo {
-  position: absolute;
-  top: 14px;
-  right: 18px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .botao-barra,
@@ -366,7 +301,7 @@ textarea {
 
 .botao-conta {
   gap: 8px;
-  max-width: 240px;
+  max-width: 420px;
   padding: 0 8px 0 5px;
   font-weight: 500;
 }
@@ -421,65 +356,6 @@ textarea {
   background: var(--roxo-fraco);
 }
 
-/* Menu lateral */
-/* Fica parada no topo enquanto a página rola, do tamanho da tela abaixo do banner, para o menu e o
-   "Seja um Magnata" não descerem junto em páginas compridas. */
-.lateral {
-  position: sticky;
-  top: 210px;
-  align-self: start;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  height: calc(100vh - 224px);
-  min-height: 420px;
-  overflow-y: auto;
-  scrollbar-width: none;
-  padding: 10px;
-  border-radius: 14px;
-  background: var(--painel);
-  box-shadow: inset 0 0 0 1px var(--linha);
-}
-
-.item-menu.casa {
-  margin-bottom: 6px;
-  color: var(--ouro);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  background: var(--roxo-fraco);
-  box-shadow: inset 0 0 0 1px var(--linha);
-}
-
-.seja-magnata {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  margin-top: auto;
-  padding: 16px 10px 14px;
-  border-radius: 12px;
-  background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.55), transparent 70%), #160b28;
-  box-shadow: inset 0 0 0 1px var(--linha-forte);
-  color: #fff;
-  font-size: 20px;
-  font-style: italic;
-  font-weight: 900;
-  line-height: 1.05;
-  text-align: center;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.seja-magnata svg {
-  width: 34px;
-  height: 26px;
-  fill: var(--ouro);
-}
-
-.seja-magnata em {
-  color: var(--ouro);
-  font-style: inherit;
-}
-
 .icone {
   width: 16px;
   height: 16px;
@@ -489,37 +365,6 @@ textarea {
   stroke-linecap: round;
   stroke-linejoin: round;
   flex: none;
-}
-
-.menu {
-  display: grid;
-  gap: 4px;
-}
-
-.item-menu {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  color: var(--tinta-2);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.item-menu:hover {
-  background: var(--roxo-fraco);
-}
-
-.item-menu[aria-current='page'] {
-  color: var(--tinta);
-  background: linear-gradient(90deg, rgba(245, 179, 1, 0.17), rgba(168, 85, 247, 0.14));
-  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.55), 0 0 14px rgba(245, 179, 1, 0.14);
-}
-
-.item-menu[aria-current='page'] .icone {
-  color: var(--ouro);
 }
 
 .perfil {
@@ -551,6 +396,7 @@ textarea {
   align-content: start;
   gap: 14px;
   min-width: 0;
+  padding: 22px 0 60px;
 }
 
 .topo-pagina {
@@ -624,21 +470,6 @@ textarea {
 }
 
 /* Patente */
-.conta-texto {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.2;
-  text-align: left;
-}
-
-.conta-patente {
-  color: var(--ouro);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .patente-perfil {
   margin-bottom: 14px;
 }
@@ -724,10 +555,6 @@ textarea {
   width: 16px;
   height: 16px;
   vertical-align: -3px;
-}
-
-.conta-patente .insignia-mini {
-  margin-right: 4px;
 }
 
 .patente-na-tabela {
@@ -1970,67 +1797,7 @@ textarea {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .banner {
-    position: relative;
-    height: 132px;
-  }
-
-  .banner-logo {
-    left: 2px;
-    top: auto;
-    bottom: 2px;
-    width: 246px;
-  }
-
-  .banner-frase,
-  .seja-magnata,
   .conta-texto {
-    display: none;
-  }
-
-  .banner-personagem {
-    left: auto;
-    right: -34px;
-    top: 8px;
-    height: 250px;
-    transform: none;
-  }
-
-  .barra-topo {
-    top: 8px;
-    right: 8px;
-  }
-
-  .app-corpo {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .lateral {
-    position: static;
-    height: auto;
-    min-height: 0;
-    overflow: visible;
-    padding: 6px;
-  }
-
-  .menu {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .item-menu {
-    flex: 1 0 auto;
-    justify-content: center;
-    width: auto;
-    padding: 9px 12px;
-    font-size: 13px;
-  }
-
-  .item-menu .icone {
     display: none;
   }
 
@@ -2434,4 +2201,320 @@ textarea {
 
 .avisar-ao-entrar {
   display: contents;
+}
+
+/* Cabeçalho: faixa preta com a conta e menu de cima, no estilo do site do CrossFire */
+.cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.faixa {
+  background: #000;
+  font-size: 13px;
+}
+
+.faixa-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 46px;
+}
+
+.faixa-logo {
+  flex: none;
+}
+
+.faixa-logo img {
+  display: block;
+  width: auto;
+  height: 34px;
+}
+
+.faixa-conta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.botao-painel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--tinta);
+  box-shadow: inset 0 0 0 1px var(--roxo);
+  font: italic 600 15px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.botao-painel:hover {
+  background: var(--roxo);
+}
+
+.contador-do-painel {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: #fff;
+  background: #dc2626;
+  font: 700 10px/18px var(--fonte-inter), sans-serif;
+  text-align: center;
+}
+
+.botao-conta .insignia-mini {
+  width: 18px;
+  height: 18px;
+}
+
+.conta-texto {
+  overflow: hidden;
+  color: var(--tinta-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conta-texto .conta-nome {
+  display: inline;
+}
+
+.conta-texto .conta-nome {
+  color: var(--ouro);
+  font-weight: 700;
+}
+
+.conta-texto .conta-patente {
+  margin-left: 4px;
+  color: var(--tinta-2);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.menu-principal {
+  background: var(--painel);
+  border-bottom: 2px solid var(--roxo);
+}
+
+.menu-principal-linha {
+  display: flex;
+  align-items: stretch;
+  height: 52px;
+}
+
+.menu-itens {
+  display: flex;
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.item-principal {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 16px;
+  color: var(--tinta);
+  font: italic 600 19px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+a.item-principal:hover,
+.item-principal[aria-current='page'] {
+  background: var(--roxo);
+  transform: skewX(-12deg);
+}
+
+a.item-principal:hover > span,
+.item-principal[aria-current='page'] > span {
+  transform: skewX(12deg);
+}
+
+.item-principal.destaque {
+  color: var(--ouro);
+}
+
+.item-principal.em-breve {
+  cursor: default;
+}
+
+.item-principal em {
+  margin-left: 4px;
+  padding: 1px 5px;
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+  font: 700 10px/1.4 var(--fonte-inter), sans-serif;
+  font-style: normal;
+  vertical-align: 3px;
+}
+
+.botao-jogar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 34px;
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+  font: italic 700 25px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.botao-jogar:hover {
+  background: #ffc933;
+}
+
+/* Fora da tela das salas: o aviso de que a pessoa ainda está numa sala */
+.aviso-sala {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 8px;
+  color: var(--tinta);
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--ouro), 0 10px 30px rgba(0, 0, 0, 0.55);
+  text-decoration: none;
+}
+
+.aviso-sala b {
+  color: var(--ouro);
+}
+
+.aviso-sala em {
+  padding: 6px 12px;
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+  font: italic 700 16px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.aviso-sala-ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.25);
+}
+
+/* Painel ADM */
+.numeros-painel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.numero-painel {
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.numero-painel span {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.numero-painel b {
+  display: block;
+  margin-top: 4px;
+  font: italic 700 40px/1 var(--fonte-titulo), sans-serif;
+}
+
+.numero-painel.alerta b {
+  color: #f87171;
+}
+
+.numero-painel.ok b {
+  color: var(--verde);
+}
+
+.atalhos-painel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.atalho-painel {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 8px;
+  color: var(--tinta);
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  text-decoration: none;
+}
+
+.atalho-painel:hover {
+  box-shadow: inset 0 0 0 1px var(--ouro);
+}
+
+.atalho-painel b {
+  font: italic 700 26px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.atalho-painel span {
+  color: var(--tinta-2);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .aviso-sala-ponto {
+    animation: pulsar 1.6s infinite;
+  }
+}
+
+@keyframes pulsar {
+  50% {
+    box-shadow: 0 0 0 7px rgba(74, 222, 128, 0);
+  }
+}
+
+@media (max-width: 860px) {
+  .menu-principal-linha {
+    height: 46px;
+  }
+
+  .item-principal {
+    padding: 0 10px;
+    font-size: 16px;
+  }
+
+  .botao-jogar {
+    padding: 0 18px;
+    font-size: 20px;
+  }
+
+  .botao-painel {
+    padding: 0 8px;
+    font-size: 0;
+  }
+
+  .botao-painel .icone {
+    width: 18px;
+    height: 18px;
+  }
+
+  .numeros-painel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aviso-sala {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
 }
