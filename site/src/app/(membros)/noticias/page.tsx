@@ -2,73 +2,92 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
+import { cartoesDeNoticias, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias, type CartaoDeNoticia } from '@/dominio/cartoes-de-noticias';
 import { ultimasNoticias } from '@/dominio/noticias';
 import { noticiasSteamDaTela } from '@/dominio/noticias-steam';
+import { ENDERECO_DA_LIQUIPEDIA, tierSDaTela } from '@/dominio/tier-s';
 
-const dataCurta = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' });
-// Notícia sem foto ganha a de um mapa, para o cartão nunca ficar vazio.
-const FOTOS_DE_RESERVA = ['/mapas/egypt.webp', '/mapas/mirage.webp', '/mapas/laboratory.webp', '/mapas/dust2.webp', '/mapas/biochemical-hotel.webp'];
+const dataCurta = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+const SELO: Record<CartaoDeNoticia['tipo'], string> = { clube: 'selo-modo ouro', cs2: 'selo-modo', times: 'selo-modo verde' };
 
-function chamada(texto: string): string {
-  const primeiro = texto.split(/\n\s*\n/)[0];
-  return primeiro.length > 160 ? `${primeiro.slice(0, 157)}...` : primeiro;
+/** Notícia do clube abre aqui no site; CS2 e times brasileiros abrem a fonte em outra aba. */
+function Destino({ cartao, className, children }: { cartao: CartaoDeNoticia; className: string; children: React.ReactNode }) {
+  if (cartao.externo) {
+    return (
+      <a href={cartao.href} className={className} target="_blank" rel="noreferrer">
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={cartao.href} className={className}>
+      {children}
+    </Link>
+  );
 }
 
-export default async function Noticias() {
+export default async function Noticias({ searchParams }: { searchParams: Promise<{ tipo?: string }> }) {
   await exigirAcesso('/noticias');
+  const filtro = lerFiltroDeNoticias((await searchParams).tipo);
   const bd = obterBd();
-  const [noticias, steam] = await Promise.all([ultimasNoticias(bd, 30), noticiasSteamDaTela(bd, 6)]);
-  const [destaque, ...resto] = noticias;
+  const [clube, steam, tierS] = await Promise.all([ultimasNoticias(bd, 30), noticiasSteamDaTela(bd, 12), tierSDaTela(bd)]);
+  const { destaque, cartoes } = cartoesDeNoticias({ clube, steam, jogos: tierS?.jogos ?? [] }, filtro);
 
   return (
     <>
       <div className="topo-jogar">
         <h1>Notícias</h1>
-        <p className="apoio">O que está rolando no clube e no CS2.</p>
+        <p className="apoio">O que está rolando no clube, no CS2 e nos times brasileiros.</p>
       </div>
-      {!destaque && <p className="vazio">Nenhuma notícia do clube ainda.</p>}
+      <nav className="filtros-jogar" aria-label="Tipo de notícia">
+        {FILTROS_DE_NOTICIAS.map((item) => (
+          <Link
+            key={item.nome}
+            className="filtro-jogar"
+            href={item.valor ? `/noticias?tipo=${item.valor}` : '/noticias'}
+            aria-current={filtro === item.valor ? 'page' : undefined}
+          >
+            {item.nome}
+          </Link>
+        ))}
+      </nav>
+
       {destaque && (
-        <Link href={`/noticias/${destaque.id}`} className="cartao-destaque grande noticia-topo">
-          <Image src={destaque.imagem ?? FOTOS_DE_RESERVA[0]} alt="" width={1200} height={500} />
-          <span className="selo-modo ouro">{destaque.fixada ? 'Fixada · Do clube' : 'Do clube'}</span>
+        <Destino cartao={destaque} className="cartao-destaque grande noticia-topo">
+          <Image src={destaque.imagem} alt="" width={1200} height={500} />
+          <span className="selo-modo ouro">{clube[0]?.fixada ? 'Fixada · Do clube' : 'Do clube'}</span>
           <h2>{destaque.titulo}</h2>
-          <p>{chamada(destaque.texto)}</p>
-          <small className="apoio">
-            {destaque.autorApelido} · {dataCurta.format(destaque.criadoEm)}
-          </small>
-        </Link>
+          {destaque.resumo && <p>{destaque.resumo}</p>}
+          {destaque.data && <small className="apoio">{dataCurta.format(destaque.data)}</small>}
+        </Destino>
       )}
-      {resto.length > 0 && (
+
+      {!destaque && cartoes.length === 0 && <p className="vazio">Nada por aqui ainda.</p>}
+      {cartoes.length > 0 && (
         <div className="noticias-grade">
-          {resto.map((noticia, indice) => (
-            <Link key={noticia.id} href={`/noticias/${noticia.id}`} className="noticia-cartao">
+          {cartoes.map((cartao, indice) => (
+            <Destino key={`${cartao.tipo}-${indice}-${cartao.titulo}`} cartao={cartao} className="noticia-cartao">
               <div className="noticia-foto">
-                <Image src={noticia.imagem ?? FOTOS_DE_RESERVA[(indice + 1) % FOTOS_DE_RESERVA.length]} alt="" width={480} height={270} />
-                <span className="selo-modo ouro">Do clube</span>
+                <Image src={cartao.imagem} alt="" width={480} height={270} />
+                <span className={SELO[cartao.tipo]}>{cartao.etiqueta}</span>
               </div>
               <div className="noticia-corpo">
-                <small>{dataCurta.format(noticia.criadoEm)}</small>
-                <h3>{noticia.titulo}</h3>
-                <p>{chamada(noticia.texto)}</p>
+                {cartao.data && <small>{dataCurta.format(cartao.data)}</small>}
+                <h3>{cartao.titulo}</h3>
+                {cartao.resumo && <p>{cartao.resumo}</p>}
               </div>
-            </Link>
+            </Destino>
           ))}
         </div>
       )}
-      {steam.length > 0 && (
-        <section className="painel">
-          <div className="cabeca-painel">
-            <h2>CS2 oficial</h2>
-            <span>Steam</span>
-          </div>
-          {steam.map((noticia) => (
-            <a className="noticia-da-lista" href={noticia.url} target="_blank" rel="noreferrer" key={noticia.gid}>
-              <small>{dataCurta.format(noticia.publicadaEm)}</small>
-              <b>{noticia.titulo}</b>
-              {noticia.resumo && <span className="apoio">{noticia.resumo}</span>}
-            </a>
-          ))}
-        </section>
+      {cartoes.some((cartao) => cartao.tipo === 'times') && (
+        <p className="fonte">
+          Jogos dos times brasileiros:{' '}
+          <a href={ENDERECO_DA_LIQUIPEDIA} target="_blank" rel="noreferrer">
+            Liquipedia
+          </a>{' '}
+          (CC-BY-SA)
+        </p>
       )}
     </>
   );
