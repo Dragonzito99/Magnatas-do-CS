@@ -248,3 +248,8 @@ test('o cartão da Mutação mostra o Silent Village quando ele está rodando', 
   const servidor = { mapa: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp' };
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'zm_silent_village' })).toEqual({ nome: 'Silent Village', foto: '/mapas/silent-village.webp' });
 });
+
+test('o cartão do Equipe mostra o Alaska quando ele está rodando', () => {
+  const servidor = { mapa: 'Transport Ship', foto: '/mapas/transport-ship.webp' };
+  expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'alaska' })).toEqual({ nome: 'Alaska', foto: '/mapas/alaska.webp' });
+});

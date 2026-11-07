@@ -999,6 +999,8 @@ def test_equipe_roda_varios_mapas():
     rotacao = conf("equipe")["ROTACAO"].split(",")
     assert rotacao[0] == conf("equipe")["OFICINA"]
     assert "3122345065" in rotacao and "3070259469" in rotacao
+    # Alaska, do CrossFire, refeito para o CS2.
+    assert "3258817421" in rotacao
 
 
 def test_o_script_entrega_a_rotacao_ao_plugin():
