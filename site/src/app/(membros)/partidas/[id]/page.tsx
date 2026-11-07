@@ -12,6 +12,7 @@ import { elogiosFeitos, TIPOS_DE_ELOGIO } from '@/dominio/elogios';
 import { dadosDeConexao, detalheDaPartida, MAPAS, type JogadorDaPartida } from '@/dominio/partidas';
 import { nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { resolverVetosVencidos, vetosDaPartida } from '@/dominio/vetos';
+import { alocarEmSegundoPlano } from '@/servidor-jogo/alocar';
 import { Atualizar } from '../../atualizar';
 import { Avatar } from '../../avatar';
 import { BotaoConfirmar } from '../../botao-confirmar';
@@ -260,6 +261,8 @@ export default async function PaginaDaPartida({
   if (!detalhe) notFound();
 
   const { partida, servidor, jogadores, salasDaPartida } = detalhe;
+  // O último veto (inclusive o automático, feito acima) deixa a partida esperando servidor: já pede um, sem esperar a varredura.
+  if (partida.estado === 'aguardando_servidor') alocarEmSegundoPlano(bd);
   const estado = TEXTOS_DO_ESTADO[partida.estado];
   const ativa = (ESTADOS_ATIVOS_DE_PARTIDA as readonly string[]).includes(partida.estado);
   const eu = jogadores.find((jogador) => jogador.id === usuario.id);

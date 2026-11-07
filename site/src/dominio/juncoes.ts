@@ -83,9 +83,12 @@ export async function pedirJuncao(bd: Bd, lider: Pick<Usuario, 'id'>, salaAlvoId
 export async function aceitarJuncao(bd: Bd, lider: Pick<Usuario, 'id'>, juncaoId: string, agora: Date = new Date()): Promise<void> {
   await bd.transaction(async (tx) => {
     await exigirAtivo(tx, lider);
+    // Trava as salas antes do pedido, na mesma ordem de quem sai da sala (sala, depois pedido): ordens opostas travariam uma à outra.
+    const [lido] = await tx.select().from(juncoes).where(eq(juncoes.id, juncaoId));
+    if (!lido) throw new JuncaoIndisponivel();
+    const travadas = await travarSalas(tx, [lido.salaOrigemId, lido.salaAlvoId]);
     const [pedido] = await tx.select().from(juncoes).where(eq(juncoes.id, juncaoId)).for('update');
     if (!pedido) throw new JuncaoIndisponivel();
-    const travadas = await travarSalas(tx, [pedido.salaOrigemId, pedido.salaAlvoId]);
     const origem = travadas.find((sala) => sala.id === pedido.salaOrigemId);
     const alvo = travadas.find((sala) => sala.id === pedido.salaAlvoId);
     if (!alvo) throw new JuncaoIndisponivel();
