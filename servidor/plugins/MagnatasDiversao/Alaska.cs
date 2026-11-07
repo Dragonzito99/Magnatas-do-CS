@@ -17,8 +17,7 @@ public partial class ModoDeDiversao
     private const int RodadasDaPartidaDeRodadas = 10;
     private const int VitoriasParaVencer = 6;
     private const float MinutosDaRodadaDeAlaska = 3f;
-    private const float SegundosAteReporArmas = 1f;
-    private const float SegundosAteEntregarKit = 0.3f;
+    private const float SegundosAteEntregarKit = 0.5f;
     private const int SegundosDoEmpate = 5;
 
     // O cfg do modo volta a valer a cada troca de mapa, então estas regras só existem enquanto o Alaska roda.
@@ -39,11 +38,6 @@ public partial class ModoDeDiversao
         "mp_t_default_grenades \"\"",
     };
 
-    private sealed record ArmaDoMapa(string Nome, Vector Posicao, QAngle Angulo);
-
-    private readonly List<ArmaDoMapa> armasDoMapa = new();
-    // Depois da primeira reposição a lista fecha: as armas que o próprio plugin cria não entram nela.
-    private bool listaDeArmasFechada;
     private bool regrasDoAlaskaAplicadas;
     private int rodadasDeAlaska;
     private int vitoriasCtNoAlaska;
@@ -57,12 +51,9 @@ public partial class ModoDeDiversao
     {
         RegisterListener<Listeners.OnMapStart>(_ =>
         {
-            armasDoMapa.Clear();
-            listaDeArmasFechada = false;
             regrasDoAlaskaAplicadas = false;
             ZerarPartidaDeAlaska();
         });
-        RegisterListener<Listeners.OnEntitySpawned>(GuardarArmaDoMapa);
     }
 
     private void ZerarPartidaDeAlaska()
@@ -71,27 +62,6 @@ public partial class ModoDeDiversao
         vitoriasCtNoAlaska = 0;
         vitoriasTrNoAlaska = 0;
         empateDoAlaska?.Kill();
-    }
-
-    /// <summary>As armas que o mapa põe no chão nascem sem dono. O plugin guarda onde ficam, para repor a cada rodada.</summary>
-    private void GuardarArmaDoMapa(CEntityInstance entidade)
-    {
-        if (listaDeArmasFechada || !NoMapaDeRodadas) return;
-        var nome = entidade.DesignerName;
-        if (!nome.StartsWith("weapon_") || nome.StartsWith("weapon_knife")) return;
-        var arma = new CBasePlayerWeapon(entidade.Handle);
-        // A posição e o dono só ficam prontos no quadro seguinte. Arma entregue a alguém já tem dono.
-        Server.NextFrame(() =>
-        {
-            if (listaDeArmasFechada || !arma.IsValid || arma.OwnerEntity.IsValid) return;
-            var posicao = arma.AbsOrigin;
-            var angulo = arma.AbsRotation;
-            if (posicao == null || angulo == null) return;
-            var mesmaPosicao = armasDoMapa.Any(guardada =>
-                guardada.Nome == arma.DesignerName && (guardada.Posicao - posicao).Length() < 1f);
-            if (mesmaPosicao) return;
-            armasDoMapa.Add(new ArmaDoMapa(arma.DesignerName, new Vector(posicao.X, posicao.Y, posicao.Z), new QAngle(angulo.X, angulo.Y, angulo.Z)));
-        });
     }
 
     private void ComecarRodadaDeAlaska()
@@ -113,8 +83,8 @@ public partial class ModoDeDiversao
             ZerarPlacarDasPessoas();
             inicioDoAlaska = DateTime.UtcNow;
         }
-        TirarEquipamentoDoMapa();
-        AddTimer(SegundosAteReporArmas, ReporArmasDoMapa);
+        // As armas do chão ficam por conta do jogo (mp_weapons_allow_map_placed 1). Criar ou apagar entidades
+        // pelo plugin derrubou o servidor quando o dono entrou.
 
         // Sem objetivo no mapa, o jogo daria a vitória ao CT quando o tempo acaba. Aqui, tempo esgotado é empate.
         empateDoAlaska?.Kill();
@@ -124,34 +94,7 @@ public partial class ModoDeDiversao
         });
     }
 
-    /// <summary>O mapa tira as armas de quem nasce e deixa só a faca. Sem esta peça, quem entrega o kit é o plugin.</summary>
-    private static void TirarEquipamentoDoMapa()
-    {
-        foreach (var equipamento in Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("game_player_equip").ToList())
-        {
-            equipamento.Remove();
-        }
-    }
-
-    private void ReporArmasDoMapa()
-    {
-        if (!NoMapaDeRodadas) return;
-        listaDeArmasFechada = true;
-        if (armasDoMapa.Count == 0) return;
-        // O que sobrou no chão da rodada anterior sai, para as armas não se acumularem.
-        foreach (var solta in Utilities.FindAllEntitiesByDesignerName<CBasePlayerWeapon>("weapon_").ToList())
-        {
-            if (solta.IsValid && !solta.OwnerEntity.IsValid && !solta.DesignerName.StartsWith("weapon_knife")) solta.Remove();
-        }
-        foreach (var guardada in armasDoMapa)
-        {
-            var arma = Utilities.CreateEntityByName<CBasePlayerWeapon>(guardada.Nome);
-            if (arma == null) continue;
-            arma.Teleport(guardada.Posicao, guardada.Angulo, new Vector(0, 0, 0));
-            arma.DispatchSpawn();
-        }
-    }
-
+    /// <summary>O game_player_equip do mapa deixa quem nasce só com a faca. O kit vem logo depois dele.</summary>
     private void EntregarKitDoAlaska(CCSPlayerController? jogador)
     {
         if (!NoMapaDeRodadas || jogador is not { IsValid: true, PawnIsAlive: true }) return;

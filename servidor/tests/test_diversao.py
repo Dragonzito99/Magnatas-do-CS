@@ -1224,19 +1224,21 @@ def test_alaska_partida_de_dez_rodadas_e_quem_faz_seis_vence():
     assert "FecharPartida(" in fim and "TrocarDeMapa" in fim
 
 
-def test_alaska_tira_o_equipamento_do_mapa_e_da_faca_e_pistola():
+def test_alaska_da_faca_e_pistola_depois_do_equipamento_do_mapa():
     codigo = codigo_do_alaska()
-    assert '"game_player_equip"' in codigo
     kit = codigo[codigo.index("void EntregarKitDoAlaska"):]
     assert "weapon_knife" in kit and "weapon_glock" in kit and "weapon_hkp2000" in kit
+    # O game_player_equip do mapa tira as armas ao nascer: o kit vem depois dele.
+    assert "SegundosAteEntregarKit = 0.5f" in codigo
 
 
-def test_alaska_guarda_as_armas_do_mapa_e_repoe_a_cada_rodada():
+def test_alaska_nao_cria_nem_apaga_entidades():
+    # Criar armas e apagar peças do mapa derrubou o servidor (segfault no libserver) quando o dono entrou.
+    # As armas do chão ficam por conta do próprio jogo, com mp_weapons_allow_map_placed 1.
     codigo = codigo_do_alaska()
-    assert "Listeners.OnEntitySpawned" in codigo
-    repor = codigo[codigo.index("void ReporArmasDoMapa"):]
-    assert "CreateEntityByName<CBasePlayerWeapon>" in repor
-    assert "DispatchSpawn()" in repor
+    assert "CreateEntityByName" not in codigo
+    assert "OnEntitySpawned" not in codigo
+    assert ".Remove()" not in codigo
 
 
 def test_o_relogio_do_mata_mata_nao_encerra_o_alaska():
