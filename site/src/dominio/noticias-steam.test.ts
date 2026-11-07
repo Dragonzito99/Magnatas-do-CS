@@ -90,3 +90,17 @@ test('limparConteudo tira as marcações da Steam e o HTML', () => {
 test('limparConteudo corta em 4.000 caracteres', () => {
   expect(limparConteudo('a'.repeat(10_000))).toHaveLength(4000);
 });
+
+test('falha passageira (chave, crédito, limite, fora do ar) não gasta tentativa e para a rodada', async () => {
+  let chamadas = 0;
+  const passageira: Traduzir = async () => {
+    chamadas += 1;
+    return 'tentar_depois';
+  };
+  for (let i = 0; i < 5; i += 1) await atualizarNoticiasSteam(bd, buscar, passageira, minutos(i * 31));
+  expect(chamadas).toBe(5);
+  const linhas = await bd.select().from(noticiasSteam);
+  expect(linhas.every((linha) => linha.tentativas === 0)).toBe(true);
+  await atualizarNoticiasSteam(bd, buscar, tradutorFalso, minutos(200));
+  expect((await noticiasSteamDaTela(bd, 1))[0].titulo).toMatch(/^PT: /);
+});

@@ -112,3 +112,15 @@ test('erro ou resposta estranha mantém o último dado bom', async () => {
 test('sem dado nenhum ainda, a tela recebe null', async () => {
   expect(await tierSDaTela(bd)).toBeNull();
 });
+
+test('se a Liquipedia mudar o HTML, o último dado bom fica e nada é apagado', async () => {
+  const mudado = { parse: { text: '<div class="layout-novo"><p>Nada que o leitor conheça</p></div>' } };
+  const { pedir } = pedidoFalso([amostraDeTorneios, amostraDeJogos, mudado, amostraDeJogos, amostraDeTorneios, mudado]);
+  await atualizarTierS(bd, pedir, AGORA);
+  await atualizarTierS(bd, pedir, minutos(11));
+  await atualizarTierS(bd, pedir, minutos(22));
+  const tela = await tierSDaTela(bd);
+  expect(tela?.torneios[0].nome).toBe('Intel Extreme Masters Beijing 2026');
+  expect(tela?.jogos.length).toBeGreaterThan(0);
+  expect(tela?.atualizadoEm).toEqual(AGORA);
+});

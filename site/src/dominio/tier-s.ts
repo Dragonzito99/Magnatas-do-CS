@@ -93,6 +93,15 @@ export function lerJogos(html: string): Jogo[] {
   return jogos;
 }
 
+/** A página ainda tem o formato que o leitor conhece? Sem isso, uma mudança da Liquipedia apagaria o último dado bom. */
+export function formatoConhecido(htmlDosTorneios: string, htmlDosJogos: string): boolean {
+  const torneios = parse(htmlDosTorneios)
+    .querySelectorAll('.tournaments-listing tr')
+    .some((linha) => linha.querySelectorAll('td').length >= 5);
+  const jogos = parse(htmlDosJogos).querySelector('.match-info') !== null;
+  return torneios && jogos;
+}
+
 const ehBrasileiro = (time: string) => (TIMES_BRASILEIROS as readonly string[]).includes(time);
 const doTorneio = (pagina: string, torneio: TorneioSTier) => pagina === torneio.pagina || pagina.startsWith(`${torneio.pagina}/`);
 
@@ -112,6 +121,9 @@ export async function atualizarTierS(bd: Bd, pedir: (parametros: Record<string, 
     if (!torneiosLidos.success) throw new Error('A Liquipedia respondeu sem a página de torneios.');
     const jogosLidos = RespostaDoParse.safeParse(await pagina('Liquipedia:Matches'));
     if (!jogosLidos.success) throw new Error('A Liquipedia respondeu sem a página de jogos.');
+    if (!formatoConhecido(torneiosLidos.data.parse.text, jogosLidos.data.parse.text)) {
+      throw new Error('O formato das páginas da Liquipedia mudou: o quadro Tier S mantém o último dado até o leitor ser ajustado.');
+    }
     const torneios = lerTorneiosSTier(torneiosLidos.data.parse.text, agora);
     const jogos = jogosBrasileiros(lerJogos(jogosLidos.data.parse.text), torneios);
     const dados = { torneios, jogos: jogos.map((jogo) => ({ ...jogo, quando: jogo.quando?.toISOString() ?? null })) };

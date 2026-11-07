@@ -11,7 +11,11 @@ const MAXIMO_DE_TENTATIVAS = 3;
 const TAMANHO_DO_CONTEUDO = 4000;
 const CHAVE_DA_ULTIMA_BUSCA = 'steam:ultima-busca';
 
-export type Traduzir = (entrada: { titulo: string; conteudo: string }) => Promise<{ titulo: string; resumo: string } | null>;
+/**
+ * null: a tradução desta notícia falhou (conta uma tentativa).
+ * 'tentar_depois': falha da conta ou da rede (chave, crédito, limite, fora do ar): não conta tentativa e para a rodada.
+ */
+export type Traduzir = (entrada: { titulo: string; conteudo: string }) => Promise<{ titulo: string; resumo: string } | null | 'tentar_depois'>;
 
 const RespostaDaSteam = z.object({
   appnews: z.object({
@@ -83,6 +87,7 @@ async function traduzirPendentes(bd: Bd, traduzir: Traduzir, agora: Date): Promi
     } catch (erro) {
       console.warn('Falha ao traduzir uma notícia da Steam:', erro);
     }
+    if (traducao === 'tentar_depois') return;
     if (traducao) {
       await bd
         .update(noticiasSteam)
