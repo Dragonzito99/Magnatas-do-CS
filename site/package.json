@@ -15,6 +15,7 @@
     "noticia:publicar": "tsx scripts/publicar-noticia.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.4",
     "pg": "^8.23.1",
