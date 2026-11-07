@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, notInArray } from 'drizzle-orm';
 import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
-import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, xpPartidas, type Papel, type Partida, type Servidor } from '@/bd/esquema';
+import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, xpPartidas, type Papel, type Partida, type Sala, type Servidor } from '@/bd/esquema';
 import type { ControladorServidor } from '@/servidor-jogo/controlador';
 import { PRAZO_DO_ACEITE_MS } from './aceites';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
@@ -254,10 +254,13 @@ export type JogadorDaPartida = {
   xp: number | null;
 };
 
+/** A sala de cada time, para a página mostrar o nome e saber quem é o líder que veta. */
+export type SalasDaPartida = { 1?: Pick<Sala, 'id' | 'nome' | 'liderId'>; 2?: Pick<Sala, 'id' | 'nome' | 'liderId'> };
+
 export async function detalheDaPartida(
   bd: Bd,
   id: string,
-): Promise<{ partida: Partida; servidor: Servidor | null; jogadores: JogadorDaPartida[] } | null> {
+): Promise<{ partida: Partida; servidor: Servidor | null; jogadores: JogadorDaPartida[]; salasDaPartida: SalasDaPartida } | null> {
   const [partida] = await bd.select().from(partidas).where(eq(partidas.id, id));
   if (!partida) return null;
   const [servidor] = partida.servidorId ? await bd.select().from(servidores).where(eq(servidores.id, partida.servidorId)) : [];
@@ -287,7 +290,13 @@ export async function detalheDaPartida(
     .leftJoin(xpPartidas, and(eq(xpPartidas.usuarioId, usuarios.id), eq(xpPartidas.referencia, id)))
     .where(eq(partidaJogadores.partidaId, id))
     .orderBy(desc(partidaJogadores.kills), asc(usuarios.apelido));
-  return { partida, servidor: servidor ?? null, jogadores };
+  const salasLigadas = await bd.select({ id: salas.id, nome: salas.nome, liderId: salas.liderId }).from(salas).where(eq(salas.partidaId, id));
+  const salasDaPartida: SalasDaPartida = {};
+  for (const sala of salasLigadas) {
+    const lider = jogadores.find((jogador) => jogador.id === sala.liderId);
+    if (lider?.time === 1 || lider?.time === 2) salasDaPartida[lider.time] = sala;
+  }
+  return { partida, servidor: servidor ?? null, jogadores, salasDaPartida };
 }
 
 const ESTADOS_COM_SERVIDOR_PRONTO: Partida['estado'][] = ['aguardando_jogadores', 'ao_vivo'];

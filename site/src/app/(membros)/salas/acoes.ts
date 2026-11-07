@@ -8,6 +8,7 @@ import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import { aceitarDesafio, cancelarDesafio, DesafioIndisponivel, desafiar, recusarDesafio, SalaIncompleta } from '@/dominio/desafios';
 import { Bloqueado, ContaSemAcesso, JaOcupado } from '@/dominio/disponibilidade';
+import { aceitarJuncao, cancelarJuncao, JuncaoIndisponivel, pedirJuncao, recusarJuncao } from '@/dominio/juncoes';
 import {
   criarSala,
   entrarNaSala,
@@ -30,6 +31,7 @@ function codigoDoErro(erro: unknown): string | null {
   if (erro instanceof ContaSemAcesso) return 'sem-acesso';
   if (erro instanceof SalaIncompleta) return 'incompleta';
   if (erro instanceof DesafioIndisponivel) return 'desafio';
+  if (erro instanceof JuncaoIndisponivel) return 'juncao';
   return null;
 }
 
@@ -84,6 +86,30 @@ export async function aceitar(dados: FormData) {
   const partida = await executar((ator) => aceitarDesafio(bd, ator, desafioId));
   alocarEmSegundoPlano(bd);
   redirect(`/partidas/${partida.id}`);
+}
+
+export async function juntar(dados: FormData) {
+  const salaId = idDe(dados, 'salaId');
+  await executar((ator) => pedirJuncao(obterBd(), ator, salaId));
+  revalidatePath('/salas');
+}
+
+export async function aceitarJuntar(dados: FormData) {
+  const juncaoId = idDe(dados, 'juncaoId');
+  await executar((ator) => aceitarJuncao(obterBd(), ator, juncaoId));
+  revalidatePath('/salas');
+}
+
+export async function recusarJuntar(dados: FormData) {
+  const juncaoId = idDe(dados, 'juncaoId');
+  await executar((ator) => recusarJuncao(obterBd(), ator, juncaoId));
+  revalidatePath('/salas');
+}
+
+export async function cancelarJuntar(dados: FormData) {
+  const juncaoId = idDe(dados, 'juncaoId');
+  await executar((ator) => cancelarJuncao(obterBd(), ator, juncaoId));
+  revalidatePath('/salas');
 }
 
 export async function recusar(dados: FormData) {

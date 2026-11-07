@@ -1,15 +1,15 @@
-import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { desafiosDaSala, type DesafioDaSala } from '@/dominio/desafios';
 import { partidaAtualDe } from '@/dominio/partidas';
 import { listarSalas, minhaSala, TAMANHO_DA_SALA, type SalaComMembros } from '@/dominio/salas';
 import { situacaoDasFaltas } from '@/dominio/faltas';
+import { juncoesDaSala, type JuncaoDaSala } from '@/dominio/juncoes';
 import { Atualizar } from '../atualizar';
 import { AvisoDeBloqueio } from '../aviso-de-bloqueio';
 import { Avatar } from '../avatar';
 import { OnlineAgora } from '../online-agora';
-import { aceitar, cancelar, chamarParaDesafio, criar, entrar, expulsar, recusar, sair } from './acoes';
+import { aceitar, aceitarJuntar, cancelar, cancelarJuntar, chamarParaDesafio, criar, entrar, expulsar, juntar, recusar, recusarJuntar, sair } from './acoes';
 
 const ERROS: Record<string, string> = {
   cheia: 'Esta sala já está completa.',
@@ -21,6 +21,7 @@ const ERROS: Record<string, string> = {
   'sem-acesso': 'Sua conta não pode fazer isso agora.',
   incompleta: 'As duas salas precisam estar completas e com todos liberados para jogar.',
   desafio: 'Este desafio não está mais disponível.',
+  juncao: 'Este pedido de junção não está mais disponível.',
 };
 
 function segundosAte(data: Date): number {
@@ -74,7 +75,46 @@ function Desafio({ desafio }: { desafio: DesafioDaSala }) {
   );
 }
 
-function SuaSala({ sala, usuarioId, desafio }: { sala: SalaComMembros; usuarioId: string; desafio?: DesafioDaSala }) {
+function Juncao({ juncao }: { juncao: JuncaoDaSala }) {
+  return (
+    <div className="vidro">
+      <small>{juncao.recebido ? 'Pedido para juntar' : 'Pedido de junção enviado'}</small>
+      <p>
+        {juncao.recebido
+          ? `${juncao.outraSalaNome} (${juncao.outraSalaTamanho}) quer entrar na sua sala`
+          : `Esperando ${juncao.outraSalaNome} (${juncao.outraSalaTamanho})`}
+        , {segundosAte(juncao.expiraEm)}s
+      </p>
+      <div className="acoes">
+        {juncao.recebido ? (
+          <>
+            <form action={aceitarJuntar}>
+              <input type="hidden" name="juncaoId" value={juncao.id} />
+              <button type="submit" className="botao ouro pequeno">
+                Aceitar
+              </button>
+            </form>
+            <form action={recusarJuntar}>
+              <input type="hidden" name="juncaoId" value={juncao.id} />
+              <button type="submit" className="botao contorno pequeno">
+                Recusar
+              </button>
+            </form>
+          </>
+        ) : (
+          <form action={cancelarJuntar}>
+            <input type="hidden" name="juncaoId" value={juncao.id} />
+            <button type="submit" className="botao contorno pequeno">
+              Cancelar
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SuaSala({ sala, usuarioId, desafio, juncoes }: { sala: SalaComMembros; usuarioId: string; desafio?: DesafioDaSala; juncoes: JuncaoDaSala[] }) {
   const souLider = sala.liderId === usuarioId;
   return (
     <section className="cartao-escuro">
@@ -100,6 +140,7 @@ function SuaSala({ sala, usuarioId, desafio }: { sala: SalaComMembros; usuarioId
         ))}
       </ul>
       {desafio && <Desafio desafio={desafio} />}
+      {souLider && juncoes.map((juncao) => <Juncao key={juncao.id} juncao={juncao} />)}
       {!sala.partidaId && (
         <form action={sair}>
           <button type="submit" className="botao contorno pequeno">
@@ -122,7 +163,12 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
     situacaoDasFaltas(bd, usuario.id),
   ]);
   const [desafio] = minha ? await desafiosDaSala(bd, minha.id) : [];
-  const possoDesafiar = minha?.liderId === usuario.id && minha.membros.length === TAMANHO_DA_SALA && !minha.partidaId && !desafio;
+  const juncoes = minha ? await juncoesDaSala(bd, minha.id) : [];
+  const souLider = !!minha && minha.liderId === usuario.id;
+  const possoDesafiar = souLider && minha.membros.length === TAMANHO_DA_SALA && !minha.partidaId && !desafio;
+  // Juntar: eu líder, minha sala fora de partida, a soma cabendo em 5 e nenhum pedido aberto com essa sala.
+  const possoJuntarCom = (sala: SalaComMembros) =>
+    souLider && !minha.partidaId && minha.membros.length + sala.membros.length <= TAMANHO_DA_SALA && !juncoes.some((juncao) => juncao.outraSalaId === sala.id);
   const outras = salas.filter((sala) => sala.id !== minha?.id);
 
   function acaoDaSala(sala: SalaComMembros) {
@@ -144,6 +190,16 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
           <input type="hidden" name="salaId" value={sala.id} />
           <button type="submit" className="botao cinza pequeno">
             Desafiar
+          </button>
+        </form>
+      );
+    }
+    if (!completa && possoJuntarCom(sala)) {
+      return (
+        <form action={juntar}>
+          <input type="hidden" name="salaId" value={sala.id} />
+          <button type="submit" className="botao cinza pequeno">
+            Juntar
           </button>
         </form>
       );
@@ -170,11 +226,6 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
           {ERROS[erro]}
         </p>
       )}
-      {partida && (
-        <p className="aviso">
-          Você está em uma partida. <Link href={`/partidas/${partida.id}`}>Abrir a partida</Link>
-        </p>
-      )}
       <div className="grade">
         <section className="painel">
           <div className="cabeca-painel">
@@ -197,11 +248,11 @@ export default async function Salas({ searchParams }: { searchParams: Promise<{ 
         </section>
         <div className="pilha">
           {minha ? (
-            <SuaSala sala={minha} usuarioId={usuario.id} desafio={desafio} />
+            <SuaSala sala={minha} usuarioId={usuario.id} desafio={desafio} juncoes={juncoes} />
           ) : (
             <section className="cartao-escuro">
               <h2>Sem sala</h2>
-              <p>Crie uma sala ou entre em uma aberta. Com 5 pessoas, o líder pode desafiar outra sala completa.</p>
+              <p>Crie uma sala ou entre em uma aberta. Salas incompletas podem se juntar. Com 5 pessoas, o líder pode desafiar outra sala completa.</p>
             </section>
           )}
           <OnlineAgora />

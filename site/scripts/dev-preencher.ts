@@ -19,7 +19,8 @@ async function contaFicticia(bd: Bd, apelido?: string): Promise<Usuario> {
   const sufixo = String(randomInt(1e9)).padStart(9, '0');
   const [conta] = await bd
     .insert(usuarios)
-    .values({ steamid64: `76561190${sufixo}`, apelido: apelido ?? `ficticio_${sufixo.slice(-4)}`, estado: 'ativo' })
+    // Vista no site daqui a um dia: senão a varredura tira a conta fictícia da sala por ter sumido do site.
+    .values({ steamid64: `76561190${sufixo}`, apelido: apelido ?? `ficticio_${sufixo.slice(-4)}`, estado: 'ativo', vistoEm: new Date(Date.now() + 24 * 60 * 60_000) })
     .returning();
   return conta;
 }

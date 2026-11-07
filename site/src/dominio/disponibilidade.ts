@@ -5,7 +5,7 @@ import { bloqueioDe } from './faltas';
 
 export type Transacao = Parameters<Parameters<Bd['transaction']>[0]>[0];
 
-export const ESTADOS_ATIVOS_DE_PARTIDA = ['aguardando_servidor', 'carregando', 'aguardando_jogadores', 'ao_vivo'] as const;
+export const ESTADOS_ATIVOS_DE_PARTIDA = ['aguardando_aceite', 'vetando', 'aguardando_servidor', 'carregando', 'aguardando_jogadores', 'ao_vivo'] as const;
 
 export class ContaSemAcesso extends Error {
   constructor() {

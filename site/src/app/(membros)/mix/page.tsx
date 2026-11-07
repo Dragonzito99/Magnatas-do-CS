@@ -58,11 +58,6 @@ export default async function Mix({ searchParams }: { searchParams: Promise<{ er
           {ERROS[erro]}
         </p>
       )}
-      {partida && (
-        <p className="aviso">
-          Você está em uma partida. <Link href={`/partidas/${partida.id}`}>Abrir a partida</Link>
-        </p>
-      )}
       <div className="grade">
         <div className="pilha">
           <section className="painel">

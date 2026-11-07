@@ -5,19 +5,21 @@ import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
 import { enderecoDoDiscord } from '@/dominio/discord';
 import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
+import { partidaAtualDe } from '@/dominio/partidas';
 import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
 import { Banner } from './banner';
 import { ManterPresenca } from './manter-presenca';
 import { Menu } from './menu';
 import { Sino } from './sino';
+import { VoltarParaAPartida } from './voltar-para-a-partida';
 
 export default async function LayoutDeMembros({ children }: { children: React.ReactNode }) {
   const usuario = await usuarioAtual();
   if (!usuario) redirect('/');
 
   const mostrarEquipe = pode(usuario, 'ver_equipe');
-  const notificacoes = await notificacoesDe(obterBd(), usuario);
+  const [notificacoes, partida] = await Promise.all([notificacoesDe(obterBd(), usuario), partidaAtualDe(obterBd(), usuario.id)]);
   const casos = casosDe(notificacoes);
 
   return (
@@ -37,7 +39,10 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
             </span>
           </Link>
         </aside>
-        <main className="conteudo">{children}</main>
+        <main className="conteudo">
+          {partida && <VoltarParaAPartida partidaId={partida.id} />}
+          {children}
+        </main>
       </div>
     </div>
   );

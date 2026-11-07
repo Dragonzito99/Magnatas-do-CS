@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
+import { elogiosDoJogador } from '@/dominio/elogios';
 import { fichaDoJogador } from '@/dominio/ficha';
 import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
@@ -41,6 +42,7 @@ export default async function FichaDoJogador({
   if (!z.uuid().safeParse(id).success) notFound();
   const ficha = await fichaDoJogador(obterBd(), usuario, id);
   if (!ficha) notFound();
+  const elogios = await elogiosDoJogador(obterBd(), id);
   const { jogador, estatisticas, historico, porMapa, melhorPartida, steamid64, equipe, xpTotal, progresso, ultimosXp } = ficha;
   const patenteNova = usuario.id === jogador.id && patenteDe(usuario.xpTotal).nivel > usuario.patenteVista;
 
@@ -211,6 +213,23 @@ export default async function FichaDoJogador({
           ))}
         </section>
         <div className="pilha">
+          <section className="painel">
+            <div className="cabeca-painel">
+              <h2>Elogios</h2>
+              <span>{elogios.reduce((total, elogio) => total + elogio.total, 0)}</span>
+            </div>
+            {elogios.length === 0 ? (
+              <p className="vazio">Ainda sem elogios.</p>
+            ) : (
+              <div className="elogios-do-jogador">
+                {elogios.map((elogio) => (
+                  <span className="elogio" key={elogio.tipo}>
+                    {elogio.nome} <b>×{elogio.total}</b>
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
           <section className="painel">
             <div className="cabeca-painel">
               <h2>Por mapa</h2>

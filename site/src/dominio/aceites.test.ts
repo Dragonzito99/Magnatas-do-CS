@@ -5,8 +5,9 @@ import { faltas, filaMix, partidaJogadores, partidas, salaMembros, salas, usuari
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { AceiteIndisponivel, aceitarPartida, aceitesDaPartida, avisoPendente, PRAZO_DO_ACEITE_MS, resolverAceitesVencidos } from './aceites';
 import { aceitarDesafio, desafiar } from './desafios';
+import { JaOcupado } from './disponibilidade';
 import { entrarNoMix } from './mix';
-import { MAPAS } from './partidas';
+import { MAPAS, partidaAtualDe } from './partidas';
 import { criarSala, entrarNaSala } from './salas';
 import { PRAZO_DO_VETO_MS } from './vetos';
 
@@ -185,4 +186,13 @@ test('a partida criada já com mapa nasce aguardando servidor, para os testes an
   const [partida] = await bd.insert(partidas).values({ tipo: 'mix', mapa: 'de_mirage' }).returning();
   expect(partida.estado).toBe('aguardando_servidor');
   expect(await bd.select().from(partidaJogadores)).toEqual([]);
+});
+
+test('quem está numa partida aguardando aceite ou nos vetos não está livre para sala nem mix', async () => {
+  const { partida, todos } = await desafioAceito();
+  await expect(entrarNoMix(bd, todos[0], { agora: AGORA })).rejects.toThrow(JaOcupado);
+  expect(await partidaAtualDe(bd, todos[0].id)).toMatchObject({ id: partida.id, estado: 'aguardando_aceite' });
+  for (const conta of todos) await aceitarPartida(bd, conta, partida.id, AGORA);
+  await expect(entrarNoMix(bd, todos[0], { agora: AGORA })).rejects.toThrow(JaOcupado);
+  expect(await partidaAtualDe(bd, todos[0].id)).toMatchObject({ id: partida.id, estado: 'vetando' });
 });
