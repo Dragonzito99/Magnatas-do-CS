@@ -133,6 +133,10 @@ export const servidoresDiversao = pgTable(
     vagas: integer('vagas').notNull().default(16),
     ativo: boolean('ativo').notNull().default(false),
     ordem: integer('ordem').notNull(),
+    // Nome da sessão na VPS (diversao-<nome>) e do arquivo /home/cs2/bin/diversao/<nome>.conf.
+    nomeNoServidor: text('nome_no_servidor'),
+    // Desligado sozinho depois de 5 minutos vazio; com false, o site nunca desliga.
+    sobDemanda: boolean('sob_demanda').notNull().default(true),
     criadoEm: criadoEm(),
   },
   (tabela) => [uniqueIndex('servidores_diversao_endereco_idx').on(sql`coalesce(${tabela.host}, '')`, tabela.porta)],
@@ -223,6 +227,20 @@ export const filaMix = pgTable('fila_mix', {
     .primaryKey()
     .references(() => usuarios.id),
   entrouEm: timestamp('entrou_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const estadoDaDiversao = pgEnum('estado_da_diversao', ['desligado', 'ligando', 'ligado']);
+
+// O que o site sabe de cada servidor da Diversão: a varredura atualiza a cada 15 segundos.
+export const estadosDaDiversao = pgTable('estados_da_diversao', {
+  servidorId: uuid('servidor_id')
+    .primaryKey()
+    .references(() => servidoresDiversao.id, { onDelete: 'cascade' }),
+  estado: estadoDaDiversao('estado').notNull().default('desligado'),
+  desde: timestamp('desde', { withTimezone: true }).notNull().defaultNow(),
+  vazioDesde: timestamp('vazio_desde', { withTimezone: true }),
+  pedidoPor: uuid('pedido_por').references(() => usuarios.id, { onDelete: 'set null' }),
+  erro: text('erro'),
 });
 
 export const estadoDesafio = pgEnum('estado_desafio', ['pendente', 'aceito', 'recusado', 'cancelado', 'expirado']);
@@ -424,6 +442,7 @@ export type Sala = typeof salas.$inferSelect;
 export type Partida = typeof partidas.$inferSelect;
 export type Servidor = typeof servidores.$inferSelect;
 export type ServidorDiversao = typeof servidoresDiversao.$inferSelect;
+export type EstadoDaDiversao = typeof estadosDaDiversao.$inferSelect;
 export type Convite = typeof convites.$inferSelect;
 export type Papel = Usuario['papel'];
 export type EstadoUsuario = Usuario['estado'];

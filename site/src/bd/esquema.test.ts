@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
-import { banimentos, cacheExterno, elogios, faltas, juncoes, noticias, noticiasSteam, partidaJogadores, partidas, usuarios, vetos } from './esquema';
+import { banimentos, cacheExterno, elogios, estadosDaDiversao, servidoresDiversao, faltas, juncoes, noticias, noticiasSteam, partidaJogadores, partidas, usuarios, vetos } from './esquema';
 import { criarBancoDeTeste, STEAM_A, STEAM_B } from './teste';
+import { readFileSync, readdirSync } from 'node:fs';
 
 test('banco de teste aplica as migrações', async () => {
   const bd = await criarBancoDeTeste();
@@ -61,4 +62,33 @@ test('notícias do clube, da Steam e cache externo', async () => {
     .values({ chave: 'tier-s', dados: { a: 2 }, atualizadoEm: new Date() })
     .onConflictDoUpdate({ target: cacheExterno.chave, set: { dados: { a: 2 } } });
   expect((await bd.select().from(cacheExterno))[0].dados).toEqual({ a: 2 });
+});
+
+test('servidor da Diversão sob demanda e o estado dele', async () => {
+  const bd = await criarBancoDeTeste();
+  const [servidor] = await bd
+    .insert(servidoresDiversao)
+    .values({ modo: 'fantasma', armas: 'Facas', mapa: 'de_mirage', foto: '/f.webp', porta: 28021, ordem: 1, nomeNoServidor: 'fantasma' })
+    .returning();
+  expect(servidor).toMatchObject({ nomeNoServidor: 'fantasma', sobDemanda: true });
+  const [estado] = await bd.insert(estadosDaDiversao).values({ servidorId: servidor.id }).returning();
+  expect(estado).toMatchObject({ estado: 'desligado', vazioDesde: null, pedidoPor: null, erro: null });
+  expect(estado.desde).toBeInstanceOf(Date);
+});
+
+test('a migração dá o nome de cada servidor pela porta', () => {
+  const arquivo = readdirSync('drizzle').find((nome) => nome.startsWith('0017_'));
+  expect(arquivo).toBe('0017_diversao_sob_demanda.sql');
+  const sqlDaMigracao = readFileSync(`drizzle/${arquivo}`, 'utf8');
+  for (const [porta, nome] of [[27016, 'ak-desert'], [27017, 'pistola'], [27018, 'awp'], [27019, 'equipe'], [27020, 'mutacao'], [27021, 'fantasma']]) {
+    expect(sqlDaMigracao).toContain(`SET "nome_no_servidor" = '${nome}' WHERE "porta" = ${porta}`);
+  }
+});
+
+test('depois das migrações, os servidores cadastrados já têm nome e são sob demanda', async () => {
+  const bd = await criarBancoDeTeste();
+  const linhas = await bd.select().from(servidoresDiversao);
+  const porPorta = Object.fromEntries(linhas.map((linha) => [linha.porta, linha.nomeNoServidor]));
+  expect(porPorta).toMatchObject({ 27016: 'ak-desert', 27017: 'pistola', 27018: 'awp', 27019: 'equipe', 27020: 'mutacao', 27021: 'fantasma' });
+  expect(linhas.every((linha) => linha.sobDemanda)).toBe(true);
 });
