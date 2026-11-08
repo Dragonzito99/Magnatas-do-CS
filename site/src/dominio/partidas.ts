@@ -21,15 +21,35 @@ const RODADAS_PERDOADAS_POR_QUEDA = 2;
  */
 export async function criarPartida(
   tx: Transacao,
-  dados: { tipo: Partida['tipo']; time1: string[]; time2: string[]; mapa?: string; agora?: Date; filaDoMix?: Map<string, Date>; nomes?: { 1: string; 2: string } },
+  dados: {
+    tipo: Partida['tipo'];
+    time1: string[];
+    time2: string[];
+    mapa?: string;
+    agora?: Date;
+    filaDoMix?: Map<string, Date>;
+    nomes?: { 1: string; 2: string };
+    clas?: { 1: string | null; 2: string | null };
+    mapas?: 1 | 3;
+    serie?: { id: string; mapa: number; servidorPreferidoId: string | null };
+  },
 ): Promise<Partida> {
   const agora = dados.agora ?? new Date();
+  const extras = {
+    claTime1Id: dados.clas?.[1] ?? null,
+    claTime2Id: dados.clas?.[2] ?? null,
+    mapasDaPartida: dados.mapas ?? 1,
+    serieId: dados.serie?.id ?? null,
+    mapaDaSerie: dados.serie?.mapa ?? null,
+    servidorPreferidoId: dados.serie?.servidorPreferidoId ?? null,
+  };
   const [partida] = await tx
     .insert(partidas)
     .values(
       dados.mapa
-        ? { tipo: dados.tipo, mapa: dados.mapa, criadoEm: agora, estadoDesde: agora, nomeTime1: dados.nomes?.[1], nomeTime2: dados.nomes?.[2] }
+        ? { tipo: dados.tipo, mapa: dados.mapa, criadoEm: agora, estadoDesde: agora, nomeTime1: dados.nomes?.[1], nomeTime2: dados.nomes?.[2], ...extras }
         : {
+            ...extras,
             tipo: dados.tipo,
             mapa: null,
             estado: 'aguardando_aceite',

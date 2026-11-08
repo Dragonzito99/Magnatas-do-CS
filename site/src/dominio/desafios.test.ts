@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { desafios, partidaJogadores, partidas, salas, usuarios, type Usuario } from '@/bd/esquema';
+import { claMembros, clas, desafios, partidaJogadores, partidas, salas, usuarios, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import {
   aceitarDesafio,
@@ -9,6 +9,7 @@ import {
   DesafioIndisponivel,
   desafiar,
   desafiosDaSala,
+  opcoesDeDesafio,
   recusarDesafio,
   SalaIncompleta,
 } from './desafios';
@@ -184,4 +185,73 @@ test('desafiosDaSala mostra só os pendentes e dentro do prazo, com os nomes', a
   expect(lista[0]).toMatchObject({ id: desafio.id, recebido: true, outraSalaNome: a.contas[0].apelido });
   expect((await desafiosDaSala(bd, a.id, AGORA))[0].recebido).toBe(false);
   expect(await desafiosDaSala(bd, a.id, new Date(AGORA.getTime() + 61_000))).toEqual([]);
+});
+
+// Clã x clã e treino: a sala só vale como clã com os 5 do mesmo clã e líder Dono ou Capitão.
+async function claCom(sigla: string, cargoDoLider: 'dono' | 'capitao' | 'membro' = 'dono') {
+  const [novo] = await bd.insert(clas).values({ nome: `Clã ${sigla}`, sigla, cor: 'ouro', entrada: 'aberto' }).returning();
+  return { cla: novo, cargoDoLider };
+}
+
+async function salaDoCla(claId: string, cargoDoLider: 'dono' | 'capitao' | 'membro' = 'capitao', deFora = 0) {
+  const sala = await salaCom();
+  for (const [indice, conta] of sala.contas.entries()) {
+    if (indice >= sala.contas.length - deFora) continue;
+    await bd.insert(claMembros).values({ usuarioId: conta.id, claId, cargo: indice === 0 ? cargoDoLider : 'membro' });
+  }
+  return sala;
+}
+
+test('salas de clãs diferentes podem fazer clã x clã, e a MD3 cria a partida de clã com 3 mapas', async () => {
+  const [alfa, bravo] = [await claCom('ALF'), await claCom('BRV')];
+  const a = await salaDoCla(alfa.cla.id, 'dono');
+  const b = await salaDoCla(bravo.cla.id, 'capitao');
+  expect(await opcoesDeDesafio(bd, a.id, b.id)).toEqual(['comum', 'cla']);
+  const desafio = await desafiar(bd, a.contas[0], b.id, AGORA, { formato: 'cla', mapas: 3 });
+  expect(desafio).toMatchObject({ formato: 'cla', mapas: 3 });
+  const lista = await desafiosDaSala(bd, b.id, AGORA);
+  expect(lista[0]).toMatchObject({ formato: 'cla', mapas: 3, outroClaSigla: 'ALF' });
+  const partida = await aceitarDesafio(bd, b.contas[0], desafio.id, AGORA);
+  expect(partida).toMatchObject({ tipo: 'cla', mapasDaPartida: 3, claTime1Id: alfa.cla.id, claTime2Id: bravo.cla.id, nomeTime1: '[ALF] Clã ALF', nomeTime2: '[BRV] Clã BRV' });
+});
+
+test('duas salas do mesmo clã só fazem treino', async () => {
+  const alfa = await claCom('ALF');
+  const a = await salaDoCla(alfa.cla.id, 'dono');
+  const b = await salaDoCla(alfa.cla.id, 'capitao');
+  expect(await opcoesDeDesafio(bd, a.id, b.id)).toEqual(['comum', 'treino']);
+  await expect(desafiar(bd, a.contas[0], b.id, AGORA, { formato: 'cla', mapas: 1 })).rejects.toThrow(DesafioIndisponivel);
+  const desafio = await desafiar(bd, a.contas[0], b.id, AGORA, { formato: 'treino', mapas: 1 });
+  const partida = await aceitarDesafio(bd, b.contas[0], desafio.id, AGORA);
+  expect(partida).toMatchObject({ tipo: 'treino', mapasDaPartida: 1, claTime1Id: alfa.cla.id, claTime2Id: alfa.cla.id });
+});
+
+test('líder que é só membro do clã não desafia pelo clã', async () => {
+  const [alfa, bravo] = [await claCom('ALF'), await claCom('BRV')];
+  const a = await salaDoCla(alfa.cla.id, 'membro');
+  const b = await salaDoCla(bravo.cla.id, 'capitao');
+  expect(await opcoesDeDesafio(bd, a.id, b.id)).toEqual(['comum']);
+  await expect(desafiar(bd, a.contas[0], b.id, AGORA, { formato: 'cla', mapas: 1 })).rejects.toThrow(DesafioIndisponivel);
+});
+
+test('sala com 4 do clã e 1 de fora não vale como clã', async () => {
+  const [alfa, bravo] = [await claCom('ALF'), await claCom('BRV')];
+  const a = await salaDoCla(alfa.cla.id, 'dono', 1);
+  const b = await salaDoCla(bravo.cla.id, 'dono');
+  expect(await opcoesDeDesafio(bd, a.id, b.id)).toEqual(['comum']);
+});
+
+test('desafio comum é sempre MD1', async () => {
+  const [a, b] = [await salaCom(), await salaCom()];
+  await expect(desafiar(bd, a.contas[0], b.id, AGORA, { formato: 'comum', mapas: 3 })).rejects.toThrow(DesafioIndisponivel);
+});
+
+test('se alguém sai do clã depois do desafio, o aceite falha e nenhuma partida é criada', async () => {
+  const [alfa, bravo] = [await claCom('ALF'), await claCom('BRV')];
+  const a = await salaDoCla(alfa.cla.id, 'dono');
+  const b = await salaDoCla(bravo.cla.id, 'capitao');
+  const desafio = await desafiar(bd, a.contas[0], b.id, AGORA, { formato: 'cla', mapas: 1 });
+  await bd.delete(claMembros).where(eq(claMembros.usuarioId, a.contas[3].id));
+  await expect(aceitarDesafio(bd, b.contas[0], desafio.id, AGORA)).rejects.toThrow(DesafioIndisponivel);
+  expect(await bd.select().from(partidas)).toEqual([]);
 });

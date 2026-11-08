@@ -1,6 +1,6 @@
 import { and, asc, eq, gt, inArray, lte, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { desafios, salaMembros, salas, usuarios, type Desafio, type Partida, type Sala, type Usuario } from '@/bd/esquema';
+import { claMembros, clas, desafios, salaMembros, salas, usuarios, type Desafio, type Partida, type Sala, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, type Transacao } from './disponibilidade';
 import { criarPartida } from './partidas';
 import { SemPermissaoNaSala, TAMANHO_DA_SALA } from './salas';
@@ -19,11 +19,48 @@ export class SalaIncompleta extends Error {
 
 const PRAZO_DO_DESAFIO_MS = 60_000;
 
-export type DesafioDaSala = Pick<Desafio, 'id' | 'expiraEm'> & {
+export type DesafioDaSala = Pick<Desafio, 'id' | 'expiraEm' | 'formato'> & {
+  mapas: 1 | 3;
   recebido: boolean;
   outraSalaId: string;
   outraSalaNome: string;
+  outroClaSigla: string | null;
 };
+
+export type FormatoDoDesafio = { formato: Desafio['formato']; mapas: 1 | 3 };
+const COMUM: FormatoDoDesafio = { formato: 'comum', mapas: 1 };
+
+type ClaDaSala = { id: string; nome: string; sigla: string } | null;
+
+/** A sala vale como clã com os 5 do mesmo clã e o líder Dono ou Capitão dele. */
+async function claDaSala(tx: Bd | Transacao, salaId: string): Promise<ClaDaSala> {
+  const [sala] = await tx.select().from(salas).where(eq(salas.id, salaId));
+  if (!sala) return null;
+  const linhas = await tx
+    .select({ usuarioId: salaMembros.usuarioId, claId: claMembros.claId, cargo: claMembros.cargo, nome: clas.nome, sigla: clas.sigla })
+    .from(salaMembros)
+    .leftJoin(claMembros, eq(claMembros.usuarioId, salaMembros.usuarioId))
+    .leftJoin(clas, eq(clas.id, claMembros.claId))
+    .where(eq(salaMembros.salaId, salaId));
+  const primeiro = linhas[0];
+  if (linhas.length !== TAMANHO_DA_SALA || !primeiro?.claId || linhas.some((linha) => linha.claId !== primeiro.claId)) return null;
+  const lider = linhas.find((linha) => linha.usuarioId === sala.liderId);
+  if (!lider || lider.cargo === 'membro') return null;
+  return { id: primeiro.claId, nome: primeiro.nome!, sigla: primeiro.sigla! };
+}
+
+/** O que uma sala pode propor à outra: o desafio comum sempre; clã x clã ou treino quando as duas são de clã. */
+export async function opcoesDeDesafio(bd: Bd | Transacao, salaOrigemId: string, salaAlvoId: string): Promise<Desafio['formato'][]> {
+  const [origem, alvo] = [await claDaSala(bd, salaOrigemId), await claDaSala(bd, salaAlvoId)];
+  if (!origem || !alvo) return ['comum'];
+  return origem.id === alvo.id ? ['comum', 'treino'] : ['comum', 'cla'];
+}
+
+async function exigirFormato(tx: Transacao, salaOrigemId: string, salaAlvoId: string, escolha: FormatoDoDesafio): Promise<void> {
+  if (escolha.mapas !== 1 && escolha.mapas !== 3) throw new DesafioIndisponivel();
+  if (escolha.formato === 'comum' && escolha.mapas !== 1) throw new DesafioIndisponivel();
+  if (!(await opcoesDeDesafio(tx, salaOrigemId, salaAlvoId)).includes(escolha.formato)) throw new DesafioIndisponivel();
+}
 
 /** Sempre na mesma ordem, para dois pedidos cruzados não travarem um ao outro. */
 function travarSalas(tx: Transacao, ids: string[]): Promise<Sala[]> {
@@ -51,6 +88,7 @@ export async function desafiar(
   lider: Pick<Usuario, 'id'>,
   salaAlvoId: string,
   agora: Date = new Date(),
+  escolha: FormatoDoDesafio = COMUM,
 ): Promise<Desafio> {
   return bd.transaction(async (tx) => {
     await exigirAtivo(tx, lider);
@@ -65,6 +103,7 @@ export async function desafiar(
 
     await exigirCompleta(tx, origem.id);
     await exigirCompleta(tx, alvo.id);
+    await exigirFormato(tx, origem.id, alvo.id, escolha);
 
     const ids = [origem.id, alvo.id];
     await tx
@@ -79,7 +118,7 @@ export async function desafiar(
 
     const [desafio] = await tx
       .insert(desafios)
-      .values({ salaOrigemId: origem.id, salaAlvoId: alvo.id, expiraEm: new Date(agora.getTime() + PRAZO_DO_DESAFIO_MS) })
+      .values({ salaOrigemId: origem.id, salaAlvoId: alvo.id, expiraEm: new Date(agora.getTime() + PRAZO_DO_DESAFIO_MS), formato: escolha.formato, mapas: escolha.mapas })
       .returning();
     return desafio;
   });
@@ -118,7 +157,26 @@ export async function aceitarDesafio(
     const time1 = await exigirCompleta(tx, desafio.salaOrigemId);
     const time2 = await exigirCompleta(tx, desafio.salaAlvoId);
     const origem = travadas.find((sala) => sala.id === desafio.salaOrigemId);
-    const partida = await criarPartida(tx, { tipo: 'desafio', time1, time2, agora, nomes: { 1: origem?.nome ?? 'Time 1', 2: alvo.nome } });
+    const nomesDasSalas = { 1: origem?.nome ?? 'Time 1', 2: alvo.nome };
+    if (desafio.formato === 'comum') {
+      const partida = await criarPartida(tx, { tipo: 'desafio', time1, time2, agora, nomes: nomesDasSalas });
+      await tx.update(salas).set({ partidaId: partida.id }).where(inArray(salas.id, ids));
+      return partida;
+    }
+    // Alguém pode ter saído do clã ou trocado de sala desde o desafio: confere de novo.
+    await exigirFormato(tx, desafio.salaOrigemId, desafio.salaAlvoId, { formato: desafio.formato, mapas: desafio.mapas as 1 | 3 });
+    const [claOrigem, claAlvo] = [await claDaSala(tx, desafio.salaOrigemId), await claDaSala(tx, desafio.salaAlvoId)];
+    // No treino os dois lados são do mesmo clã: o nome da sala diferencia melhor que a sigla.
+    const nomes = desafio.formato === 'cla' ? { 1: `[${claOrigem!.sigla}] ${claOrigem!.nome}`, 2: `[${claAlvo!.sigla}] ${claAlvo!.nome}` } : nomesDasSalas;
+    const partida = await criarPartida(tx, {
+      tipo: desafio.formato,
+      time1,
+      time2,
+      agora,
+      nomes,
+      clas: { 1: claOrigem!.id, 2: claAlvo!.id },
+      mapas: desafio.mapas as 1 | 3,
+    });
     await tx.update(salas).set({ partidaId: partida.id }).where(inArray(salas.id, ids));
     return partida;
   });
@@ -168,6 +226,12 @@ export async function desafiosDaSala(bd: Bd, salaId: string, agora: Date = new D
     .select({ id: salas.id, nome: salas.nome })
     .from(salas)
     .where(inArray(salas.id, pendentes.map(outraSala)));
+  const siglas = new Map<string, string>();
+  for (const desafio of pendentes) {
+    if (desafio.formato === 'comum') continue;
+    const cla = await claDaSala(bd, outraSala(desafio));
+    if (cla) siglas.set(outraSala(desafio), cla.sigla);
+  }
   return pendentes.flatMap((desafio) => {
     const outra = nomes.find((sala) => sala.id === outraSala(desafio));
     if (!outra) return [];
@@ -175,9 +239,12 @@ export async function desafiosDaSala(bd: Bd, salaId: string, agora: Date = new D
       {
         id: desafio.id,
         expiraEm: desafio.expiraEm,
+        formato: desafio.formato,
+        mapas: desafio.mapas as 1 | 3,
         recebido: desafio.salaAlvoId === salaId,
         outraSalaId: outra.id,
         outraSalaNome: outra.nome,
+        outroClaSigla: siglas.get(outra.id) ?? null,
       },
     ];
   });
