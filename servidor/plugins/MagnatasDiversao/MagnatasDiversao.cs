@@ -109,7 +109,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.7.3";
+    public override string ModuleVersion => "1.7.4";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -462,7 +462,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         {
             AddTimer(EsperaAposNascer, () =>
             {
-                if (jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }) AplicarAtributosDoMutante(jogador);
+                if (jogador != null && EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador);
                 EntregarArmaDoHumano(jogador);
             });
         }

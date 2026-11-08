@@ -888,10 +888,28 @@ def test_humano_recebe_ak_ou_m4_por_sorteio():
     assert '"weapon_ak47"' in CODIGO_DA_MUTACAO and '"weapon_m4a1"' in CODIGO_DA_MUTACAO
 
 
-def test_o_sorteio_da_arma_vale_para_cada_rodada():
-    # Quem sobreviveu ainda está com a arma da rodada anterior.
+def test_quem_ja_tem_ak_ou_m4_fica_com_ela():
+    # Tirar e dar de novo a arma logo depois de a rodada reiniciar derruba o jogo de quem está no servidor
+    # ("missing client entity"). Só a super Negev sai, e só quem está sem AK nem M4 ganha uma.
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EntregarArmaDoHumano"):]
-    assert trecho.index(".Remove()") < trecho.index("GiveNamedItem(")
+    trecho = trecho[:trecho.index(FIM_DO_METODO)]
+    assert "arma.DesignerName == ArmaEspecial) arma.Remove()" in trecho
+    assert "ArmasDoHumano.Contains(arma.DesignerName) ||" not in trecho
+    assert trecho.index("if (jaTem) return;") < trecho.index("GiveNamedItem(")
+
+
+def test_so_quem_virou_mutante_perde_as_armas_ao_nascer():
+    # Bot que entra como TR antes do sorteio não é mutante: tirar as armas dele junto do reinício também derruba o jogo.
+    nasce = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index('else if (Config.Regra == "mutacao")', CODIGO_DO_PLUGIN.index("HookResult AoNascer")):]
+    assert "EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador)" in nasce[:500]
+    confere = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("bool EhMutanteDeVerdade"):]
+    assert "rodadaEmAndamento && sorteioFeito" in confere[:400]
+
+
+def test_a_rodada_nova_so_mexe_em_quem_era_mutante_ou_tinha_a_super_negev():
+    prepara = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
+    prepara = prepara[:prepara.index(FIM_DO_METODO)]
+    assert "if (!eraMutante && jogador.Slot != portadorAnterior) continue;" in prepara
 
 
 def test_o_humano_recebe_a_arma_ao_nascer():

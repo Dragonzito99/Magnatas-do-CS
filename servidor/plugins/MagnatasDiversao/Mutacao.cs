@@ -497,20 +497,31 @@ public partial class ModoDeDiversao
         }
     }
 
-    /// <summary>Quem sobreviveu ainda está com a arma da rodada anterior, e o sorteio vale para cada rodada.</summary>
+    /// <summary>
+    /// Quem já tem AK ou M4 fica com ela: tirar e dar de novo a arma logo depois de a rodada reiniciar derruba o jogo de
+    /// quem está no servidor ("missing client entity"). Só a super Negev sai, e só quem está sem nenhuma das duas ganha uma.
+    /// </summary>
     private void EntregarArmaDoHumano(CCSPlayerController? jogador)
     {
         if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }) return;
         var armas = jogador.PlayerPawn.Value?.WeaponServices?.MyWeapons;
         if (armas == null) return;
+        var jaTem = false;
         foreach (var item in armas.ToList())
         {
             var arma = item.Value;
-            if (arma != null && (ArmasDoHumano.Contains(arma.DesignerName) || arma.DesignerName == ArmaEspecial)) arma.Remove();
+            if (arma == null) continue;
+            if (arma.DesignerName == ArmaEspecial) arma.Remove();
+            else if (ArmasDoHumano.Contains(arma.DesignerName)) jaTem = true;
         }
+        if (jaTem) return;
         jogador.GiveNamedItem(ArmasDoHumano[Random.Shared.Next(ArmasDoHumano.Length)]);
         jogador.ExecuteClientCommand("slot1");
     }
+
+    /// <summary>Bot que entra como TR antes do sorteio não é mutante, e não pode perder as armas junto do reinício da rodada.</summary>
+    private bool EhMutanteDeVerdade(CCSPlayerController jogador) =>
+        rodadaEmAndamento && sorteioFeito && jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist };
 
     [GameEventHandler]
     public HookResult AoAtingirMutante(EventPlayerHurt evento, GameEventInfo informacao)
@@ -591,14 +602,18 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "mutacao") return HookResult.Continue;
         rodadaEmAndamento = false;
+        var portadorAnterior = portadorDaSuperArma;
         portadorDaSuperArma = null;
         relogioDaContagem?.Kill();
         somDaContagem?.Kill();
         infeccoes.Clear();
-        // O portador da rodada anterior é humano e continua dourado: todos voltam à cor e ao tamanho normais.
+        // Os mutantes e o portador dourado voltam à cor e ao tamanho normais. Os outros ficam como estão: mexer em todo
+        // mundo junto do reinício da rodada só aumenta a chance de derrubar o jogo de quem está no servidor.
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist }))
         {
-            if (jogador.Team == CsTeam.Terrorist) jogador.SwitchTeam(CsTeam.CounterTerrorist);
+            var eraMutante = jogador.Team == CsTeam.Terrorist;
+            if (eraMutante) jogador.SwitchTeam(CsTeam.CounterTerrorist);
+            if (!eraMutante && jogador.Slot != portadorAnterior) continue;
             var corpo = jogador.PlayerPawn.Value;
             if (corpo == null) continue;
             corpo.MaxHealth = VidaDoHumano;
