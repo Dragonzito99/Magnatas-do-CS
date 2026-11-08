@@ -45,6 +45,8 @@ public partial class ModoDeDiversao
     private const int SegundosDaContagemNaTela = 10;
     // Sozinho não há o que jogar: a rodada fica parada, sem contar, até chegar mais alguém.
     private const int MinimoDeJogadores = 2;
+    // O teste com bots precisa de um mapa com o caminho que os bots seguem; os da Mutação não têm.
+    private const string MapaDoTeste = "de_dust2";
     private const float IntervaloDoAvisoDeEspera = 2f;
     private const int SegundosParaComecar = 3;
     // 1 mutante para cada 4 jogadores, arredondando para cima: 2 a 4 jogadores, 1; 5 a 8, 2; e assim por diante.
@@ -354,8 +356,13 @@ public partial class ModoDeDiversao
         {
             manifesto.AddResource(ModeloDoMutante);
         });
-        // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
-        RegisterListener<Listeners.OnMapStart>(_ => zumbiNoServidor = null);
+        RegisterListener<Listeners.OnMapStart>(mapa =>
+        {
+            // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
+            zumbiNoServidor = null;
+            // Ao ligar, o servidor abre o mapa da Oficina por último: se o teste já tinha pedido a Dust 2, ela era trocada.
+            if (testeComBots && mapa != MapaDoTeste) AddTimer(1f, () => Server.ExecuteCommand($"changelevel {MapaDoTeste}"));
+        });
         // Recarregado no meio da rodada, o plugin não teria a rodada em andamento nem o relógio, e o servidor travaria.
         if (hotReload)
         {
@@ -690,7 +697,7 @@ public partial class ModoDeDiversao
         var jaEstava = testeComBots;
         testeComBots = true;
         comando.ReplyToCommand("teste_bots=1");
-        if (!jaEstava || Server.MapName != "de_dust2") Server.ExecuteCommand("changelevel de_dust2");
+        if (!jaEstava || Server.MapName != MapaDoTeste) Server.ExecuteCommand($"changelevel {MapaDoTeste}");
     }
 
     private static void ChamarBotsDoTeste()

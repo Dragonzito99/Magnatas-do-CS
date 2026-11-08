@@ -1418,7 +1418,7 @@ def test_teste_com_bots_so_pelo_site_e_na_dust_2():
     assert "CommandUsage.SERVER_ONLY" in trecho[:300]
     assert "testeComBots = true" in trecho
     # Os mapas da Mutação não têm o caminho dos bots. A Dust 2 tem.
-    assert 'changelevel de_dust2' in trecho
+    assert 'changelevel {MapaDoTeste}' in trecho
 
 
 def test_teste_com_bots_poe_os_bots_a_cada_rodada():
@@ -1498,3 +1498,12 @@ def test_a_corrida_zera_junto_com_o_nivel():
     assert "corridas.Remove(" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):]
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TransformarEmMutante"):]
     assert trecho.index("corridas.Remove(jogador.Slot)") < trecho.index("AplicarAtributosDoMutante(jogador)")
+
+
+def test_o_teste_volta_para_a_dust_2_se_o_mapa_da_oficina_abrir_por_cima():
+    # Ao ligar, o servidor abre o mapa da Oficina por último, e isso passava por cima da troca do teste.
+    inicio = CODIGO_DA_MUTACAO.index("RegisterListener<Listeners.OnMapStart>")
+    ouvinte = CODIGO_DA_MUTACAO[inicio:inicio + 600]
+    assert "testeComBots && mapa != MapaDoTeste" in ouvinte
+    assert 'changelevel {MapaDoTeste}' in ouvinte
+    assert 'MapaDoTeste = "de_dust2";' in CODIGO_DA_MUTACAO
