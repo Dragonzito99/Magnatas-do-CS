@@ -754,7 +754,8 @@ def test_mutacao_so_liga_na_regra_dela():
 def test_os_atributos_do_mutante_ficam_em_um_lugar_so():
     # Os mutantes de outros tipos entram aqui, sem reescrever o modo.
     assert "record TipoDeMutante" in CODIGO_DA_MUTACAO
-    assert 'new("Mutante", 2000, 1.1f, 3f' in CODIGO_DA_MUTACAO
+    assert "record NivelDoMutante" in CODIGO_DA_MUTACAO
+    assert 'new("Mutante", 3f' in CODIGO_DA_MUTACAO
 
 
 def test_o_golpe_transforma_sem_causar_dano():
@@ -806,8 +807,9 @@ def test_todos_voltam_a_ser_humanos_na_rodada_seguinte():
     assert "MaxHealth = VidaDoHumano" in trecho
 
 
-def test_vinte_segundos_para_espalhar():
-    assert "SegundosParaEspalhar = 20f" in CODIGO_DA_MUTACAO
+def test_quinze_segundos_para_espalhar():
+    # Do tamanho da contagem com o som, aprovado pelo dono.
+    assert "SegundosParaEspalhar = 15f" in CODIGO_DA_MUTACAO
 
 
 def test_um_mutante_para_cada_quatro_arredondando_para_cima():
@@ -1195,7 +1197,7 @@ def test_o_mutante_usa_o_boneco_blindado_e_fica_maior():
     assert "AddResource(ModeloDoMutante)" in CODIGO_DA_MUTACAO
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     assert "SetModel(ModeloDoMutante)" in trecho
-    assert "TamanhoDoMutante" in trecho
+    assert "nivel.Tamanho" in trecho
     prepara = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
     assert "TamanhoDoHumano" in prepara
 
@@ -1276,3 +1278,98 @@ def test_resultado_leva_mapa_placar_e_mortes_para_a_tabela_do_perfil():
     assert "placar = PlacarDaPartida()" in CODIGO_DO_PLUGIN
     # Equipe x Equipe sem rodadas soma os abates de cada time; nos modos de rodada vale o placar do jogo.
     assert '"cs_team_manager"' in CODIGO_DO_PLUGIN
+
+
+FIM_DO_METODO = chr(10) + "    }" + chr(10)
+
+
+def test_tres_niveis_de_mutante_com_mais_vida_velocidade_e_tamanho():
+    # Nível, infecções para chegar, vida, velocidade e tamanho, aprovados pelo dono.
+    for nivel in ["new(1, 0, 2000, 1.10f, 1.15f)", "new(2, 2, 3000, 1.15f, 1.25f)", "new(3, 5, 4000, 1.20f, 1.35f)"]:
+        assert nivel in CODIGO_DA_MUTACAO
+
+
+def test_o_nivel_e_o_maior_alcancado_pelas_infeccoes():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("static NivelDoMutante NivelPelasInfeccoes"):]
+    assert "LastOrDefault(nivel => infeccoes >= nivel.InfeccoesParaChegar)" in trecho[:400]
+
+
+def test_infectar_sobe_o_nivel_com_a_vida_extra_e_aviso_para_todos():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ContarTransformacao"):]
+    assert "SubirDeNivel(autor" in trecho[:900]
+    sobe = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void SubirDeNivel"):]
+    sobe = sobe[:sobe.index(FIM_DO_METODO)]
+    # Ganha só a diferença de vida: quem estava ferido continua ferido.
+    assert "corpo.Health + novo.Vida - antigo.Vida" in sobe
+    assert "MudarTamanho(corpo, novo.Tamanho)" in sobe
+    assert "chegou ao nível" in sobe
+    assert "HtmlEncode" in sobe
+
+
+def test_quem_morre_volta_no_mesmo_nivel_e_a_velocidade_segue_o_nivel():
+    aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
+    aplica = aplica[:aplica.index(FIM_DO_METODO)]
+    assert "NivelDe(jogador)" in aplica
+    assert "nivel.Vida" in aplica and "nivel.Velocidade" in aplica and "MudarTamanho(corpo, nivel.Tamanho)" in aplica
+    mantem = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ManterVelocidadeDosMutantes"):]
+    assert "NivelDe(mutante).Velocidade" in mantem[:600]
+
+
+def test_o_nivel_zera_a_cada_rodada_e_com_quem_sai():
+    for inicio in ["void ComecarRodadaDaMutacao", "EventRoundPrestart"]:
+        assert "infeccoes.Clear()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(inicio):]
+    assert "infeccoes.Remove(" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):]
+
+
+def test_quem_vira_mutante_comeca_no_nivel_um():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TransformarEmMutante"):]
+    assert trecho.index("infeccoes.Remove(jogador.Slot)") < trecho.index("AplicarAtributosDoMutante(jogador)")
+
+
+def test_a_contagem_toca_o_som_para_todos_e_acaba_quando_o_mutante_aparece():
+    assert 'SomDaContagem = "magnatas.contagem_mutacao"' in CODIGO_DA_MUTACAO
+    comeca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):CODIGO_DA_MUTACAO.index("void SortearMutantes")]
+    # O som termina junto com o sorteio.
+    assert "AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, TocarContagem)" in comeca
+    assert "MostrarContagem, TimerFlags.REPEAT" in comeca
+    toca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TocarContagem"):]
+    toca = toca[:toca.index(FIM_DO_METODO)]
+    assert "new RecipientFilter" in toca and "EmitSound(SomDaContagem" in toca
+
+
+def test_a_contagem_nao_sobra_de_uma_rodada_para_outra():
+    for timer in ["relogioDaContagem", "somDaContagem"]:
+        assert CODIGO_DA_MUTACAO.index(f"{timer}?.Kill()") < CODIGO_DA_MUTACAO.index(f"{timer} = AddTimer")
+        for trecho in ["void EncerrarRodadaDaMutacao", "EventRoundPrestart"]:
+            assert f"{timer}?.Kill()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(trecho):]
+
+
+def test_a_partida_so_comeca_com_dois_jogadores():
+    assert "MinimoDeJogadores = 2" in CODIGO_DA_MUTACAO
+    comeca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):]
+    espera = comeca.index("JogadoresNaRodada() < MinimoDeJogadores")
+    # Sozinho, nem conta rodada, nem abre partida, nem liga o relógio.
+    assert espera < comeca.index("rodadasDaPartida == 0")
+    assert espera < comeca.index("relogioDoSorteio = AddTimer")
+    assert espera < comeca.index("fimDaRodada = AddTimer")
+    assert "esperandoJogadores = true" in comeca[espera:comeca.index("rodadasDaPartida == 0")]
+
+
+def test_quem_chega_para_o_que_estava_sozinho_comeca_a_partida():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ColocarNaRodada"):]
+    trecho = trecho[:trecho.index(FIM_DO_METODO)]
+    espera = trecho[trecho.index("if (esperandoJogadores)"):trecho.index("if (!rodadaEmAndamento")]
+    assert "JogadoresNaRodada() >= MinimoDeJogadores" in espera
+    assert "TerminateRound(" in espera
+    assert "esperandoJogadores = false" in espera
+
+
+def test_quem_morre_esperando_volta_a_nascer():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("HookResult AoMorrerNaMutacao"):]
+    assert "if (esperandoJogadores)" in trecho[:900]
+
+
+def test_quem_esta_sozinho_ve_que_falta_jogador():
+    assert "AvisarQueFaltaJogador, TimerFlags.REPEAT" in CODIGO_DA_MUTACAO
+    aviso = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AvisarQueFaltaJogador"):]
+    assert "if (!esperandoJogadores) return;" in aviso[:300]

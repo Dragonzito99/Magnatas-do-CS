@@ -17,14 +17,31 @@ namespace MagnatasDiversao;
 public partial class ModoDeDiversao
 {
     /// <summary>Os atributos ficam juntos para os mutantes de outros tipos entrarem aqui, sem reescrever o modo.</summary>
-    private sealed record TipoDeMutante(string Nome, int Vida, float Velocidade, float SegundosParaRenascer, Color Cor);
+    private sealed record TipoDeMutante(string Nome, float SegundosParaRenascer, Color Cor, NivelDoMutante[] Niveis);
 
-    private static readonly TipoDeMutante MutanteComum = new("Mutante", 2000, 1.1f, 3f, Color.FromArgb(255, 110, 255, 110));
+    /// <summary>O mutante sobe de nível conforme infecta, só durante a rodada. Quem morre volta no nível em que estava.</summary>
+    private sealed record NivelDoMutante(int Nivel, int InfeccoesParaChegar, int Vida, float Velocidade, float Tamanho);
+
+    // Nível, infecções para chegar, vida, velocidade e tamanho, aprovados pelo dono.
+    private static readonly TipoDeMutante MutanteComum = new("Mutante", 3f, Color.FromArgb(255, 110, 255, 110), new NivelDoMutante[]
+    {
+        new(1, 0, 2000, 1.10f, 1.15f),
+        new(2, 2, 3000, 1.15f, 1.25f),
+        new(3, 5, 4000, 1.20f, 1.35f),
+    });
     private static readonly Color CorDoHumano = Color.FromArgb(255, 255, 255, 255);
     private const int VidaDoHumano = 100;
     private const float IntervaloDaVelocidade = 0.5f;
     private const int SegundosDoAvisoDeMutante = 3;
-    private const float SegundosParaEspalhar = 20f;
+    private const float SegundosParaEspalhar = 15f;
+    // O som da contagem começa antes e termina junto com o sorteio. Na tela, só os últimos 10 segundos.
+    private const string SomDaContagem = "magnatas.contagem_mutacao";
+    private const float SegundosDoSomDaContagem = 11.5f;
+    private const int SegundosDaContagemNaTela = 10;
+    // Sozinho não há o que jogar: a rodada fica parada, sem contar, até chegar mais alguém.
+    private const int MinimoDeJogadores = 2;
+    private const float IntervaloDoAvisoDeEspera = 2f;
+    private const int SegundosParaComecar = 3;
     // 1 mutante para cada 4 jogadores, arredondando para cima: 2 a 4 jogadores, 1; 5 a 8, 2; e assim por diante.
     private const int JogadoresPorMutante = 4;
     private const int RodadasPorPartida = 10;
@@ -37,7 +54,6 @@ public partial class ModoDeDiversao
 
     // O mutante usa o boneco blindado que já vem no jogo, um pouco maior que os humanos: ninguém precisa baixar nada.
     private const string ModeloDoMutante = "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl";
-    private const float TamanhoDoMutante = 1.15f;
     private const float TamanhoDoHumano = 1f;
 
     // Um humano por rodada ganha a super Negev: não acaba a munição e empurra o mutante bem mais longe.
@@ -52,6 +68,12 @@ public partial class ModoDeDiversao
     private readonly TipoDeMutante mutanteDaRodada = MutanteComum;
     private CounterStrikeSharp.API.Modules.Timers.Timer? relogioDoSorteio;
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaRodada;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? relogioDaContagem;
+    private CounterStrikeSharp.API.Modules.Timers.Timer? somDaContagem;
+    private int segundosAteOMutante;
+    private bool esperandoJogadores;
+    // Infecções de cada mutante na rodada, pela vaga. Decidem o nível.
+    private readonly Dictionary<int, int> infeccoes = new();
     private bool rodadaEmAndamento;
     private bool sorteioFeito;
     private bool tempoDeEspalharAcabou;
@@ -65,6 +87,18 @@ public partial class ModoDeDiversao
         // O console recusa este comando, e o mapa pode reverter ao carregar. Por isso o plugin liga a cada rodada.
         var municao = ConVar<int>.Find("sv_infinite_ammo");
         if (municao != null) municao.Value = MunicaoDeReservaInfinita;
+        relogioDoSorteio?.Kill();
+        fimDaRodada?.Kill();
+        relogioDaContagem?.Kill();
+        somDaContagem?.Kill();
+        infeccoes.Clear();
+        if (JogadoresNaRodada() < MinimoDeJogadores)
+        {
+            esperandoJogadores = true;
+            rodadaEmAndamento = false;
+            return;
+        }
+        esperandoJogadores = false;
         if (rodadasDaPartida == 0)
         {
             ZerarContagem();
@@ -80,7 +114,6 @@ public partial class ModoDeDiversao
         superArmaSorteada = false;
         portadorDaSuperArma = null;
 
-        relogioDoSorteio?.Kill();
         relogioDoSorteio = AddTimer(SegundosParaEspalhar, () =>
         {
             tempoDeEspalharAcabou = true;
@@ -88,10 +121,49 @@ public partial class ModoDeDiversao
         });
         // O mesmo valor do relógio da tela, para os dois chegarem juntos ao fim.
         var minutos = ConVar<float>.Find("mp_roundtime")?.Value ?? MinutosDaRodadaSeFaltarORelogio;
-        fimDaRodada?.Kill();
         fimDaRodada = AddTimer(minutos * 60f, () => EncerrarRodadaDaMutacao(RoundEndReason.CTsWin));
 
-        foreach (var pessoa in Pessoas()) pessoa.PrintToChat(" [Magnatas] Espalhem-se: o mutante aparece em 20 segundos.");
+        segundosAteOMutante = (int)SegundosParaEspalhar;
+        relogioDaContagem = AddTimer(1f, MostrarContagem, TimerFlags.REPEAT);
+        somDaContagem = AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, TocarContagem);
+        foreach (var pessoa in Pessoas()) pessoa.PrintToChat($" [Magnatas] Espalhem-se: o mutante aparece em {SegundosParaEspalhar:0} segundos.");
+    }
+
+    /// <summary>Bots contam, para os testes com bots.</summary>
+    private static int JogadoresNaRodada() =>
+        Utilities.GetPlayers().Count(jogador => jogador is { IsValid: true, IsHLTV: false, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist });
+
+    private void MostrarContagem()
+    {
+        segundosAteOMutante--;
+        if (!rodadaEmAndamento || sorteioFeito || segundosAteOMutante <= 0 || segundosAteOMutante > SegundosDaContagemNaTela) return;
+        foreach (var pessoa in Pessoas())
+        {
+            pessoa.PrintToCenterHtml($"<font color='#ff4d4d' class='fontSize-xl'>{segundosAteOMutante}</font><br><font color='#ffffff'>O mutante vai aparecer</font>", 1);
+        }
+    }
+
+    private void TocarContagem()
+    {
+        if (!rodadaEmAndamento || sorteioFeito) return;
+        foreach (var pessoa in Pessoas())
+        {
+            var soEle = new RecipientFilter();
+            soEle.Add(pessoa);
+            pessoa.EmitSound(SomDaContagem, soEle);
+        }
+    }
+
+    /// <summary>Repete enquanto a pessoa está sozinha, e começa a partida se alguém entrou sem passar pela escolha de time.</summary>
+    private void AvisarQueFaltaJogador()
+    {
+        if (!esperandoJogadores) return;
+        ColocarNaRodada(null);
+        if (!esperandoJogadores) return;
+        foreach (var pessoa in Pessoas())
+        {
+            pessoa.PrintToCenterHtml("<font color='#f5b301' class='fontSize-l'>Esperando mais um jogador</font><br><font color='#ffffff'>A partida começa com 2 ou mais</font>", (int)IntervaloDoAvisoDeEspera + 1);
+        }
     }
 
     private void SortearMutantes()
@@ -163,6 +235,8 @@ public partial class ModoDeDiversao
         rodadaEmAndamento = false;
         relogioDoSorteio?.Kill();
         fimDaRodada?.Kill();
+        relogioDaContagem?.Kill();
+        somDaContagem?.Kill();
 
         var humanosVenceram = motivo == RoundEndReason.CTsWin;
         if (humanosVenceram) vitoriasDosHumanos++;
@@ -186,6 +260,23 @@ public partial class ModoDeDiversao
     /// <summary>Para quem entrou no meio ou morreu antes do sorteio: ninguém fica esperando morto até a próxima rodada.</summary>
     private void ColocarNaRodada(CCSPlayerController? jogador)
     {
+        if (esperandoJogadores)
+        {
+            if (JogadoresNaRodada() >= MinimoDeJogadores)
+            {
+                esperandoJogadores = false;
+                foreach (var pessoa in Pessoas()) pessoa.PrintToChat(" [Magnatas] Chegou mais um jogador. A partida vai começar!");
+                RegrasDoJogo()?.TerminateRound(SegundosParaComecar, RoundEndReason.RoundDraw);
+                return;
+            }
+            // Sozinho, a pessoa anda pelo mapa como humano até alguém chegar.
+            if (jogador is { IsValid: true, PawnIsAlive: false, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist })
+            {
+                if (jogador.Team == CsTeam.Terrorist) jogador.SwitchTeam(CsTeam.CounterTerrorist);
+                jogador.Respawn();
+            }
+            return;
+        }
         if (!rodadaEmAndamento || jogador is not { IsValid: true, PawnIsAlive: false } || jogador.Team is not (CsTeam.Terrorist or CsTeam.CounterTerrorist)) return;
         if (sorteioFeito)
         {
@@ -213,6 +304,7 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "mutacao") return HookResult.Continue;
         var quem = evento.Userid;
+        if (quem != null) infeccoes.Remove(quem.Slot);
         // Quem chegar depois não pode herdar uma partida que ninguém mais está jogando.
         if (!Pessoas().Any(pessoa => pessoa.Slot != quem?.Slot))
         {
@@ -227,6 +319,7 @@ public partial class ModoDeDiversao
     private void LigarMutacao(bool hotReload)
     {
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
+        AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         RegisterListener<Listeners.OnServerPrecacheResources>(manifesto => manifesto.AddResource(ModeloDoMutante));
         // Recarregado no meio da rodada, o plugin não teria a rodada em andamento nem o relógio, e o servidor travaria.
@@ -281,6 +374,7 @@ public partial class ModoDeDiversao
         }
         jogador.SwitchTeam(CsTeam.Terrorist);
         transformacoes++;
+        infeccoes.Remove(jogador.Slot);
         AplicarAtributosDoMutante(jogador);
         jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Você virou mutante!</font>", SegundosDoAvisoDeMutante);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
@@ -291,6 +385,10 @@ public partial class ModoDeDiversao
     {
         Registrar(autor);
         if (!partidaEncerrada && naPartida.TryGetValue(autor.SteamID, out var dados)) dados.Abates++;
+        var antes = NivelDe(autor);
+        infeccoes[autor.Slot] = infeccoes.GetValueOrDefault(autor.Slot) + 1;
+        var depois = NivelDe(autor);
+        if (depois.Nivel > antes.Nivel) SubirDeNivel(autor, antes, depois);
         var estatisticas = autor.ActionTrackingServices?.MatchStats;
         if (estatisticas == null) return;
         estatisticas.Kills++;
@@ -302,15 +400,43 @@ public partial class ModoDeDiversao
         var corpo = jogador.PlayerPawn.Value;
         if (corpo == null) return;
         DeixarSoAFaca(jogador);
-        corpo.MaxHealth = mutanteDaRodada.Vida;
-        corpo.Health = mutanteDaRodada.Vida;
+        var nivel = NivelDe(jogador);
+        corpo.MaxHealth = nivel.Vida;
+        corpo.Health = nivel.Vida;
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
         corpo.SetModel(ModeloDoMutante);
-        MudarTamanho(corpo, TamanhoDoMutante);
+        MudarTamanho(corpo, nivel.Tamanho);
         corpo.Render = mutanteDaRodada.Cor;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
-        corpo.VelocityModifier = mutanteDaRodada.Velocidade;
+        corpo.VelocityModifier = nivel.Velocidade;
+    }
+
+    private static NivelDoMutante NivelPelasInfeccoes(NivelDoMutante[] niveis, int infeccoes) =>
+        niveis.LastOrDefault(nivel => infeccoes >= nivel.InfeccoesParaChegar) ?? niveis[0];
+
+    private NivelDoMutante NivelDe(CCSPlayerController jogador) =>
+        NivelPelasInfeccoes(mutanteDaRodada.Niveis, infeccoes.GetValueOrDefault(jogador.Slot));
+
+    /// <summary>Ganha só a diferença de vida: quem estava ferido continua ferido. Morto, o nível vale quando renascer.</summary>
+    private void SubirDeNivel(CCSPlayerController mutante, NivelDoMutante antigo, NivelDoMutante novo)
+    {
+        var corpo = mutante.PlayerPawn.Value;
+        if (corpo != null && mutante.PawnIsAlive)
+        {
+            corpo.MaxHealth = novo.Vida;
+            corpo.Health = corpo.Health + novo.Vida - antigo.Vida;
+            Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
+            Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
+            corpo.VelocityModifier = novo.Velocidade;
+            MudarTamanho(corpo, novo.Tamanho);
+        }
+        var nome = System.Net.WebUtility.HtmlEncode(mutante.PlayerName);
+        foreach (var pessoa in Pessoas())
+        {
+            pessoa.PrintToCenterHtml($"<font color='#6eff6e' class='fontSize-l'>{nome} chegou ao nível {novo.Nivel}!</font>", SegundosDoAvisoDeMutante);
+            pessoa.PrintToChat($" [Magnatas] {mutante.PlayerName} chegou ao nível {novo.Nivel} de mutação.");
+        }
     }
 
     private static void MudarTamanho(CCSPlayerPawn corpo, float tamanho)
@@ -327,7 +453,7 @@ public partial class ModoDeDiversao
         foreach (var mutante in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }))
         {
             var corpo = mutante.PlayerPawn.Value;
-            if (corpo != null) corpo.VelocityModifier = mutanteDaRodada.Velocidade;
+            if (corpo != null) corpo.VelocityModifier = NivelDe(mutante).Velocidade;
         }
     }
 
@@ -392,6 +518,11 @@ public partial class ModoDeDiversao
         if (Config.Regra != "mutacao") return HookResult.Continue;
         var jogador = evento.Userid;
         if (jogador is not { IsValid: true }) return HookResult.Continue;
+        if (esperandoJogadores)
+        {
+            AddTimer(mutanteDaRodada.SegundosParaRenascer, () => ColocarNaRodada(jogador));
+            return HookResult.Continue;
+        }
 
         // Queda, ou o golpe se o gancho quebrar numa atualização do jogo: humano morto também vira mutante.
         // Antes do sorteio ainda não há mutante, então ele só volta humano.
@@ -421,6 +552,9 @@ public partial class ModoDeDiversao
         if (Config.Regra != "mutacao") return HookResult.Continue;
         rodadaEmAndamento = false;
         portadorDaSuperArma = null;
+        relogioDaContagem?.Kill();
+        somDaContagem?.Kill();
+        infeccoes.Clear();
         // O portador da rodada anterior é humano e continua dourado: todos voltam à cor e ao tamanho normais.
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist }))
         {
@@ -444,8 +578,8 @@ public partial class ModoDeDiversao
         {
             var corpo = jogador.PlayerPawn.Value;
             var armas = corpo?.WeaponServices?.MyWeapons.Select(item => item.Value?.DesignerName ?? "?") ?? Enumerable.Empty<string>();
-            comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} vida={corpo?.Health}/{corpo?.MaxHealth} velocidade={corpo?.AbsVelocity.Length():0} modificador={corpo?.VelocityModifier:0.00} armas={string.Join(",", armas)}");
+            comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} vida={corpo?.Health}/{corpo?.MaxHealth} velocidade={corpo?.AbsVelocity.Length():0} modificador={corpo?.VelocityModifier:0.00} nivel={(jogador.Team == CsTeam.Terrorist ? NivelDe(jogador).Nivel : 0)} armas={string.Join(",", armas)}");
         }
-        comando.ReplyToCommand($"em_andamento={rodadaEmAndamento} sorteio={sorteioFeito} rodadas={rodadasDaPartida} humanos={vitoriasDosHumanos} mutantes={vitoriasDosMutantes} transformacoes={transformacoes} municao={ConVar<int>.Find("sv_infinite_ammo")?.Value}");
+        comando.ReplyToCommand($"em_andamento={rodadaEmAndamento} esperando={esperandoJogadores} sorteio={sorteioFeito} rodadas={rodadasDaPartida} humanos={vitoriasDosHumanos} mutantes={vitoriasDosMutantes} transformacoes={transformacoes} municao={ConVar<int>.Find("sv_infinite_ammo")?.Value}");
     }
 }

@@ -13,7 +13,7 @@ Lista do que ficou para depois da revisão geral de 04/11/2026. Quando um item f
   - o mix fechando com 10 pessoas no visual novo;
   - uma conta de fora entra no modo Cada um por si e é derrubada em até 15 segundos, e o placar zera depois de 20 minutos completos.
 - Provar com os amigos nos modos da Diversão:
-  - Mutação no `zm_biochemical_hotel`, onde bots não entram: todos entram como humanos, o golpe transforma outra pessoa, a força do empurrão, a cor do mutante e a partida inteira de 10 rodadas com XP;
+  - Mutação no `zm_biochemical_hotel`, onde bots não entram: todos entram como humanos, o golpe transforma outra pessoa, a força do empurrão, a cor do mutante e a partida inteira de 10 rodadas com XP. Conferir também a espera sozinho até chegar o segundo jogador, a contagem de 15 segundos com o som (precisa do pacote de sons atualizado na Oficina) e os 3 níveis do mutante (2 e 5 infecções);
   - Fantasma: o volume da respiração e o equilíbrio com o shift e o bhop invisíveis;
   - sair e voltar no meio da partida nos outros modos. No Equipe x Equipe, o dono saiu e voltou na VPS e continuou com os abates.
 - Conferir no CS2 os comandos `demoui` e `demo_gototick`, que a tela do Olho de Águia ensina a usar.
