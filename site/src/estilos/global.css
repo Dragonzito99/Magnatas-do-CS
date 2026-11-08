@@ -4782,3 +4782,326 @@ a.cartao-destaque:hover {
   margin: 0;
   color: var(--tinta-2);
 }
+
+/* Clãs como no rascunho: sigla colorida, capa do clã, números, membros, busca, ranking e o formulário com prévia */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.sigla-cla {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cor-cla-ouro {
+  color: var(--ouro);
+}
+
+.cor-cla-roxo {
+  color: #c084fc;
+}
+
+.cor-cla-verde {
+  color: var(--verde);
+}
+
+.cor-cla-vermelho {
+  color: #f87171;
+}
+
+.cor-cla-prata {
+  color: #c9d1dc;
+}
+
+.link-da-sigla {
+  text-decoration: none;
+}
+
+.borda-cla-ouro {
+  --cor-do-cla: var(--ouro);
+}
+
+.borda-cla-roxo {
+  --cor-do-cla: #c084fc;
+}
+
+.borda-cla-verde {
+  --cor-do-cla: var(--verde);
+}
+
+.borda-cla-vermelho {
+  --cor-do-cla: #f87171;
+}
+
+.borda-cla-prata {
+  --cor-do-cla: #c9d1dc;
+}
+
+.capa-cla {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border-left: 4px solid var(--cor-do-cla, var(--roxo));
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--roxo-fraco), var(--painel));
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.capa-cla-nome h2 {
+  margin: 0 0 6px;
+  font: italic 700 40px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.capa-cla-nome p {
+  margin: 0 0 6px;
+}
+
+.capa-cla-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.numeros-cla {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.colunas-cla {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.pilha-cla {
+  display: grid;
+  gap: 14px;
+}
+
+.colunas-cla .cabeca-painel h2,
+.clas-lista + .painel .cabeca-painel h2 {
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.tabela-cla td {
+  vertical-align: middle;
+}
+
+.cargo-cla {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  background: var(--roxo-fraco);
+}
+
+.cargo-cla.dono {
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+}
+
+.cargo-cla.capitao {
+  color: #fff;
+  background: var(--roxo);
+}
+
+.acoes-do-membro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.editar-cla {
+  padding: 14px 20px;
+}
+
+.editar-cla summary {
+  cursor: pointer;
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.editar-cla .criar-cla {
+  margin-top: 14px;
+}
+
+.sem-cla {
+  padding-bottom: 18px;
+}
+
+.busca-cla {
+  display: flex;
+  gap: 8px;
+}
+
+.busca-cla input {
+  flex: 1;
+  min-width: 0;
+}
+
+.clas-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.cla-cartao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-left: 4px solid var(--cor-do-cla, var(--roxo));
+  border-radius: 6px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.cla-cartao > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cla-cartao > div span {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.cla-cartao-nome {
+  color: var(--tinta);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.criar-cla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.previa-cla {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px 22px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b1a63, var(--painel));
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.previa-cla b {
+  font: italic 700 32px/1.05 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.formulario-cla {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.formulario-cla label,
+.formulario-cla legend {
+  display: grid;
+  gap: 6px;
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.cores-cla {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cores-cla legend {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.cor-opcao {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
+.cor-opcao input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cor-opcao:has(input:checked) {
+  box-shadow: 0 0 0 3px var(--pagina), 0 0 0 5px var(--tinta);
+}
+
+.cor-opcao:has(input:focus-visible) {
+  outline: 2px solid var(--tinta);
+  outline-offset: 4px;
+}
+
+.fundo-cla-ouro {
+  background: var(--ouro);
+}
+
+.fundo-cla-roxo {
+  background: #c084fc;
+}
+
+.fundo-cla-verde {
+  background: var(--verde);
+}
+
+.fundo-cla-vermelho {
+  background: #f87171;
+}
+
+.fundo-cla-prata {
+  background: #c9d1dc;
+}
+
+@media (max-width: 860px) {
+  .numeros-cla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .colunas-cla,
+  .criar-cla {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .capa-cla-nome h2 {
+    font-size: 30px;
+  }
+
+  .cla-cartao {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .cla-cartao > :last-child {
+    grid-column: 1 / -1;
+  }
+}

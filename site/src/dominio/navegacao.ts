@@ -26,7 +26,16 @@ export const ITENS_DO_MENU: ItemDoMenu[] = [
     ],
   },
   { nome: 'Comunidade', href: '/convites', filhos: [{ nome: 'Convites', href: '/convites' }] },
-  { nome: 'Clãs', emBreve: true },
+  {
+    nome: 'Clãs',
+    href: '/clas',
+    filhos: [
+      { nome: 'Meu clã', href: '/clas' },
+      { nome: 'Procurar clãs', href: '/clas?aba=procurar' },
+      { nome: 'Ranking de clãs', href: '/clas?aba=ranking' },
+      { nome: 'Criar clã', href: '/clas?aba=criar' },
+    ],
+  },
   { nome: 'Magnata Shop', emBreve: true, destaque: true },
 ];
 

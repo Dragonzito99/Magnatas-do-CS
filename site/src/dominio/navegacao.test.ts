@@ -8,12 +8,22 @@ test('o menu de cima não tem as áreas da equipe nem o "Seja um Magnata"', () =
   expect(nomes.join(' ')).not.toMatch(/Seja um Magnata/i);
 });
 
-test('Clãs e Magnata Shop ficam no menu como "em breve", sem levar a lugar nenhum', () => {
-  for (const nome of ['Clãs', 'Magnata Shop']) {
-    const item = ITENS_DO_MENU.find((candidato) => candidato.nome === nome);
-    expect(item).toMatchObject({ emBreve: true });
-    expect(item).not.toHaveProperty('href');
-  }
+test('Magnata Shop fica no menu como "em breve", sem levar a lugar nenhum', () => {
+  const item = ITENS_DO_MENU.find((candidato) => candidato.nome === 'Magnata Shop');
+  expect(item).toMatchObject({ emBreve: true });
+  expect(item).not.toHaveProperty('href');
+});
+
+test('Clãs saiu do "em breve" e abre Meu clã, Procurar, Ranking e Criar', () => {
+  const item = ITENS_DO_MENU.find((candidato) => candidato.nome === 'Clãs');
+  expect(item).toMatchObject({ href: '/clas' });
+  expect(item?.emBreve).toBeFalsy();
+  expect(item?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
+    ['Meu clã', '/clas'],
+    ['Procurar clãs', '/clas?aba=procurar'],
+    ['Ranking de clãs', '/clas?aba=ranking'],
+    ['Criar clã', '/clas?aba=criar'],
+  ]);
 });
 
 test('o botão JOGAR leva para a tela que junta salas, mix e Diversão', () => {

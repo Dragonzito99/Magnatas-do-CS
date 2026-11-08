@@ -331,9 +331,9 @@ export default async function Ranking({ searchParams }: { searchParams: Promise<
             {item.nome}
           </Link>
         ))}
-        <span className="filtro-jogar desligado">
-          Clãs <em className="breve-tag">em breve</em>
-        </span>
+        <Link className="filtro-jogar" href="/clas?aba=ranking">
+          Clãs
+        </Link>
       </nav>
       {atual === 'mix' ? <RankingDoMix usuario={usuario} texto={mes} /> : atual === 'mvps' ? <RankingDeMvps usuario={usuario} /> : <RankingDaComunidade usuario={usuario} />}
     </div>
