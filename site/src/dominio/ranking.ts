@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, gt, gte, lt, min, sql, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, gte, inArray, lt, min, sql, sum } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, usuarios } from '@/bd/esquema';
+import { partidaJogadores, partidas, usuarios, xpPartidas } from '@/bd/esquema';
 import { kdDe, porcentagem, umaCasa } from './ficha';
 import type { UsuarioPublico } from './salas';
 import { patenteDe, type Patente } from './xp';
@@ -98,7 +98,7 @@ export async function primeiroMesComPartida(bd: Bd): Promise<Mes | null> {
   return primeira ? mesDe(primeira) : null;
 }
 
-export type LinhaDaComunidade = { posicao: number; jogador: UsuarioPublico; patente: Patente; xp: number };
+export type LinhaDaComunidade = { posicao: number; jogador: UsuarioPublico; patente: Patente; xp: number; partidas: number; vitoriasPct: number };
 
 /** Por XP de sempre: mostra quem tem a patente mais alta do clube. */
 export async function rankingDaComunidade(bd: Bd, limite: number = LIMITE_DA_COMUNIDADE): Promise<LinhaDaComunidade[]> {
@@ -108,5 +108,34 @@ export async function rankingDaComunidade(bd: Bd, limite: number = LIMITE_DA_COM
     .where(and(eq(usuarios.estado, 'ativo'), gt(usuarios.xpTotal, 0)))
     .orderBy(desc(usuarios.xpTotal), asc(usuarios.apelido))
     .limit(limite);
-  return contas.map(({ xp, ...jogador }, indice) => ({ posicao: indice + 1, jogador, patente: patenteDe(xp), xp }));
+  const ids = contas.map((conta) => conta.id);
+  const jogos =
+    ids.length === 0
+      ? []
+      : await bd
+          .select({
+            usuarioId: xpPartidas.usuarioId,
+            partidas: count(),
+            vitorias: sql<number>`count(*) filter (where ${xpPartidas.resultado} = 'vitoria')`.mapWith(Number),
+          })
+          .from(xpPartidas)
+          .where(inArray(xpPartidas.usuarioId, ids))
+          .groupBy(xpPartidas.usuarioId);
+  const porConta = new Map(jogos.map((linha) => [linha.usuarioId, linha]));
+  return contas.map(({ xp, ...jogador }, indice) => {
+    const jogo = porConta.get(jogador.id);
+    return { posicao: indice + 1, jogador, patente: patenteDe(xp), xp, partidas: jogo?.partidas ?? 0, vitoriasPct: porcentagem(jogo?.vitorias ?? 0, jogo?.partidas ?? 0) };
+  });
+}
+
+/** Onde a pessoa está no ranking e quanto XP falta para passar quem está logo acima. Fora da lista é null. */
+export function minhaPosicao(
+  linhas: { posicao: number; jogador: { id: string; apelido: string }; xp: number }[],
+  usuarioId: string,
+): { posicao: number; faltam: number; acima: string | null } | null {
+  const indice = linhas.findIndex((linha) => linha.jogador.id === usuarioId);
+  if (indice < 0) return null;
+  const acima = linhas[indice - 1];
+  if (!acima) return { posicao: linhas[indice].posicao, faltam: 0, acima: null };
+  return { posicao: linhas[indice].posicao, faltam: acima.xp - linhas[indice].xp + 1, acima: acima.jogador.apelido };
 }

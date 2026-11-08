@@ -4349,3 +4349,134 @@ a.cartao-destaque:hover {
     font-size: 48px;
   }
 }
+
+/* Ranking como no rascunho: abas em filtro, pódio com prata, ouro e bronze, e a frase de quanto falta */
+.filtro-jogar.desligado {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.filtro-jogar.desligado:hover {
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.breve-tag {
+  margin-left: 4px;
+  padding: 1px 5px;
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+  font: normal 700 10px/1.4 Inter, sans-serif;
+  vertical-align: middle;
+}
+
+.podio-ranking {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 18px;
+}
+
+.podio-ranking.com-1 {
+  grid-template-columns: minmax(0, 340px);
+  justify-content: center;
+}
+
+.podio-ranking.com-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.podio-ranking.com-3 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+.podio-lugar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 22px 14px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+  text-align: center;
+}
+
+.podio-lugar.ouro {
+  padding-top: 34px;
+  border-color: var(--ouro);
+  background: linear-gradient(180deg, var(--ouro-fraco), var(--painel));
+}
+
+.podio-lugar.prata {
+  border-color: #c9d1dc;
+}
+
+.podio-lugar.bronze {
+  border-color: #c08a5a;
+}
+
+.podio-pos {
+  color: var(--ouro);
+  font: italic 700 34px/1 var(--fonte-titulo), sans-serif;
+}
+
+.podio-lugar.prata .podio-pos {
+  color: #c9d1dc;
+}
+
+.podio-lugar.bronze .podio-pos {
+  color: #c08a5a;
+}
+
+.podio-lugar .avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  font-size: 28px;
+}
+
+.podio-lugar.ouro .avatar {
+  box-shadow: 0 0 0 3px var(--ouro);
+}
+
+.podio-nome {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--tinta);
+  font: italic 700 26px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.podio-numero {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.podio-lugar.ouro .podio-numero {
+  color: var(--ouro);
+  font-weight: 700;
+}
+
+.estrelas-do-ranking {
+  color: var(--ouro);
+}
+
+.frase-do-ranking {
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .podio-ranking.com-3,
+  .podio-ranking.com-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .podio-lugar.ouro {
+    order: -1;
+  }
+}

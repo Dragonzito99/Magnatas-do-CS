@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, usuarios, type Usuario } from '@/bd/esquema';
+import { partidaJogadores, partidas, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { lerMes, mesAnterior, mesDe, MINIMO_DE_PARTIDAS_NO_MES, primeiroMesComPartida, proximoMes, rankingDaComunidade, rankingDoMes } from './ranking';
+import { lerMes, mesAnterior, mesDe, minhaPosicao, MINIMO_DE_PARTIDAS_NO_MES, primeiroMesComPartida, proximoMes, rankingDaComunidade, rankingDoMes } from './ranking';
 
 let bd: Bd;
 const NOVEMBRO = { ano: 2026, mes: 11 };
@@ -190,4 +190,29 @@ test('a comunidade respeita o limite', async () => {
   await comXp('b', 200);
   await comXp('c', 100);
   expect((await rankingDaComunidade(bd, 2)).map((linha) => linha.jogador.apelido)).toEqual(['a', 'b']);
+});
+
+test('na comunidade, cada linha traz as partidas e a porcentagem de vitórias de tudo que deu XP', async () => {
+  const conta = await comXp('ana', 900);
+  const resultados = ['vitoria', 'vitoria', 'derrota', 'empate'] as const;
+  for (const [indice, resultado] of resultados.entries()) {
+    await bd.insert(xpPartidas).values({ usuarioId: conta.id, origem: indice < 2 ? 'partida' : 'diversao', referencia: `p${indice}`, abates: 3, resultado, xp: 200 });
+  }
+  await comXp('zeca', 100);
+  const linhas = await rankingDaComunidade(bd);
+  expect(linhas.map((linha) => [linha.jogador.apelido, linha.partidas, linha.vitoriasPct])).toEqual([
+    ['ana', 4, 50],
+    ['zeca', 0, 0],
+  ]);
+});
+
+test('minhaPosicao diz quanto XP falta para passar quem está logo acima', async () => {
+  const linhas = [
+    { posicao: 1, jogador: { id: 'a', apelido: 'Alfa' }, xp: 5000 },
+    { posicao: 2, jogador: { id: 'b', apelido: 'Bravo' }, xp: 3000 },
+    { posicao: 3, jogador: { id: 'c', apelido: 'Charlie' }, xp: 2990 },
+  ];
+  expect(minhaPosicao(linhas, 'c')).toEqual({ posicao: 3, faltam: 11, acima: 'Bravo' });
+  expect(minhaPosicao(linhas, 'a')).toEqual({ posicao: 1, faltam: 0, acima: null });
+  expect(minhaPosicao(linhas, 'z')).toBeNull();
 });

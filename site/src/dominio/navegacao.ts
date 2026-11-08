@@ -15,7 +15,15 @@ export const ITENS_DO_MENU: ItemDoMenu[] = [
       { nome: 'Patentes', href: '/patentes' },
     ],
   },
-  { nome: 'Ranking', href: '/ranking' },
+  {
+    nome: 'Ranking',
+    href: '/ranking',
+    filhos: [
+      { nome: 'Comunidade', href: '/ranking' },
+      { nome: 'Mix do mês', href: '/ranking?aba=mix' },
+      { nome: 'MVPs', href: '/ranking?aba=mvps' },
+    ],
+  },
   { nome: 'Comunidade', href: '/convites', filhos: [{ nome: 'Convites', href: '/convites' }] },
   { nome: 'Clãs', emBreve: true },
   { nome: 'Magnata Shop', emBreve: true, destaque: true },

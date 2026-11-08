@@ -64,3 +64,12 @@ test('como no rascunho, o menu tem Comunidade no lugar de Convites, e o convite 
   expect(comunidade).toMatchObject({ href: '/convites' });
   expect(comunidade?.filhos?.map((filho) => filho.nome)).toEqual(['Convites']);
 });
+
+test('como no rascunho, o Ranking abre Comunidade, Mix do mês e MVPs', () => {
+  const ranking = ITENS_DO_MENU.find((item) => item.nome === 'Ranking');
+  expect(ranking?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
+    ['Comunidade', '/ranking'],
+    ['Mix do mês', '/ranking?aba=mix'],
+    ['MVPs', '/ranking?aba=mvps'],
+  ]);
+});
