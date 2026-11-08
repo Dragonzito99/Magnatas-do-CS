@@ -92,3 +92,28 @@ export function cartoesDeNoticias(
   cartoes.sort((a, b) => (b.data?.getTime() ?? 0) - (a.data?.getTime() ?? 0));
   return { destaque, cartoes };
 }
+
+export type BlocoDaNoticia = { tipo: 'linha-fina' | 'paragrafo' | 'subtitulo'; texto: string };
+
+/**
+ * O texto puro da notícia em blocos para a página: o primeiro parágrafo vira a linha fina, em destaque,
+ * e o parágrafo que começa com "## " vira subtítulo. Nada de HTML: o React escapa o texto.
+ */
+export function blocosDaNoticia(texto: string): BlocoDaNoticia[] {
+  const paragrafos = texto
+    .split(/\n\s*\n/)
+    .map((paragrafo) => paragrafo.trim())
+    .filter(Boolean);
+  return paragrafos.map((paragrafo, indice) => {
+    if (paragrafo.startsWith('## ')) return { tipo: 'subtitulo', texto: paragrafo.slice(3).trim() };
+    return { tipo: indice === 0 ? 'linha-fina' : 'paragrafo', texto: paragrafo };
+  });
+}
+
+/** Os cartões de "Mais notícias" embaixo de uma notícia aberta: as outras do clube, até três. */
+export function maisNoticiasDoClube(noticias: DoClube[], idAtual: string, limite: number = 3): CartaoDeNoticia[] {
+  return noticias
+    .filter((noticia) => noticia.id !== idAtual)
+    .slice(0, limite)
+    .map(doClube);
+}

@@ -33,7 +33,7 @@ function Formulario({ noticia }: { noticia?: NoticiaComAutor | null }) {
         maxLength={LIMITES_DA_NOTICIA.texto}
         rows={8}
         defaultValue={noticia?.texto}
-        placeholder="Separe os parágrafos com uma linha em branco."
+        placeholder="Separe os parágrafos com uma linha em branco. Para um subtítulo, comece o parágrafo com ## e um espaço."
       />
       <label htmlFor="imagem">Imagem (opcional)</label>
       <input id="imagem" name="imagem" placeholder="/mapas/luxville.webp" defaultValue={noticia?.imagem ?? ''} />

@@ -2029,29 +2029,6 @@ textarea {
   gap: 8px;
 }
 
-.noticia-completa {
-  display: grid;
-  gap: 12px;
-  max-width: 760px;
-}
-
-.noticia-completa h1 {
-  font-size: 30px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-}
-
-.noticia-completa p {
-  line-height: 1.6;
-  white-space: pre-line;
-}
-
-.noticia-imagem {
-  width: 100%;
-  height: auto;
-  border-radius: 14px;
-}
-
 /* Tela principal */
 .bombando {
   margin-bottom: 16px;
@@ -4674,4 +4651,96 @@ a.cartao-destaque:hover {
 .painel-conteudo > .grade,
 .painel-conteudo > .painel {
   margin: 0;
+}
+
+/* Notícia aberta como no rascunho: capa com foto, título grande e texto numa coluna estreita */
+.coluna-da-noticia {
+  width: min(780px, 100%);
+  margin: 0 auto;
+}
+
+.noticia-capa {
+  margin: -22px calc(50% - 50vw) 0;
+  padding: 80px 16px 30px;
+  background-position: center;
+  background-size: cover;
+}
+
+.voltar-noticias {
+  display: table;
+  margin-bottom: 16px;
+  color: var(--tinta-2);
+  text-decoration: none;
+}
+
+.voltar-noticias:hover {
+  color: var(--tinta);
+}
+
+.conteudo .noticia-capa h1 {
+  margin: 10px 0 12px;
+  font: italic 700 60px/0.95 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.noticia-autor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--tinta-2);
+}
+
+.mini-foto {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--tinta);
+  background: #3b1a63;
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+}
+
+.noticia-texto {
+  padding-top: 10px;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.noticia-texto p {
+  margin: 0 0 16px;
+  color: #d9cdee;
+  white-space: pre-line;
+}
+
+.noticia-texto .linha-fina {
+  color: var(--tinta);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.noticia-texto h2 {
+  margin: 30px 0 6px;
+  font: italic 700 32px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.noticia-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.mais-noticias {
+  margin-top: 40px;
+}
+
+@media (max-width: 860px) {
+  .conteudo .noticia-capa h1 {
+    font-size: 38px;
+  }
 }

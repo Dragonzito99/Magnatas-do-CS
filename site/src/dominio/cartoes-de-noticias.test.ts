@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { cartoesDeNoticias, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias } from './cartoes-de-noticias';
+import { blocosDaNoticia, cartoesDeNoticias, maisNoticiasDoClube, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias } from './cartoes-de-noticias';
 
 const clube = [
   { id: 'a', titulo: 'Fixada', texto: 'Texto fixado', imagem: '/mapas/egypt.webp', fixada: true, criadoEm: new Date('2026-11-01T12:00:00Z') },
@@ -37,4 +37,28 @@ test('com filtro, só aparece aquele tipo, e o destaque só existe no filtro do 
   const doClube = cartoesDeNoticias({ clube, steam, jogos }, 'clube');
   expect(doClube.destaque?.titulo).toBe('Fixada');
   expect(doClube.cartoes.map((cartao) => cartao.tipo)).toEqual(['clube']);
+});
+
+test('o texto da notícia vira blocos: o primeiro parágrafo é a linha fina e "## " vira subtítulo', () => {
+  const texto = 'O mapa entrou na rotação.\n\nQuem jogou vai reconhecer.\n\n## Como jogar\n\nAbra a tela Jogar.';
+  expect(blocosDaNoticia(texto)).toEqual([
+    { tipo: 'linha-fina', texto: 'O mapa entrou na rotação.' },
+    { tipo: 'paragrafo', texto: 'Quem jogou vai reconhecer.' },
+    { tipo: 'subtitulo', texto: 'Como jogar' },
+    { tipo: 'paragrafo', texto: 'Abra a tela Jogar.' },
+  ]);
+});
+
+test('notícia que começa com subtítulo não ganha linha fina, e parágrafo vazio some', () => {
+  expect(blocosDaNoticia('## Novidade\n\n\n\nTexto.')).toEqual([
+    { tipo: 'subtitulo', texto: 'Novidade' },
+    { tipo: 'paragrafo', texto: 'Texto.' },
+  ]);
+});
+
+test('mais notícias do clube deixa de fora a que está aberta e para em três', () => {
+  const noticia = (id: string) => ({ id, titulo: `N${id}`, texto: 'x', imagem: null, fixada: false, criadoEm: new Date('2026-11-01') });
+  const cartoes = maisNoticiasDoClube([noticia('1'), noticia('2'), noticia('3'), noticia('4'), noticia('5')], '2');
+  expect(cartoes.map((cartao) => cartao.href)).toEqual(['/noticias/1', '/noticias/3', '/noticias/4']);
+  expect(cartoes.every((cartao) => cartao.imagem.startsWith('/mapas/'))).toBe(true);
 });
