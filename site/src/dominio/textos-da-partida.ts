@@ -7,6 +7,32 @@ export const NOME_DA_GRAVACAO: Record<Exclude<SituacaoDaGravacao, 'disponivel'>,
   apagada: 'Gravação apagada',
 };
 
+export type FaseDaPartida = 'aceite' | 'vetos' | 'entrar' | 'vivo' | 'fim';
+
+/** As cinco fases que a tela da partida mostra no alto, na ordem em que acontecem. */
+export const FASES_DA_PARTIDA: readonly { fase: FaseDaPartida; nome: string }[] = [
+  { fase: 'aceite', nome: 'Aceite' },
+  { fase: 'vetos', nome: 'Vetos' },
+  { fase: 'entrar', nome: 'Entrar no servidor' },
+  { fase: 'vivo', nome: 'Ao vivo' },
+  { fase: 'fim', nome: 'Fim' },
+];
+
+const FASE_DO_ESTADO: Record<Partida['estado'], FaseDaPartida> = {
+  aguardando_aceite: 'aceite',
+  vetando: 'vetos',
+  aguardando_servidor: 'entrar',
+  carregando: 'entrar',
+  aguardando_jogadores: 'entrar',
+  ao_vivo: 'vivo',
+  encerrada: 'fim',
+  cancelada: 'fim',
+};
+
+export function faseDaPartida(estado: Partida['estado']): FaseDaPartida {
+  return FASE_DO_ESTADO[estado];
+}
+
 export function nomeDaPartida(partida: Pick<Partida, 'tipo' | 'numero'>): string {
   return `${partida.tipo === 'mix' ? 'Mix' : 'Desafio'} #${partida.numero}`;
 }

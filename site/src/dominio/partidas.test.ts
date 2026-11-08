@@ -11,10 +11,12 @@ import {
   criarServidor,
   dadosDeConexao,
   detalheDaPartida,
+  gravacaoDaPartida,
   devolverPartida,
   MAPAS,
   partidaAtualDe,
   partidasEmAndamento,
+  quemEntrouNoServidor,
   respostaDaConfig,
 } from './partidas';
 
@@ -285,6 +287,40 @@ test('detalheDaPartida traz a partida, o servidor e os jogadores sem dados priva
   expect(jogador).toMatchObject({ apelido: time1[0].apelido, time: 1, kills: 0 });
   expect(jogador).not.toHaveProperty('cpfHmac');
   expect(jogador).not.toHaveProperty('steamid64');
+});
+
+test('detalheDaPartida traz o XP total de cada jogador, para a tela mostrar a patente', async () => {
+  const { partida, time1 } = await novaPartida();
+  await bd.update(usuarios).set({ xpTotal: 4200 }).where(eq(usuarios.id, time1[0].id));
+  const detalhe = await detalheDaPartida(bd, partida.id);
+  expect(detalhe?.jogadores.find((j) => j.id === time1[0].id)?.xpTotal).toBe(4200);
+  expect(detalhe?.jogadores.find((j) => j.id === time1[1].id)?.xpTotal).toBe(0);
+});
+
+test('quemEntrouNoServidor cruza quem está no servidor com os jogadores da partida', async () => {
+  const { time1, time2 } = await novaPartida();
+  const servidor = { host: '10.0.0.1', porta: 27015 };
+  const estranho = (await contas(1))[0];
+  const controlador = controladorFalso({ conectados: { '10.0.0.1': [time1[0].steamid64, time2[2].steamid64, estranho.steamid64] } });
+  const ids = [...time1, ...time2].map((conta) => conta.id);
+  expect(await quemEntrouNoServidor(bd, controlador, servidor, ids)).toEqual(new Set([time1[0].id, time2[2].id]));
+});
+
+test('quemEntrouNoServidor sem servidor ou com o servidor fora do ar fica vazio', async () => {
+  const { time1 } = await novaPartida();
+  const ids = time1.map((conta) => conta.id);
+  expect(await quemEntrouNoServidor(bd, controladorFalso(), null, ids)).toEqual(new Set());
+  const caido = controladorFalso({ hostsComFalha: ['10.0.0.1'] });
+  expect(await quemEntrouNoServidor(bd, caido, { host: '10.0.0.1', porta: 27015 }, ids)).toEqual(new Set());
+});
+
+test('gravacaoDaPartida diz se a gravação está pronta e qual baixar', async () => {
+  const { partida } = await novaPartida();
+  const encerradaEm = new Date('2026-11-01T20:00:00Z');
+  expect(await gravacaoDaPartida(bd, { id: partida.id, encerradaEm }, new Date('2026-11-01T20:05:00Z'))).toEqual({ situacao: 'aguardando' });
+  expect(await gravacaoDaPartida(bd, { id: partida.id, encerradaEm }, new Date('2026-11-01T21:00:00Z'))).toEqual({ situacao: 'sem' });
+  const [gravacao] = await bd.insert(gravacoes).values({ partidaId: partida.id, arquivo: '1.dem', bytes: 10 }).returning();
+  expect(await gravacaoDaPartida(bd, { id: partida.id, encerradaEm })).toEqual({ situacao: 'disponivel', id: gravacao.id });
 });
 
 test('detalheDaPartida de partida inexistente é null', async () => {

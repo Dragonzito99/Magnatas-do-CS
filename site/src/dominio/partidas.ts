@@ -2,9 +2,10 @@ import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, notInArray } from '
 import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
 import { gravacoes, partidaJogadores, partidas, salas, servidores, usuarios, xpPartidas, type Papel, type Partida, type Sala, type Servidor } from '@/bd/esquema';
-import type { ControladorServidor } from '@/servidor-jogo/controlador';
+import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
 import { PRAZO_DO_ACEITE_MS } from './aceites';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
+import { situacaoDaGravacao, type SituacaoDaGravacao } from './ficha';
 import { lancarXp } from './xp';
 
 export const MAPAS = ['de_mirage', 'de_inferno', 'de_nuke', 'de_ancient', 'de_anubis', 'de_dust2', 'de_overpass'] as const;
@@ -261,6 +262,7 @@ export type JogadorDaPartida = {
   k4: number;
   k5: number;
   xp: number | null;
+  xpTotal: number;
 };
 
 /** A sala de cada time, para a página mostrar o nome e saber quem é o líder que veta. */
@@ -293,6 +295,7 @@ export async function detalheDaPartida(
       k4: partidaJogadores.k4,
       k5: partidaJogadores.k5,
       xp: xpPartidas.xp,
+      xpTotal: usuarios.xpTotal,
     })
     .from(partidaJogadores)
     .innerJoin(usuarios, eq(partidaJogadores.usuarioId, usuarios.id))
@@ -306,6 +309,29 @@ export async function detalheDaPartida(
     if (lider?.time === 1 || lider?.time === 2) salasDaPartida[lider.time] = sala;
   }
   return { partida, servidor: servidor ?? null, jogadores, salasDaPartida };
+}
+
+/** Quem da partida já está no servidor, para a tela de entrar. Servidor fora do ar conta como ninguém. */
+export async function quemEntrouNoServidor(bd: Bd, controlador: ControladorServidor, servidor: ServidorAlvo | null, ids: string[]): Promise<Set<string>> {
+  if (!servidor || ids.length === 0) return new Set();
+  const conectados = await controlador.jogadoresConectados(servidor).catch(() => [] as string[]);
+  if (conectados.length === 0) return new Set();
+  const linhas = await bd
+    .select({ id: usuarios.id })
+    .from(usuarios)
+    .where(and(inArray(usuarios.steamid64, conectados), inArray(usuarios.id, ids)));
+  return new Set(linhas.map((linha) => linha.id));
+}
+
+/** A gravação da partida, para o botão de baixar no fim. */
+export async function gravacaoDaPartida(
+  bd: Bd,
+  partida: Pick<Partida, 'id' | 'encerradaEm'>,
+  agora: Date = new Date(),
+): Promise<{ situacao: SituacaoDaGravacao; id?: string }> {
+  const [gravacao] = await bd.select({ id: gravacoes.id, apagadaEm: gravacoes.apagadaEm }).from(gravacoes).where(eq(gravacoes.partidaId, partida.id));
+  const situacao = situacaoDaGravacao(partida, gravacao ?? null, agora);
+  return situacao === 'disponivel' ? { situacao, id: gravacao.id } : { situacao };
 }
 
 const ESTADOS_COM_SERVIDOR_PRONTO: Partida['estado'][] = ['aguardando_jogadores', 'ao_vivo'];

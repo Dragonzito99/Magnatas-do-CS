@@ -19,7 +19,7 @@ import { resolverVetosVencidos } from './vetos';
 const MINUTO_MS = 60_000;
 const LIMITE_CARREGANDO_MS = 2 * MINUTO_MS;
 // O servidor só avisa que a partida começou depois da rodada de faca, então o tempo inclui preparar e a faca.
-const LIMITE_AGUARDANDO_JOGADORES_MS = 10 * MINUTO_MS;
+export const LIMITE_AGUARDANDO_JOGADORES_MS = 10 * MINUTO_MS;
 // Fila normal por servidor ocupado cabe aqui. Passou disso, as pessoas não podem ficar presas.
 const LIMITE_SEM_SERVIDOR_MS = 60 * MINUTO_MS;
 const LIMITE_SEM_EVENTO_MS = 3 * 60 * MINUTO_MS;
