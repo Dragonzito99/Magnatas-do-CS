@@ -6,6 +6,7 @@ import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controla
 import { PRAZO_DO_ACEITE_MS } from './aceites';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 import { situacaoDaGravacao, type SituacaoDaGravacao } from './ficha';
+import { avancarSerie } from './series';
 import { lancarXp } from './xp';
 
 export const MAPAS = ['de_mirage', 'de_inferno', 'de_nuke', 'de_ancient', 'de_anubis', 'de_dust2', 'de_overpass'] as const;
@@ -76,12 +77,15 @@ export async function finalizarPartida(
   resultado: { estado: 'encerrada' | 'cancelada'; vencedor: number | null; motivoDoCancelamento?: Partida['motivoDoCancelamento'] },
 ): Promise<void> {
   const agora = new Date();
-  await tx
+  const [partida] = await tx
     .update(partidas)
     .set({ ...resultado, encerradaEm: agora, estadoDesde: agora })
-    .where(eq(partidas.id, partidaId));
+    .where(eq(partidas.id, partidaId))
+    .returning();
+  // Na MD3 que continua, as salas passam direto para o mapa seguinte, sem ficarem livres no meio.
+  const proxima = partida?.serieId ? await avancarSerie(tx, partida, resultado.vencedor, resultado.estado, agora) : null;
   await tx.update(servidores).set({ partidaId: null }).where(eq(servidores.partidaId, partidaId));
-  await tx.update(salas).set({ partidaId: null }).where(eq(salas.partidaId, partidaId));
+  await tx.update(salas).set({ partidaId: proxima?.id ?? null }).where(eq(salas.partidaId, partidaId));
   if (resultado.estado === 'encerrada') await lancarXpDaPartida(tx, partidaId, resultado.vencedor);
 }
 
@@ -92,6 +96,8 @@ export function jogouAteOFim(rodadas: number, totalDeRodadas: number): boolean {
 
 async function lancarXpDaPartida(tx: Transacao, partidaId: string, vencedor: number | null): Promise<void> {
   const [partida] = await tx.select().from(partidas).where(eq(partidas.id, partidaId));
+  // Treino é clã contra ele mesmo: um lado podia se deixar matar para o outro pegar XP.
+  if (partida.tipo === 'treino') return;
   const jogadores = await tx
     .select({ usuarioId: partidaJogadores.usuarioId, time: partidaJogadores.time, kills: partidaJogadores.kills, rodadas: partidaJogadores.rodadas })
     .from(partidaJogadores)
@@ -128,14 +134,13 @@ export async function criarServidor(bd: Bd, dados: { nome: string; host: string;
 
 async function reservarServidor(bd: Bd, ignorar: string[], agora: Date): Promise<{ partida: Partida; servidor: Servidor } | null> {
   return bd.transaction(async (tx) => {
-    const [partida] = await tx
+    const esperando = await tx
       .select()
       .from(partidas)
       .where(eq(partidas.estado, 'aguardando_servidor'))
       .orderBy(asc(partidas.numero))
-      .limit(1)
       .for('update', { skipLocked: true });
-    if (!partida) return null;
+    if (esperando.length === 0) return null;
     // A gravação chega minutos depois do fim, e é a prova: carregar outra partida antes pode cortar o envio.
     const esperandoGravacao = await tx
       .select({ id: partidas.servidorId })
@@ -150,14 +155,31 @@ async function reservarServidor(bd: Bd, ignorar: string[], agora: Date): Promise
         ),
       );
     const foraDaVez = [...ignorar, ...esperandoGravacao.flatMap((linha) => (linha.id ? [linha.id] : []))];
-    const [servidor] = await tx
-      .select()
-      .from(servidores)
-      .where(and(eq(servidores.ativo, true), isNull(servidores.partidaId), notInArray(servidores.id, foraDaVez)))
-      .orderBy(asc(servidores.criadoEm), asc(servidores.id))
-      .limit(1)
-      .for('update', { skipLocked: true });
-    if (!servidor) return null;
+    // O mapa seguinte de uma MD3 espera o servidor onde os jogadores já estão; ninguém mais pega esse servidor.
+    const guardados = esperando.flatMap((linha) => (linha.servidorPreferidoId ? [linha.servidorPreferidoId] : []));
+    let escolha: { partida: Partida; servidor: Servidor } | null = null;
+    for (const candidata of esperando) {
+      const [livre] = await tx
+        .select()
+        .from(servidores)
+        .where(
+          and(
+            eq(servidores.ativo, true),
+            isNull(servidores.partidaId),
+            notInArray(servidores.id, foraDaVez),
+            candidata.servidorPreferidoId ? eq(servidores.id, candidata.servidorPreferidoId) : notInArray(servidores.id, guardados),
+          ),
+        )
+        .orderBy(asc(servidores.criadoEm), asc(servidores.id))
+        .limit(1)
+        .for('update', { skipLocked: true });
+      if (livre) {
+        escolha = { partida: candidata, servidor: livre };
+        break;
+      }
+    }
+    if (!escolha) return null;
+    const { partida, servidor } = escolha;
     await tx
       .update(partidas)
       .set({ estado: 'carregando', servidorId: servidor.id, estadoDesde: new Date() })
@@ -223,8 +245,9 @@ export async function configDaPartida(bd: Bd, numero: number, minimoDeProntos: n
   const time = (numeroDoTime: number) => {
     const doTime = jogadores.filter((jogador) => jogador.time === numeroDoTime);
     const sala = salasDaPartida.find((linha) => doTime.some((jogador) => jogador.id === linha.liderId));
+    const nomeGuardado = numeroDoTime === 1 ? partida.nomeTime1 : partida.nomeTime2;
     return {
-      name: sala?.nome ?? `Time ${numeroDoTime}`,
+      name: nomeGuardado ?? sala?.nome ?? `Time ${numeroDoTime}`,
       players: Object.fromEntries(doTime.map((jogador) => [jogador.steamid64, jogador.apelido])),
     };
   };
