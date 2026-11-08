@@ -4744,3 +4744,41 @@ a.cartao-destaque:hover {
     font-size: 38px;
   }
 }
+
+/* Regras do clube na página Jogo, como no rascunho */
+.regras {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regras li {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 18px;
+  border-left: 4px solid var(--roxo);
+  border-radius: 6px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.regras li > b {
+  min-width: 22px;
+  color: var(--ouro);
+  font: italic 700 36px/1 var(--fonte-titulo), sans-serif;
+}
+
+.regras h3 {
+  margin: 0 0 4px;
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.regras p {
+  margin: 0;
+  color: var(--tinta-2);
+}

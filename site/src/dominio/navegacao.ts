@@ -13,6 +13,7 @@ export const ITENS_DO_MENU: ItemDoMenu[] = [
       { nome: 'Modos', href: '/jogo#modos' },
       { nome: 'Mapas', href: '/jogo#mapas' },
       { nome: 'Patentes', href: '/patentes' },
+      { nome: 'Regras', href: '/jogo#regras' },
     ],
   },
   {

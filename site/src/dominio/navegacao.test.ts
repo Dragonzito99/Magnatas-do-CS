@@ -37,7 +37,7 @@ test('o aviso de sala aparece fora da tela Jogar, e some quando a sala está em 
   expect(mostrarAvisoDeSala('/ranking', { ...sala, emPartida: true })).toBe(false);
 });
 
-test('o menu começa por Notícias e Jogo, e o Jogo abre Como funciona, Modos, Mapas e Patentes', () => {
+test('o menu começa por Notícias e Jogo, e o Jogo abre Como funciona, Modos, Mapas, Patentes e Regras', () => {
   expect(ITENS_DO_MENU.slice(0, 2).map((item) => [item.nome, item.href])).toEqual([
     ['Notícias', '/noticias'],
     ['Jogo', '/jogo'],
@@ -48,6 +48,7 @@ test('o menu começa por Notícias e Jogo, e o Jogo abre Como funciona, Modos, M
     ['Modos', '/jogo#modos'],
     ['Mapas', '/jogo#mapas'],
     ['Patentes', '/patentes'],
+    ['Regras', '/jogo#regras'],
   ]);
 });
 

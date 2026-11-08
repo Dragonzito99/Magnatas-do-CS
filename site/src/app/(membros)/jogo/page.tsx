@@ -10,6 +10,15 @@ const PASSOS = [
   { titulo: 'Suba de patente', texto: `Cada partida jogada até o fim dá XP. São ${PATENTES.length} degraus, do Recruta ao Magnata Lendário.` },
 ];
 
+// As regras do rascunho aprovado pelo dono.
+const REGRAS = [
+  { titulo: 'Sem trapaça', texto: 'Qualquer programa que dê vantagem é banimento. Toda partida competitiva é gravada e o Olho de Águia assiste às denúncias.' },
+  { titulo: 'Respeito', texto: 'Xingar, humilhar ou ameaçar alguém leva a suspensão. Brincadeira tem limite.' },
+  { titulo: 'Jogue até o fim', texto: 'Quem sai no meio deixa o time na mão e não ganha XP da partida.' },
+  { titulo: 'Uma conta por pessoa', texto: 'A verificação de identidade garante que cada pessoa tem uma conta só.' },
+  { titulo: 'Denuncie direito', texto: 'Use o botão Denunciar na tela da partida. Denúncia falsa também é punida.' },
+];
+
 const MODOS = [
   { nome: 'Competitivo', selo: 'ouro', foto: '/mapas/dust2.webp', texto: '5 contra 5 em salas. Juntem a sala, desafiem outra e vetem os mapas.', filtro: 'competitivo' },
   { nome: 'Mix', selo: 'ouro', foto: '/mapas/mirage.webp', texto: 'Entre sozinho na fila. Com 10, os times são sorteados e a partida começa.', filtro: 'mix' },
@@ -92,6 +101,21 @@ export default async function Jogo() {
           </div>
         ))}
       </section>
+
+      <h2 className="secao-titulo" id="regras">
+        As <b>regras</b>
+      </h2>
+      <ol className="regras">
+        {REGRAS.map((regra, indice) => (
+          <li key={regra.titulo}>
+            <b>{indice + 1}</b>
+            <div>
+              <h3>{regra.titulo}</h3>
+              <p>{regra.texto}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </>
   );
 }
