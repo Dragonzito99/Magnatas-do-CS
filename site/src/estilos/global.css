@@ -3314,11 +3314,46 @@ a.cartao-destaque:hover {
   text-transform: uppercase;
 }
 
+/* A história de um mapa, logo abaixo dos cartões: foto ao lado do texto, e um embaixo do outro no celular. */
+.historia-mapa {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 18px;
+  margin-top: 14px;
+  padding: 18px;
+  border-left: 4px solid var(--verde);
+  border-radius: 6px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.historia-mapa img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.historia-mapa h3 {
+  margin: 8px 0 10px;
+  font: italic 700 26px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.historia-mapa p {
+  margin: 0 0 10px;
+  color: var(--tinta-2);
+}
+
 @media (max-width: 860px) {
   .passos,
   .modos-info,
   .mapas-jogo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .historia-mapa {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .como-ganhar {

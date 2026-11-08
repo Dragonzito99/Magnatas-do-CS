@@ -54,9 +54,9 @@ public partial class ModoDeDiversao
 
     // O zumbi vem no pacote da Oficina que todo jogador baixa ao entrar, junto com os sons.
     private const string ModeloDoMutante = "models/magnatas/mutante/mutante.vmdl";
-    // Sem o zumbi no servidor (o pacote novo ainda não chegou), o mutante ficaria sem áreas de acerto e sem animação:
-    // ninguém dava dano nele. Até o pacote chegar, vai um boneco do próprio jogo, verde para não confundir.
-    private const string ModeloDeReserva = "agents/models/tm_phoenix/tm_phoenix.vmdl";
+    // Sem o zumbi no servidor (o pacote novo ainda não chegou), o mutante ficaria sem áreas de acerto e sem animação.
+    // Trocar para outro boneco do jogo fazia o jogo de quem estava no servidor parar para carregar o modelo e cair
+    // ("OnPreserveEntity"). Então, sem o zumbi, o mutante fica com o próprio boneco, verde e maior.
     private static readonly Color CorDaReserva = Color.FromArgb(255, 110, 255, 110);
     private const string PacoteDoServidor = "3835000213";
     private bool? zumbiNoServidor;
@@ -116,6 +116,11 @@ public partial class ModoDeDiversao
             vitoriasDosHumanos = 0;
             vitoriasDosMutantes = 0;
             MostrarNoPlacar();
+            // A história do mapa, a mesma da página Jogo do site.
+            if (Server.MapName == "zm_silent_village")
+            {
+                foreach (var pessoa in Pessoas()) pessoa.PrintToChat(" [Magnatas] Silent Village: o vírus vazou do laboratório debaixo da vila. Não confie em ninguém.");
+            }
         }
         rodadaEmAndamento = true;
         sorteioFeito = false;
@@ -335,7 +340,6 @@ public partial class ModoDeDiversao
         RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
         {
             manifesto.AddResource(ModeloDoMutante);
-            manifesto.AddResource(ModeloDeReserva);
         });
         // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
         RegisterListener<Listeners.OnMapStart>(_ => zumbiNoServidor = null);
@@ -423,7 +427,7 @@ public partial class ModoDeDiversao
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
         var zumbi = ZumbiNoServidor();
-        corpo.SetModel(zumbi ? ModeloDoMutante : ModeloDeReserva);
+        if (zumbi) corpo.SetModel(ModeloDoMutante);
         MudarTamanho(corpo, nivel.Tamanho);
         corpo.Render = zumbi ? mutanteDaRodada.Cor : CorDaReserva;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
@@ -450,7 +454,7 @@ public partial class ModoDeDiversao
             }
         }
         zumbiNoServidor = achou;
-        Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(achou ? "sim" : "não, vai o boneco do jogo")}.");
+        Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(achou ? "sim" : "não, o mutante fica com o próprio boneco")}.");
         return achou;
     }
 

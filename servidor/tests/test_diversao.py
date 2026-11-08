@@ -1222,19 +1222,18 @@ def test_o_mutante_usa_o_zumbi_do_pacote_e_fica_maior():
     assert "TamanhoDoHumano" in prepara
 
 
-def test_sem_o_zumbi_no_servidor_o_mutante_usa_um_boneco_do_jogo():
-    # Sem o arquivo no servidor, o mutante ficou sem áreas de acerto e sem animação: ninguém dava dano nele.
-    assert 'ModeloDeReserva = "agents/models/tm_phoenix/tm_phoenix.vmdl"' in CODIGO_DA_MUTACAO
-    assert "AddResource(ModeloDeReserva)" in CODIGO_DA_MUTACAO
+def test_sem_o_zumbi_no_servidor_o_mutante_nao_troca_de_boneco():
+    # Sem o arquivo no servidor, o mutante ficava sem áreas de acerto e sem animação. Trocar para outro boneco do jogo
+    # fazia o jogo de quem estava no servidor parar para carregar o modelo e cair ("OnPreserveEntity").
+    # Então, sem o zumbi, o mutante fica com o próprio boneco, verde e maior.
+    assert "ModeloDeReserva" not in CODIGO_DA_MUTACAO
     confere = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("bool ZumbiNoServidor"):]
     confere = confere[:confere.index(FIM_DO_METODO)]
     assert '"models/magnatas/mutante"' in confere and "_dir.vpk" in confere
     aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     aplica = aplica[:aplica.index(FIM_DO_METODO)]
-    assert "SetModel(zumbi ? ModeloDoMutante : ModeloDeReserva)" in aplica
-    # O boneco do jogo vai verde, para não confundir com os humanos.
+    assert "if (zumbi) corpo.SetModel(ModeloDoMutante);" in aplica
     assert "zumbi ? mutanteDaRodada.Cor : CorDaReserva" in aplica
-    # A cada mapa a conferência se refaz: depois da aprovação, o pacote novo chega numa troca de mapa.
     assert "zumbiNoServidor = null" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void LigarMutacao"):]
 
 
@@ -1449,3 +1448,10 @@ def test_mutacao_troca_de_mapa_no_fim_da_partida_menos_no_teste():
     trecho = trecho[:trecho.index(FIM_DO_METODO)]
     fim = trecho[trecho.index("AvisarFimDaPartida("):]
     assert "if (!testeComBots) AddTimer(SegundosMostrandoOVencedor - 1, TrocarDeMapa);" in fim
+
+
+def test_a_partida_no_silent_village_comeca_com_a_historia_do_mapa():
+    comeca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):]
+    inicio = comeca[comeca.index("if (rodadasDaPartida == 0)"):comeca.index("rodadaEmAndamento = true;")]
+    assert 'Server.MapName == "zm_silent_village"' in inicio
+    assert "o vírus vazou do laboratório debaixo da vila. Não confie em ninguém." in inicio

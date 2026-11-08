@@ -39,6 +39,13 @@ const MAPAS = [
   { nome: 'Silent Village', foto: '/mapas/silent-village.webp', modo: 'Mutação' },
 ];
 
+// A história do mapa, aprovada pelo dono: o universo dos Magnatas, sem o texto do CrossFire.
+const HISTORIA_DO_SILENT_VILLAGE = [
+  'Debaixo de uma vila esquecida nas montanhas, um laboratório clandestino pesquisava um vírus capaz de reescrever o DNA humano. Numa noite de tempestade, um tanque se rompeu e o vírus subiu pelos dutos até a superfície. Em poucas horas, a vila ficou em silêncio.',
+  'Os agentes Magnatas desceram para conter o vazamento e tirar os sobreviventes de lá. Mas o vírus não escolhe lado: quem é atingido muda por dentro e vira um monstro que só quer espalhar a infecção.',
+  'Para sair vivo da Silent Village, você vai ter que fazer o impensável: atirar no amigo que entrou com você.',
+];
+
 /** Tudo o que alguém novo precisa saber para jogar no Magnatas. */
 export default async function Jogo() {
   await exigirAcesso('/jogo');
@@ -100,6 +107,16 @@ export default async function Jogo() {
             <p>{mapa.modo}</p>
           </div>
         ))}
+      </section>
+      <section className="historia-mapa" aria-labelledby="historia-silent-village">
+        <Image src="/mapas/silent-village.webp" alt="" width={480} height={270} />
+        <div>
+          <span className="etiqueta">Mutação</span>
+          <h3 id="historia-silent-village">Silent Village: o vazamento</h3>
+          {HISTORIA_DO_SILENT_VILLAGE.map((paragrafo) => (
+            <p key={paragrafo}>{paragrafo}</p>
+          ))}
+        </div>
       </section>
 
       <h2 className="secao-titulo" id="regras">
