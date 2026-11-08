@@ -14,6 +14,7 @@ import { alocarServidores, devolverPartida, finalizarPartida } from './partidas'
 import { expirarJuncoes } from './juncoes';
 import { tirarDaFilaQuemSaiuDoSite } from './mix';
 import { fecharSalasAbandonadas } from './salas';
+import { chamarBotsDosTestes } from './teste-competitivo';
 import { resolverVetosVencidos } from './vetos';
 
 const MINUTO_MS = 60_000;
@@ -215,6 +216,7 @@ export async function varrer(
     () => resolverVetosVencidos(bd, agora),
     () => alocarServidores(bd, controlador, agora),
     () => expulsarPunidos(bd, controlador),
+    () => chamarBotsDosTestes(bd, controlador),
     // Vem antes de apagar, porque a denúncia nova protege a gravação da partida.
     () => converterChamadosSemResposta(bd),
     () => apagarGravacoesVencidas(bd, pasta, agora),

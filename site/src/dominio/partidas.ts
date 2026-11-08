@@ -97,7 +97,8 @@ export function jogouAteOFim(rodadas: number, totalDeRodadas: number): boolean {
 async function lancarXpDaPartida(tx: Transacao, partidaId: string, vencedor: number | null): Promise<void> {
   const [partida] = await tx.select().from(partidas).where(eq(partidas.id, partidaId));
   // Treino é clã contra ele mesmo: um lado podia se deixar matar para o outro pegar XP.
-  if (partida.tipo === 'treino') return;
+  // O teste do competitivo é o Adm sozinho contra bots: não vale nada.
+  if (partida.tipo === 'treino' || partida.tipo === 'teste') return;
   const jogadores = await tx
     .select({ usuarioId: partidaJogadores.usuarioId, time: partidaJogadores.time, kills: partidaJogadores.kills, rodadas: partidaJogadores.rodadas })
     .from(partidaJogadores)
@@ -252,12 +253,15 @@ export async function configDaPartida(bd: Bd, numero: number, minimoDeProntos: n
     };
   };
 
+  // No teste o Adm está sozinho: um pronto basta, o lado é fixo (bot não escolhe lado na faca) e os bots completam.
+  const doTeste = partida.tipo === 'teste' ? { min_players_to_ready: 1, map_sides: ['team1_ct'] } : {};
   return {
     matchid: partida.numero,
     maplist: [partida.mapa],
     num_maps: 1,
     players_per_team: JOGADORES_POR_TIME,
     min_players_to_ready: minimoDeProntos,
+    ...doTeste,
     skip_veto: true,
     team1: time(1),
     team2: time(2),

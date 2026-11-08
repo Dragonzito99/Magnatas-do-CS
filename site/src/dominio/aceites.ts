@@ -51,7 +51,8 @@ async function seguirDepoisDoAceite(tx: Transacao, partida: Partida, agora: Date
   if (partida.tipo !== 'mix') {
     await tx
       .update(partidas)
-      .set({ estado: 'vetando', primeiroAVetar: randomInt(1, 3), vetoAte: new Date(agora.getTime() + PRAZO_DO_VETO_MS), estadoDesde: agora })
+      // No teste, quem começa é sempre o Adm: os bots vetam logo depois dele.
+      .set({ estado: 'vetando', primeiroAVetar: partida.tipo === 'teste' ? 1 : randomInt(1, 3), vetoAte: new Date(agora.getTime() + PRAZO_DO_VETO_MS), estadoDesde: agora })
       .where(eq(partidas.id, partida.id));
     return;
   }

@@ -33,7 +33,7 @@ export function faseDaPartida(estado: Partida['estado']): FaseDaPartida {
   return FASE_DO_ESTADO[estado];
 }
 
-const NOME_DO_TIPO: Record<Partida['tipo'], string> = { mix: 'Mix', desafio: 'Desafio', cla: 'Clã x clã', treino: 'Treino' };
+const NOME_DO_TIPO: Record<Partida['tipo'], string> = { mix: 'Mix', desafio: 'Desafio', cla: 'Clã x clã', treino: 'Treino', teste: 'Teste' };
 
 export function nomeDaPartida(partida: Pick<Partida, 'tipo' | 'numero'>): string {
   return `${NOME_DO_TIPO[partida.tipo]} #${partida.numero}`;
@@ -62,5 +62,6 @@ export function seloDaPartida(partida: Pick<Partida, 'tipo' | 'mapasDaPartida'>)
   const formato = `MD${partida.mapasDaPartida === 3 ? 3 : 1}`;
   if (partida.tipo === 'cla') return `Clã x clã · ${formato}`;
   if (partida.tipo === 'treino') return `Treino · ${formato}`;
+  if (partida.tipo === 'teste') return 'Teste contra bots';
   return partida.tipo === 'mix' ? 'Mix' : 'Desafio';
 }

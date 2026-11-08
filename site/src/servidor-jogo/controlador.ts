@@ -11,7 +11,12 @@ export type ControladorServidor = {
   jogadoresConectados(servidor: ServidorAlvo): Promise<string[]>;
   /** As pessoas e o mapa que está rodando, numa pergunta só. */
   estadoDoServidor(servidor: ServidorAlvo): Promise<EstadoDoServidor>;
+  /** Só no teste do competitivo: completa os times com bots e, se `comecar`, força o início da partida. */
+  chamarBots(servidor: ServidorAlvo, comecar: boolean): Promise<void>;
 };
+
+/** O modo "fill" conta as pessoas: com uma pessoa, entram 9 bots. */
+export const COMANDOS_DOS_BOTS = ['mp_autoteambalance 1', 'bot_quota_mode fill', 'bot_quota 10'];
 
 export type EstadoDoServidor = { contas: string[]; mapa?: string };
 
@@ -87,6 +92,12 @@ export function controladorRcon(
     },
     jogadoresConectados: (servidor) => comConexao(servidor, async (conexao) => pessoasDaLista(await conexao.send('magnatas_jogadores'))),
     estadoDoServidor: (servidor) => comConexao(servidor, async (conexao) => estadoDaResposta(await conexao.send('magnatas_jogadores'))),
+    async chamarBots(servidor, comecar) {
+      await comConexao(servidor, async (conexao) => {
+        for (const comando of COMANDOS_DOS_BOTS) await conexao.send(comando);
+        if (comecar) await conexao.send('css_start');
+      });
+    },
   };
 }
 
@@ -106,7 +117,8 @@ type ChamadaFalsa =
   | { acao: 'carregarPartida'; host: string; numero: number }
   | { acao: 'encerrarPartida'; host: string }
   | { acao: 'expulsar'; host: string; steamid64: string }
-  | { acao: 'jogadoresConectados'; host: string };
+  | { acao: 'jogadoresConectados'; host: string }
+  | { acao: 'chamarBots'; host: string; comecar: boolean };
 
 /** Só para testes: anota as chamadas, e os hosts da lista falham como se estivessem fora do ar. */
 export function controladorFalso(
@@ -140,6 +152,10 @@ export function controladorFalso(
       const contas = await this.jogadoresConectados(servidor);
       const mapa = opcoes.mapas?.[servidor.host];
       return mapa ? { contas, mapa } : { contas };
+    },
+    async chamarBots(servidor, comecar) {
+      conferir(servidor);
+      chamadas.push({ acao: 'chamarBots', host: servidor.host, comecar });
     },
   };
 }

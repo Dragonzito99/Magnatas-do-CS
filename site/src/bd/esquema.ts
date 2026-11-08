@@ -99,7 +99,7 @@ export const auditoria = pgTable('auditoria', {
   criadoEm: criadoEm(),
 });
 
-export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix', 'cla', 'treino']);
+export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix', 'cla', 'treino', 'teste']);
 export const motivoDoCancelamento = pgEnum('motivo_do_cancelamento', ['aceite', 'equipe', 'abandono']);
 export const estadoPartida = pgEnum('estado_partida', [
   'aguardando_aceite',

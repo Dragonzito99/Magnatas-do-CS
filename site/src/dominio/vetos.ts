@@ -41,7 +41,16 @@ async function vetadosDe(tx: Bd | Transacao, partidaId: string) {
 }
 
 /** O líder vale pelo que a sala diz agora: se a liderança mudou no meio dos vetos, o novo líder veta. */
-async function timeDoLider(tx: Transacao, partidaId: string, liderId: string): Promise<Time | null> {
+async function timeDoLider(tx: Transacao, partida: Partida, liderId: string): Promise<Time | null> {
+  const partidaId = partida.id;
+  // No teste não há sala: quem está na partida é o Adm sozinho, e ele veta pelo time dele.
+  if (partida.tipo === 'teste') {
+    const [vaga] = await tx
+      .select({ time: partidaJogadores.time })
+      .from(partidaJogadores)
+      .where(and(eq(partidaJogadores.partidaId, partidaId), eq(partidaJogadores.usuarioId, liderId)));
+    return vaga?.time === 1 ? 1 : null;
+  }
   const [sala] = await tx.select().from(salas).where(and(eq(salas.partidaId, partidaId), eq(salas.liderId, liderId)));
   if (!sala) return null;
   const [vaga] = await tx
@@ -55,13 +64,25 @@ export async function vetarMapa(bd: Bd, lider: Pick<Usuario, 'id'>, partidaId: s
   await bd.transaction(async (tx) => {
     const partida = await travarPartida(tx, partidaId);
     if (!partida || partida.estado !== 'vetando' || !partida.vetoAte || partida.vetoAte <= agora) throw new VetoIndisponivel();
-    const time = await timeDoLider(tx, partidaId, lider.id);
+    const time = await timeDoLider(tx, partida, lider.id);
     if (!time) throw new SemPermissaoNaSala();
     const feitos = await vetadosDe(tx, partidaId);
     if (vezDeVetar(partida.primeiroAVetar as Time, feitos.length) !== time) throw new VetoIndisponivel();
     if (!(MAPAS as readonly string[]).includes(mapa) || feitos.some((veto) => veto.mapa === mapa)) throw new VetoIndisponivel();
     await registrarVeto(tx, partida, feitos.length + 1, time, mapa, false, agora);
+    await vetarPelosBots(tx, partida.id, agora);
   });
+}
+
+/** No teste, a vez dos bots não espera os 20 segundos: o site veta um mapa qualquer por eles na hora. */
+async function vetarPelosBots(tx: Transacao, partidaId: string, agora: Date): Promise<void> {
+  const partida = await travarPartida(tx, partidaId);
+  if (!partida || partida.tipo !== 'teste' || partida.estado !== 'vetando') return;
+  const feitos = await vetadosDe(tx, partidaId);
+  if (vezDeVetar(partida.primeiroAVetar as Time, feitos.length) !== 2) return;
+  const vetados = new Set(feitos.map((veto) => veto.mapa));
+  const restantes = MAPAS.filter((mapa) => !vetados.has(mapa));
+  await registrarVeto(tx, partida, feitos.length + 1, 2, restantes[randomInt(restantes.length)], true, agora);
 }
 
 async function registrarVeto(tx: Transacao, partida: Partida, ordem: number, time: Time, mapa: string, automatico: boolean, agora: Date): Promise<void> {
@@ -109,6 +130,7 @@ export async function resolverVetosVencidos(bd: Bd, agora: Date = new Date()): P
       const restantes = MAPAS.filter((mapa) => !vetados.has(mapa));
       const time = vezDeVetar(partida.primeiroAVetar as Time, feitos.length);
       await registrarVeto(tx, partida, feitos.length + 1, time, restantes[randomInt(restantes.length)], true, agora);
+      await vetarPelosBots(tx, id, agora);
     });
   }
 }

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, lt, sql, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, lt, ne, sql, sum } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { partidaJogadores, partidas, usuarios } from '@/bd/esquema';
 
@@ -34,7 +34,7 @@ export async function mvpsDoPeriodo(bd: Bd, periodo: { inicio: Date; fim: Date }
     .from(partidaJogadores)
     .innerJoin(partidas, eq(partidaJogadores.partidaId, partidas.id))
     .innerJoin(usuarios, eq(partidaJogadores.usuarioId, usuarios.id))
-    .where(and(eq(partidas.estado, 'encerrada'), gte(partidas.encerradaEm, periodo.inicio), lt(partidas.encerradaEm, periodo.fim)))
+    .where(and(eq(partidas.estado, 'encerrada'), ne(partidas.tipo, 'teste'), gte(partidas.encerradaEm, periodo.inicio), lt(partidas.encerradaEm, periodo.fim)))
     .groupBy(usuarios.id, usuarios.apelido, usuarios.avatarUrl)
     .having(sql`${sum(partidaJogadores.mvps)} > 0`)
     .orderBy(desc(estrelas), desc(abates), asc(usuarios.apelido))

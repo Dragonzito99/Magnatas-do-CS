@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
@@ -11,7 +11,7 @@ const ESPERA_DA_GRAVACAO_MS = 10 * 60_000;
 const TAMANHO_DO_HISTORICO = 30;
 const ULTIMOS_XP = 10;
 
-const MODO_DA_PARTIDA: Record<Partida['tipo'], string> = { desafio: 'Competitivo', mix: 'Mix', cla: 'Clã x clã', treino: 'Treino' };
+const MODO_DA_PARTIDA: Record<Partida['tipo'], string> = { desafio: 'Competitivo', mix: 'Mix', cla: 'Clã x clã', treino: 'Treino', teste: 'Teste' };
 
 export type SituacaoDaGravacao = 'disponivel' | 'aguardando' | 'sem' | 'apagada';
 
@@ -91,7 +91,7 @@ export async function kdDosJogadores(bd: Bd, ids: string[]): Promise<Map<string,
     })
     .from(partidaJogadores)
     .innerJoin(partidas, eq(partidaJogadores.partidaId, partidas.id))
-    .where(and(inArray(partidaJogadores.usuarioId, ids), eq(partidas.estado, 'encerrada')))
+    .where(and(inArray(partidaJogadores.usuarioId, ids), eq(partidas.estado, 'encerrada'), ne(partidas.tipo, 'teste')))
     .groupBy(partidaJogadores.usuarioId);
   const kd = new Map(ids.map((id) => [id, 0]));
   for (const linha of linhas) kd.set(linha.usuarioId, kdDe(linha.abates, linha.mortes));
@@ -179,7 +179,7 @@ export async function fichaDoJogador(bd: Bd, leitor: Pick<Usuario, 'id'>, jogado
     .from(partidaJogadores)
     .innerJoin(partidas, eq(partidaJogadores.partidaId, partidas.id))
     .leftJoin(gravacoes, eq(gravacoes.partidaId, partidas.id))
-    .where(and(eq(partidaJogadores.usuarioId, jogadorId), eq(partidas.estado, 'encerrada')))
+    .where(and(eq(partidaJogadores.usuarioId, jogadorId), eq(partidas.estado, 'encerrada'), ne(partidas.tipo, 'teste')))
     .orderBy(desc(partidas.encerradaEm));
 
   const soma = (campo: 'kills' | 'deaths' | 'assists' | 'damage' | 'headshotKills' | 'rodadas') => linhas.reduce((total, linha) => total + linha[campo], 0);

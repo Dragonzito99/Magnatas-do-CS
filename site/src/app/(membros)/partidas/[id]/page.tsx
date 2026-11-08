@@ -408,7 +408,8 @@ export default async function PaginaDaPartida({
     1: partida.nomeTime1 ?? salasDaPartida[1]?.nome ?? 'Time 1',
     2: partida.nomeTime2 ?? salasDaPartida[2]?.nome ?? 'Time 2',
   };
-  const souLider = meuTime !== null && salasDaPartida[meuTime]?.liderId === usuario.id;
+  // No teste não há sala: o Adm sozinho veta pelo time dele.
+  const souLider = meuTime !== null && (salasDaPartida[meuTime]?.liderId === usuario.id || partida.tipo === 'teste');
   const ehEquipe = pode(usuario, 'moderar');
 
   const [aceites, vetos, feitos, noServidor, gravacao, serie] = await Promise.all([
@@ -602,6 +603,7 @@ export default async function PaginaDaPartida({
               {nomes[1]} {partida.placar1} x {partida.placar2} {nomes[2]} · {nomeDoMapa(partida.mapa)}
               {minutos && ` · ${minutos} minutos`}
               {partida.tipo === 'treino' && ' · Treino: não vale XP nem ranking'}
+              {partida.tipo === 'teste' && ' · Teste contra bots: não vale XP nem aparece no perfil'}
             </span>
           </div>
           {partida.estado === 'encerrada' && (mvp || (eu && progresso)) && (
@@ -622,7 +624,7 @@ export default async function PaginaDaPartida({
                 <div className="painel xp-bloco">
                   <div>
                     <span className="apoio">Você ganhou</span>
-                    <b className="xp-grande">{partida.tipo === 'treino' ? 'Treino: 0 XP' : eu.xp === null ? 'XP chegando' : `+${eu.xp} XP`}</b>
+                    <b className="xp-grande">{partida.tipo === 'treino' ? 'Treino: 0 XP' : partida.tipo === 'teste' ? 'Teste: 0 XP' : eu.xp === null ? 'XP chegando' : `+${eu.xp} XP`}</b>
                   </div>
                   <InsigniaDaPatente patente={progresso.patente} />
                   <div className="patente-texto">
