@@ -264,6 +264,8 @@ public partial class ModoDeDiversao
         FecharPartida(null, (float)Math.Max(0.01, (DateTime.UtcNow - inicioDaPartida).TotalMinutes));
         rodadasDaPartida = 0;
         RegrasDoJogo()?.TerminateRound(SegundosMostrandoOVencedor, motivo);
+        // Sorteia o próximo mapa da rotação, como nos outros modos. O teste com bots fica na Dust 2.
+        if (!testeComBots) AddTimer(SegundosMostrandoOVencedor - 1, TrocarDeMapa);
     }
 
     /// <summary>Para quem entrou no meio ou morreu antes do sorteio: ninguém fica esperando morto até a próxima rodada.</summary>

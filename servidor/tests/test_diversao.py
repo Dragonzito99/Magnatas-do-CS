@@ -1440,3 +1440,11 @@ def test_teste_com_bots_nao_forca_bot_e_deixa_entrar_antes_da_pessoa():
     bots = bots[:bots.index(FIM_DO_METODO)]
     assert "bot_join_after_player 0" in bots
     assert "bot_add" not in bots
+
+
+def test_mutacao_troca_de_mapa_no_fim_da_partida_menos_no_teste():
+    # O Silent Village estava na rotação, mas a Mutação nunca trocava de mapa: rodava sempre o Biochemical Hotel.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void EncerrarRodadaDaMutacao"):]
+    trecho = trecho[:trecho.index(FIM_DO_METODO)]
+    fim = trecho[trecho.index("AvisarFimDaPartida("):]
+    assert "if (!testeComBots) AddTimer(SegundosMostrandoOVencedor - 1, TrocarDeMapa);" in fim
