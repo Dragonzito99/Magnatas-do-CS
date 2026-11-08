@@ -1,6 +1,6 @@
 import type { Papel, Usuario } from '@/bd/esquema';
 
-export type Acao = 'gerar_convite_ilimitado' | 'ver_equipe' | 'mudar_papel' | 'dar_convites' | 'moderar' | 'decidir_banimento' | 'publicar_noticia' | 'testar_competitivo';
+export type Acao = 'gerar_convite_ilimitado' | 'ver_equipe' | 'mudar_papel' | 'dar_convites' | 'moderar' | 'decidir_banimento' | 'publicar_noticia' | 'testar_competitivo' | 'testar_mutacao';
 
 const REGRAS: Record<Acao, Papel[]> = {
   gerar_convite_ilimitado: ['gm', 'adm'],
@@ -11,6 +11,7 @@ const REGRAS: Record<Acao, Papel[]> = {
   decidir_banimento: ['adm'],
   publicar_noticia: ['adm'],
   testar_competitivo: ['adm'],
+  testar_mutacao: ['adm'],
 };
 
 export function pode(usuario: Pick<Usuario, 'papel' | 'estado'>, acao: Acao): boolean {

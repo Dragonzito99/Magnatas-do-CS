@@ -199,12 +199,12 @@ export async function adiarDesligamento(bd: Bd, servidorId: string, agora: Date 
     .where(and(eq(estadosDaDiversao.servidorId, servidorId), eq(estadosDaDiversao.estado, 'ligado'), isNotNull(estadosDaDiversao.vazioDesde)));
 }
 
-export type EstadoNaTela = Pick<EstadoDaDiversao, 'estado' | 'desde' | 'erro' | 'pedidoPor'>;
+export type EstadoNaTela = Pick<EstadoDaDiversao, 'estado' | 'desde' | 'erro' | 'pedidoPor' | 'teste'>;
 
 export async function estadosDaTela(bd: Bd, ids?: string[]): Promise<Map<string, EstadoNaTela>> {
   const linhas = await bd
     .select()
     .from(estadosDaDiversao)
     .where(ids ? inArray(estadosDaDiversao.servidorId, ids) : undefined);
-  return new Map(linhas.map((linha) => [linha.servidorId, { estado: linha.estado, desde: linha.desde, erro: linha.erro, pedidoPor: linha.pedidoPor }]));
+  return new Map(linhas.map((linha) => [linha.servidorId, { estado: linha.estado, desde: linha.desde, erro: linha.erro, pedidoPor: linha.pedidoPor, teste: linha.teste }]));
 }

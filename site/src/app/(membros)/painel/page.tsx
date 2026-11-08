@@ -13,17 +13,15 @@ import { NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { atender } from '../olho-de-aguia/acoes';
-import { testarCompetitivo } from './acoes';
 import { TelaDoPainel } from './lateral-do-painel';
 
 const CASOS_NO_RESUMO = 4;
 const NOME_DO_ESTADO_DO_SERVIDOR = { ligado: 'Ligado', ligando: 'Ligando', desligado: 'Desligado' } as const;
 
 /** O Resumo do Painel ADM, como no rascunho: os números do clube, os casos, os chamados, os servidores e a equipe. */
-export default async function PainelAdm({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function PainelAdm() {
   const usuario = await exigirAcesso('/painel');
   if (!pode(usuario, 'ver_equipe')) redirect('/inicio');
-  const { erro } = await searchParams;
 
   const bd = obterBd();
   const moderar = pode(usuario, 'moderar');
@@ -48,17 +46,7 @@ export default async function PainelAdm({ searchParams }: { searchParams: Promis
         usuario={usuario}
         atual="resumo"
         titulo="Resumo"
-        extra={
-          pode(usuario, 'testar_competitivo') && (
-            <form action={testarCompetitivo}>
-              <button type="submit" className="botao ouro pequeno" title="Uma partida só com você contra bots, sem XP e fora do perfil">
-                Testar o competitivo
-              </button>
-            </form>
-          )
-        }
       >
-        {erro === 'ocupado' && <p role="alert" className="aviso">Saia da sala, da fila ou da partida em que você está antes de testar.</p>}
         <div className="numeros-painel">
           <div className={abertos > 0 ? 'numero-painel alerta' : 'numero-painel'}>
             <span>Casos abertos</span>

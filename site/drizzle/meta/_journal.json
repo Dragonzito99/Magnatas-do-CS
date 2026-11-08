@@ -162,6 +162,13 @@
       "when": 1794153259926,
       "tag": "0022_teste_competitivo",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794167413783,
+      "tag": "0023_teste_da_diversao",
+      "breakpoints": true
     }
   ]
 }

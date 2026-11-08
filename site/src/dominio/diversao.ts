@@ -34,7 +34,7 @@ export function mapaDoCartao(servidor: { mapa: string; foto: string }, situacao:
   if (!situacao.ligado || !situacao.mapa) return { nome: servidor.mapa, foto: servidor.foto };
   return MAPAS_CONHECIDOS[situacao.mapa] ?? { nome: situacao.mapa, foto: servidor.foto };
 }
-export type EstadoDoCartao = 'em_breve' | 'fora_do_ar' | 'desligado_sob_demanda' | 'ligando' | 'trocando_mapa' | 'cheio' | 'aberto';
+export type EstadoDoCartao = 'em_breve' | 'fora_do_ar' | 'desligado_sob_demanda' | 'ligando' | 'trocando_mapa' | 'cheio' | 'aberto' | 'em_teste';
 
 export const MODOS_DE_DIVERSAO: readonly { valor: ModoDeDiversao; nome: string }[] = [
   { valor: 'cada_um', nome: 'Cada um por si' },
@@ -76,8 +76,11 @@ export function estadoDoCartao(
   servidor: { ativo: boolean; vagas: number; sobDemanda?: boolean; nomeNoServidor?: string | null },
   situacao: SituacaoDoServidor,
   estado?: EstadoDaDiversao['estado'],
+  teste?: EstadoDaDiversao['teste'],
 ): EstadoDoCartao {
   if (!servidor.ativo) return 'em_breve';
+  // No teste do Adm o servidor roda outro mapa com bots, e quem entrasse não ganharia XP.
+  if (teste) return 'em_teste';
   if (situacao.ligado) return situacao.jogando >= servidor.vagas ? 'cheio' : 'aberto';
   if (estado === 'ligando') return 'ligando';
   // Ligado para o site, mas sem responder agora: quase sempre é a troca de mapa.

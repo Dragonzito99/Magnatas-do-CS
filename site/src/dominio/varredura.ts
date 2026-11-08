@@ -15,6 +15,7 @@ import { expirarJuncoes } from './juncoes';
 import { tirarDaFilaQuemSaiuDoSite } from './mix';
 import { fecharSalasAbandonadas } from './salas';
 import { chamarBotsDosTestes } from './teste-competitivo';
+import { aplicarTestesDaMutacao } from './teste-mutacao';
 import { resolverVetosVencidos } from './vetos';
 
 const MINUTO_MS = 60_000;
@@ -206,6 +207,7 @@ export async function varrer(
     // Antes da fiscalização: ela só pergunta a quem o site sabe estar ligado.
     () => (diversao ? acompanharDiversao(bd, diversao.controle, diversao.perguntar, agora) : Promise.resolve()),
     () => fiscalizarDiversao(bd, controlador, hostDaDiversao),
+    () => aplicarTestesDaMutacao(bd, controlador, hostDaDiversao),
     () => fecharSalasAbandonadas(bd, agora),
     () => tirarDaFilaQuemSaiuDoSite(bd, agora),
     () => expirarDesafios(bd, agora),

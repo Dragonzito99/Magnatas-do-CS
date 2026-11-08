@@ -35,6 +35,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         discord={enderecoDoDiscord(process.env.DISCORD_URL)}
         sino={<Sino notificacoes={notificacoes} />}
         casosDaEquipe={pode(usuario, 'ver_equipe') ? casosDe(notificacoes) : null}
+        testes={pode(usuario, 'testar_competitivo') || pode(usuario, 'testar_mutacao')}
       />
       <main className="conteudo largura">
         <AvisoDePartida />

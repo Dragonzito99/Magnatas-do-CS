@@ -1376,3 +1376,25 @@ def test_quem_esta_sozinho_ve_que_falta_jogador():
     assert "AvisarQueFaltaJogador, TimerFlags.REPEAT" in CODIGO_DA_MUTACAO
     aviso = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AvisarQueFaltaJogador"):]
     assert "if (!esperandoJogadores) return;" in aviso[:300]
+
+
+def test_teste_com_bots_so_pelo_site_e_na_dust_2():
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_teste_bots"'):]
+    assert "CommandUsage.SERVER_ONLY" in trecho[:300]
+    assert "testeComBots = true" in trecho
+    # Os mapas da Mutação não têm o caminho dos bots. A Dust 2 tem.
+    assert 'changelevel de_dust2' in trecho
+
+
+def test_teste_com_bots_poe_os_bots_a_cada_rodada():
+    comeca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):]
+    # Antes da espera: são os bots que completam os 2 jogadores.
+    assert comeca.index("if (testeComBots) ChamarBotsDoTeste()") < comeca.index("JogadoresNaRodada() < MinimoDeJogadores")
+    bots = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ChamarBotsDoTeste"):]
+    for comando in ["bot_quota_mode fill", "bot_quota 10", "bot_join_team any"]:
+        assert comando in bots[:600]
+
+
+def test_teste_com_bots_nao_vale_xp():
+    fecha = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void FecharPartida"):]
+    assert fecha.index("if (testeComBots) return;") < fecha.index("Config.SiteUrl")

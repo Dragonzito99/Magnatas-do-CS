@@ -13,6 +13,8 @@ export type ControladorServidor = {
   estadoDoServidor(servidor: ServidorAlvo): Promise<EstadoDoServidor>;
   /** Só no teste do competitivo: completa os times com bots e, se `comecar`, força o início da partida. */
   chamarBots(servidor: ServidorAlvo, comecar: boolean): Promise<void>;
+  /** Só na Mutação: o teste do Adm, na Dust 2 com bots e sem XP. Falha se o plugin não confirmar. */
+  comecarTesteComBots(servidor: ServidorAlvo): Promise<void>;
 };
 
 /** O modo "fill" conta as pessoas: com uma pessoa, entram 9 bots. */
@@ -126,6 +128,10 @@ export function controladorRcon(
         if (comecar) await conexao.send('css_start');
       });
     },
+    async comecarTesteComBots(servidor) {
+      const resposta = await comConexao(servidor, (conexao) => conexao.send('magnatas_teste_bots'));
+      if (!resposta.includes('teste_bots=1')) throw new Error('O servidor não confirmou o teste com bots.');
+    },
   };
 }
 
@@ -146,7 +152,8 @@ type ChamadaFalsa =
   | { acao: 'encerrarPartida'; host: string }
   | { acao: 'expulsar'; host: string; steamid64: string }
   | { acao: 'jogadoresConectados'; host: string }
-  | { acao: 'chamarBots'; host: string; comecar: boolean };
+  | { acao: 'chamarBots'; host: string; comecar: boolean }
+  | { acao: 'testeComBots'; host: string; porta: number };
 
 /** Só para testes: anota as chamadas, e os hosts da lista falham como se estivessem fora do ar. */
 export function controladorFalso(
@@ -184,6 +191,10 @@ export function controladorFalso(
     async chamarBots(servidor, comecar) {
       conferir(servidor);
       chamadas.push({ acao: 'chamarBots', host: servidor.host, comecar });
+    },
+    async comecarTesteComBots(servidor) {
+      conferir(servidor);
+      chamadas.push({ acao: 'testeComBots', host: servidor.host, porta: servidor.porta });
     },
   };
 }

@@ -72,6 +72,8 @@ public partial class ModoDeDiversao
     private CounterStrikeSharp.API.Modules.Timers.Timer? somDaContagem;
     private int segundosAteOMutante;
     private bool esperandoJogadores;
+    // Pedido pelo site, na aba Testes do Adm. Vale até o servidor desligar: troca o mapa, mas o plugin continua o mesmo.
+    private bool testeComBots;
     // Infecções de cada mutante na rodada, pela vaga. Decidem o nível.
     private readonly Dictionary<int, int> infeccoes = new();
     private bool rodadaEmAndamento;
@@ -92,6 +94,7 @@ public partial class ModoDeDiversao
         relogioDaContagem?.Kill();
         somDaContagem?.Kill();
         infeccoes.Clear();
+        if (testeComBots) ChamarBotsDoTeste();
         if (JogadoresNaRodada() < MinimoDeJogadores)
         {
             esperandoJogadores = true;
@@ -569,6 +572,31 @@ public partial class ModoDeDiversao
         return HookResult.Continue;
     }
 
+    /// <summary>
+    /// O teste do Adm com bots. Os mapas da Mutação não têm o caminho que os bots seguem, e a Dust 2 tem.
+    /// A configuração do modo zera os bots a cada mapa, então eles são chamados de novo a cada rodada.
+    /// </summary>
+    [ConsoleCommand("magnatas_teste_bots", "Liga o teste com bots do Adm, na Dust 2 e sem XP")]
+    [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void LigarTesteComBots(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        if (Config.Regra != "mutacao")
+        {
+            comando.ReplyToCommand("teste_bots=0");
+            return;
+        }
+        var jaEstava = testeComBots;
+        testeComBots = true;
+        comando.ReplyToCommand("teste_bots=1");
+        if (!jaEstava || Server.MapName != "de_dust2") Server.ExecuteCommand("changelevel de_dust2");
+    }
+
+    private static void ChamarBotsDoTeste()
+    {
+        // Com "fill", a cota conta as pessoas: 1 pessoa e 9 bots.
+        foreach (var comando in new[] { "bot_difficulty 1", "bot_join_team any", "bot_quota_mode fill", "bot_quota 10" }) Server.ExecuteCommand(comando);
+    }
+
     [ConsoleCommand("magnatas_mutacao_ver", "Mostra humanos, mutantes e a rodada, para conferir o modo")]
     [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
     public void VerMutacao(CCSPlayerController? chamador, CommandInfo comando)
@@ -580,6 +608,6 @@ public partial class ModoDeDiversao
             var armas = corpo?.WeaponServices?.MyWeapons.Select(item => item.Value?.DesignerName ?? "?") ?? Enumerable.Empty<string>();
             comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} vida={corpo?.Health}/{corpo?.MaxHealth} velocidade={corpo?.AbsVelocity.Length():0} modificador={corpo?.VelocityModifier:0.00} nivel={(jogador.Team == CsTeam.Terrorist ? NivelDe(jogador).Nivel : 0)} armas={string.Join(",", armas)}");
         }
-        comando.ReplyToCommand($"em_andamento={rodadaEmAndamento} esperando={esperandoJogadores} sorteio={sorteioFeito} rodadas={rodadasDaPartida} humanos={vitoriasDosHumanos} mutantes={vitoriasDosMutantes} transformacoes={transformacoes} municao={ConVar<int>.Find("sv_infinite_ammo")?.Value}");
+        comando.ReplyToCommand($"em_andamento={rodadaEmAndamento} esperando={esperandoJogadores} teste_bots={testeComBots} sorteio={sorteioFeito} rodadas={rodadasDaPartida} humanos={vitoriasDosHumanos} mutantes={vitoriasDosMutantes} transformacoes={transformacoes} municao={ConVar<int>.Find("sv_infinite_ammo")?.Value}");
     }
 }

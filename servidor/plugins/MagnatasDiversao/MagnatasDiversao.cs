@@ -311,6 +311,8 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private void FecharPartida(string? vencedor, float duracaoMinutos)
     {
         partidaEncerrada = true;
+        // O teste do Adm com bots não vale XP nem entra no perfil.
+        if (testeComBots) return;
         if (Config.SiteUrl == "" || Config.Token == "") return;
 
         var conectadas = Pessoas().ToDictionary(pessoa => pessoa.SteamID);

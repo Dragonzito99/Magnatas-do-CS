@@ -31,8 +31,9 @@ export function RodapeDoCartao({
   modo: string | null;
   agora: number;
 }) {
-  const estado = estadoDoCartao(servidor, situacao, guardado?.estado);
+  const estado = estadoDoCartao(servidor, situacao, guardado?.estado, guardado?.teste);
   if (estado === 'em_breve') return <span className="etiqueta">Em breve</span>;
+  if (estado === 'em_teste') return <span className="etiqueta">Em teste pelo Adm</span>;
   if (estado === 'fora_do_ar') return <span className="etiqueta">Fora do ar</span>;
   if (estado === 'ligando') {
     return (

@@ -1,0 +1,100 @@
+import { eq } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
+import { exigirAcesso } from '@/auth/guarda';
+import { pode } from '@/auth/permissoes';
+import { obterBd } from '@/bd/conexao';
+import { estadosDaDiversao } from '@/bd/esquema';
+import { alvoDoServidor, comandoDeConectar, linkDeEntrar } from '@/dominio/diversao';
+import { etapaDoTeste, servidorDaMutacao } from '@/dominio/teste-mutacao';
+import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
+import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
+import { BotaoCopiar } from '../botao-copiar';
+import { AvisarAoEntrar, TempoLigando } from '../diversao/esperar-e-entrar';
+import { testarCompetitivo, testarMutacao } from './acoes';
+
+const ERROS: Record<string, string> = {
+  ocupado: 'Saia da sala, da fila ou da partida em que você está antes de testar o competitivo.',
+  mutacao_ocupada: 'A Mutação está com gente jogando agora. Tente o teste quando ela esvaziar.',
+  limite: 'Todos os servidores estão cheios de gente agora. Tente de novo em alguns minutos.',
+  indisponivel: 'Não consegui ligar o servidor da Mutação agora. Tente de novo em instantes.',
+};
+
+/** Só o Adm: os testes dos modos num lugar só, sem XP e fora do perfil. A página se atualiza sozinha a cada 15 segundos. */
+export default async function Testes({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const usuario = await exigirAcesso('/testes');
+  if (!pode(usuario, 'testar_competitivo') && !pode(usuario, 'testar_mutacao')) redirect('/inicio');
+  const { erro } = await searchParams;
+
+  const bd = obterBd();
+  const mutacao = await servidorDaMutacao(bd);
+  const diversao = diversaoDoAmbiente(controladorDoAmbiente());
+  const [guardado] = mutacao ? await bd.select().from(estadosDaDiversao).where(eq(estadosDaDiversao.servidorId, mutacao.id)) : [];
+  const situacao = mutacao ? await diversao.perguntar(mutacao) : { ligado: false, jogando: 0 };
+  const etapa = etapaDoTeste(guardado, situacao);
+  const alvo = mutacao ? alvoDoServidor(mutacao, process.env.DIVERSAO_HOST) : null;
+  const senha = process.env.SERVIDOR_SENHA ?? '';
+
+  return (
+    <>
+      <div className="topo-pagina">
+        <h1>Testes</h1>
+      </div>
+      <p className="apoio">Só o Adm vê esta aba. Nenhum teste vale XP nem aparece no perfil.</p>
+      {erro && ERROS[erro] && (
+        <p role="alert" className="aviso">
+          {ERROS[erro]}
+        </p>
+      )}
+
+      <section className="painel">
+        <div className="linha">
+          <div>
+            <b>Competitivo contra bots</b>
+            <p className="apoio">Uma partida 5x5 com você e 9 bots: aceite, vetos, servidor e tela final.</p>
+          </div>
+          <div className="acoes">
+            {pode(usuario, 'testar_competitivo') && (
+              <form action={testarCompetitivo}>
+                <button type="submit" className="botao ouro pequeno">
+                  Testar o competitivo
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        <div className="linha">
+          <div>
+            <b>Mutação com bots</b>
+            <p className="apoio">Na Dust 2, com você e 9 bots. Enquanto roda, a Mutação fica fechada na tela Jogar.</p>
+          </div>
+          <div className="acoes">
+            {!mutacao && <span className="etiqueta">Mutação fora do ar</span>}
+            {mutacao && etapa === 'livre' && pode(usuario, 'testar_mutacao') && (
+              <form action={testarMutacao}>
+                <button type="submit" className="botao ouro pequeno">
+                  Testar a Mutação
+                </button>
+              </form>
+            )}
+            {etapa === 'ligando' && (
+              <>
+                <span className="etiqueta">Ligando o servidor... cerca de 1 minuto</span>
+                {guardado && <TempoLigando desde={guardado.desde.toISOString()} />}
+              </>
+            )}
+            {etapa === 'preparando' && <span className="etiqueta">Trocando para a Dust 2 e chamando os bots...</span>}
+            {mutacao && etapa === 'pronto' && alvo && (
+              <AvisarAoEntrar servidorId={mutacao.id}>
+                {comandoDeConectar(alvo, senha) && <BotaoCopiar texto={comandoDeConectar(alvo, senha)!} />}
+                <a className="botao ouro pequeno" href={linkDeEntrar(alvo, senha)}>
+                  Entrar
+                </a>
+              </AvisarAoEntrar>
+            )}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}

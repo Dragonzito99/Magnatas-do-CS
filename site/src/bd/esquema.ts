@@ -258,6 +258,8 @@ export const estadosDaDiversao = pgTable('estados_da_diversao', {
   semRespostaDesde: timestamp('sem_resposta_desde', { withTimezone: true }),
   pedidoPor: uuid('pedido_por').references(() => usuarios.id, { onDelete: 'set null' }),
   erro: text('erro'),
+  // Teste do Adm com bots (só a Mutação): pedido até o site mandar o comando ao servidor, ativo até ele desligar.
+  teste: text('teste', { enum: ['pedido', 'ativo'] }),
 });
 
 export const estadoDesafio = pgEnum('estado_desafio', ['pendente', 'aceito', 'recusado', 'cancelado', 'expirado']);

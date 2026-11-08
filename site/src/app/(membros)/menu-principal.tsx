@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DESTINO_DO_JOGAR, ITENS_DO_MENU, itemAtivo } from '@/dominio/navegacao';
 
-/** O Discord entra no submenu da Comunidade quando o endereço estiver configurado. */
-export function MenuPrincipal({ discord }: { discord: string | null }) {
+/** O Discord entra no submenu da Comunidade quando o endereço estiver configurado. A aba Testes só aparece para o Adm. */
+export function MenuPrincipal({ discord, testes = false }: { discord: string | null; testes?: boolean }) {
   const caminho = usePathname();
   return (
     <nav className="menu-principal" aria-label="Áreas">
@@ -43,6 +43,13 @@ export function MenuPrincipal({ discord }: { discord: string | null }) {
                 </span>
               </span>
             ),
+          )}
+          {testes && (
+            <div className="item-com-submenu">
+              <Link href="/testes" className="item-principal" aria-current={itemAtivo(caminho, '/testes') ? 'page' : undefined}>
+                <span>Testes</span>
+              </Link>
+            </div>
           )}
         </div>
         <Link href={DESTINO_DO_JOGAR} className="botao-jogar">

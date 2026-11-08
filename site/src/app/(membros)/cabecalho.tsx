@@ -13,6 +13,7 @@ export function Cabecalho({
   discord,
   sino,
   casosDaEquipe,
+  testes = false,
 }: {
   usuario: UsuarioPublico;
   patente: Patente;
@@ -20,6 +21,8 @@ export function Cabecalho({
   sino?: React.ReactNode;
   /** Só a equipe recebe um número aqui, e só ela vê o botão do Painel ADM. */
   casosDaEquipe: number | null;
+  /** Só o Adm vê a aba Testes no menu. */
+  testes?: boolean;
 }) {
   return (
     <header className="cabecalho">
@@ -73,7 +76,7 @@ export function Cabecalho({
           </div>
         </div>
       </div>
-      <MenuPrincipal discord={discord} />
+      <MenuPrincipal discord={discord} testes={testes} />
     </header>
   );
 }
