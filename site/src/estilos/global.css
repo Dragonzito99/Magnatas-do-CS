@@ -5105,3 +5105,66 @@ a.cartao-destaque:hover {
     grid-column: 1 / -1;
   }
 }
+
+/* Clã na sala, no desafio, na partida e no perfil */
+.desafio-com-escolha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.desafio-com-escolha select {
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.veto-mapa.escolhido {
+  border-color: var(--ouro);
+}
+
+.veto-mapa .carimbo.escolhido {
+  color: var(--ouro);
+}
+
+.botao-vetar.escolher {
+  color: var(--sobre-ouro);
+  background: var(--ouro);
+}
+
+.botao-vetar.escolher:hover {
+  background: #ffc933;
+}
+
+.linha-da-serie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: rgba(18, 10, 31, 0.85);
+  font-size: 14px;
+}
+
+.linha-da-serie b {
+  color: var(--ouro);
+}
+
+.linha-da-serie a {
+  color: var(--tinta);
+}
+
+.linha-da-serie span {
+  color: var(--tinta-2);
+}
+
+.linha-da-serie .atual {
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.selo-do-cla {
+  font-weight: 600;
+}

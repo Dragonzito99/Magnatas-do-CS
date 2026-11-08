@@ -46,9 +46,9 @@ export async function aceitarPartida(bd: Bd, ator: Pick<Usuario, 'id'>, partidaI
   });
 }
 
-/** Desafio vai para os vetos, com o cara ou coroa já tirado. Mix sorteia o mapa e espera servidor. */
+/** Desafio, clã x clã e treino vão para os vetos, com o cara ou coroa já tirado. Mix sorteia o mapa e espera servidor. */
 async function seguirDepoisDoAceite(tx: Transacao, partida: Partida, agora: Date): Promise<void> {
-  if (partida.tipo === 'desafio') {
+  if (partida.tipo !== 'mix') {
     await tx
       .update(partidas)
       .set({ estado: 'vetando', primeiroAVetar: randomInt(1, 3), vetoAte: new Date(agora.getTime() + PRAZO_DO_VETO_MS), estadoDesde: agora })

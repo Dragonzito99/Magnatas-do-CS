@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
-import { aceitarDesafio, cancelarDesafio, DesafioIndisponivel, desafiar, recusarDesafio, SalaIncompleta } from '@/dominio/desafios';
+import { aceitarDesafio, cancelarDesafio, DesafioIndisponivel, desafiar, recusarDesafio, SalaIncompleta, type FormatoDoDesafio } from '@/dominio/desafios';
 import { Bloqueado, ContaSemAcesso, JaOcupado } from '@/dominio/disponibilidade';
 import { aceitarJuncao, cancelarJuncao, JuncaoIndisponivel, pedirJuncao, recusarJuncao } from '@/dominio/juncoes';
 import {
@@ -74,9 +74,18 @@ export async function expulsar(dados: FormData) {
   revalidatePath('/jogar');
 }
 
+const ESCOLHAS: Record<string, FormatoDoDesafio> = {
+  'comum-1': { formato: 'comum', mapas: 1 },
+  'cla-1': { formato: 'cla', mapas: 1 },
+  'cla-3': { formato: 'cla', mapas: 3 },
+  'treino-1': { formato: 'treino', mapas: 1 },
+  'treino-3': { formato: 'treino', mapas: 3 },
+};
+
 export async function chamarParaDesafio(dados: FormData) {
   const salaId = idDe(dados, 'salaId');
-  await executar((ator) => desafiar(obterBd(), ator, salaId));
+  const escolha = ESCOLHAS[String(dados.get('escolha') ?? 'comum-1')] ?? ESCOLHAS['comum-1'];
+  await executar((ator) => desafiar(obterBd(), ator, salaId, new Date(), escolha));
   revalidatePath('/jogar');
 }
 

@@ -1,8 +1,10 @@
 import Image from 'next/image';
-import type { DesafioDaSala } from '@/dominio/desafios';
+import type { ClaResumido } from '@/dominio/clas';
+import type { DesafioDaSala, FormatoDoDesafio } from '@/dominio/desafios';
 import type { JuncaoDaSala } from '@/dominio/juncoes';
 import { TAMANHO_DA_SALA, type SalaComMembros } from '@/dominio/salas';
 import { Avatar } from '../avatar';
+import { SiglaDoCla } from '../clas/sigla-do-cla';
 import { aceitar, aceitarJuntar, cancelar, cancelarJuntar, chamarParaDesafio, criar, entrar, expulsar, juntar, recusar, recusarJuntar, sair } from '../salas/acoes';
 
 const FOTO_DO_COMPETITIVO = '/mapas/dust2.webp';
@@ -12,12 +14,32 @@ function segundosAte(data: Date): number {
   return Math.max(0, Math.ceil((data.getTime() - Date.now()) / 1000));
 }
 
+export type ClasDasPessoas = Map<string, ClaResumido>;
+
+/** O clã da sala, quando os 5 (ou todos que estão nela) são do mesmo clã. */
+export function claDaSala(sala: SalaComMembros, clas: ClasDasPessoas): ClaResumido | null {
+  const primeiro = sala.membros[0] && clas.get(sala.membros[0].id);
+  if (!primeiro || sala.membros.some((membro) => clas.get(membro.id)?.id !== primeiro.id)) return null;
+  return primeiro;
+}
+
+function textoDoDesafio(desafio: DesafioDaSala): string {
+  const formato = `MD${desafio.mapas}`;
+  if (desafio.formato === 'cla') {
+    return desafio.recebido ? `O clã [${desafio.outroClaSigla ?? '?'}] desafiou vocês para uma ${formato}` : `Clã x clã ${formato}: esperando ${desafio.outraSalaNome}`;
+  }
+  if (desafio.formato === 'treino') {
+    return desafio.recebido ? `Seu clã chamou vocês para um treino ${formato}` : `Treino ${formato}: esperando ${desafio.outraSalaNome}`;
+  }
+  return desafio.recebido ? `${desafio.outraSalaNome} chamou vocês` : `Esperando ${desafio.outraSalaNome}`;
+}
+
 function Desafio({ desafio }: { desafio: DesafioDaSala }) {
   return (
     <div className="pedido-sala">
       <small>{desafio.recebido ? 'Desafio recebido' : 'Desafio enviado'}</small>
       <p>
-        {desafio.recebido ? `${desafio.outraSalaNome} chamou vocês` : `Esperando ${desafio.outraSalaNome}`}, {segundosAte(desafio.expiraEm)}s
+        {textoDoDesafio(desafio)}, {segundosAte(desafio.expiraEm)}s
       </p>
       <div className="acoes">
         {desafio.recebido ? (
@@ -101,20 +123,31 @@ export function BarraDaSala({
   kd,
   desafio,
   juncoes,
+  clas,
 }: {
   sala: SalaComMembros;
   usuarioId: string;
   kd: Map<string, number>;
   desafio?: DesafioDaSala;
   juncoes: JuncaoDaSala[];
+  clas: ClasDasPessoas;
 }) {
   const souLider = sala.liderId === usuarioId;
+  const cla = claDaSala(sala, clas);
   const vagas = TAMANHO_DA_SALA - sala.membros.length;
   return (
     <aside className="barra-sala" aria-label="Sua sala">
       <div className="barra-sala-topo">
         <span className="selo-modo ouro">Sua sala</span>
-        <h2>Sala de {sala.nome}</h2>
+        <h2>
+          Sala de {sala.nome}
+          {cla && (
+            <>
+              {' '}
+              <SiglaDoCla cla={cla} />
+            </>
+          )}
+        </h2>
         <small>
           {souLider ? 'Você é o líder · ' : ''}
           {textoDaSala(sala, souLider)}
@@ -125,7 +158,14 @@ export function BarraDaSala({
           <li key={membro.id} className={membro.id === sala.liderId ? 'lider' : undefined}>
             <Avatar usuario={membro} />
             <span className="barra-sala-nome">
-              {membro.apelido}
+              <span>
+                {clas.get(membro.id) && !cla && (
+                  <>
+                    <SiglaDoCla cla={clas.get(membro.id)!} />{' '}
+                  </>
+                )}
+                {membro.apelido}
+              </span>
               <small>
                 K/D {kdEmTexto(kd.get(membro.id))}
                 {membro.id === sala.liderId ? ' · líder' : ''}
@@ -188,8 +228,9 @@ export function CriarSalaCartao() {
 }
 
 /** O que dá para fazer com outra sala: entrar, juntar a sua ou desafiar. */
-export function SalaCartao({ sala, kd, acao }: { sala: SalaComMembros; kd: Map<string, number>; acao: React.ReactNode }) {
+export function SalaCartao({ sala, kd, acao, clas }: { sala: SalaComMembros; kd: Map<string, number>; acao: React.ReactNode; clas: ClasDasPessoas }) {
   const total = sala.membros.length;
+  const cla = claDaSala(sala, clas);
   return (
     <article className="cartao-jogar">
       <div className="foto-jogar">
@@ -197,10 +238,18 @@ export function SalaCartao({ sala, kd, acao }: { sala: SalaComMembros; kd: Map<s
         <span className="selo-modo">Competitivo</span>
       </div>
       <div className="corpo-jogar">
-        <h2>Sala de {sala.nome}</h2>
+        <h2>
+          Sala de {sala.nome}
+          {cla && (
+            <>
+              {' '}
+              <SiglaDoCla cla={cla} />
+            </>
+          )}
+        </h2>
         <div className="vagas-sala">
           {sala.membros.map((membro) => (
-            <span key={membro.id} className="vaga-sala" title={membro.apelido}>
+            <span key={membro.id} className="vaga-sala" title={clas.get(membro.id) ? `[${clas.get(membro.id)!.sigla}] ${membro.apelido}` : membro.apelido}>
               <Avatar usuario={membro} />
               <small>{kdEmTexto(kd.get(membro.id))}</small>
             </span>
@@ -225,6 +274,35 @@ export function SalaCartao({ sala, kd, acao }: { sala: SalaComMembros; kd: Map<s
         </div>
       </div>
     </article>
+  );
+}
+
+const NOME_DA_ESCOLHA: Record<string, string> = {
+  'comum-1': 'Desafio',
+  'cla-1': 'Clã x clã MD1',
+  'cla-3': 'Clã x clã MD3',
+  'treino-1': 'Treino MD1',
+  'treino-3': 'Treino MD3',
+};
+
+/** Desafiar: sem clã, o botão de sempre; com as duas salas de clã, dá para escolher clã x clã ou treino, MD1 ou MD3. */
+export function BotaoDeDesafio({ salaId, opcoes }: { salaId: string; opcoes: FormatoDoDesafio['formato'][] }) {
+  if (opcoes.length <= 1) return <BotaoDaSala tipo="desafiar" salaId={salaId} />;
+  const escolhas = opcoes.flatMap((formato) => (formato === 'comum' ? ['comum-1'] : [`${formato}-1`, `${formato}-3`]));
+  return (
+    <form action={chamarParaDesafio} className="desafio-com-escolha">
+      <input type="hidden" name="salaId" value={salaId} />
+      <select name="escolha" aria-label="Tipo de desafio" defaultValue={escolhas[1] ?? escolhas[0]}>
+        {escolhas.map((escolha) => (
+          <option key={escolha} value={escolha}>
+            {NOME_DA_ESCOLHA[escolha]}
+          </option>
+        ))}
+      </select>
+      <button type="submit" className="botao ouro pequeno">
+        Desafiar
+      </button>
+    </form>
   );
 }
 

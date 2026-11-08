@@ -11,6 +11,8 @@ const ESPERA_DA_GRAVACAO_MS = 10 * 60_000;
 const TAMANHO_DO_HISTORICO = 30;
 const ULTIMOS_XP = 10;
 
+const MODO_DA_PARTIDA: Record<Partida['tipo'], string> = { desafio: 'Competitivo', mix: 'Mix', cla: 'Clã x clã', treino: 'Treino' };
+
 export type SituacaoDaGravacao = 'disponivel' | 'aguardando' | 'sem' | 'apagada';
 
 /** A gravação chega minutos depois do fim e às vezes não chega, então o tempo decide quando desistir. */
@@ -139,7 +141,7 @@ export async function ultimasPartidasDoPerfil(bd: Bd, jogadorId: string, limite:
       const deles = linha.meuTime === 2 ? linha.placar1 : linha.placar2;
       return {
         ...base,
-        modo: linha.tipo === 'desafio' ? 'Competitivo' : 'Mix',
+        modo: MODO_DA_PARTIDA[linha.tipo ?? 'mix'],
         mapa: linha.mapaDaPartida ? (nomeDoMapaConhecido(linha.mapaDaPartida) ?? nomeDoMapa(linha.mapaDaPartida)) : null,
         placar: temPlacar ? `${meu} x ${deles}` : null,
         mortes: linha.mortesNaPartida ?? linha.xp.mortes,

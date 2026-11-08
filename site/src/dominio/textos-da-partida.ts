@@ -33,8 +33,10 @@ export function faseDaPartida(estado: Partida['estado']): FaseDaPartida {
   return FASE_DO_ESTADO[estado];
 }
 
+const NOME_DO_TIPO: Record<Partida['tipo'], string> = { mix: 'Mix', desafio: 'Desafio', cla: 'Clã x clã', treino: 'Treino' };
+
 export function nomeDaPartida(partida: Pick<Partida, 'tipo' | 'numero'>): string {
-  return `${partida.tipo === 'mix' ? 'Mix' : 'Desafio'} #${partida.numero}`;
+  return `${NOME_DO_TIPO[partida.tipo]} #${partida.numero}`;
 }
 
 /** Sem mapa ainda: a partida está no aceite ou nos vetos. */
@@ -54,3 +56,11 @@ export const TEXTOS_DO_ESTADO: Record<Partida['estado'], { etiqueta: string; exp
   encerrada: { etiqueta: 'Encerrada', explicacao: 'A partida terminou.' },
   cancelada: { etiqueta: 'Cancelada', explicacao: 'A partida foi cancelada e não conta nas estatísticas.' },
 };
+
+/** O selo do topo da partida: o tipo e, no clã x clã e no treino, se é MD1 ou MD3. */
+export function seloDaPartida(partida: Pick<Partida, 'tipo' | 'mapasDaPartida'>): string {
+  const formato = `MD${partida.mapasDaPartida === 3 ? 3 : 1}`;
+  if (partida.tipo === 'cla') return `Clã x clã · ${formato}`;
+  if (partida.tipo === 'treino') return `Treino · ${formato}`;
+  return partida.tipo === 'mix' ? 'Mix' : 'Desafio';
+}

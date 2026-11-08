@@ -2,7 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
-import { desafiosDaSala } from '@/dominio/desafios';
+import { clasDosUsuarios } from '@/dominio/clas';
+import { desafiosDaSala, opcoesDeDesafio } from '@/dominio/desafios';
 import { estadoDoCartao, listarServidoresDaDiversao, mapaDoCartao } from '@/dominio/diversao';
 import { situacaoDasFaltas } from '@/dominio/faltas';
 import { kdDosJogadores } from '@/dominio/ficha';
@@ -20,7 +21,7 @@ import { AvisoDeBloqueio } from '../aviso-de-bloqueio';
 import { entrar as entrarNoMix, sair as sairDoMix } from '../mix/acoes';
 import { OnlineAgora } from '../online-agora';
 import { ERROS_DA_DIVERSAO, nomeDoModo, RodapeDoCartao, SEM_RESPOSTA } from './rodape-da-diversao';
-import { BarraDaSala, BotaoDaSala, CriarSalaCartao, SalaCartao } from './sala';
+import { BarraDaSala, BotaoDaSala, BotaoDeDesafio, CriarSalaCartao, SalaCartao } from './sala';
 
 const TOTAL_DO_MIX = 10;
 const FOTO_DO_MIX = '/mapas/mirage.webp';
@@ -57,7 +58,8 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   ]);
   const [desafio] = minha ? await desafiosDaSala(bd, minha.id) : [];
   const juncoes = minha ? await juncoesDaSala(bd, minha.id) : [];
-  const kd = await kdDosJogadores(bd, [...new Set(salas.flatMap((sala) => sala.membros.map((membro) => membro.id)))]);
+  const idsNasSalas = [...new Set(salas.flatMap((sala) => sala.membros.map((membro) => membro.id)))];
+  const [kd, clasNasSalas] = await Promise.all([kdDosJogadores(bd, idsNasSalas), clasDosUsuarios(bd, idsNasSalas)]);
 
   const servidores = todosServidores.filter((servidor) => mostraNoFiltro(filtro, servidor.modo));
   const diversao = diversaoDoAmbiente(controladorDoAmbiente());
@@ -81,13 +83,21 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   const possoJuntarCom = (sala: SalaComMembros) =>
     souLider && !minha.partidaId && minha.membros.length + sala.membros.length <= TAMANHO_DA_SALA && !juncoes.some((juncao) => juncao.outraSalaId === sala.id);
   const outras = salas.filter((sala) => sala.id !== minha?.id);
+  // Com as duas salas de clã, o desafio pode ser clã x clã ou treino.
+  const opcoes = new Map(
+    possoDesafiar
+      ? await Promise.all(
+          outras.filter((sala) => sala.membros.length === TAMANHO_DA_SALA && !sala.partidaId).map(async (sala) => [sala.id, await opcoesDeDesafio(bd, minha.id, sala.id)] as const),
+        )
+      : [],
+  );
   const modoDaDiversao = filtro && filtro !== 'competitivo' && filtro !== 'mix' ? filtro : null;
 
   function acaoDaSala(sala: SalaComMembros) {
     if (sala.partidaId) return <span className="etiqueta">Em partida</span>;
     const completa = sala.membros.length === TAMANHO_DA_SALA;
     if (!completa && !minha && !partida) return <BotaoDaSala tipo="entrar" salaId={sala.id} />;
-    if (completa && possoDesafiar) return <BotaoDaSala tipo="desafiar" salaId={sala.id} />;
+    if (completa && possoDesafiar) return <BotaoDeDesafio salaId={sala.id} opcoes={opcoes.get(sala.id) ?? ['comum']} />;
     if (!completa && possoJuntarCom(sala)) return <BotaoDaSala tipo="juntar" salaId={sala.id} />;
     return null;
   }
@@ -95,7 +105,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       {(minha || estouNoMix || algumEsperando || filtro === 'competitivo' || filtro === 'mix') && <Atualizar segundos={3} />}
-      {minha && <BarraDaSala sala={minha} usuarioId={usuario.id} kd={kd} desafio={desafio} juncoes={juncoes} />}
+      {minha && <BarraDaSala sala={minha} usuarioId={usuario.id} kd={kd} desafio={desafio} juncoes={juncoes} clas={clasNasSalas} />}
       <div className={minha ? 'tela-jogar com-sala' : 'tela-jogar'}>
         <AvisoDeBloqueio situacao={faltas} />
         <div className="topo-jogar">
@@ -157,7 +167,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
           )}
 
           {mostraNoFiltro(filtro, 'competitivo') && !minha && !partida && !faltas.bloqueadoAte && <CriarSalaCartao />}
-          {mostraNoFiltro(filtro, 'competitivo') && outras.map((sala) => <SalaCartao key={sala.id} sala={sala} kd={kd} acao={acaoDaSala(sala)} />)}
+          {mostraNoFiltro(filtro, 'competitivo') && outras.map((sala) => <SalaCartao key={sala.id} sala={sala} kd={kd} acao={acaoDaSala(sala)} clas={clasNasSalas} />)}
 
           {servidores.map((servidor, indice) => {
             const mapa = mapaDoCartao(servidor, situacoes[indice]);

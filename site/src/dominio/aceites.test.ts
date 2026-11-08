@@ -221,3 +221,12 @@ test('partida cancelada por falta de aceite guarda o motivo', async () => {
   await resolverAceitesVencidos(bd, VENCIDO);
   expect((await partidaDe(partida.id)).motivoDoCancelamento).toBe('aceite');
 });
+
+test.each([['cla'], ['treino']] as const)('os 10 aceitando, a partida de %s também vai para os vetos', async (tipo) => {
+  const { partida, todos } = await desafioAceito();
+  await bd.update(partidas).set({ tipo }).where(eq(partidas.id, partida.id));
+  for (const conta of todos) await aceitarPartida(bd, conta, partida.id, AGORA);
+  const depois = await partidaDe(partida.id);
+  expect(depois.estado).toBe('vetando');
+  expect(depois.mapa).toBeNull();
+});

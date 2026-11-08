@@ -12,7 +12,8 @@ import { ESTADOS_ATIVOS_DE_PARTIDA } from '@/dominio/disponibilidade';
 import { fotoDoMapa } from '@/dominio/diversao';
 import { elogiosFeitos, TIPOS_DE_ELOGIO } from '@/dominio/elogios';
 import { dadosDeConexao, detalheDaPartida, gravacaoDaPartida, MAPAS, quemEntrouNoServidor, type JogadorDaPartida } from '@/dominio/partidas';
-import { FASES_DA_PARTIDA, faseDaPartida, NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO, type FaseDaPartida } from '@/dominio/textos-da-partida';
+import { serieDaPartida } from '@/dominio/series';
+import { FASES_DA_PARTIDA, faseDaPartida, NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa, seloDaPartida, TEXTOS_DO_ESTADO, type FaseDaPartida } from '@/dominio/textos-da-partida';
 import { LIMITE_AGUARDANDO_JOGADORES_MS } from '@/dominio/varredura';
 import { resolverVetosVencidos, vetosDaPartida } from '@/dominio/vetos';
 import { patenteDe, progressoDe } from '@/dominio/xp';
@@ -157,7 +158,7 @@ function Aceite({ partida, jogadores, aceites, usuarioId }: { partida: Partida; 
       {partida.aceiteAte && <RelogioRedondo ate={partida.aceiteAte.toISOString()} totalSegundos={PRAZO_DO_ACEITE_MS / 1000} />}
       <h2>{jogaNaPartida ? 'Sua partida está pronta' : 'Esperando os jogadores aceitarem'}</h2>
       <p className="apoio">
-        {partida.tipo === 'mix' ? 'Mix' : 'Desafio'} · 5 contra 5 · {partida.mapa ? nomeDoMapa(partida.mapa) : 'o mapa sai dos vetos'}
+        {seloDaPartida(partida)} · 5 contra 5 · {partida.mapa ? nomeDoMapa(partida.mapa) : 'o mapa sai dos vetos'}
       </p>
       <div className="aceite-pessoas">
         {jogadores.map((jogador) => (
@@ -232,26 +233,38 @@ function TelaDeVetos({
         <ListaDoTime nome={nomes[1]} jogadores={time1} lado="a" />
         <div>
           <div className={minhaVez ? 'vez-do-veto minha' : 'vez-do-veto'}>
-            <b>{minhaVez ? 'Sua vez de vetar' : vetos.vez ? `Vez de ${nomes[vetos.vez]}` : 'Vetos encerrados'}</b>
+            <b>
+              {minhaVez
+                ? vetos.acaoDaVez === 'escolhe'
+                  ? 'Sua vez de escolher'
+                  : 'Sua vez de vetar'
+                : vetos.vez
+                  ? `Vez de ${nomes[vetos.vez]}${vetos.acaoDaVez === 'escolhe' ? ' escolher' : ''}`
+                  : 'Vetos encerrados'}
+            </b>
             {partida.vetoAte && vetos.vez && <Relogio ate={partida.vetoAte.toISOString()} minutos />}
           </div>
           <div className="vetos-grade">
             {MAPAS.map((mapa) => {
               const veto = vetadoPor(mapa);
               return (
-                <div key={mapa} className={veto ? 'veto-mapa vetado' : sobrou ? 'veto-mapa sobrou' : 'veto-mapa'} style={fundoDoMapa(mapa)}>
+                <div
+                  key={mapa}
+                  className={veto ? (veto.acao === 'escolhe' ? 'veto-mapa escolhido' : 'veto-mapa vetado') : sobrou ? 'veto-mapa sobrou' : 'veto-mapa'}
+                  style={fundoDoMapa(mapa)}
+                >
                   <b>{nomeDoMapa(mapa)}</b>
                   {veto ? (
-                    <span className="carimbo">
-                      Vetado · {nomes[veto.time]}
+                    <span className={veto.acao === 'escolhe' ? 'carimbo escolhido' : 'carimbo'}>
+                      {veto.acao === 'escolhe' ? 'Escolhido' : 'Vetado'} · {nomes[veto.time]}
                       {veto.automatico && ' (automático)'}
                     </span>
                   ) : minhaVez ? (
                     <form action={vetar}>
                       <input type="hidden" name="partidaId" value={partida.id} />
                       <input type="hidden" name="mapa" value={mapa} />
-                      <button type="submit" className="botao-vetar">
-                        Vetar
+                      <button type="submit" className={vetos.acaoDaVez === 'escolhe' ? 'botao-vetar escolher' : 'botao-vetar'}>
+                        {vetos.acaoDaVez === 'escolhe' ? 'Escolher' : 'Vetar'}
                       </button>
                     </form>
                   ) : null}
@@ -259,6 +272,9 @@ function TelaDeVetos({
               );
             })}
           </div>
+          {partida.mapasDaPartida === 3 && (
+            <p className="apoio dica-do-veto">MD3: cada time veta um, escolhe um e veta mais um. O que sobrar é o desempate.</p>
+          )}
           {!minhaVez && <p className="apoio dica-do-veto">Só o líder do time da vez veta. Escolha o mapa que você não quer jogar.</p>}
         </div>
         <ListaDoTime nome={nomes[2]} jogadores={time2} lado="b" />
@@ -395,7 +411,7 @@ export default async function PaginaDaPartida({
   const souLider = meuTime !== null && salasDaPartida[meuTime]?.liderId === usuario.id;
   const ehEquipe = pode(usuario, 'moderar');
 
-  const [aceites, vetos, feitos, noServidor, gravacao] = await Promise.all([
+  const [aceites, vetos, feitos, noServidor, gravacao, serie] = await Promise.all([
     partida.estado === 'aguardando_aceite' ? aceitesDaPartida(bd, id) : [],
     partida.estado === 'vetando' ? vetosDaPartida(bd, id) : null,
     partida.estado === 'encerrada' && jogaNaPartida ? elogiosFeitos(bd, id, usuario.id) : new Set<string>(),
@@ -408,6 +424,7 @@ export default async function PaginaDaPartida({
         )
       : new Set<string>(),
     partida.estado === 'encerrada' && ehEquipe ? gravacaoDaPartida(bd, partida) : null,
+    partida.serieId ? serieDaPartida(bd, partida.id) : null,
   ]);
   const mvp = partida.estado === 'encerrada' ? mvpDaPartida(jogadores) : null;
   const time1 = jogadores.filter((jogador) => jogador.time === 1);
@@ -423,12 +440,16 @@ export default async function PaginaDaPartida({
     partida.estado !== 'encerrada' ? null : partida.vencedor === null ? 'empate' : meuTime === null ? 'neutro' : partida.vencedor === meuTime ? 'vitoria' : 'derrota';
   const minutos = partida.iniciadaEm && partida.encerradaEm ? Math.max(1, Math.round((partida.encerradaEm.getTime() - partida.iniciadaEm.getTime()) / 60_000)) : null;
   const progresso = eu ? progressoDe(eu.xpTotal) : null;
+  // Na MD3 que continua, o fim do mapa leva ao mapa seguinte.
+  const proximoMapa = serie?.partidas.find((item) => item.mapaDaSerie === (partida.mapaDaSerie ?? 0) + 1) ?? null;
 
   return (
     <>
       {ativa && <Atualizar segundos={3} />}
       <section className="capa-partida" style={fundoDoMapa(partida.mapa, 'linear-gradient(90deg, rgba(7, 4, 13, 0.95) 35%, rgba(7, 4, 13, 0.6))')}>
-        <span className="selo-modo ouro">{nomeDaPartida(partida)}</span>
+        <span className="selo-modo ouro">
+          {seloDaPartida(partida)} · #{partida.numero}
+        </span>
         <h1>{titulo}</h1>
         <p className="apoio">{texto}</p>
         <ol className="fases-partida" aria-label="Fases da partida">
@@ -438,6 +459,28 @@ export default async function PaginaDaPartida({
             </li>
           ))}
         </ol>
+        {serie && (
+          <nav className="linha-da-serie" aria-label="Mapas da série">
+            <b>
+              Mapa {partida.mapaDaSerie} de 3 · série {serie.serie.vitorias1} x {serie.serie.vitorias2}
+              {serie.serie.estado === 'encerrada' && ' · série encerrada'}
+              {serie.serie.estado === 'cancelada' && ' · série cancelada'}
+            </b>
+            {serie.serie.mapas.map((mapa, indice) => {
+              const jogado = serie.partidas.find((item) => item.mapaDaSerie === indice + 1);
+              const texto = `${indice + 1}. ${nomeDoMapa(mapa)}${indice === 2 ? ' (desempate)' : ''}${jogado?.estado === 'encerrada' ? ` · ${jogado.placar1} x ${jogado.placar2}` : ''}`;
+              return jogado && jogado.id !== partida.id ? (
+                <Link key={mapa} href={`/partidas/${jogado.id}`}>
+                  {texto}
+                </Link>
+              ) : (
+                <span key={mapa} className={jogado?.id === partida.id ? 'atual' : undefined}>
+                  {texto}
+                </span>
+              );
+            })}
+          </nav>
+        )}
       </section>
 
       {erro && ERROS[erro] && (
@@ -558,6 +601,7 @@ export default async function PaginaDaPartida({
             <span>
               {nomes[1]} {partida.placar1} x {partida.placar2} {nomes[2]} · {nomeDoMapa(partida.mapa)}
               {minutos && ` · ${minutos} minutos`}
+              {partida.tipo === 'treino' && ' · Treino: não vale XP nem ranking'}
             </span>
           </div>
           {partida.estado === 'encerrada' && (mvp || (eu && progresso)) && (
@@ -578,7 +622,7 @@ export default async function PaginaDaPartida({
                 <div className="painel xp-bloco">
                   <div>
                     <span className="apoio">Você ganhou</span>
-                    <b className="xp-grande">{eu.xp === null ? 'XP chegando' : `+${eu.xp} XP`}</b>
+                    <b className="xp-grande">{partida.tipo === 'treino' ? 'Treino: 0 XP' : eu.xp === null ? 'XP chegando' : `+${eu.xp} XP`}</b>
                   </div>
                   <InsigniaDaPatente patente={progresso.patente} />
                   <div className="patente-texto">
@@ -618,9 +662,15 @@ export default async function PaginaDaPartida({
                 Denunciar um jogador
               </a>
             )}
-            <Link className="botao ouro pequeno" href="/jogar">
-              Jogar de novo
-            </Link>
+            {proximoMapa ? (
+              <Link className="botao ouro pequeno" href={`/partidas/${proximoMapa.id}`}>
+                Ir para o mapa {proximoMapa.mapaDaSerie}
+              </Link>
+            ) : (
+              <Link className="botao ouro pequeno" href="/jogar">
+                Jogar de novo
+              </Link>
+            )}
           </div>
         </>
       )}

@@ -7,11 +7,15 @@ import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { fotoDoMapa } from '@/dominio/diversao';
 import { elogiosDoJogador } from '@/dominio/elogios';
+import { claDoUsuario } from '@/dominio/clas';
 import { fichaDoJogador, kdDe, ultimasPartidasDoPerfil } from '@/dominio/ficha';
 import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { PATENTES, patenteDe } from '@/dominio/xp';
 import { Avatar } from '../../avatar';
+import { chamar } from '../../clas/acoes';
+import { ERROS_DO_CLA } from '../../clas/bloco-do-cla';
+import { SiglaDoCla } from '../../clas/sigla-do-cla';
 import { InsigniaDaPatente } from '../../insignia-da-patente';
 import { MarcarPatenteVista } from './marcar-patente-vista';
 import { Punicoes } from './punicoes';
@@ -43,14 +47,21 @@ const ERROS: Record<string, string> = {
   permissao: 'Você não tem permissão para isso.',
 };
 
-export default async function FichaDoJogador({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ erro?: string }> }) {
+export default async function FichaDoJogador({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ erro?: string; aviso?: string }> }) {
   const { id } = await params;
-  const { erro } = await searchParams;
+  const { erro, aviso } = await searchParams;
   const usuario = await exigirAcesso(`/jogadores/${id}`);
   if (!z.uuid().safeParse(id).success) notFound();
   const ficha = await fichaDoJogador(obterBd(), usuario, id);
   if (!ficha) notFound();
-  const [elogios, ultimas] = await Promise.all([elogiosDoJogador(obterBd(), id), ultimasPartidasDoPerfil(obterBd(), id)]);
+  const [elogios, ultimas, claDele, meuCla] = await Promise.all([
+    elogiosDoJogador(obterBd(), id),
+    ultimasPartidasDoPerfil(obterBd(), id),
+    claDoUsuario(obterBd(), id),
+    claDoUsuario(obterBd(), usuario.id),
+  ]);
+  // Dono ou Capitão chama daqui quem ainda não tem clã.
+  const possoChamar = !!meuCla && meuCla.cargo !== 'membro' && !claDele && usuario.id !== id;
   const { jogador, estatisticas, historico, porMapa, melhorPartida, steamid64, equipe, xpTotal, progresso } = ficha;
   const patenteNova = usuario.id === jogador.id && patenteDe(usuario.xpTotal).nivel > usuario.patenteVista;
   const fotoMelhor = melhorPartida ? fotoDoMapa(melhorPartida.mapa) : null;
@@ -70,9 +81,23 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
                 <InsigniaDaPatente patente={progresso.patente} classe="insignia-mini" />
                 {progresso.patente.nome}
               </span>
+              {claDele && (
+                <span className="selo-do-cla">
+                  <SiglaDoCla cla={claDele} link /> {claDele.nome}
+                </span>
+              )}
               <span className="apoio">Na Magnatas desde {dataCurta.format(jogador.criadoEm)}</span>
             </div>
           </div>
+          {possoChamar && (
+            <form action={chamar}>
+              <input type="hidden" name="claId" value={meuCla.id} />
+              <input type="hidden" name="usuarioId" value={jogador.id} />
+              <button type="submit" className="botao ouro pequeno">
+                Chamar para o clã [{meuCla.sigla}]
+              </button>
+            </form>
+          )}
           {steamid64 && (
             <a className="botao contorno pequeno" href={`https://steamcommunity.com/profiles/${steamid64}`} target="_blank" rel="noreferrer">
               Ver na Steam
@@ -80,11 +105,12 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
           )}
         </div>
       </section>
-      {erro && ERROS[erro] && (
+      {erro && (ERROS[erro] ?? ERROS_DO_CLA[erro]) && (
         <p role="alert" className="aviso">
-          {ERROS[erro]}
+          {ERROS[erro] ?? ERROS_DO_CLA[erro]}
         </p>
       )}
+      {aviso === 'chamado' && <p className="aviso">Chamado enviado. A pessoa vê no sino e aceita na tela de Clãs.</p>}
       {patenteNova && <MarcarPatenteVista />}
       <section className="painel patente-e-xp">
         <InsigniaDaPatente patente={progresso.patente} classe="insignia-perfil" />

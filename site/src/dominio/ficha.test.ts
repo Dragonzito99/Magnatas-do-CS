@@ -245,3 +245,12 @@ test('na partida do site, o placar vem do lado de quem está vendo', async () =>
   await bd.transaction((tx) => lancarXp(tx, [{ usuarioId: jogador.id, origem: 'partida', referencia: sala.id, abates: 10, resultado: 'derrota', jogouAteOFim: true }]));
   expect((await ultimasPartidasDoPerfil(bd, jogador.id))[0]).toMatchObject({ modo: 'Competitivo', mapa: 'Dust 2', placar: '7 x 13', mortes: 12 });
 });
+
+test.each([
+  ['cla', 'Clã x clã'],
+  ['treino', 'Treino'],
+] as const)('nas últimas do perfil, a partida de %s aparece com o nome certo', async (tipo, modo) => {
+  const partida = await jogada(jogador, numeros(10, 12), { tipo, mapa: 'de_dust2', placar1: 13, placar2: 7, vencedor: 1 }, 1);
+  await bd.transaction((tx) => lancarXp(tx, [{ usuarioId: jogador.id, origem: 'partida', referencia: partida.id, abates: 10, resultado: 'vitoria', jogouAteOFim: true }]));
+  expect((await ultimasPartidasDoPerfil(bd, jogador.id))[0]).toMatchObject({ modo });
+});
