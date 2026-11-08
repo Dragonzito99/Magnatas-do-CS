@@ -32,6 +32,11 @@ public partial class ModoDeDiversao
     private static readonly Color CorDoHumano = Color.FromArgb(255, 255, 255, 255);
     private const int VidaDoHumano = 100;
     private const float IntervaloDaVelocidade = 0.5f;
+    // A partir do nível 2, o mutante corre mais rápido por alguns segundos ao apertar G (o "largar arma" do jogo).
+    private const int NivelDaCorrida = 2;
+    private const float BonusDaCorrida = 0.5f;
+    private const float SegundosDaCorrida = 3f;
+    private const float SegundosDeRecargaDaCorrida = 12f;
     private const int SegundosDoAvisoDeMutante = 3;
     private const float SegundosParaEspalhar = 15f;
     // O som da contagem começa antes e termina junto com o sorteio. Na tela, só os últimos 10 segundos.
@@ -82,6 +87,8 @@ public partial class ModoDeDiversao
     private bool testeComBots;
     // Infecções de cada mutante na rodada, pela vaga. Decidem o nível.
     private readonly Dictionary<int, int> infeccoes = new();
+    // Por vaga: até quando a corrida vale e quando o G volta a funcionar, no relógio do servidor.
+    private readonly Dictionary<int, (float Fim, float Recarga)> corridas = new();
     private bool rodadaEmAndamento;
     private bool sorteioFeito;
     private bool tempoDeEspalharAcabou;
@@ -100,6 +107,7 @@ public partial class ModoDeDiversao
         relogioDaContagem?.Kill();
         somDaContagem?.Kill();
         infeccoes.Clear();
+        corridas.Clear();
         if (testeComBots) ChamarBotsDoTeste();
         if (JogadoresNaRodada() < MinimoDeJogadores)
         {
@@ -320,7 +328,11 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "mutacao") return HookResult.Continue;
         var quem = evento.Userid;
-        if (quem != null) infeccoes.Remove(quem.Slot);
+        if (quem != null)
+        {
+            infeccoes.Remove(quem.Slot);
+            corridas.Remove(quem.Slot);
+        }
         // Quem chegar depois não pode herdar uma partida que ninguém mais está jogando.
         if (!Pessoas().Any(pessoa => pessoa.Slot != quem?.Slot))
         {
@@ -337,6 +349,7 @@ public partial class ModoDeDiversao
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
+        AddCommandListener("drop", AoApertarG, HookMode.Pre);
         RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
         {
             manifesto.AddResource(ModeloDoMutante);
@@ -396,6 +409,7 @@ public partial class ModoDeDiversao
         jogador.SwitchTeam(CsTeam.Terrorist);
         transformacoes++;
         infeccoes.Remove(jogador.Slot);
+        corridas.Remove(jogador.Slot);
         AplicarAtributosDoMutante(jogador);
         jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Você virou mutante!</font>", SegundosDoAvisoDeMutante);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
@@ -431,7 +445,7 @@ public partial class ModoDeDiversao
         MudarTamanho(corpo, nivel.Tamanho);
         corpo.Render = zumbi ? mutanteDaRodada.Cor : CorDaReserva;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
-        corpo.VelocityModifier = nivel.Velocidade;
+        corpo.VelocityModifier = VelocidadeDe(jogador);
     }
 
     /// <summary>
@@ -474,7 +488,7 @@ public partial class ModoDeDiversao
             corpo.Health = corpo.Health + novo.Vida - antigo.Vida;
             Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
             Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
-            corpo.VelocityModifier = novo.Velocidade;
+            corpo.VelocityModifier = VelocidadeDe(mutante);
             MudarTamanho(corpo, novo.Tamanho);
         }
         var nome = System.Net.WebUtility.HtmlEncode(mutante.PlayerName);
@@ -483,6 +497,35 @@ public partial class ModoDeDiversao
             pessoa.PrintToCenterHtml($"<font color='#6eff6e' class='fontSize-l'>{nome} chegou ao nível {novo.Nivel}!</font>", SegundosDoAvisoDeMutante);
             pessoa.PrintToChat($" [Magnatas] {mutante.PlayerName} chegou ao nível {novo.Nivel} de mutação.");
         }
+        if (novo.Nivel == NivelDaCorrida) mutante.PrintToChat(" [Magnatas] Aperte G para correr mais rápido por alguns segundos.");
+    }
+
+    /// <summary>A velocidade do nível, mais o bônus enquanto a corrida do G vale.</summary>
+    private float VelocidadeDe(CCSPlayerController jogador)
+    {
+        var correndo = corridas.TryGetValue(jogador.Slot, out var corrida) && Server.CurrentTime < corrida.Fim;
+        return NivelDe(jogador).Velocidade + (correndo ? BonusDaCorrida : 0f);
+    }
+
+    /// <summary>
+    /// O G do mutante a partir do nível 2 é a corrida, e não larga a faca. Para os humanos, o G continua largando a arma.
+    /// O fim da corrida vem pelo ManterVelocidadeDosMutantes, que reaplica a velocidade a cada meio segundo.
+    /// </summary>
+    private HookResult AoApertarG(CCSPlayerController? jogador, CommandInfo comando)
+    {
+        if (jogador == null || !EhMutanteDeVerdade(jogador)) return HookResult.Continue;
+        if (NivelDe(jogador).Nivel < NivelDaCorrida) return HookResult.Handled;
+        var agora = Server.CurrentTime;
+        if (corridas.TryGetValue(jogador.Slot, out var corrida) && agora < corrida.Recarga)
+        {
+            jogador.PrintToCenterHtml($"<font color='#f5b301'>Corrida em {Math.Ceiling(corrida.Recarga - agora)} s</font>", 1);
+            return HookResult.Handled;
+        }
+        corridas[jogador.Slot] = (agora + SegundosDaCorrida, agora + SegundosDeRecargaDaCorrida);
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo != null) corpo.VelocityModifier = VelocidadeDe(jogador);
+        jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Correndo!</font>", (int)SegundosDaCorrida);
+        return HookResult.Handled;
     }
 
     private static void MudarTamanho(CCSPlayerPawn corpo, float tamanho)
@@ -499,7 +542,7 @@ public partial class ModoDeDiversao
         foreach (var mutante in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }))
         {
             var corpo = mutante.PlayerPawn.Value;
-            if (corpo != null) corpo.VelocityModifier = NivelDe(mutante).Velocidade;
+            if (corpo != null) corpo.VelocityModifier = VelocidadeDe(mutante);
         }
     }
 
@@ -613,6 +656,7 @@ public partial class ModoDeDiversao
         relogioDaContagem?.Kill();
         somDaContagem?.Kill();
         infeccoes.Clear();
+        corridas.Clear();
         // Os mutantes e o portador dourado voltam à cor e ao tamanho normais. Os outros ficam como estão: mexer em todo
         // mundo junto do reinício da rodada só aumenta a chance de derrubar o jogo de quem está no servidor.
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist }))

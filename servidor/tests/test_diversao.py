@@ -1346,9 +1346,11 @@ def test_quem_morre_volta_no_mesmo_nivel_e_a_velocidade_segue_o_nivel():
     aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     aplica = aplica[:aplica.index(FIM_DO_METODO)]
     assert "NivelDe(jogador)" in aplica
-    assert "nivel.Vida" in aplica and "nivel.Velocidade" in aplica and "MudarTamanho(corpo, nivel.Tamanho)" in aplica
+    assert "nivel.Vida" in aplica and "VelocidadeDe(jogador)" in aplica and "MudarTamanho(corpo, nivel.Tamanho)" in aplica
     mantem = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ManterVelocidadeDosMutantes"):]
-    assert "NivelDe(mutante).Velocidade" in mantem[:600]
+    assert "VelocidadeDe(mutante)" in mantem[:600]
+    velocidade = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("float VelocidadeDe("):][:400]
+    assert "NivelDe(jogador).Velocidade" in velocidade
 
 
 def test_o_nivel_zera_a_cada_rodada_e_com_quem_sai():
@@ -1455,3 +1457,44 @@ def test_a_partida_no_silent_village_comeca_com_a_historia_do_mapa():
     inicio = comeca[comeca.index("if (rodadasDaPartida == 0)"):comeca.index("rodadaEmAndamento = true;")]
     assert 'Server.MapName == "zm_silent_village"' in inicio
     assert "o vírus vazou do laboratório debaixo da vila. Não confie em ninguém." in inicio
+
+
+def metodo_da_mutacao(assinatura):
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(assinatura):]
+    return trecho[:trecho.index(FIM_DO_METODO)]
+
+
+def test_o_mutante_corre_mais_rapido_ao_apertar_g_a_partir_do_nivel_dois():
+    assert "NivelDaCorrida = 2;" in CODIGO_DA_MUTACAO
+    assert 'AddCommandListener("drop", AoApertarG' in CODIGO_DA_MUTACAO
+    g = metodo_da_mutacao("HookResult AoApertarG")
+    assert "EhMutanteDeVerdade(jogador)" in g
+    assert "NivelDe(jogador).Nivel < NivelDaCorrida" in g
+    # O humano continua largando a arma no G; o G do mutante não larga a faca.
+    assert "return HookResult.Continue;" in g
+    assert "return HookResult.Handled;" in g
+
+
+def test_a_corrida_dura_pouco_e_tem_recarga():
+    assert "SegundosDaCorrida = 3f;" in CODIGO_DA_MUTACAO
+    assert "SegundosDeRecargaDaCorrida = 12f;" in CODIGO_DA_MUTACAO
+    g = metodo_da_mutacao("HookResult AoApertarG")
+    assert "Server.CurrentTime" in g
+    assert "Corrida em" in g
+    velocidade = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("float VelocidadeDe("):][:400]
+    assert "BonusDaCorrida" in velocidade and "Server.CurrentTime" in velocidade
+
+
+def test_a_corrida_vale_tambem_na_subida_de_nivel_e_quem_chega_ao_dois_fica_sabendo():
+    sobe = metodo_da_mutacao("void SubirDeNivel")
+    assert "VelocidadeDe(mutante)" in sobe
+    assert "novo.Nivel == NivelDaCorrida" in sobe
+    assert "Aperte G" in sobe
+
+
+def test_a_corrida_zera_junto_com_o_nivel():
+    for inicio in ["void ComecarRodadaDaMutacao", "EventRoundPrestart"]:
+        assert "corridas.Clear()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(inicio):]
+    assert "corridas.Remove(" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):]
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TransformarEmMutante"):]
+    assert trecho.index("corridas.Remove(jogador.Slot)") < trecho.index("AplicarAtributosDoMutante(jogador)")
