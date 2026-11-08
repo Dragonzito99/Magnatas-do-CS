@@ -19,6 +19,8 @@ export const usuarios = pgTable('usuarios', {
   convidadoPor: uuid('convidado_por'),
   vistoEm: timestamp('visto_em', { withTimezone: true }),
   xpTotal: integer('xp_total').notNull().default(0),
+  // Quem sai de um clã espera 24 horas para entrar em outro, para ninguém "emprestar" jogador entre desafios.
+  saiuDeClaEm: timestamp('saiu_de_cla_em', { withTimezone: true }),
   // A patente mais alta que a pessoa já viu no perfil, para o sino avisar só da nova.
   patenteVista: integer('patente_vista').notNull().default(1),
   criadoEm: criadoEm(),
@@ -97,7 +99,7 @@ export const auditoria = pgTable('auditoria', {
   criadoEm: criadoEm(),
 });
 
-export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix']);
+export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix', 'cla', 'treino']);
 export const motivoDoCancelamento = pgEnum('motivo_do_cancelamento', ['aceite', 'equipe', 'abandono']);
 export const estadoPartida = pgEnum('estado_partida', [
   'aguardando_aceite',
@@ -172,6 +174,15 @@ export const partidas = pgTable('partidas', {
   ultimoEventoEm: timestamp('ultimo_evento_em', { withTimezone: true }),
   iniciadaEm: timestamp('iniciada_em', { withTimezone: true }),
   encerradaEm: timestamp('encerrada_em', { withTimezone: true }),
+  // Clã de cada time no clã x clã e no treino. Sem chave estrangeira: o clã desfeito continua no histórico.
+  claTime1Id: uuid('cla_time1_id'),
+  claTime2Id: uuid('cla_time2_id'),
+  // Na MD3 cada mapa é uma partida, ligadas pela série.
+  serieId: uuid('serie_id'),
+  mapaDaSerie: integer('mapa_da_serie'),
+  mapasDaPartida: integer('mapas_da_partida').notNull().default(1),
+  // O mapa seguinte da série espera o mesmo servidor, onde os jogadores já estão.
+  servidorPreferidoId: uuid('servidor_preferido_id'),
 }, (tabela) => [index('partidas_estado_idx').on(tabela.estado)]);
 
 export const partidaJogadores = pgTable(
@@ -251,8 +262,12 @@ export const estadosDaDiversao = pgTable('estados_da_diversao', {
 
 export const estadoDesafio = pgEnum('estado_desafio', ['pendente', 'aceito', 'recusado', 'cancelado', 'expirado']);
 
+export const formatoDesafio = pgEnum('formato_desafio', ['comum', 'cla', 'treino']);
+
 export const desafios = pgTable('desafios', {
   id: uuid('id').primaryKey().defaultRandom(),
+  formato: formatoDesafio('formato').notNull().default('comum'),
+  mapas: integer('mapas').notNull().default(1),
   // Sem chave estrangeira: o desafio encerrado continua no histórico depois que a sala acaba.
   salaOrigemId: uuid('sala_origem_id').notNull(),
   salaAlvoId: uuid('sala_alvo_id').notNull(),
@@ -271,9 +286,13 @@ export const juncoes = pgTable('juncoes', {
   criadoEm: criadoEm(),
 });
 
+export const acaoVeto = pgEnum('acao_veto', ['veta', 'escolhe']);
+
 export const vetos = pgTable(
   'vetos',
   {
+    // Na MD3 alguns passos escolhem o mapa em vez de vetar.
+    acao: acaoVeto('acao').notNull().default('veta'),
     partidaId: uuid('partida_id')
       .notNull()
       .references(() => partidas.id),
@@ -432,7 +451,77 @@ export const banimentos = pgTable('banimentos', {
   decididoEm: timestamp('decidido_em', { withTimezone: true }),
 });
 
+export const cargoCla = pgEnum('cargo_cla', ['dono', 'capitao', 'membro']);
+export const corCla = pgEnum('cor_cla', ['ouro', 'roxo', 'verde', 'vermelho', 'prata']);
+export const entradaCla = pgEnum('entrada_cla', ['aberto', 'convite']);
+export const tipoPedidoCla = pgEnum('tipo_pedido_cla', ['pedido', 'chamado']);
+
+export const clas = pgTable(
+  'clas',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    nome: text('nome').notNull(),
+    sigla: text('sigla').notNull(),
+    cor: corCla('cor').notNull(),
+    entrada: entradaCla('entrada').notNull(),
+    descricao: text('descricao').notNull().default(''),
+    criadoEm: criadoEm(),
+    // Desfeito não some: as partidas antigas continuam mostrando nome e sigla.
+    desfeitoEm: timestamp('desfeito_em', { withTimezone: true }),
+  },
+  (tabela) => [
+    uniqueIndex('clas_nome_idx').on(sql`lower(${tabela.nome})`).where(sql`${tabela.desfeitoEm} is null`),
+    uniqueIndex('clas_sigla_idx').on(sql`lower(${tabela.sigla})`).where(sql`${tabela.desfeitoEm} is null`),
+  ],
+);
+
+export const claMembros = pgTable('cla_membros', {
+  // Ser chave primária garante um clã por pessoa.
+  usuarioId: uuid('usuario_id')
+    .primaryKey()
+    .references(() => usuarios.id),
+  claId: uuid('cla_id')
+    .notNull()
+    .references(() => clas.id),
+  cargo: cargoCla('cargo').notNull(),
+  entrouEm: timestamp('entrou_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Pedido da pessoa para entrar, ou chamado do clã para a pessoa. Aceitar qualquer um resolve os dois. */
+export const claPedidos = pgTable(
+  'cla_pedidos',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    claId: uuid('cla_id')
+      .notNull()
+      .references(() => clas.id),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    tipo: tipoPedidoCla('tipo').notNull(),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [unique('cla_pedidos_cla_usuario').on(tabela.claId, tabela.usuarioId)],
+);
+
+export const estadoSerie = pgEnum('estado_serie', ['em_andamento', 'encerrada', 'cancelada']);
+
+/** Uma MD3: os 3 mapas saídos dos vetos e quantos mapas cada time já ganhou. */
+export const series = pgTable('series', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  mapas: text('mapas').array().notNull(),
+  estado: estadoSerie('estado').notNull().default('em_andamento'),
+  vitorias1: integer('vitorias1').notNull().default(0),
+  vitorias2: integer('vitorias2').notNull().default(0),
+  vencedor: integer('vencedor'),
+  criadoEm: criadoEm(),
+});
+
 export type Usuario = typeof usuarios.$inferSelect;
+export type Cla = typeof clas.$inferSelect;
+export type ClaMembro = typeof claMembros.$inferSelect;
+export type ClaPedido = typeof claPedidos.$inferSelect;
+export type Serie = typeof series.$inferSelect;
 export type Banimento = typeof banimentos.$inferSelect;
 export type Denuncia = typeof denuncias.$inferSelect;
 export type Chamado = typeof chamados.$inferSelect;
