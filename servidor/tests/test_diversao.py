@@ -1199,10 +1199,25 @@ def test_o_mutante_usa_o_zumbi_do_pacote_e_fica_maior():
     assert "Color.FromArgb(255, 255, 255, 255), new NivelDoMutante[]" in CODIGO_DA_MUTACAO
     assert "AddResource(ModeloDoMutante)" in CODIGO_DA_MUTACAO
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
-    assert "SetModel(ModeloDoMutante)" in trecho
     assert "nivel.Tamanho" in trecho
     prepara = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
     assert "TamanhoDoHumano" in prepara
+
+
+def test_sem_o_zumbi_no_servidor_o_mutante_usa_um_boneco_do_jogo():
+    # Sem o arquivo no servidor, o mutante ficou sem áreas de acerto e sem animação: ninguém dava dano nele.
+    assert 'ModeloDeReserva = "agents/models/tm_phoenix/tm_phoenix.vmdl"' in CODIGO_DA_MUTACAO
+    assert "AddResource(ModeloDeReserva)" in CODIGO_DA_MUTACAO
+    confere = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("bool ZumbiNoServidor"):]
+    confere = confere[:confere.index(FIM_DO_METODO)]
+    assert '"models/magnatas/mutante"' in confere and "_dir.vpk" in confere
+    aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
+    aplica = aplica[:aplica.index(FIM_DO_METODO)]
+    assert "SetModel(zumbi ? ModeloDoMutante : ModeloDeReserva)" in aplica
+    # O boneco do jogo vai verde, para não confundir com os humanos.
+    assert "zumbi ? mutanteDaRodada.Cor : CorDaReserva" in aplica
+    # A cada mapa a conferência se refaz: depois da aprovação, o pacote novo chega numa troca de mapa.
+    assert "zumbiNoServidor = null" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void LigarMutacao"):]
 
 
 def test_mutacao_roda_biochemical_hotel_e_silent_village():
@@ -1288,7 +1303,7 @@ FIM_DO_METODO = chr(10) + "    }" + chr(10)
 
 def test_tres_niveis_de_mutante_com_mais_vida_velocidade_e_tamanho():
     # Nível, infecções para chegar, vida, velocidade e tamanho, aprovados pelo dono.
-    for nivel in ["new(1, 0, 2000, 1.10f, 1.15f)", "new(2, 2, 3000, 1.15f, 1.25f)", "new(3, 5, 4000, 1.20f, 1.35f)"]:
+    for nivel in ["new(1, 0, 1000, 1.10f, 1.15f)", "new(2, 2, 1500, 1.15f, 1.25f)", "new(3, 5, 2000, 1.20f, 1.35f)"]:
         assert nivel in CODIGO_DA_MUTACAO
 
 

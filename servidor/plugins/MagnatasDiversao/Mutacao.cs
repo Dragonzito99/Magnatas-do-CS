@@ -25,9 +25,9 @@ public partial class ModoDeDiversao
     // Nível, infecções para chegar, vida, velocidade e tamanho, aprovados pelo dono.
     private static readonly TipoDeMutante MutanteComum = new("Mutante", 3f, Color.FromArgb(255, 255, 255, 255), new NivelDoMutante[]
     {
-        new(1, 0, 2000, 1.10f, 1.15f),
-        new(2, 2, 3000, 1.15f, 1.25f),
-        new(3, 5, 4000, 1.20f, 1.35f),
+        new(1, 0, 1000, 1.10f, 1.15f),
+        new(2, 2, 1500, 1.15f, 1.25f),
+        new(3, 5, 2000, 1.20f, 1.35f),
     });
     private static readonly Color CorDoHumano = Color.FromArgb(255, 255, 255, 255);
     private const int VidaDoHumano = 100;
@@ -54,6 +54,12 @@ public partial class ModoDeDiversao
 
     // O zumbi vem no pacote da Oficina que todo jogador baixa ao entrar, junto com os sons.
     private const string ModeloDoMutante = "models/magnatas/mutante/mutante.vmdl";
+    // Sem o zumbi no servidor (o pacote novo ainda não chegou), o mutante ficaria sem áreas de acerto e sem animação:
+    // ninguém dava dano nele. Até o pacote chegar, vai um boneco do próprio jogo, verde para não confundir.
+    private const string ModeloDeReserva = "agents/models/tm_phoenix/tm_phoenix.vmdl";
+    private static readonly Color CorDaReserva = Color.FromArgb(255, 110, 255, 110);
+    private const string PacoteDoServidor = "3835000213";
+    private bool? zumbiNoServidor;
     private const float TamanhoDoHumano = 1f;
 
     // Um humano por rodada ganha a super Negev: não acaba a munição e empurra o mutante bem mais longe.
@@ -324,7 +330,13 @@ public partial class ModoDeDiversao
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
-        RegisterListener<Listeners.OnServerPrecacheResources>(manifesto => manifesto.AddResource(ModeloDoMutante));
+        RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
+        {
+            manifesto.AddResource(ModeloDoMutante);
+            manifesto.AddResource(ModeloDeReserva);
+        });
+        // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
+        RegisterListener<Listeners.OnMapStart>(_ => zumbiNoServidor = null);
         // Recarregado no meio da rodada, o plugin não teria a rodada em andamento nem o relógio, e o servidor travaria.
         if (hotReload)
         {
@@ -408,11 +420,36 @@ public partial class ModoDeDiversao
         corpo.Health = nivel.Vida;
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
-        corpo.SetModel(ModeloDoMutante);
+        var zumbi = ZumbiNoServidor();
+        corpo.SetModel(zumbi ? ModeloDoMutante : ModeloDeReserva);
         MudarTamanho(corpo, nivel.Tamanho);
-        corpo.Render = mutanteDaRodada.Cor;
+        corpo.Render = zumbi ? mutanteDaRodada.Cor : CorDaReserva;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
         corpo.VelocityModifier = nivel.Velocidade;
+    }
+
+    /// <summary>
+    /// O zumbi vem no pacote da Oficina, que o servidor baixa de novo só depois da aprovação da Steam.
+    /// A lista de arquivos do pacote diz se ele já chegou.
+    /// </summary>
+    private bool ZumbiNoServidor()
+    {
+        if (zumbiNoServidor is bool sabido) return sabido;
+        var achou = false;
+        foreach (var raiz in new[] { Server.GameDirectory, Path.GetDirectoryName(Server.GameDirectory) ?? "" })
+        {
+            var lista = Path.Combine(raiz, "bin", "linuxsteamrt64", "steamapps", "workshop", "content", "730", PacoteDoServidor, $"{PacoteDoServidor}_dir.vpk");
+            try
+            {
+                if (File.Exists(lista) && System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(lista)).Contains("models/magnatas/mutante")) achou = true;
+            }
+            catch (Exception erro) when (erro is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+        zumbiNoServidor = achou;
+        Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(achou ? "sim" : "não, vai o boneco do jogo")}.");
+        return achou;
     }
 
     private static NivelDoMutante NivelPelasInfeccoes(NivelDoMutante[] niveis, int infeccoes) =>
@@ -610,6 +647,6 @@ public partial class ModoDeDiversao
             var armas = corpo?.WeaponServices?.MyWeapons.Select(item => item.Value?.DesignerName ?? "?") ?? Enumerable.Empty<string>();
             comando.ReplyToCommand($"vaga={jogador.Slot} time={jogador.Team} vivo={jogador.PawnIsAlive} vida={corpo?.Health}/{corpo?.MaxHealth} velocidade={corpo?.AbsVelocity.Length():0} modificador={corpo?.VelocityModifier:0.00} nivel={(jogador.Team == CsTeam.Terrorist ? NivelDe(jogador).Nivel : 0)} armas={string.Join(",", armas)}");
         }
-        comando.ReplyToCommand($"em_andamento={rodadaEmAndamento} esperando={esperandoJogadores} teste_bots={testeComBots} sorteio={sorteioFeito} rodadas={rodadasDaPartida} humanos={vitoriasDosHumanos} mutantes={vitoriasDosMutantes} transformacoes={transformacoes} municao={ConVar<int>.Find("sv_infinite_ammo")?.Value}");
+        comando.ReplyToCommand($"em_andamento={rodadaEmAndamento} esperando={esperandoJogadores} teste_bots={testeComBots} zumbi={ZumbiNoServidor()} sorteio={sorteioFeito} rodadas={rodadasDaPartida} humanos={vitoriasDosHumanos} mutantes={vitoriasDosMutantes} transformacoes={transformacoes} municao={ConVar<int>.Find("sv_infinite_ammo")?.Value}");
     }
 }
