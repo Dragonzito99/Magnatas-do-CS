@@ -11,10 +11,20 @@ os.makedirs(os.path.join(DESTINO, 'materials'), exist_ok=True)
 # Corpo do zumbi e as texturas.
 shutil.copy(os.path.join(SAIDA, 'mutante_corpo.dmx'), DESTINO)
 # O Blender às vezes grava o JPG embutido com nome de PNG, e o compilador recusa. O ffmpeg regrava como PNG de verdade.
+# O nome do material muda de um modelo do Meshy para outro (Material_0, BakedMaterial), e nem todo modelo traz o normal.
 import subprocess
-for tipo in ('baseColor', 'normal', 'roughness', 'metallic'):
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', os.path.join(SAIDA, f'Material_0_{tipo}.png'), '-pix_fmt', 'gray' if tipo in ('roughness', 'metallic') else 'rgb24',
-                    os.path.join(DESTINO, 'materials', f'mutante_{tipo}.png')], check=True)
+TIPOS = ('baseColor', 'normal', 'roughness', 'metallic')
+achadas = {tipo: next((f for f in os.listdir(SAIDA) if f.endswith(f'_{tipo}.png')), None) for tipo in TIPOS}
+assert achadas['baseColor'], 'sem a textura de cor'
+for tipo in TIPOS:
+    destino = os.path.join(DESTINO, 'materials', f'mutante_{tipo}.png')
+    if achadas[tipo] is None:
+        if os.path.exists(destino):
+            os.remove(destino)
+        print('SEM TEXTURA', tipo)
+        continue
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', os.path.join(SAIDA, achadas[tipo]), '-pix_fmt', 'gray' if tipo in ('roughness', 'metallic') else 'rgb24',
+                    destino], check=True)
 
 # Braços de primeira pessoa, kit e animações de ferramenta continuam os do SAS.
 COPIAS = {
@@ -28,6 +38,7 @@ for de, para in COPIAS.items():
     shutil.copy(os.path.join(REF, de), os.path.join(DESTINO, para))
 
 with open(os.path.join(DESTINO, 'materials', 'mutante_corpo.vmat'), 'w', encoding='utf-8', newline='\n') as arquivo:
+    normal = f'\tTextureNormal "{PASTA}/materials/mutante_normal.png"\n' if achadas['normal'] else ''
     arquivo.write(f'''// Material do mutante, no mesmo shader dos bonecos do CS2.
 Layer0
 {{
@@ -36,8 +47,7 @@ Layer0
 	g_flModelTintAmount "1.000"
 	g_vColorTint "[1.000000 1.000000 1.000000 0.000000]"
 	TextureColor "{PASTA}/materials/mutante_baseColor.png"
-	TextureNormal "{PASTA}/materials/mutante_normal.png"
-	TextureRoughness "{PASTA}/materials/mutante_roughness.png"
+{normal}	TextureRoughness "{PASTA}/materials/mutante_roughness.png"
 	TextureMetalness "{PASTA}/materials/mutante_metallic.png"
 	TextureAmbientOcclusion "materials/default/default_ao.tga"
 	TextureBloodMask "materials/default/default_mask.tga"
