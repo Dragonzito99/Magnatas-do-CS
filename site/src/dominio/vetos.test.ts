@@ -1,13 +1,13 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { partidas, salas, vetos, type Partida, type Usuario } from '@/bd/esquema';
+import { partidas, salas, series, vetos, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { aceitarPartida } from './aceites';
 import { aceitarDesafio, desafiar } from './desafios';
 import { MAPAS } from './partidas';
 import { criarSala, entrarNaSala, SemPermissaoNaSala } from './salas';
-import { PRAZO_DO_VETO_MS, resolverVetosVencidos, vetarMapa, VetoIndisponivel, vetosDaPartida, vezDeVetar } from './vetos';
+import { ACOES_DA_MD3, acaoDaVez, PRAZO_DO_VETO_MS, resolverVetosVencidos, vetarMapa, VetoIndisponivel, vetosDaPartida, vezDeVetar } from './vetos';
 
 let bd: Bd;
 const AGORA = new Date('2026-11-06T22:00:00Z');
@@ -129,8 +129,10 @@ test('vetosDaPartida mostra o cara ou coroa, a vez, o prazo, os vetados e os que
   expect(situacao).toEqual({
     primeiroAVetar: 2,
     vez: 1,
+    acaoDaVez: 'veta',
     vetoAte: new Date(AGORA.getTime() + PRAZO_DO_VETO_MS),
-    vetados: [{ mapa: MAPAS[3], time: 2, automatico: false }],
+    vetados: [{ mapa: MAPAS[3], time: 2, automatico: false, acao: 'veta' }],
+    escolhidos: [],
     restantes: MAPAS.filter((mapa) => mapa !== MAPAS[3]),
   });
 });
@@ -139,4 +141,49 @@ test('partida fora dos vetos não aceita veto', async () => {
   const { partida, lideres } = await partidaVetando(1);
   await bd.update(partidas).set({ estado: 'cancelada' }).where(eq(partidas.id, partida.id));
   await expect(vetarMapa(bd, lideres[1], partida.id, MAPAS[0], AGORA)).rejects.toThrow(VetoIndisponivel);
+});
+
+// MD3: veta, veta, escolhe, escolhe, veta, veta; o que sobra é o terceiro mapa.
+async function md3Vetando(primeiro: 1 | 2 = 1) {
+  const montada = await partidaVetando(primeiro);
+  await bd.update(partidas).set({ mapasDaPartida: 3 }).where(eq(partidas.id, montada.partida.id));
+  return montada;
+}
+
+test('acaoDaVez: na MD3 o terceiro e o quarto passos escolhem; na MD1 tudo é veto', () => {
+  expect([0, 1, 2, 3, 4, 5].map((feitos) => acaoDaVez(3, feitos))).toEqual(['veta', 'veta', 'escolhe', 'escolhe', 'veta', 'veta']);
+  expect(ACOES_DA_MD3).toEqual(['veta', 'veta', 'escolhe', 'escolhe', 'veta', 'veta']);
+  expect(acaoDaVez(1, 2)).toBe('veta');
+});
+
+test('MD3 completa: as duas escolhas e a sobra viram a série, e a partida vai para o servidor com o primeiro mapa', async () => {
+  const { partida, lideres } = await md3Vetando(1);
+  const ordem = [1, 2, 1, 2, 1, 2] as const;
+  for (let i = 0; i < 6; i += 1) await vetarMapa(bd, lideres[ordem[i]], partida.id, MAPAS[i], new Date(AGORA.getTime() + i * 1000));
+  const depois = await partidaDe(partida.id);
+  expect(depois).toMatchObject({ estado: 'aguardando_servidor', mapa: MAPAS[2], mapaDaSerie: 1 });
+  const [serie] = await bd.select().from(series).where(eq(series.id, depois.serieId!));
+  expect(serie).toMatchObject({ mapas: [MAPAS[2], MAPAS[3], MAPAS[6]], estado: 'em_andamento', vitorias1: 0, vitorias2: 0 });
+  const feitos = await bd.select().from(vetos).where(eq(vetos.partidaId, partida.id));
+  expect(feitos.sort((a, b) => a.ordem - b.ordem).map((veto) => veto.acao)).toEqual(['veta', 'veta', 'escolhe', 'escolhe', 'veta', 'veta']);
+});
+
+test('na MD3, o tempo acabando numa vez de escolha faz o site escolher', async () => {
+  const { partida, lideres } = await md3Vetando(1);
+  await vetarMapa(bd, lideres[1], partida.id, MAPAS[0], AGORA);
+  await vetarMapa(bd, lideres[2], partida.id, MAPAS[1], AGORA);
+  await resolverVetosVencidos(bd, new Date(AGORA.getTime() + PRAZO_DO_VETO_MS + 1));
+  const [terceiro] = await bd.select().from(vetos).where(and(eq(vetos.partidaId, partida.id), eq(vetos.ordem, 3)));
+  expect(terceiro).toMatchObject({ acao: 'escolhe', automatico: true, time: 1 });
+});
+
+test('vetosDaPartida da MD3 diz a ação da vez e os mapas escolhidos', async () => {
+  const { partida, lideres } = await md3Vetando(2);
+  await vetarMapa(bd, lideres[2], partida.id, MAPAS[0], AGORA);
+  await vetarMapa(bd, lideres[1], partida.id, MAPAS[1], AGORA);
+  expect(await vetosDaPartida(bd, partida.id)).toMatchObject({ vez: 2, acaoDaVez: 'escolhe', escolhidos: [] });
+  await vetarMapa(bd, lideres[2], partida.id, MAPAS[4], AGORA);
+  const depois = await vetosDaPartida(bd, partida.id);
+  expect(depois).toMatchObject({ vez: 1, acaoDaVez: 'escolhe', escolhidos: [MAPAS[4]] });
+  expect(depois.vetados.map((veto) => veto.acao)).toEqual(['veta', 'veta', 'escolhe']);
 });

@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { and, asc, eq, lte } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, salas, vetos, type Partida, type Usuario } from '@/bd/esquema';
+import { partidaJogadores, partidas, salas, series, vetos, type Partida, type Usuario, type Veto } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
 import { MAPAS } from './partidas';
 import { SemPermissaoNaSala } from './salas';
@@ -16,6 +16,15 @@ export class VetoIndisponivel extends Error {
 }
 
 type Time = 1 | 2;
+
+type Acao = Veto['acao'];
+
+/** Na MD3, o jeito comum do CS: cada time veta um, cada um escolhe um, cada um veta mais um, e o que sobra é o desempate. */
+export const ACOES_DA_MD3 = ['veta', 'veta', 'escolhe', 'escolhe', 'veta', 'veta'] as const;
+
+export function acaoDaVez(mapas: number, feitos: number): Acao {
+  return mapas === 3 ? (ACOES_DA_MD3[feitos] ?? 'veta') : 'veta';
+}
 
 /** Quem ganhou o cara ou coroa veta primeiro, e depois vai alternando. */
 export function vezDeVetar(primeiro: Time, vetosFeitos: number): Time {
@@ -56,17 +65,32 @@ export async function vetarMapa(bd: Bd, lider: Pick<Usuario, 'id'>, partidaId: s
 }
 
 async function registrarVeto(tx: Transacao, partida: Partida, ordem: number, time: Time, mapa: string, automatico: boolean, agora: Date): Promise<void> {
-  await tx.insert(vetos).values({ partidaId: partida.id, ordem, time, mapa, automatico, criadoEm: agora });
+  const acao = acaoDaVez(partida.mapasDaPartida, ordem - 1);
+  await tx.insert(vetos).values({ partidaId: partida.id, ordem, time, mapa, automatico, acao, criadoEm: agora });
   const restantes = MAPAS.length - ordem;
   if (restantes > 1) {
     await tx.update(partidas).set({ vetoAte: new Date(agora.getTime() + PRAZO_DO_VETO_MS) }).where(eq(partidas.id, partida.id));
     return;
   }
-  const vetados = new Set((await vetadosDe(tx, partida.id)).map((veto) => veto.mapa));
-  const sobrou = MAPAS.find((candidato) => !vetados.has(candidato))!;
+  const feitos = await vetadosDe(tx, partida.id);
+  const usados = new Set(feitos.map((veto) => veto.mapa));
+  const sobrou = MAPAS.find((candidato) => !usados.has(candidato))!;
+  if (partida.mapasDaPartida !== 3) {
+    await tx
+      .update(partidas)
+      .set({ mapa: sobrou, estado: 'aguardando_servidor', vetoAte: null, estadoDesde: agora })
+      .where(eq(partidas.id, partida.id));
+    return;
+  }
+  // MD3: os dois escolhidos, na ordem, e a sobra como desempate. A primeira partida já é o mapa 1 da série.
+  const escolhidos = feitos.filter((veto) => veto.acao === 'escolhe').map((veto) => veto.mapa);
+  const [serie] = await tx
+    .insert(series)
+    .values({ mapas: [...escolhidos, sobrou], criadoEm: agora })
+    .returning();
   await tx
     .update(partidas)
-    .set({ mapa: sobrou, estado: 'aguardando_servidor', vetoAte: null, estadoDesde: agora })
+    .set({ mapa: escolhidos[0], serieId: serie.id, mapaDaSerie: 1, estado: 'aguardando_servidor', vetoAte: null, estadoDesde: agora })
     .where(eq(partidas.id, partida.id));
 }
 
@@ -92,7 +116,15 @@ export async function resolverVetosVencidos(bd: Bd, agora: Date = new Date()): P
 export async function vetosDaPartida(
   bd: Bd,
   partidaId: string,
-): Promise<{ primeiroAVetar: Time; vez: Time | null; vetoAte: Date | null; vetados: { mapa: string; time: Time; automatico: boolean }[]; restantes: string[] }> {
+): Promise<{
+  primeiroAVetar: Time;
+  vez: Time | null;
+  acaoDaVez: Acao | null;
+  vetoAte: Date | null;
+  vetados: { mapa: string; time: Time; automatico: boolean; acao: Acao }[];
+  escolhidos: string[];
+  restantes: string[];
+}> {
   const [partida] = await bd.select().from(partidas).where(eq(partidas.id, partidaId));
   const feitos = await vetadosDe(bd, partidaId);
   const vetados = new Set(feitos.map((veto) => veto.mapa));
@@ -100,8 +132,10 @@ export async function vetosDaPartida(
   return {
     primeiroAVetar: primeiro,
     vez: partida?.estado === 'vetando' ? vezDeVetar(primeiro, feitos.length) : null,
+    acaoDaVez: partida?.estado === 'vetando' ? acaoDaVez(partida.mapasDaPartida, feitos.length) : null,
     vetoAte: partida?.vetoAte ?? null,
-    vetados: feitos.map((veto) => ({ mapa: veto.mapa, time: veto.time as Time, automatico: veto.automatico })),
+    vetados: feitos.map((veto) => ({ mapa: veto.mapa, time: veto.time as Time, automatico: veto.automatico, acao: veto.acao })),
+    escolhidos: feitos.filter((veto) => veto.acao === 'escolhe').map((veto) => veto.mapa),
     restantes: MAPAS.filter((mapa) => !vetados.has(mapa)),
   };
 }
