@@ -1192,8 +1192,11 @@ def test_a_super_negev_some_na_rodada_seguinte():
     assert "ArmaEspecial" in humano
 
 
-def test_o_mutante_usa_o_boneco_blindado_e_fica_maior():
-    assert 'ModeloDoMutante = "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl"' in CODIGO_DA_MUTACAO
+def test_o_mutante_usa_o_zumbi_do_pacote_e_fica_maior():
+    # O boneco blindado do jogo virou um arquivo vazio numa atualização do CS2. O zumbi vem no pacote da Oficina.
+    assert 'ModeloDoMutante = "models/magnatas/mutante/mutante.vmdl"' in CODIGO_DA_MUTACAO
+    # Sem tingir: a cor é a do próprio zumbi.
+    assert "Color.FromArgb(255, 255, 255, 255), new NivelDoMutante[]" in CODIGO_DA_MUTACAO
     assert "AddResource(ModeloDoMutante)" in CODIGO_DA_MUTACAO
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     assert "SetModel(ModeloDoMutante)" in trecho

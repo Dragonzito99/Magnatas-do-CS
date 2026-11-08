@@ -23,7 +23,7 @@ public partial class ModoDeDiversao
     private sealed record NivelDoMutante(int Nivel, int InfeccoesParaChegar, int Vida, float Velocidade, float Tamanho);
 
     // Nível, infecções para chegar, vida, velocidade e tamanho, aprovados pelo dono.
-    private static readonly TipoDeMutante MutanteComum = new("Mutante", 3f, Color.FromArgb(255, 110, 255, 110), new NivelDoMutante[]
+    private static readonly TipoDeMutante MutanteComum = new("Mutante", 3f, Color.FromArgb(255, 255, 255, 255), new NivelDoMutante[]
     {
         new(1, 0, 2000, 1.10f, 1.15f),
         new(2, 2, 3000, 1.15f, 1.25f),
@@ -52,8 +52,8 @@ public partial class ModoDeDiversao
     private const int MunicaoDeReservaInfinita = 2;
     private static readonly string[] ArmasDoHumano = { "weapon_ak47", "weapon_m4a1" };
 
-    // O mutante usa o boneco blindado que já vem no jogo, um pouco maior que os humanos: ninguém precisa baixar nada.
-    private const string ModeloDoMutante = "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl";
+    // O zumbi vem no pacote da Oficina que todo jogador baixa ao entrar, junto com os sons.
+    private const string ModeloDoMutante = "models/magnatas/mutante/mutante.vmdl";
     private const float TamanhoDoHumano = 1f;
 
     // Um humano por rodada ganha a super Negev: não acaba a munição e empurra o mutante bem mais longe.
