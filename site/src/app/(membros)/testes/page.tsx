@@ -1,9 +1,11 @@
 import { eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { estadosDaDiversao } from '@/bd/esquema';
+import { ehCelular } from '@/dominio/aparelho';
 import { alvoDoServidor, comandoDeConectar, linkDeEntrar } from '@/dominio/diversao';
 import { etapaDoTeste, servidorDaMutacao } from '@/dominio/teste-mutacao';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
@@ -17,6 +19,7 @@ const ERROS: Record<string, string> = {
   mutacao_ocupada: 'A Mutação está com gente jogando agora. Tente o teste quando ela esvaziar.',
   limite: 'Todos os servidores estão cheios de gente agora. Tente de novo em alguns minutos.',
   indisponivel: 'Não consegui ligar o servidor da Mutação agora. Tente de novo em instantes.',
+  celular: 'Os testes ligam servidor, e o servidor só liga pelo PC, onde o CS2 roda.',
 };
 
 /** Só o Adm: os testes dos modos num lugar só, sem XP e fora do perfil. A página se atualiza sozinha a cada 15 segundos. */
@@ -33,6 +36,7 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
   const etapa = etapaDoTeste(guardado, situacao);
   const alvo = mutacao ? alvoDoServidor(mutacao, process.env.DIVERSAO_HOST) : null;
   const senha = process.env.SERVIDOR_SENHA ?? '';
+  const celular = ehCelular(await headers());
 
   return (
     <>
@@ -53,7 +57,8 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
             <p className="apoio">Uma partida 5x5 com você e 9 bots: aceite, vetos, servidor e tela final.</p>
           </div>
           <div className="acoes">
-            {pode(usuario, 'testar_competitivo') && (
+            {celular && <span className="etiqueta">Ligue pelo PC</span>}
+            {!celular && pode(usuario, 'testar_competitivo') && (
               <form action={testarCompetitivo}>
                 <button type="submit" className="botao ouro pequeno">
                   Testar o competitivo
@@ -70,7 +75,8 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
           </div>
           <div className="acoes">
             {!mutacao && <span className="etiqueta">Mutação fora do ar</span>}
-            {mutacao && etapa === 'livre' && pode(usuario, 'testar_mutacao') && (
+            {mutacao && etapa === 'livre' && celular && <span className="etiqueta">Ligue pelo PC</span>}
+            {mutacao && etapa === 'livre' && !celular && pode(usuario, 'testar_mutacao') && (
               <form action={testarMutacao}>
                 <button type="submit" className="botao ouro pequeno">
                   Testar a Mutação

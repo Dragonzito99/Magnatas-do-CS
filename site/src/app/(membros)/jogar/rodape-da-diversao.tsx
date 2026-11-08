@@ -12,6 +12,7 @@ const AVISO_DE_FALHA_MS = 2 * 60_000;
 export const ERROS_DA_DIVERSAO: Record<string, string> = {
   limite: 'Todos os servidores estão cheios de gente agora. Tente de novo em alguns minutos.',
   indisponivel: 'Este modo não pode ser ligado agora.',
+  celular: 'Pelo celular dá para ver tudo, mas o servidor só liga pelo PC, onde o CS2 roda.',
 };
 
 export function nomeDoModo(modo: ServidorDiversao['modo']) {
@@ -24,12 +25,15 @@ export function RodapeDoCartao({
   guardado,
   modo,
   agora,
+  celular = false,
 }: {
   servidor: ServidorDiversao;
   situacao: SituacaoDoServidor;
   guardado: EstadoNaTela | undefined;
   modo: string | null;
   agora: number;
+  /** Pelo celular o cartão mostra o estado, mas não o botão de ligar. */
+  celular?: boolean;
 }) {
   const estado = estadoDoCartao(servidor, situacao, guardado?.estado, guardado?.teste);
   if (estado === 'em_breve') return <span className="etiqueta">Em breve</span>;
@@ -46,6 +50,7 @@ export function RodapeDoCartao({
   }
   if (estado === 'trocando_mapa') return <span className="etiqueta">Trocando de mapa...</span>;
   if (estado === 'desligado_sob_demanda') {
+    if (celular) return <span className="etiqueta">Ligue pelo PC</span>;
     const falhou = guardado?.erro && agora - guardado.desde.getTime() < AVISO_DE_FALHA_MS;
     return (
       <form action={ligar} className="ligar-servidor">

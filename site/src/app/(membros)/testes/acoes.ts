@@ -1,8 +1,10 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
+import { ehCelular } from '@/dominio/aparelho';
 import { Bloqueado, JaOcupado } from '@/dominio/disponibilidade';
 import { LimiteDeServidores, maximoDeLigados, ServidorIndisponivel } from '@/dominio/sob-demanda';
 import { criarTesteDoCompetitivo } from '@/dominio/teste-competitivo';
@@ -13,6 +15,7 @@ import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
 /** O Adm entra numa partida sozinho contra bots e cai direto na tela dela. */
 export async function testarCompetitivo(): Promise<void> {
   const adm = await exigirAcesso('/testes');
+  if (ehCelular(await headers())) redirect('/testes?erro=celular');
   let partidaId: string;
   try {
     partidaId = (await criarTesteDoCompetitivo(obterBd(), adm)).id;
@@ -26,6 +29,7 @@ export async function testarCompetitivo(): Promise<void> {
 /** Liga a Mutação na Dust 2 com bots. A tela acompanha até o servidor ficar pronto para entrar. */
 export async function testarMutacao(): Promise<void> {
   const adm = await exigirAcesso('/testes');
+  if (ehCelular(await headers())) redirect('/testes?erro=celular');
   const diversao = diversaoDoAmbiente(controladorDoAmbiente());
   let erro: string | undefined;
   try {

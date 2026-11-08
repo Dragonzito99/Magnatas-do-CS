@@ -1,7 +1,9 @@
+import { headers } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
+import { ehCelular } from '@/dominio/aparelho';
 import { clasDosUsuarios } from '@/dominio/clas';
 import { desafiosDaSala, opcoesDeDesafio } from '@/dominio/desafios';
 import { estadoDoCartao, listarServidoresDaDiversao, mapaDoCartao } from '@/dominio/diversao';
@@ -75,6 +77,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   );
   // eslint-disable-next-line react-hooks/purity -- página do servidor: a hora é lida uma vez por pedido.
   const agora = Date.now();
+  const celular = ehCelular(await headers());
 
   const estouNoMix = mix.jogadores.some((jogador) => jogador.id === usuario.id);
   const souLider = !!minha && minha.liderId === usuario.id;
@@ -183,7 +186,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
                   <p>{mapa.regra ?? servidor.armas}</p>
                   <small className="apoio">{mapa.nome}</small>
                   <div className="rodape-jogar rodape-servidor">
-                    <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} />
+                    <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} celular={celular} />
                   </div>
                 </div>
               </article>

@@ -1,10 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
+import { ehCelular } from '@/dominio/aparelho';
 import { lerModo } from '@/dominio/diversao';
 import { adiarDesligamento, LimiteDeServidores, maximoDeLigados, pedirParaLigar, ServidorIndisponivel } from '@/dominio/sob-demanda';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
@@ -23,6 +25,7 @@ export async function ligar(dados: FormData): Promise<void> {
   const modo = lerModo(String(dados.get('modo') ?? ''));
   const servidorId = z.uuid().safeParse(dados.get('servidor'));
   if (!servidorId.success) redirect(voltar(modo, 'indisponivel'));
+  if (ehCelular(await headers())) redirect(voltar(modo, 'celular'));
   let erro: string | undefined;
   try {
     const { controle } = diversaoDoAmbiente(controladorDoAmbiente());
