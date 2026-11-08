@@ -5,6 +5,7 @@ import { auditoria, claMembros, clas, partidas, type Usuario } from '@/bd/esquem
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import {
   ClaInvalido,
+  comoErroDoCla,
   chamadosDe,
   chamarParaCla,
   claDoUsuario,
@@ -286,5 +287,37 @@ describe('leituras', () => {
     const mapa = await clasDosUsuarios(bd, [dono.id, membro.id, (await ativo()).id]);
     expect(mapa.get(membro.id)).toMatchObject({ sigla: 'MGN', cor: 'ouro' });
     expect(mapa.size).toBe(2);
+  });
+});
+
+describe('comoErroDoCla', () => {
+  async function erroDe(acao: () => Promise<unknown>): Promise<unknown> {
+    return acao().then(
+      () => null,
+      (erro: unknown) => erro,
+    );
+  }
+
+  test('nome ou sigla repetidos no mesmo instante viram a mensagem de repetido, e não uma página de erro', async () => {
+    await bd.insert(clas).values({ nome: 'Magnatas', sigla: 'MGN', cor: 'ouro', entrada: 'aberto' });
+    const nome = comoErroDoCla(await erroDe(() => bd.insert(clas).values({ nome: 'MAGNATAS', sigla: 'XYZ', cor: 'roxo', entrada: 'aberto' })));
+    const sigla = comoErroDoCla(await erroDe(() => bd.insert(clas).values({ nome: 'Outro', sigla: 'mgn', cor: 'roxo', entrada: 'aberto' })));
+    expect(nome).toBeInstanceOf(ClaInvalido);
+    expect((nome as ClaInvalido).motivo).toBe('repetido');
+    expect((sigla as ClaInvalido).motivo).toBe('repetido');
+  });
+
+  test('a mesma pessoa criando dois clãs ao mesmo tempo vira "já tem clã"', async () => {
+    const conta = await criarUsuario(bd, { estado: 'ativo' });
+    const [a] = await bd.insert(clas).values({ nome: 'Alfa', sigla: 'ALF', cor: 'ouro', entrada: 'aberto' }).returning();
+    const [b] = await bd.insert(clas).values({ nome: 'Bravo', sigla: 'BRV', cor: 'ouro', entrada: 'aberto' }).returning();
+    await bd.insert(claMembros).values({ usuarioId: conta.id, claId: a.id, cargo: 'dono' });
+    const erro = comoErroDoCla(await erroDe(() => bd.insert(claMembros).values({ usuarioId: conta.id, claId: b.id, cargo: 'dono' })));
+    expect((erro as ClaInvalido).motivo).toBe('ja-tem-cla');
+  });
+
+  test('outros erros passam como vieram', () => {
+    const outro = new Error('caiu a conexão');
+    expect(comoErroDoCla(outro)).toBe(outro);
   });
 });

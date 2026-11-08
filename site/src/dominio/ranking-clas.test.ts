@@ -119,6 +119,19 @@ describe('rankingDeClas', () => {
     await jogo(desfeito, alfa, '2026-11-01T18:00:00Z', 1);
     expect((await rankingDeClas(bd)).map((linha) => [linha.cla.sigla, linha.vitorias, linha.jogos])).toEqual([['ALF', 0, 1]]);
   });
+
+  test('clã que ainda não jogou fica no fim e sem posição, mesmo sozinho', async () => {
+    const alfa = await cla('Alfa', 'ALF');
+    const novato = await cla('Novato', 'NOV');
+    expect(await numerosDoCla(bd, novato.id)).toMatchObject({ posicao: null, vitorias: 0 });
+    const bravo = await cla('Bravo', 'BRV');
+    await jogo(bravo, alfa, '2026-11-01T18:00:00Z', 1);
+    expect((await rankingDeClas(bd)).map((linha) => [linha.posicao, linha.cla.sigla])).toEqual([
+      [1, 'BRV'],
+      [2, 'ALF'],
+      [null, 'NOV'],
+    ]);
+  });
 });
 
 describe('numeros e últimas do clã', () => {
