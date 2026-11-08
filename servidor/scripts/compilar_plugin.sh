@@ -40,3 +40,12 @@ DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_CLI_HOME="$OBRA/casa" \
   "$SDK/dotnet" build "$OBRA/codigo" -c Release -o "$OBRA/saida" -p:CssApi="$API" -v quiet --nologo
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida/MagnatasDiversao.dll" "$CASA/bin/"
 echo "Plugin compilado em $CASA/bin/MagnatasDiversao.dll."
+
+# O servidor do competitivo só tem o MatchZy. Este plugin pequeno diz ao site quem já entrou na partida, porque o
+# status do CS2 não mostra o SteamID. A pasta do competitivo não é refeita a cada início, então ele vai direto para lá.
+cp -r "$ORIGEM/plugins/MagnatasLista" "$OBRA/lista"
+DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_CLI_HOME="$OBRA/casa"   "$SDK/dotnet" build "$OBRA/lista" -c Release -o "$OBRA/saida-lista" -p:CssApi="$API" -v quiet --nologo
+PASTA_DA_LISTA=$CASA/server/game/csgo/addons/counterstrikesharp/plugins/MagnatasLista
+install -d -o "$USUARIO" -g "$USUARIO" "$PASTA_DA_LISTA"
+install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida-lista/MagnatasLista.dll" "$PASTA_DA_LISTA/"
+echo "Plugin da lista instalado no servidor do competitivo."
