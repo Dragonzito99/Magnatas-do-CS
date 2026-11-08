@@ -1404,4 +1404,4 @@ def test_teste_com_bots_chama_o_primeiro_bot_a_forca():
     # Só a cota não põe bot num servidor que acabou de acordar, como no teste do competitivo.
     bots = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ChamarBotsDoTeste"):]
     bots = bots[:bots.index(FIM_DO_METODO)]
-    assert "jogador.IsBot" in bots and 'Server.ExecuteCommand("bot_add")' in bots
+    assert "IsBot: true" in bots and 'Server.ExecuteCommand("bot_add")' in bots
