@@ -42,11 +42,7 @@ export default async function PainelAdm() {
   return (
     <>
       <Atualizar segundos={30} />
-      <div className="topo-jogar">
-        <h1>Painel ADM</h1>
-        <p className="apoio">Só a equipe vê esta área. Cada um vê as partes que o cargo permite.</p>
-      </div>
-      <TelaDoPainel usuario={usuario} atual="resumo">
+      <TelaDoPainel usuario={usuario} atual="resumo" titulo="Resumo">
         <div className="numeros-painel">
           <div className={abertos > 0 ? 'numero-painel alerta' : 'numero-painel'}>
             <span>Casos abertos</span>

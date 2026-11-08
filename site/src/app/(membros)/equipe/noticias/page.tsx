@@ -64,13 +64,16 @@ export default async function NoticiasDaEquipe({ searchParams }: { searchParams:
   const [lista, emEdicao] = await Promise.all([ultimasNoticias(bd, 50), idParaEditar ? noticiaPorId(bd, idParaEditar) : null]);
 
   return (
-    <TelaDoPainel usuario={usuario} atual="noticias">
-      <div className="topo-pagina">
-        <h1>Notícias do clube</h1>
+    <TelaDoPainel
+      usuario={usuario}
+      atual="noticias"
+      titulo="Notícias do clube"
+      extra={
         <Link href="/inicio" className="botao cinza pequeno">
           Ver a tela principal
         </Link>
-      </div>
+      }
+    >
       {erro && ERROS[erro] && (
         <p role="alert" className="aviso">
           {ERROS[erro]}

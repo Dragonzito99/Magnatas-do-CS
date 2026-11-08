@@ -138,19 +138,8 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
   if (aberto && !chave) redirect(`/olho-de-aguia?caso=${aberto.chave}${erro ? `&erro=${erro}` : ''}`);
 
   return (
-    <TelaDoPainel usuario={usuario} atual="olho">
+    <TelaDoPainel usuario={usuario} atual="olho" titulo="Olho de Águia">
       <Atualizar segundos={5} />
-      <div className="topo-pagina titulo-com-icone">
-        <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" />
-          <circle cx="12" cy="12" r="3.5" />
-          <path d="M12 1v4" />
-          <path d="M12 19v4" />
-          <path d="M1 12h4" />
-          <path d="M19 12h4" />
-        </svg>
-        <h1>Olho de Águia</h1>
-      </div>
       {erro && ERROS[erro] && (
         <p role="alert" className="aviso">
           {ERROS[erro]}

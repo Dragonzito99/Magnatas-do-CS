@@ -23,16 +23,7 @@ export default async function Equipe({ searchParams }: { searchParams: Promise<{
   const podeDarConvites = pode(usuario, 'dar_convites');
 
   return (
-    <TelaDoPainel usuario={usuario} atual="membros">
-      <div className="topo-pagina">
-        <h1>Membros e cargos</h1>
-        <span className="apoio">{membros.length} contas</span>
-        {pode(usuario, 'publicar_noticia') && (
-          <Link href="/equipe/noticias" className="botao ouro pequeno">
-            Notícias do clube
-          </Link>
-        )}
-      </div>
+    <TelaDoPainel usuario={usuario} atual="membros" titulo="Membros e cargos" extra={<span className="apoio">{membros.length} contas</span>}>
       {erro && ERROS[erro] && (
         <p role="alert" className="aviso">
           {ERROS[erro]}

@@ -4646,3 +4646,32 @@ a.cartao-destaque:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Painel ADM: a faixa com o nome da parte, igual em todas as abas */
+.topo-da-parte {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 0 10px;
+  border-bottom: 2px solid var(--roxo);
+}
+
+.topo-da-parte h2 {
+  margin: 0;
+  font: italic 700 30px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.extra-da-parte {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.painel-conteudo > .grade,
+.painel-conteudo > .painel {
+  margin: 0;
+}

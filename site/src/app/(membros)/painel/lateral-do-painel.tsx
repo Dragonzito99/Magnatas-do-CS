@@ -46,12 +46,39 @@ async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: Pa
   );
 }
 
-/** A tela de todas as partes do Painel ADM: o menu na lateral e a parte escolhida ao lado. */
-export function TelaDoPainel({ usuario, atual, children }: { usuario: Usuario; atual: ParteDoPainel; children: ReactNode }) {
+/**
+ * A tela de todas as partes do Painel ADM. O topo, o menu e a faixa com o nome da parte ficam sempre no mesmo lugar,
+ * para trocar de aba mudar só o conteúdo ao lado.
+ */
+export function TelaDoPainel({
+  usuario,
+  atual,
+  titulo,
+  extra,
+  children,
+}: {
+  usuario: Usuario;
+  atual: ParteDoPainel;
+  titulo: string;
+  extra?: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <div className="painel-tela">
-      <LateralDoPainel usuario={usuario} atual={atual} />
-      <div className="painel-conteudo">{children}</div>
-    </div>
+    <>
+      <div className="topo-jogar">
+        <h1>Painel ADM</h1>
+        <p className="apoio">Só a equipe vê esta área. Cada um vê as partes que o cargo permite.</p>
+      </div>
+      <div className="painel-tela">
+        <LateralDoPainel usuario={usuario} atual={atual} />
+        <div className="painel-conteudo">
+          <div className="topo-da-parte">
+            <h2>{titulo}</h2>
+            {extra && <div className="extra-da-parte">{extra}</div>}
+          </div>
+          {children}
+        </div>
+      </div>
+    </>
   );
 }
