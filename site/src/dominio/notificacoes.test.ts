@@ -1,7 +1,9 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, chamados, desafios, partidaJogadores, partidas, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, chamados, claMembros, clas, desafios, partidaJogadores, partidas, salaMembros, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
+import { chamarParaCla, criarCla, pedirParaEntrar } from './clas';
 import { contarCasos, denunciar } from './denuncias';
 import { desafiar } from './desafios';
 import { casosDe, notificacoesDe } from './notificacoes';
@@ -126,4 +128,36 @@ test('GM com partida pronta vê as duas coisas', async () => {
   await bd.insert(banimentos).values({ usuarioId: jogador.id, motivo: 'z', propostoPor: gm.id });
   const tipos = (await notificacoesDe(bd, gm, AGORA)).map((item) => item.tipo);
   expect(tipos).toEqual(['partida', 'propostas']);
+});
+
+// Clãs: desafio de clã, chamado para o clã e pedidos para quem cuida do clã.
+async function salaDoCla(claId: string, nome: string, cargo: 'dono' | 'capitao') {
+  const sala = await salaCompleta(nome);
+  const membros = await bd.select().from(salaMembros).where(eq(salaMembros.salaId, sala.id));
+  for (const linha of membros) await bd.insert(claMembros).values({ usuarioId: linha.usuarioId, claId, cargo: linha.usuarioId === sala.lider.id ? cargo : 'membro' });
+  return sala;
+}
+
+test('desafio de clã aparece com a sigla e o formato; o de treino, como treino', async () => {
+  const [alfa] = await bd.insert(clas).values({ nome: 'Magnatas', sigla: 'MGN', cor: 'ouro', entrada: 'aberto' }).returning();
+  const [bravo] = await bd.insert(clas).values({ nome: 'Forja', sigla: 'FRG', cor: 'roxo', entrada: 'aberto' }).returning();
+  const origem = await salaDoCla(alfa.id, 'Alfa', 'dono');
+  const alvo = await salaDoCla(bravo.id, 'Bravo', 'capitao');
+  await desafiar(bd, origem.lider, alvo.id, AGORA, { formato: 'cla', mapas: 3 });
+  expect(await notificacoesDe(bd, alvo.lider, AGORA)).toEqual([
+    { tipo: 'desafio', texto: 'O clã [MGN] desafiou vocês para uma MD3', href: '/jogar?modo=competitivo', quantidade: 1 },
+  ]);
+  const treino = await salaDoCla(alfa.id, 'Charlie', 'capitao');
+  const outraDoClaAlfa = await salaDoCla(alfa.id, 'Delta', 'capitao');
+  await desafiar(bd, treino.lider, outraDoClaAlfa.id, AGORA, { formato: 'treino', mapas: 1 });
+  expect((await notificacoesDe(bd, outraDoClaAlfa.lider, AGORA))[0].texto).toBe('Seu clã chamou vocês para um treino MD1');
+});
+
+test('quem foi chamado para um clã vê o aviso, e o dono vê os pedidos para entrar', async () => {
+  const dono = await criarUsuario(bd, { estado: 'ativo' });
+  const cla = await criarCla(bd, dono, { nome: 'Magnatas', sigla: 'MGN', cor: 'ouro', entrada: 'convite', descricao: '' }, AGORA);
+  await chamarParaCla(bd, dono, cla.id, jogador.id, AGORA);
+  expect(await notificacoesDe(bd, jogador, AGORA)).toEqual([{ tipo: 'cla', texto: 'O clã [MGN] chamou você', href: '/clas', quantidade: 1 }]);
+  for (let i = 0; i < 2; i += 1) await pedirParaEntrar(bd, await criarUsuario(bd, { estado: 'ativo' }), cla.id, AGORA);
+  expect(await notificacoesDe(bd, dono, AGORA)).toEqual([{ tipo: 'cla', texto: '2 pedidos para entrar no clã', href: '/clas', quantidade: 2 }]);
 });
