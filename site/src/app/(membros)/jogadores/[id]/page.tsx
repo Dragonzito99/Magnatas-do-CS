@@ -7,7 +7,7 @@ import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { fotoDoMapa } from '@/dominio/diversao';
 import { elogiosDoJogador } from '@/dominio/elogios';
-import { fichaDoJogador, ultimasPartidasDoPerfil } from '@/dominio/ficha';
+import { fichaDoJogador, kdDe, ultimasPartidasDoPerfil } from '@/dominio/ficha';
 import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { PATENTES, patenteDe } from '@/dominio/xp';
@@ -165,8 +165,8 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
                     <th scope="col" className="so-computador">
                       Placar
                     </th>
-                    <th scope="col" title="Abates e mortes">
-                      K/M
+                    <th scope="col" title="Abates divididos pelas mortes">
+                      KDR
                     </th>
                     <th scope="col">XP</th>
                   </tr>
@@ -184,7 +184,7 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
                       </td>
                       <td className="so-computador">{linha.placar ?? '—'}</td>
                       <td>
-                        {linha.abates}/{linha.mortes ?? '—'}
+                        {linha.mortes === null ? '—' : kdDe(linha.abates, linha.mortes).toFixed(2)}
                       </td>
                       <td>
                         <b className="xp-ganho">+{numero.format(linha.xp)}</b>
