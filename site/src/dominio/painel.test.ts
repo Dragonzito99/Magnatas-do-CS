@@ -1,8 +1,8 @@
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { estadosDaDiversao, partidas, servidoresDiversao } from '@/bd/esquema';
+import { estadosDaDiversao, partidas, quedasDoJogo, servidoresDiversao } from '@/bd/esquema';
 import { criarBancoDeTeste } from '@/bd/teste';
-import { partidasDoDia, servidoresDoPainel } from './painel';
+import { partidasDoDia, quedasDoPainel, servidoresDoPainel } from './painel';
 
 let bd: Bd;
 
@@ -39,4 +39,16 @@ test('servidoresDoPainel lista os servidores ativos da Diversão com o modo, o m
     { id: equipe.id, modo: 'Equipe x Equipe', mapa: 'egypt', estado: 'desligado' },
     { id: fantasma.id, modo: 'Fantasma', mapa: 'laboratory', estado: 'ligado' },
   ]);
+});
+
+test('quedasDoPainel mostra as quedas do jogo da mais nova para a mais antiga, até o limite', async () => {
+  // O banco de teste já vem com as quedas da migração: começa do zero.
+  await bd.delete(quedasDoJogo);
+  await bd.insert(quedasDoJogo).values([
+    { quando: new Date('2026-11-08T20:29:46Z'), motivo: 'O CS2 fechou', onde: 'Mutação com bots' },
+    { quando: new Date('2026-11-08T22:06:02Z'), motivo: 'O CS2 fechou', onde: 'Mutação' },
+    { quando: new Date('2026-11-07T09:16:01Z'), motivo: 'O CS2 fechou', onde: 'Dust 2' },
+  ]);
+  const quedas = await quedasDoPainel(bd, 2);
+  expect(quedas.map((queda) => queda.onde)).toEqual(['Mutação', 'Mutação com bots']);
 });

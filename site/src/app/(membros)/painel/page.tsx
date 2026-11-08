@@ -8,7 +8,7 @@ import { contagemDeCasos, membrosOnline } from '@/dominio/denuncias';
 import { nomeDoMapaConhecido } from '@/dominio/diversao';
 import { listarMembros } from '@/dominio/equipe';
 import { chamadosEmAndamento, listarCasosDeDenuncia } from '@/dominio/olho-de-aguia';
-import { partidasDoDia, servidoresDoPainel } from '@/dominio/painel';
+import { partidasDoDia, quedasDoPainel, servidoresDoPainel } from '@/dominio/painel';
 import { NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
@@ -16,6 +16,7 @@ import { atender } from '../olho-de-aguia/acoes';
 import { TelaDoPainel } from './lateral-do-painel';
 
 const CASOS_NO_RESUMO = 4;
+const horaDaQueda = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 const NOME_DO_ESTADO_DO_SERVIDOR = { ligado: 'Ligado', ligando: 'Ligando', desligado: 'Desligado' } as const;
 
 /** O Resumo do Painel ADM, como no rascunho: os números do clube, os casos, os chamados, os servidores e a equipe. */
@@ -25,7 +26,8 @@ export default async function PainelAdm() {
 
   const bd = obterBd();
   const moderar = pode(usuario, 'moderar');
-  const [contagem, membros, online, hoje, servidores, casos, propostas, chamados] = await Promise.all([
+  const verQuedas = pode(usuario, 'ver_quedas');
+  const [contagem, membros, online, hoje, servidores, casos, propostas, chamados, quedas] = await Promise.all([
     moderar ? contagemDeCasos(bd, usuario) : null,
     listarMembros(bd),
     membrosOnline(bd),
@@ -34,6 +36,7 @@ export default async function PainelAdm() {
     moderar ? listarCasosDeDenuncia(bd, usuario) : [],
     moderar ? listarBanimentosAbertos(bd, usuario) : [],
     moderar ? chamadosEmAndamento(bd, usuario) : [],
+    verQuedas ? quedasDoPainel(bd) : [],
   ]);
   const ativos = membros.filter((membro) => membro.estado === 'ativo').length;
   const abertos = contagem ? contagem.chamados + contagem.denuncias + contagem.propostas : 0;
@@ -148,6 +151,28 @@ export default async function PainelAdm() {
             <p className="apoio nota-do-painel">Os servidores da Diversão ligam quando alguém pede para jogar.</p>
           </section>
         </div>
+
+        {verQuedas && (
+          <section className="painel">
+            <div className="cabeca-painel">
+              <h2>Quedas do jogo</h2>
+            </div>
+            {quedas.length === 0 && <p className="vazio">Nenhuma queda registrada.</p>}
+            {quedas.map((queda) => (
+              <div className="linha-caso" key={queda.id}>
+                <div>
+                  {queda.motivo}
+                  <small>
+                    {horaDaQueda.format(queda.quando)} · {queda.onde}
+                    {queda.observacao ? ` · ${queda.observacao}` : ''}
+                  </small>
+                </div>
+                <span className="selo-caso vermelho">Queda</span>
+              </div>
+            ))}
+            <p className="apoio nota-do-painel">Só o resumo fica aqui. O arquivo que o CS2 deixa a cada queda tem de 5 a 10 GB e é apagado do PC.</p>
+          </section>
+        )}
 
         <section className="painel">
           <div className="cabeca-painel">

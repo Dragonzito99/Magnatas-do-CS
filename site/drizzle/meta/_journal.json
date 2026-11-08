@@ -176,6 +176,13 @@
       "when": 1794175034015,
       "tag": "0024_silent_village_na_mutacao",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794180468264,
+      "tag": "0025_quedas_do_jogo",
+      "breakpoints": true
     }
   ]
 }

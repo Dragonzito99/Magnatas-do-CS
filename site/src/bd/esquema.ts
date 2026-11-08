@@ -99,6 +99,18 @@ export const auditoria = pgTable('auditoria', {
   criadoEm: criadoEm(),
 });
 
+/** As quedas do CS2 dos membros, em resumo: o arquivo de diagnóstico que o jogo deixa tem 5 a 10 GB e é apagado. */
+export const quedasDoJogo = pgTable('quedas_do_jogo', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  quando: timestamp('quando', { withTimezone: true }).notNull(),
+  motivo: text('motivo').notNull(),
+  onde: text('onde').notNull(),
+  observacao: text('observacao'),
+  criadoEm: criadoEm(),
+});
+
+export type QuedaDoJogo = typeof quedasDoJogo.$inferSelect;
+
 export const tipoPartida = pgEnum('tipo_partida', ['desafio', 'mix', 'cla', 'treino', 'teste']);
 export const motivoDoCancelamento = pgEnum('motivo_do_cancelamento', ['aceite', 'equipe', 'abandono']);
 export const estadoPartida = pgEnum('estado_partida', [

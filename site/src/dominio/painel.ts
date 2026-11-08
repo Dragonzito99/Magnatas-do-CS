@@ -1,6 +1,6 @@
-import { and, asc, count, eq, gte, lt, ne } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, lt, ne } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { partidas, servidoresDiversao, type EstadoDaDiversao } from '@/bd/esquema';
+import { partidas, quedasDoJogo, servidoresDiversao, type EstadoDaDiversao, type QuedaDoJogo } from '@/bd/esquema';
 import { MODOS_DE_DIVERSAO } from './diversao';
 import { periodoDeBrasilia } from './mvps';
 import { estadosDaTela } from './sob-demanda';
@@ -30,4 +30,9 @@ export async function servidoresDoPainel(bd: Bd): Promise<ServidorDoPainel[]> {
     mapa: servidor.mapa,
     estado: estados.get(servidor.id)?.estado ?? 'desligado',
   }));
+}
+
+/** As últimas quedas do CS2, para o Adm acompanhar se uma correção resolveu. */
+export async function quedasDoPainel(bd: Bd, limite = 8): Promise<QuedaDoJogo[]> {
+  return bd.select().from(quedasDoJogo).orderBy(desc(quedasDoJogo.quando)).limit(limite);
 }
