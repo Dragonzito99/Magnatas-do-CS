@@ -595,6 +595,8 @@ public partial class ModoDeDiversao
     {
         // Com "fill", a cota conta as pessoas: 1 pessoa e 9 bots.
         foreach (var comando in new[] { "bot_difficulty 1", "bot_join_team any", "bot_quota_mode fill", "bot_quota 10" }) Server.ExecuteCommand(comando);
+        // Num servidor que acabou de acordar, só a cota não põe bot nenhum: o primeiro é chamado e a cota completa o resto.
+        if (!Utilities.GetPlayers().Any(jogador => jogador is { IsValid: true, IsBot: true, IsHLTV: false })) Server.ExecuteCommand("bot_add");
     }
 
     [ConsoleCommand("magnatas_mutacao_ver", "Mostra humanos, mutantes e a rodada, para conferir o modo")]
