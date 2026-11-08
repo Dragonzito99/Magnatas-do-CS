@@ -942,7 +942,7 @@ def test_mutacao_no_mapa_certo_e_no_modo_personalizado():
     campos = conf("mutacao")
     assert campos["PORTA"] == "27020"
     assert campos["VAGAS"] == "16"
-    assert campos["OFICINA"] == "3223106683"
+    assert campos["OFICINA"] == "3222984182"
     assert campos["GAME_TYPE"] == "3"
     assert campos["GAME_MODE"] == "0"
     assert campos["REGRAS_DO_JOGO"] == "gamemode_custom_server.cfg"
@@ -1241,7 +1241,8 @@ def test_sem_o_zumbi_no_servidor_o_mutante_usa_um_boneco_do_jogo():
 def test_mutacao_roda_biochemical_hotel_e_silent_village():
     rotacao = conf("mutacao")["ROTACAO"].split(",")
     assert rotacao[0] == conf("mutacao")["OFICINA"]
-    assert rotacao == ["3223106683", "3222984182"]
+    # O dono pediu o Silent Village primeiro, por enquanto: é o mapa que abre ao ligar.
+    assert rotacao == ["3222984182", "3223106683"]
 
 
 ALASKA = RAIZ / "plugins" / "MagnatasDiversao" / "Alaska.cs"
