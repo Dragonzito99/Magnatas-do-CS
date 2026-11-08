@@ -7,6 +7,7 @@ import { obterBd } from '@/bd/conexao';
 import { LIMITES_DA_NOTICIA, noticiaPorId, ultimasNoticias, type NoticiaComAutor } from '@/dominio/noticias';
 import { BotaoConfirmar } from '../../botao-confirmar';
 import { apagar, publicar, salvar } from './acoes';
+import { TelaDoPainel } from '../../painel/lateral-do-painel';
 
 const ERROS: Record<string, string> = {
   invalida: `A notícia precisa de título (até ${LIMITES_DA_NOTICIA.titulo} caracteres) e texto (até ${LIMITES_DA_NOTICIA.texto}). A imagem, se tiver, é um caminho do próprio site, como /mapas/luxville.webp.`,
@@ -63,7 +64,7 @@ export default async function NoticiasDaEquipe({ searchParams }: { searchParams:
   const [lista, emEdicao] = await Promise.all([ultimasNoticias(bd, 50), idParaEditar ? noticiaPorId(bd, idParaEditar) : null]);
 
   return (
-    <>
+    <TelaDoPainel usuario={usuario} atual="noticias">
       <div className="topo-pagina">
         <h1>Notícias do clube</h1>
         <Link href="/inicio" className="botao cinza pequeno">
@@ -115,6 +116,6 @@ export default async function NoticiasDaEquipe({ searchParams }: { searchParams:
           <Formulario key={emEdicao?.id ?? 'nova'} noticia={emEdicao} />
         </section>
       </div>
-    </>
+    </TelaDoPainel>
   );
 }

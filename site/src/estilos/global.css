@@ -4480,3 +4480,169 @@ a.cartao-destaque:hover {
     order: -1;
   }
 }
+
+/* Painel ADM como no rascunho: menu na lateral, quatro números e quadros com linhas de caso */
+.painel-tela {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.painel-conteudo {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.painel-lado {
+  position: sticky;
+  top: 16px;
+  padding: 8px 0;
+  border-radius: 6px;
+  background: var(--painel);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.painel-lado small {
+  display: block;
+  padding: 12px 18px 4px;
+  color: var(--tinta-2);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.painel-lado a,
+.painel-lado .breve {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 18px;
+  color: var(--tinta);
+  font: italic 600 18px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.painel-lado a:hover,
+.painel-lado a.ativo {
+  background: var(--roxo);
+}
+
+.painel-lado a b {
+  padding: 0 7px;
+  border-radius: 9px;
+  color: #fff;
+  background: #ef4444;
+  font: normal 700 11px/1.6 Inter, sans-serif;
+}
+
+.painel-lado .breve {
+  color: var(--tinta-2);
+  opacity: 0.6;
+}
+
+.painel-conteudo .numeros-painel {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.painel-conteudo .cabeca-painel {
+  border-bottom: 1px solid var(--linha);
+}
+
+.painel-conteudo .cabeca-painel h2 {
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.painel-conteudo .cabeca-painel a {
+  color: var(--ouro);
+  font-size: 13px;
+}
+
+.linha-caso {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--roxo-fraco);
+  font-size: 14px;
+}
+
+.linha-caso:last-child {
+  border-bottom: 0;
+}
+
+.linha-caso small {
+  display: block;
+  color: var(--tinta-2);
+}
+
+.linha-caso a:not(.botao) {
+  color: var(--tinta);
+}
+
+.selo-caso {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(168, 85, 247, 0.2);
+  font-size: 12px;
+}
+
+.selo-caso.vermelho {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.selo-caso.verde {
+  color: var(--verde);
+  background: rgba(74, 222, 128, 0.15);
+}
+
+.colunas-painel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.nota-do-painel {
+  margin: 0;
+  padding: 10px 20px 14px;
+  font-size: 12px;
+}
+
+.ancora-do-painel {
+  scroll-margin-top: 16px;
+}
+
+@media (max-width: 1000px) {
+  .painel-tela,
+  .colunas-painel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .painel-lado {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+  }
+
+  .painel-lado small,
+  .painel-lado .breve {
+    display: none;
+  }
+
+  .painel-lado a {
+    padding: 8px 12px;
+  }
+
+  .painel-conteudo .numeros-painel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

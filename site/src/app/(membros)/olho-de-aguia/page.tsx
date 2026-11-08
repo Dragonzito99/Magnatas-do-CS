@@ -10,6 +10,7 @@ import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
 import { BotaoConfirmar } from '../botao-confirmar';
 import { atender, encerrar, proporDoCaso, suspenderDoCaso } from './acoes';
+import { TelaDoPainel } from '../painel/lateral-do-painel';
 import { AssistirNoCs2 } from './assistir-no-cs2';
 
 const ERROS: Record<string, string> = {
@@ -137,7 +138,7 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
   if (aberto && !chave) redirect(`/olho-de-aguia?caso=${aberto.chave}${erro ? `&erro=${erro}` : ''}`);
 
   return (
-    <>
+    <TelaDoPainel usuario={usuario} atual="olho">
       <Atualizar segundos={5} />
       <div className="topo-pagina titulo-com-icone">
         <svg className="icone" viewBox="0 0 24 24" aria-hidden="true">
@@ -155,6 +156,7 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
           {ERROS[erro]}
         </p>
       )}
+      <div id="chamados" className="ancora-do-painel" />
       {chamados.map((chamado) => (
         <div className="chamado-agora" key={chamado.id}>
           <span>
@@ -231,6 +233,6 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
           </div>
         ))}
       </section>
-    </>
+    </TelaDoPainel>
   );
 }

@@ -6,6 +6,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { listarMembros } from '@/dominio/equipe';
 import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { concederConvites, trocarPapel } from './acoes';
+import { TelaDoPainel } from '../painel/lateral-do-painel';
 
 const ERROS: Record<string, string> = {
   'ultimo-adm': 'A plataforma precisa ter pelo menos um Adm ativo.',
@@ -22,9 +23,9 @@ export default async function Equipe({ searchParams }: { searchParams: Promise<{
   const podeDarConvites = pode(usuario, 'dar_convites');
 
   return (
-    <>
+    <TelaDoPainel usuario={usuario} atual="membros">
       <div className="topo-pagina">
-        <h1>Equipe</h1>
+        <h1>Membros e cargos</h1>
         <span className="apoio">{membros.length} contas</span>
         {pode(usuario, 'publicar_noticia') && (
           <Link href="/equipe/noticias" className="botao ouro pequeno">
@@ -87,6 +88,6 @@ export default async function Equipe({ searchParams }: { searchParams: Promise<{
           </div>
         ))}
       </section>
-    </>
+    </TelaDoPainel>
   );
 }
