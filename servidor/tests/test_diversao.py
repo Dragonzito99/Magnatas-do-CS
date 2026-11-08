@@ -1400,8 +1400,10 @@ def test_teste_com_bots_nao_vale_xp():
     assert fecha.index("if (testeComBots) return;") < fecha.index("Config.SiteUrl")
 
 
-def test_teste_com_bots_chama_o_primeiro_bot_a_forca():
-    # Só a cota não põe bot num servidor que acabou de acordar, como no teste do competitivo.
+def test_teste_com_bots_nao_forca_bot_e_deixa_entrar_antes_da_pessoa():
+    # Forçar um bot enquanto a pessoa ainda carregava fez o jogo tirar e recriar bots sem parar, e o servidor caiu.
+    # Com os bots liberados antes da pessoa escolher o time, a cota sozinha completa o servidor.
     bots = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ChamarBotsDoTeste"):]
     bots = bots[:bots.index(FIM_DO_METODO)]
-    assert "IsBot: true" in bots and 'Server.ExecuteCommand("bot_add")' in bots
+    assert "bot_join_after_player 0" in bots
+    assert "bot_add" not in bots

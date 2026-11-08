@@ -594,9 +594,9 @@ public partial class ModoDeDiversao
     private static void ChamarBotsDoTeste()
     {
         // Com "fill", a cota conta as pessoas: 1 pessoa e 9 bots.
-        foreach (var comando in new[] { "bot_difficulty 1", "bot_join_team any", "bot_quota_mode fill", "bot_quota 10" }) Server.ExecuteCommand(comando);
-        // Num servidor que acabou de acordar, só a cota não põe bot nenhum: o primeiro é chamado e a cota completa o resto.
-        if (!Utilities.GetPlayers().Any(jogador => jogador is { IsValid: true, IsBot: true, IsHLTV: false })) Server.ExecuteCommand("bot_add");
+        // Os bots entram sem esperar a pessoa escolher o time. Forçar um bot enquanto ela carregava fez o jogo tirar e
+        // recriar bots sem parar, e o servidor caiu.
+        foreach (var comando in new[] { "bot_difficulty 1", "bot_join_team any", "bot_join_after_player 0", "bot_quota_mode fill", "bot_quota 10" }) Server.ExecuteCommand(comando);
     }
 
     [ConsoleCommand("magnatas_mutacao_ver", "Mostra humanos, mutantes e a rodada, para conferir o modo")]
