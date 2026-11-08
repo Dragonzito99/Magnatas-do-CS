@@ -45,6 +45,29 @@ function pessoasDaLista(resposta: string): string[] {
   return lista[1].match(/7656\d{13}/g) ?? [];
 }
 
+/** Lê o texto em vez de converter o JSON, porque um SteamID em forma de número perderia os últimos dígitos. */
+function estadoDoStatus(resposta: string): EstadoDoServidor {
+  if (!resposta.includes('"server"')) throw new Error('O servidor não mandou a lista de jogadores.');
+  const contas = [...resposta.matchAll(/"steamid64"\s*:\s*"?(7656\d{13})"?/g)].map((achado) => achado[1]);
+  const mapa = resposta.match(/"map"\s*:\s*"([A-Za-z0-9_-]{1,64})"/)?.[1];
+  return mapa ? { contas, mapa } : { contas };
+}
+
+/** Os bots de verdade no `status_json`, sem a SourceTV, que também aparece como bot. */
+function botsDoStatus(resposta: string): number {
+  return [...resposta.matchAll(/"bot"\s*:\s*true\s*,\s*"name"\s*:\s*"([^"]*)"/g)].filter((achado) => achado[1] !== 'SourceTV').length;
+}
+
+/**
+ * Os servidores da Diversão têm o plugin, que lista todas as vagas. O do competitivo só tem o MatchZy: lá a lista vem
+ * do `status_json`, que basta para as 10 vagas de uma partida.
+ */
+async function perguntarEstado(conexao: Conexao): Promise<EstadoDoServidor> {
+  const resposta = await conexao.send('magnatas_jogadores');
+  if (/magnatas_jogadores=\[/.test(resposta)) return estadoDaResposta(resposta);
+  return estadoDoStatus(await conexao.send('status_json'));
+}
+
 /** A varredura e as punições esperam esta resposta, então um servidor travado não pode prender ninguém. */
 function comPrazo<T>(promessa: Promise<T>, prazoMs: number): Promise<T> {
   return new Promise((resolver, rejeitar) => {
@@ -90,11 +113,16 @@ export function controladorRcon(
     async expulsar(servidor, steamid64) {
       await comConexao(servidor, (conexao) => conexao.send(comandoDeExpulsar(steamid64)));
     },
-    jogadoresConectados: (servidor) => comConexao(servidor, async (conexao) => pessoasDaLista(await conexao.send('magnatas_jogadores'))),
-    estadoDoServidor: (servidor) => comConexao(servidor, async (conexao) => estadoDaResposta(await conexao.send('magnatas_jogadores'))),
+    jogadoresConectados: (servidor) => comConexao(servidor, async (conexao) => (await perguntarEstado(conexao)).contas),
+    estadoDoServidor: (servidor) => comConexao(servidor, perguntarEstado),
     async chamarBots(servidor, comecar) {
       await comConexao(servidor, async (conexao) => {
         for (const comando of COMANDOS_DOS_BOTS) await conexao.send(comando);
+        // Só a cota não basta num servidor sem bot nenhum: o primeiro precisa ser chamado, e a cota volta para 10.
+        if (botsDoStatus(await conexao.send('status_json')) === 0) {
+          await conexao.send('bot_add_ct');
+          await conexao.send('bot_quota 10');
+        }
         if (comecar) await conexao.send('css_start');
       });
     },

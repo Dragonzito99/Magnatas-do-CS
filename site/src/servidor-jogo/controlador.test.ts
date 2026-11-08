@@ -83,7 +83,27 @@ test('jogadores conectados aceita texto antes da lista e servidor vazio', async 
   expect(await controladorRcon(AMBIENTE, async () => conexao).jogadoresConectados(SERVIDOR)).toEqual([]);
 });
 
-test('servidor sem o plugin dá erro, e não uma lista vazia', async () => {
+const STATUS_JSON = `{
+  "server":
+  {
+    "map": "de_anubis",
+    "clients":
+    [
+      { "steamid64": "90071996842377219", "steamid": "[A:1:3:1]", "bot": true, "name": "SourceTV" },
+      { "steamid64": "0", "steamid": "[I:0:0]", "bot": false, "name": "" },
+      { "steamid64": "76561198000000001", "steamid": "[U:1:39734273]", "bot": false, "name": "Fulano" }
+    ],
+    "steamid64": "85568392936940659"
+  }
+}`;
+
+test('servidor do competitivo, sem o plugin, responde pelo status_json, sem bots, sem quem ainda conecta e com o mapa', async () => {
+  const { conexao, enviados } = conexaoFalsa(["Unknown command 'magnatas_jogadores'", STATUS_JSON]);
+  expect(await controladorRcon(AMBIENTE, async () => conexao).estadoDoServidor(SERVIDOR)).toEqual({ contas: ['76561198000000001'], mapa: 'de_anubis' });
+  expect(enviados).toEqual(['magnatas_jogadores', 'status_json']);
+});
+
+test('servidor que não manda nem a lista nem o status dá erro, e não uma lista vazia', async () => {
   const { conexao } = conexaoFalsa("Unknown command 'magnatas_jogadores'");
   await expect(controladorRcon(AMBIENTE, async () => conexao).jogadoresConectados(SERVIDOR)).rejects.toThrow(/lista/);
 });
@@ -150,4 +170,18 @@ test('o mapa atual vem junto da lista do plugin', async () => {
 test('sem o mapa na resposta, o estado vem só com as contas', async () => {
   const { conexao } = conexaoFalsa('magnatas_jogadores=[76561198000000001]');
   expect(await controladorRcon(AMBIENTE, async () => conexao).estadoDoServidor(SERVIDOR)).toEqual({ contas: ['76561198000000001'] });
+});
+
+test('chamar os bots completa os times e, se nenhum bot entrou ainda, puxa o primeiro para o servidor começar a encher', async () => {
+  const { conexao, enviados } = conexaoFalsa(['', '', '', STATUS_JSON]);
+  await controladorRcon(AMBIENTE, async () => conexao).chamarBots(SERVIDOR, true);
+  expect(enviados).toEqual(['mp_autoteambalance 1', 'bot_quota_mode fill', 'bot_quota 10', 'status_json', 'bot_add_ct', 'bot_quota 10', 'css_start']);
+});
+
+test('com bots já no servidor, chamar os bots só confirma a quantidade', async () => {
+  const darryl = '{ "steamid64": "0", "steamid": "[I:0:0]", "bot": true, "name": "Darryl" }';
+  const comBot = STATUS_JSON.replace('"name": "Fulano" }', `"name": "Fulano" }, ${darryl}`);
+  const { conexao, enviados } = conexaoFalsa(['', '', '', comBot]);
+  await controladorRcon(AMBIENTE, async () => conexao).chamarBots(SERVIDOR, false);
+  expect(enviados).toEqual(['mp_autoteambalance 1', 'bot_quota_mode fill', 'bot_quota 10', 'status_json']);
 });
