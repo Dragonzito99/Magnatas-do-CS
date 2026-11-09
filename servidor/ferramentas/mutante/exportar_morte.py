@@ -14,9 +14,10 @@ PASTA = os.environ.get('MUTANTE_PASTA', 'models/magnatas/mutante')
 DESTINO = os.path.join(r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons', ADDON, *PASTA.split('/'), 'morte', 'guerreiro_morte.fbx')
 # Mesma altura do boneco do mutante no jogo (75 polegadas).
 ALTURA = 75.0
-# O FBX sai em centímetros e o compilador converte para polegadas, a unidade do jogo: 39,37 por metro.
-# (A medida de 366,5 vinha de uma conferência errada e deixou a queda da v1 com uns 10% do tamanho.)
-UNIDADES_POR_METRO = 39.37
+# O FBX sai em centímetros e o compilador lê cada centímetro como uma unidade do jogo, sem converter: 100 por metro.
+# Conferido nos limites do modelo compilado (m_vMaxBounds): com 39,37 a queda saiu com 190,5 de altura, 2,54 vezes
+# o boneco do jogador (74); com 366,5 a da v1 saiu pequena.
+UNIDADES_POR_METRO = 100.0
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.fbx(filepath=ORIGEM)
