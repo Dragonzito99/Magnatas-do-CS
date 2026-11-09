@@ -1522,3 +1522,10 @@ def test_o_fim_da_rodada_nao_acontece_no_mesmo_instante_da_infeccao():
     assert "ConferirFimDaRodada();" not in transforma
     assert "AddTimer(EsperaParaConferirOFim, ConferirFimDaRodada)" in transforma
     assert "EsperaParaConferirOFim = 0.5f;" in CODIGO_DA_MUTACAO
+
+
+def test_o_adm_desliga_o_zumbi_so_pelo_console_do_servidor():
+    # Para testar com bots se a queda vem do boneco do zumbi.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_mutacao_sem_zumbi"'):][:700]
+    assert "CommandUsage.SERVER_ONLY" in trecho
+    assert "zumbiNoServidor = false" in trecho

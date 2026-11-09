@@ -711,6 +711,15 @@ public partial class ModoDeDiversao
         foreach (var comando in new[] { "bot_difficulty 1", "bot_join_team any", "bot_join_after_player 0", "bot_quota_mode fill", "bot_quota 10" }) Server.ExecuteCommand(comando);
     }
 
+    /// <summary>Só para teste: o mutante fica com o próprio boneco até o próximo mapa, para ver se a queda vem do zumbi.</summary>
+    [ConsoleCommand("magnatas_mutacao_sem_zumbi", "Teste: mutante sem o boneco do zumbi até trocar de mapa")]
+    [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void DesligarZumbiParaTeste(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        zumbiNoServidor = false;
+        comando.ReplyToCommand("zumbi=False");
+    }
+
     [ConsoleCommand("magnatas_mutacao_ver", "Mostra humanos, mutantes e a rodada, para conferir o modo")]
     [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
     public void VerMutacao(CCSPlayerController? chamador, CommandInfo comando)
