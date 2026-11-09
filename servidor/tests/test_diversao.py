@@ -1235,7 +1235,8 @@ def test_sem_o_zumbi_no_servidor_o_mutante_nao_troca_de_boneco():
     assert "ModeloDeReserva" not in CODIGO_DA_MUTACAO
     confere = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("bool ZumbiNoServidor"):]
     confere = confere[:confere.index(FIM_DO_METODO)]
-    assert '"models/magnatas/mutante"' in confere and "_dir.vpk" in confere
+    assert 'NoPacote("models/magnatas/mutante")' in confere
+    assert "_dir.vpk" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("static bool NoPacote("):][:600]
     aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     aplica = aplica[:aplica.index(FIM_DO_METODO)]
     assert "if (zumbi) corpo.SetModel(ModeloDoMutante);" in aplica
@@ -1569,3 +1570,29 @@ def test_a_super_negev_entra_depois_que_o_fuzil_saiu():
     assert entrega.index("arma.Remove()") < entrega.index("Server.NextFrame(") < entrega.index("GiveNamedItem(ArmaEspecial)")
     proximo = entrega[entrega.index("Server.NextFrame("):]
     assert "portadorDaSuperArma" in proximo and "PawnIsAlive: true" in proximo
+
+
+def test_mutante_que_morre_cai_com_a_animacao_do_guerreiro():
+    assert 'ModeloDaMorte = "models/magnatas/mutante/morte/guerreiro_morte.vmdl";' in CODIGO_DA_MUTACAO
+    precache = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("OnServerPrecacheResources"):][:300]
+    assert "AddResource(ModeloDaMorte)" in precache
+    morte = metodo_da_mutacao("HookResult AoMorrerNaMutacao")
+    # Só quem já era mutante: humano que morre de queda vira mutante sem a cena.
+    assert "var eraMutante = jogador.Team == CsTeam.Terrorist;" in morte
+    assert "if (eraMutante) MostrarQuedaDoMutante(jogador);" in morte
+
+
+def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
+    cena = metodo_da_mutacao("void MostrarQuedaDoMutante")
+    assert "if (!MorteNoServidor()) return;" in cena
+    assert 'CreateEntityByName<CDynamicProp>("prop_dynamic")' in cena
+    assert "SetModel(ModeloDaMorte)" in cena
+    assert 'AcceptInput("SetAnimation", value: "morte")' in cena
+    assert "Color.FromArgb(0," in cena and "m_clrRender" in cena
+    assert "MudarTamanho(queda, NivelDe(jogador).Tamanho)" in cena
+    assert "AddTimer(SegundosDaCenaDaMorte" in cena and ".Remove()" in cena
+
+
+def test_a_cena_da_morte_so_aparece_quando_o_pacote_do_servidor_tem_o_modelo():
+    assert 'NoPacote("models/magnatas/mutante/morte")' in CODIGO_DA_MUTACAO
+    assert 'NoPacote("models/magnatas/mutante")' in CODIGO_DA_MUTACAO

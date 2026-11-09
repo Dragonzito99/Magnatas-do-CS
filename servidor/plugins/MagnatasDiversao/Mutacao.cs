@@ -68,6 +68,11 @@ public partial class ModoDeDiversao
     private static readonly Color CorDaReserva = Color.FromArgb(255, 110, 255, 110);
     private const string PacoteDoServidor = "3835000213";
     private bool? zumbiNoServidor;
+    private bool? morteNoServidor;
+    // Quando o mutante morre, o corpo some e no lugar cai o guerreiro de cena tocando a animação do Meshy. O CS2 não toca
+    // animação de morte no jogador (o corpo vira boneco de pano), então a queda é um modelo à parte que some sozinho.
+    private const string ModeloDaMorte = "models/magnatas/mutante/morte/guerreiro_morte.vmdl";
+    private const float SegundosDaCenaDaMorte = 4f;
     private const float TamanhoDoHumano = 1f;
 
     // Um humano por rodada ganha a super Negev: não acaba a munição e empurra o mutante bem mais longe.
@@ -373,11 +378,13 @@ public partial class ModoDeDiversao
         RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
         {
             manifesto.AddResource(ModeloDoMutante);
+            manifesto.AddResource(ModeloDaMorte);
         });
         RegisterListener<Listeners.OnMapStart>(mapa =>
         {
             // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
             zumbiNoServidor = null;
+            morteNoServidor = null;
             // Ao ligar, o servidor abre o mapa da Oficina por último: se o teste já tinha pedido a Dust 2, ela era trocada.
             if (testeComBots && mapa != MapaDoTeste) AddTimer(1f, () => Server.ExecuteCommand($"changelevel {MapaDoTeste}"));
         });
@@ -475,28 +482,38 @@ public partial class ModoDeDiversao
         corpo.VelocityModifier = VelocidadeDe(jogador);
     }
 
-    /// <summary>
-    /// O zumbi vem no pacote da Oficina, que o servidor baixa de novo só depois da aprovação da Steam.
-    /// A lista de arquivos do pacote diz se ele já chegou.
-    /// </summary>
+    /// <summary>O zumbi vem no pacote da Oficina, que o servidor baixa ao ligar. A lista de arquivos do pacote diz se ele já chegou.</summary>
     private bool ZumbiNoServidor()
     {
         if (zumbiNoServidor is bool sabido) return sabido;
-        var achou = false;
+        zumbiNoServidor = NoPacote("models/magnatas/mutante");
+        Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(zumbiNoServidor.Value ? "sim" : "não, o mutante fica com o próprio boneco")}.");
+        return zumbiNoServidor.Value;
+    }
+
+    /// <summary>A queda do guerreiro veio depois do zumbi: com o pacote antigo no servidor, o corpo cai do jeito normal.</summary>
+    private bool MorteNoServidor()
+    {
+        if (morteNoServidor is bool sabido) return sabido;
+        morteNoServidor = NoPacote("models/magnatas/mutante/morte");
+        Console.WriteLine($"[Magnatas] Queda do guerreiro no servidor: {(morteNoServidor.Value ? "sim" : "não")}.");
+        return morteNoServidor.Value;
+    }
+
+    private static bool NoPacote(string caminho)
+    {
         foreach (var raiz in new[] { Server.GameDirectory, Path.GetDirectoryName(Server.GameDirectory) ?? "" })
         {
             var lista = Path.Combine(raiz, "bin", "linuxsteamrt64", "steamapps", "workshop", "content", "730", PacoteDoServidor, $"{PacoteDoServidor}_dir.vpk");
             try
             {
-                if (File.Exists(lista) && System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(lista)).Contains("models/magnatas/mutante")) achou = true;
+                if (File.Exists(lista) && System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(lista)).Contains(caminho)) return true;
             }
             catch (Exception erro) when (erro is IOException or UnauthorizedAccessException)
             {
             }
         }
-        zumbiNoServidor = achou;
-        Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(achou ? "sim" : "não, o mutante fica com o próprio boneco")}.");
-        return achou;
+        return false;
     }
 
     private static NivelDoMutante NivelPelasInfeccoes(NivelDoMutante[] niveis, int infeccoes) =>
@@ -555,7 +572,7 @@ public partial class ModoDeDiversao
         return HookResult.Handled;
     }
 
-    private static void MudarTamanho(CCSPlayerPawn corpo, float tamanho)
+    private static void MudarTamanho(CBaseEntity corpo, float tamanho)
     {
         var esqueleto = corpo.CBodyComponent?.SceneNode?.GetSkeletonInstance();
         if (esqueleto == null) return;
@@ -645,6 +662,8 @@ public partial class ModoDeDiversao
         if (Config.Regra != "mutacao") return HookResult.Continue;
         var jogador = evento.Userid;
         if (jogador is not { IsValid: true }) return HookResult.Continue;
+        var eraMutante = jogador.Team == CsTeam.Terrorist;
+        if (eraMutante) MostrarQuedaDoMutante(jogador);
         if (esperandoJogadores)
         {
             AddTimer(mutanteDaRodada.SegundosParaRenascer, () => ColocarNaRodada(jogador));
@@ -665,6 +684,36 @@ public partial class ModoDeDiversao
         }
         if (jogador.Team == CsTeam.Terrorist) AddTimer(mutanteDaRodada.SegundosParaRenascer, () => RenascerComoMutante(jogador));
         return HookResult.Continue;
+    }
+
+    /// <summary>
+    /// O corpo do mutante fica invisível e, no mesmo lugar e do mesmo tamanho, o guerreiro de cena toca a queda.
+    /// Quando o mutante renasce, a cor volta pelo AplicarAtributosDoMutante.
+    /// </summary>
+    private void MostrarQuedaDoMutante(CCSPlayerController jogador)
+    {
+        if (!MorteNoServidor()) return;
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo is not { IsValid: true } || corpo.AbsOrigin == null || corpo.AbsRotation == null) return;
+        var lugar = new Vector(corpo.AbsOrigin.X, corpo.AbsOrigin.Y, corpo.AbsOrigin.Z);
+        var giro = new QAngle(0, corpo.AbsRotation.Y, 0);
+
+        corpo.RenderMode = RenderMode_t.kRenderTransAlpha;
+        corpo.Render = Color.FromArgb(0, 255, 255, 255);
+        Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_nRenderMode");
+        Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
+
+        var queda = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic");
+        if (queda == null) return;
+        queda.SetModel(ModeloDaMorte);
+        queda.DispatchSpawn();
+        queda.Teleport(lugar, giro, new Vector(0, 0, 0));
+        MudarTamanho(queda, NivelDe(jogador).Tamanho);
+        queda.AcceptInput("SetAnimation", value: "morte");
+        AddTimer(SegundosDaCenaDaMorte, () =>
+        {
+            if (queda.IsValid) queda.Remove();
+        });
     }
 
     private void RenascerComoMutante(CCSPlayerController jogador)
