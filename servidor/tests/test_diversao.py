@@ -1625,3 +1625,12 @@ def test_o_placar_de_cima_conta_as_rodadas_da_mutacao():
     assert 'SetStateChanged(time, "CTeam", "m_iScore")' in placar
     zera = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("vitoriasDosMutantes = 0;"):][:120]
     assert "MostrarPlacarDaMutacao();" in zera
+
+
+def test_o_fim_da_rodada_toca_o_som_de_quem_venceu():
+    assert 'SomDaVitoriaDosMagnatas = "magnatas.vitoria_magnatas";' in CODIGO_DA_MUTACAO
+    assert 'SomDaVitoriaDosMutantes = "magnatas.vitoria_mutantes";' in CODIGO_DA_MUTACAO
+    encerra = metodo_da_mutacao("void EncerrarRodadaDaMutacao")
+    assert "TocarParaTodos(humanosVenceram ? SomDaVitoriaDosMagnatas : SomDaVitoriaDosMutantes);" in encerra
+    toca = metodo_da_mutacao("void TocarParaTodos")
+    assert "foreach (var pessoa in Pessoas())" in toca and "EmitSound(som, soEle)" in toca

@@ -41,6 +41,9 @@ public partial class ModoDeDiversao
     private const float SegundosParaEspalhar = 15f;
     // O som da contagem começa antes e termina junto com o sorteio. Na tela, só os últimos 10 segundos.
     private const string SomDaContagem = "magnatas.contagem_mutacao";
+    // Gravados pelo dono: um para a vitória dos Magnatas (os humanos, CT) e outro para a dos mutantes.
+    private const string SomDaVitoriaDosMagnatas = "magnatas.vitoria_magnatas";
+    private const string SomDaVitoriaDosMutantes = "magnatas.vitoria_mutantes";
     private const float SegundosDoSomDaContagem = 11.5f;
     private const int SegundosDaContagemNaTela = 10;
     // Sozinho não há o que jogar: a rodada fica parada, sem contar, até chegar mais alguém.
@@ -188,6 +191,17 @@ public partial class ModoDeDiversao
         }
     }
 
+    /// <summary>Cada um ouve o som no próprio ouvido, na mesma altura, onde quer que esteja no mapa.</summary>
+    private void TocarParaTodos(string som)
+    {
+        foreach (var pessoa in Pessoas())
+        {
+            var soEle = new RecipientFilter();
+            soEle.Add(pessoa);
+            pessoa.EmitSound(som, soEle);
+        }
+    }
+
     private void TocarContagem()
     {
         if (!rodadaEmAndamento || sorteioFeito) return;
@@ -305,6 +319,7 @@ public partial class ModoDeDiversao
         if (humanosVenceram) vitoriasDosHumanos++;
         else vitoriasDosMutantes++;
         MostrarPlacarDaMutacao();
+        TocarParaTodos(humanosVenceram ? SomDaVitoriaDosMagnatas : SomDaVitoriaDosMutantes);
         rodadasDaPartida++;
 
         if (rodadasDaPartida < RodadasPorPartida)
