@@ -740,11 +740,15 @@ public partial class ModoDeDiversao
 
         var queda = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic");
         if (queda == null) return;
-        queda.SetModel(ModeloDaMorte);
-        queda.DispatchSpawn();
-        queda.Teleport(lugar, giro, new Vector(0, 0, 0));
+        // Tudo vai na criação: trocar o modelo antes de a entidade nascer dava erro interno no servidor a cada morte.
+        var valores = new CEntityKeyValues();
+        valores.SetString("model", ModeloDaMorte);
+        valores.SetVector("origin", lugar);
+        valores.SetAngle("angles", giro);
+        valores.SetString("DefaultAnim", "morte");
+        valores.SetInt("solid", 0);
+        queda.DispatchSpawn(valores);
         MudarTamanho(queda, NivelDe(jogador).Tamanho);
-        queda.AcceptInput("SetAnimation", value: "morte");
         AddTimer(SegundosDaCenaDaMorte, () =>
         {
             if (queda.IsValid) queda.Remove();

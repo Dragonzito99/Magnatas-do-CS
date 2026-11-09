@@ -1590,8 +1590,12 @@ def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
     cena = metodo_da_mutacao("void MostrarQuedaDoMutante")
     assert "if (!MorteNoServidor()) return;" in cena
     assert 'CreateEntityByName<CDynamicProp>("prop_dynamic")' in cena
-    assert "SetModel(ModeloDaMorte)" in cena
-    assert 'AcceptInput("SetAnimation", value: "morte")' in cena
+    # Trocar o modelo antes de a entidade nascer dava erro interno no servidor a cada morte (SetupModel, entidade
+    # ainda "em preparo"): o modelo, o lugar e a animação vão junto na criação.
+    assert "SetModel(" not in cena and "Teleport(" not in cena
+    assert 'valores.SetString("model", ModeloDaMorte);' in cena
+    assert 'valores.SetString("DefaultAnim", "morte");' in cena
+    assert "queda.DispatchSpawn(valores);" in cena
     assert "Color.FromArgb(0," in cena and "m_clrRender" in cena
     assert "MudarTamanho(queda, NivelDe(jogador).Tamanho)" in cena
     assert "AddTimer(SegundosDaCenaDaMorte" in cena and ".Remove()" in cena
