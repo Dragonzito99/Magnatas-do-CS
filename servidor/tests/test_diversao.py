@@ -1115,6 +1115,12 @@ def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
     assert valor("mm_cache_clients_with_addons", servidor) == "1"
 
 
+@pytest.mark.parametrize("servidor", SERVIDORES)
+def test_o_servidor_baixa_a_versao_nova_do_pacote_ao_montar(servidor):
+    # Sem isso, quem já tinha o pacote ficava para sempre com a versão antiga, e o mutante novo nunca chegava.
+    assert valor("mm_addon_mount_download", servidor) == "1"
+
+
 def test_o_plugin_lembra_o_mapa_atual_depois_de_recarregar():
     # Recarregado no Luxville, o plugin achava que estava no primeiro mapa da lista e sorteava o Luxville
     # de novo. Recarregar o mesmo pacote abre o mapa auxiliar dele, e o servidor cai.
