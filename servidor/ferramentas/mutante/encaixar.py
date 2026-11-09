@@ -24,6 +24,15 @@ bpy.ops.import_scene.fbx(filepath=ORIGEM_ZUMBI)
 novos = [o for o in bpy.data.objects if o not in antes]
 mix = next(o for o in novos if o.type == 'ARMATURE')
 zumbi = next(o for o in novos if o.type == 'MESH')
+# Alguns modelos do Meshy vêm só com uma animação (correr, morrer): o encaixe parte da pose de descanso, sem ela.
+if mix.animation_data:
+    mix.animation_data.action = None
+for pb in mix.pose.bones:
+    pb.location = (0, 0, 0)
+    pb.rotation_quaternion = (1, 0, 0, 0)
+    pb.rotation_euler = (0, 0, 0)
+    pb.scale = (1, 1, 1)
+bpy.context.view_layer.update()
 
 def cabeca(arm, nome):
     return arm.matrix_world @ arm.data.bones[nome].head_local
