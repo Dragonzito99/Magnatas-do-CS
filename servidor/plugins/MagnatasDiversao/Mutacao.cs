@@ -846,7 +846,31 @@ public partial class ModoDeDiversao
         comando.ReplyToCommand("zumbi=False");
     }
 
-    [ConsoleCommand("magnatas_mutacao_ver", "Mostra humanos, mutantes e a rodada, para conferir o modo")]
+    /// <summary>Só para teste: sobe os bots mutantes vivos (ou só o da vaga dada) até o nível pedido, para ver o boneco de cada nível.</summary>
+    [ConsoleCommand("magnatas_mutacao_nivel", "Teste: sobe bots mutantes até o nível dado (nivel [vaga])")]
+    [CommandHelper(minArgs: 1, usage: "<nivel> [vaga]", whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void SubirBotDeNivel(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        if (Config.Regra != "mutacao" || !int.TryParse(comando.GetArg(1), out var nivel)) return;
+        var novo = mutanteDaRodada.Niveis.FirstOrDefault(item => item.Nivel == nivel);
+        if (novo == null)
+        {
+            comando.ReplyToCommand("nivel_invalido");
+            return;
+        }
+        int? vaga = comando.ArgCount > 2 && int.TryParse(comando.GetArg(2), out var numero) ? numero : null;
+        foreach (var bot in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: true, PawnIsAlive: true, Team: CsTeam.Terrorist } && (vaga == null || jogador.Slot == vaga)))
+        {
+            var antes = NivelDe(bot);
+            // Só sobe: descer pela conta da vida deixaria um bot ferido com vida negativa.
+            if (novo.Nivel <= antes.Nivel) continue;
+            infeccoes[bot.Slot] = novo.InfeccoesParaChegar;
+            SubirDeNivel(bot, antes, novo);
+            comando.ReplyToCommand($"vaga={bot.Slot} nivel={novo.Nivel}");
+        }
+    }
+
+    [ConsoleCommand("magnatas_mutacao_ver","Mostra humanos, mutantes e a rodada, para conferir o modo")]
     [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
     public void VerMutacao(CCSPlayerController? chamador, CommandInfo comando)
     {

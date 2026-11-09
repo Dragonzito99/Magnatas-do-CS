@@ -1672,3 +1672,15 @@ def test_o_pente_da_negev_so_enche_se_a_pessoa_ainda_e_o_portador_humano():
     proximo = atira[atira.index("Server.NextFrame("):atira.index("arma.Clip1 = PenteDaSuperArma;")]
     assert "jogador.Slot != portadorDaSuperArma" in proximo
     assert "PawnIsAlive: true, Team: CsTeam.CounterTerrorist" in proximo
+
+
+def test_comando_de_teste_sobe_um_bot_mutante_de_nivel_para_o_dono_ver():
+    # O dono queria ver o boneco de cada nível sem precisar fazer 5 infecções numa rodada (09/11).
+    # Só pelo servidor (RCON) e só em bot: não mexe no nível de gente de verdade.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_mutacao_nivel"'):]
+    trecho = trecho[:trecho.index(FIM_DO_METODO)]
+    assert "CommandUsage.SERVER_ONLY" in trecho
+    assert "IsBot" in trecho
+    assert "Team: CsTeam.Terrorist" in trecho
+    assert "infeccoes[bot.Slot] = novo.InfeccoesParaChegar;" in trecho
+    assert "SubirDeNivel(bot, antes, novo);" in trecho
