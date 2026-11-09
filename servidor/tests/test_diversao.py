@@ -1555,3 +1555,17 @@ def test_temporizador_de_uma_vez_so_se_esquece_ao_disparar():
 
 def test_o_comando_de_teste_dos_jeitos_de_encerrar_saiu():
     assert "magnatas_teste_fim" not in CODIGO_DA_MUTACAO
+
+
+def test_ninguem_larga_arma_ao_morrer_mesmo_depois_de_trocar_de_mapa():
+    # A troca de mapa volta as configurações do jogo ao padrão, e a super Negev caía no chão.
+    comeca = metodo_da_mutacao("void ComecarRodadaDaMutacao")
+    assert 'Server.ExecuteCommand("mp_death_drop_gun 0")' in comeca
+
+
+def test_a_super_negev_entra_depois_que_o_fuzil_saiu():
+    # O fuzil só sai de verdade no fim do quadro: dar a Negev no mesmo instante deixava o portador sem ela.
+    entrega = metodo_da_mutacao("void EntregarSuperArma")
+    assert entrega.index("arma.Remove()") < entrega.index("Server.NextFrame(") < entrega.index("GiveNamedItem(ArmaEspecial)")
+    proximo = entrega[entrega.index("Server.NextFrame("):]
+    assert "portadorDaSuperArma" in proximo and "PawnIsAlive: true" in proximo

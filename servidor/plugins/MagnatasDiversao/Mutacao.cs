@@ -105,6 +105,8 @@ public partial class ModoDeDiversao
         // O console recusa este comando, e o mapa pode reverter ao carregar. Por isso o plugin liga a cada rodada.
         var municao = ConVar<int>.Find("sv_infinite_ammo");
         if (municao != null) municao.Value = MunicaoDeReservaInfinita;
+        // A troca de mapa volta as configurações ao padrão, e a super Negev de quem morria caía no chão.
+        Server.ExecuteCommand("mp_death_drop_gun 0");
         Parar(ref relogioDoSorteio);
         Parar(ref fimDaRodada);
         Parar(ref relogioDaContagem);
@@ -239,9 +241,15 @@ public partial class ModoDeDiversao
             var arma = item.Value;
             if (arma != null && ArmasDoHumano.Contains(arma.DesignerName)) arma.Remove();
         }
-        jogador.GiveNamedItem(ArmaEspecial);
-        jogador.ExecuteClientCommand("slot1");
         portadorDaSuperArma = jogador.Slot;
+        // O fuzil só sai de verdade no fim do quadro: com a vaga ainda ocupada, a Negev não entrava e o portador
+        // ficava sem arma. Ela vem no quadro seguinte, se ele ainda for o portador e estiver vivo como humano.
+        Server.NextFrame(() =>
+        {
+            if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot != portadorDaSuperArma) return;
+            jogador.GiveNamedItem(ArmaEspecial);
+            jogador.ExecuteClientCommand("slot1");
+        });
         corpo.Render = CorDoPortador;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
     }
