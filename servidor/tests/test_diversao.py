@@ -1068,6 +1068,8 @@ def test_equipe_nunca_dorme_com_varios_mapas():
 
 SONS_DE_ABATE = RAIZ / "plugins" / "MagnatasDiversao" / "SonsDeAbate.cs"
 PACOTE_DE_SONS = "3835000213"
+# Cada versão do boneco é um item novo da Oficina, que nunca é atualizado (ver servidor/ferramentas/mutante/LEIAME.md).
+PACOTE_DO_MUTANTE = "3836525270"
 
 
 def codigo_dos_sons():
@@ -1110,7 +1112,9 @@ def test_o_servidor_carrega_os_sons_do_pacote():
 
 @pytest.mark.parametrize("servidor", SERVIDORES)
 def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
-    assert valor("mm_extra_addons", servidor) == f'"{PACOTE_DE_SONS}"'
+    # A Mutação também manda baixar o pacote do mutante, que só ela usa.
+    esperado = f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE}"' if servidor == "mutacao" else f'"{PACOTE_DE_SONS}"'
+    assert valor("mm_extra_addons", servidor) == esperado
     # Sem isso, cada troca de mapa do Equipe x Equipe faria todo mundo reconectar para conferir o pacote.
     assert valor("mm_cache_clients_with_addons", servidor) == "1"
 
@@ -1218,7 +1222,7 @@ def test_a_super_negev_some_na_rodada_seguinte():
 
 def test_o_mutante_usa_o_zumbi_do_pacote_e_fica_maior():
     # O boneco blindado do jogo virou um arquivo vazio numa atualização do CS2. O zumbi vem no pacote da Oficina.
-    assert 'ModeloDoMutante = "models/magnatas/mutante/mutante.vmdl"' in CODIGO_DA_MUTACAO
+    assert 'ModeloDoMutante = "models/magnatas/mutante_v1/mutante.vmdl"' in CODIGO_DA_MUTACAO
     # Sem tingir: a cor é a do próprio zumbi.
     assert "Color.FromArgb(255, 255, 255, 255), new NivelDoMutante[]" in CODIGO_DA_MUTACAO
     assert "AddResource(ModeloDoMutante)" in CODIGO_DA_MUTACAO
@@ -1235,7 +1239,7 @@ def test_sem_o_zumbi_no_servidor_o_mutante_nao_troca_de_boneco():
     assert "ModeloDeReserva" not in CODIGO_DA_MUTACAO
     confere = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("bool ZumbiNoServidor"):]
     confere = confere[:confere.index(FIM_DO_METODO)]
-    assert 'NoPacote("models/magnatas/mutante")' in confere
+    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1")' in confere
     assert "_dir.vpk" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("static bool NoPacote("):][:600]
     aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     aplica = aplica[:aplica.index(FIM_DO_METODO)]
@@ -1573,7 +1577,7 @@ def test_a_super_negev_entra_depois_que_o_fuzil_saiu():
 
 
 def test_mutante_que_morre_cai_com_a_animacao_do_guerreiro():
-    assert 'ModeloDaMorte = "models/magnatas/mutante/morte/guerreiro_morte.vmdl";' in CODIGO_DA_MUTACAO
+    assert 'ModeloDaMorte = "models/magnatas/mutante_v1/morte/guerreiro_morte.vmdl";' in CODIGO_DA_MUTACAO
     precache = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("OnServerPrecacheResources"):][:300]
     assert "AddResource(ModeloDaMorte)" in precache
     morte = metodo_da_mutacao("HookResult AoMorrerNaMutacao")
@@ -1594,15 +1598,13 @@ def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
 
 
 def test_a_cena_da_morte_so_aparece_quando_o_pacote_do_servidor_tem_o_modelo():
-    assert 'NoPacote("models/magnatas/mutante/morte")' in CODIGO_DA_MUTACAO
-    assert 'NoPacote("models/magnatas/mutante")' in CODIGO_DA_MUTACAO
+    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1/morte")' in CODIGO_DA_MUTACAO
+    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1")' in CODIGO_DA_MUTACAO
 
 
-def test_bonecos_do_pacote_desligados_enquanto_o_jogo_de_cada_um_pode_ter_outra_versao():
-    # Com o pacote do servidor numa versão e o do jogador em outra, o mesmo boneco tinha esqueletos diferentes e o jogo
-    # de quem virava mutante fechava ("OnPreserveEntity"). Até cada versão ter caminho próprio, o mutante fica com o
-    # próprio boneco e o corpo cai do jeito normal.
-    assert "private static readonly bool UsarBonecosDoPacote = false;" in CODIGO_DA_MUTACAO
+def test_a_chave_dos_bonecos_do_pacote_desliga_o_boneco_e_a_queda_de_uma_vez():
+    # Se uma versão nova do boneco der problema, a chave volta o mutante ao próprio boneco e o corpo cai do jeito normal.
+    assert "private static readonly bool UsarBonecosDoPacote = true;" in CODIGO_DA_MUTACAO
     for metodo in ["bool ZumbiNoServidor", "bool MorteNoServidor"]:
         assert "if (!UsarBonecosDoPacote) return false;" in metodo_da_mutacao(metodo)
     precache = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("OnServerPrecacheResources"):][:400]
@@ -1634,3 +1636,11 @@ def test_o_fim_da_rodada_toca_o_som_de_quem_venceu():
     assert "TocarParaTodos(humanosVenceram ? SomDaVitoriaDosMagnatas : SomDaVitoriaDosMutantes);" in encerra
     toca = metodo_da_mutacao("void TocarParaTodos")
     assert "foreach (var pessoa in Pessoas())" in toca and "EmitSound(som, soEle)" in toca
+
+
+def test_o_boneco_vem_do_pacote_proprio_da_versao():
+    assert f'PacoteDoMutante = "{PACOTE_DO_MUTANTE}";' in CODIGO_DA_MUTACAO
+    assert 'ModeloDoMutante = "models/magnatas/mutante_v1/mutante.vmdl";' in CODIGO_DA_MUTACAO
+    assert 'ModeloDaMorte = "models/magnatas/mutante_v1/morte/guerreiro_morte.vmdl";' in CODIGO_DA_MUTACAO
+    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1")' in CODIGO_DA_MUTACAO
+    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1/morte")' in CODIGO_DA_MUTACAO

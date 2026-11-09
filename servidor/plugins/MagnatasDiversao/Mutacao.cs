@@ -63,22 +63,22 @@ public partial class ModoDeDiversao
     private const int MunicaoDeReservaInfinita = 2;
     private static readonly string[] ArmasDoHumano = { "weapon_ak47", "weapon_m4a1" };
 
-    // O zumbi vem no pacote da Oficina que todo jogador baixa ao entrar, junto com os sons.
-    private const string ModeloDoMutante = "models/magnatas/mutante/mutante.vmdl";
+    // O boneco vem num pacote da Oficina só dele, um item novo para cada versão, que nunca é atualizado: a Steam entrega
+    // atualizações ao servidor e ao jogo de cada um em horas diferentes, e o mesmo boneco com esqueletos diferentes
+    // fechava o jogo de quem virava mutante ("OnPreserveEntity", 08/11 às 23:02 e 23:05). Item novo, todos baixam igual.
+    private const string PacoteDoMutante = "3836525270";
+    private const string ModeloDoMutante = "models/magnatas/mutante_v1/mutante.vmdl";
     // Sem o zumbi no servidor (o pacote novo ainda não chegou), o mutante ficaria sem áreas de acerto e sem animação.
     // Trocar para outro boneco do jogo fazia o jogo de quem estava no servidor parar para carregar o modelo e cair
     // ("OnPreserveEntity"). Então, sem o zumbi, o mutante fica com o próprio boneco, verde e maior.
     private static readonly Color CorDaReserva = Color.FromArgb(255, 110, 255, 110);
-    private const string PacoteDoServidor = "3835000213";
     private bool? zumbiNoServidor;
-    // Desligado: a Steam atualiza o pacote no servidor e no jogo de cada um em horas diferentes, e o mesmo boneco com
-    // esqueletos diferentes fechava o jogo de quem virava mutante ("OnPreserveEntity", 08/11 às 23:02 e 23:05). Volta
-    // quando cada versão do boneco tiver caminho próprio no pacote.
-    private static readonly bool UsarBonecosDoPacote = false;
+    // Chave para desligar os bonecos do pacote de uma vez, se uma versão nova der problema.
+    private static readonly bool UsarBonecosDoPacote = true;
     private bool? morteNoServidor;
     // Quando o mutante morre, o corpo some e no lugar cai o guerreiro de cena tocando a animação do Meshy. O CS2 não toca
     // animação de morte no jogador (o corpo vira boneco de pano), então a queda é um modelo à parte que some sozinho.
-    private const string ModeloDaMorte = "models/magnatas/mutante/morte/guerreiro_morte.vmdl";
+    private const string ModeloDaMorte = "models/magnatas/mutante_v1/morte/guerreiro_morte.vmdl";
     private const float SegundosDaCenaDaMorte = 4f;
     private const float TamanhoDoHumano = 1f;
 
@@ -520,7 +520,7 @@ public partial class ModoDeDiversao
     {
         if (!UsarBonecosDoPacote) return false;
         if (zumbiNoServidor is bool sabido) return sabido;
-        zumbiNoServidor = NoPacote("models/magnatas/mutante");
+        zumbiNoServidor = NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1");
         Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(zumbiNoServidor.Value ? "sim" : "não, o mutante fica com o próprio boneco")}.");
         return zumbiNoServidor.Value;
     }
@@ -530,16 +530,16 @@ public partial class ModoDeDiversao
     {
         if (!UsarBonecosDoPacote) return false;
         if (morteNoServidor is bool sabido) return sabido;
-        morteNoServidor = NoPacote("models/magnatas/mutante/morte");
+        morteNoServidor = NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1/morte");
         Console.WriteLine($"[Magnatas] Queda do guerreiro no servidor: {(morteNoServidor.Value ? "sim" : "não")}.");
         return morteNoServidor.Value;
     }
 
-    private static bool NoPacote(string caminho)
+    private static bool NoPacote(string pacote, string caminho)
     {
         foreach (var raiz in new[] { Server.GameDirectory, Path.GetDirectoryName(Server.GameDirectory) ?? "" })
         {
-            var lista = Path.Combine(raiz, "bin", "linuxsteamrt64", "steamapps", "workshop", "content", "730", PacoteDoServidor, $"{PacoteDoServidor}_dir.vpk");
+            var lista = Path.Combine(raiz, "bin", "linuxsteamrt64", "steamapps", "workshop", "content", "730", pacote, $"{pacote}_dir.vpk");
             try
             {
                 if (File.Exists(lista) && System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(lista)).Contains(caminho)) return true;
