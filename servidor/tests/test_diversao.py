@@ -1538,9 +1538,12 @@ TODO_O_PLUGIN = CODIGO_DO_PLUGIN + CODIGO_DA_MUTACAO + CODIGO_DO_ALASKA + CODIGO
 def test_nenhum_temporizador_e_parado_sem_passar_pelo_parar():
     # Parar um temporizador de uma vez só que já disparou estraga a memória e derruba o servidor (provado com bots).
     import re
-    assert re.findall(r"\w+\?\.Kill\(\)", TODO_O_PLUGIN) == ["relogio?.Kill()"]
-    parar = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("static void Parar(ref"):][:300]
-    assert "relogio?.Kill();" in parar and "relogio = null;" in parar
+    assert re.findall(r"\w+\?\.Kill\(\)", TODO_O_PLUGIN) == []
+    parar = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("static void Parar(ref"):][:400]
+    # Parar um temporizador enquanto o servidor roda os temporizadores derruba o servidor (provado com bots):
+    # a parada de verdade fica para o quadro seguinte, fora dessa hora.
+    assert "relogio = null;" in parar
+    assert "Server.NextFrame(parado.Kill)" in parar
 
 
 def test_temporizador_de_uma_vez_so_se_esquece_ao_disparar():

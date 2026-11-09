@@ -109,18 +109,20 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     /// <summary>
-    /// Para o temporizador e esquece dele. Parar de novo um temporizador de uma vez só que já disparou estraga a memória
-    /// do servidor: foi o que derrubou o servidor e o jogo de quem estava na Mutação no fim da rodada (provado com bots).
-    /// Por isso cada temporizador de uma vez só também se esquece ao disparar.
+    /// Esquece o temporizador agora e o para no quadro seguinte. Parar um temporizador enquanto o servidor está rodando
+    /// os temporizadores (o fim da rodada da Mutação vem de um deles) estraga a memória e derruba o servidor: provado
+    /// com bots, parando de dentro de um temporizador cai, parando fora dele não. Cada temporizador de uma vez só também
+    /// se esquece ao disparar, para ninguém parar o que já acabou.
     /// </summary>
     private static void Parar(ref CounterStrikeSharp.API.Modules.Timers.Timer? relogio)
     {
-        relogio?.Kill();
+        var parado = relogio;
         relogio = null;
+        if (parado != null) Server.NextFrame(parado.Kill);
     }
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.8.6";
+    public override string ModuleVersion => "1.8.7";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
