@@ -225,6 +225,8 @@ public partial class ModoDeDiversao
     {
         // O evento de nascer nem sempre traz o corpo de um jogador humano.
         mortos.Clear();
+        // Mirar no fantasma mostrava o nome dele. A troca de mapa volta as configurações ao padrão: liga a cada rodada.
+        Server.ExecuteCommand("mp_playerid 1");
         if (regras.TotalRoundsPlayed == 0)
         {
             ZerarContagem();

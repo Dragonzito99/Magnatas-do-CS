@@ -68,6 +68,10 @@ public partial class ModoDeDiversao
     private static readonly Color CorDaReserva = Color.FromArgb(255, 110, 255, 110);
     private const string PacoteDoServidor = "3835000213";
     private bool? zumbiNoServidor;
+    // Desligado: a Steam atualiza o pacote no servidor e no jogo de cada um em horas diferentes, e o mesmo boneco com
+    // esqueletos diferentes fechava o jogo de quem virava mutante ("OnPreserveEntity", 08/11 às 23:02 e 23:05). Volta
+    // quando cada versão do boneco tiver caminho próprio no pacote.
+    private static readonly bool UsarBonecosDoPacote = false;
     private bool? morteNoServidor;
     // Quando o mutante morre, o corpo some e no lugar cai o guerreiro de cena tocando a animação do Meshy. O CS2 não toca
     // animação de morte no jogador (o corpo vira boneco de pano), então a queda é um modelo à parte que some sozinho.
@@ -133,7 +137,7 @@ public partial class ModoDeDiversao
             inicioDaPartida = DateTime.UtcNow;
             vitoriasDosHumanos = 0;
             vitoriasDosMutantes = 0;
-            MostrarNoPlacar();
+            MostrarPlacarDaMutacao();
             // A história do mapa, a mesma da página Jogo do site.
             if (Server.MapName == "zm_silent_village")
             {
@@ -276,6 +280,18 @@ public partial class ModoDeDiversao
         return HookResult.Continue;
     }
 
+    /// <summary>O encerrar da rodada pelo plugin não soma ponto para o time: o placar de cima mostra as rodadas de cada lado.</summary>
+    private void MostrarPlacarDaMutacao()
+    {
+        foreach (var time in Utilities.FindAllEntitiesByDesignerName<CCSTeam>("cs_team_manager"))
+        {
+            if (time.TeamNum == (byte)CsTeam.CounterTerrorist) time.Score = vitoriasDosHumanos;
+            else if (time.TeamNum == (byte)CsTeam.Terrorist) time.Score = vitoriasDosMutantes;
+            else continue;
+            Utilities.SetStateChanged(time, "CTeam", "m_iScore");
+        }
+    }
+
     private void EncerrarRodadaDaMutacao(RoundEndReason motivo)
     {
         if (!rodadaEmAndamento) return;
@@ -288,6 +304,7 @@ public partial class ModoDeDiversao
         var humanosVenceram = motivo == RoundEndReason.CTsWin;
         if (humanosVenceram) vitoriasDosHumanos++;
         else vitoriasDosMutantes++;
+        MostrarPlacarDaMutacao();
         rodadasDaPartida++;
 
         if (rodadasDaPartida < RodadasPorPartida)
@@ -377,6 +394,7 @@ public partial class ModoDeDiversao
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
         RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
         {
+            if (!UsarBonecosDoPacote) return;
             manifesto.AddResource(ModeloDoMutante);
             manifesto.AddResource(ModeloDaMorte);
         });
@@ -485,6 +503,7 @@ public partial class ModoDeDiversao
     /// <summary>O zumbi vem no pacote da Oficina, que o servidor baixa ao ligar. A lista de arquivos do pacote diz se ele já chegou.</summary>
     private bool ZumbiNoServidor()
     {
+        if (!UsarBonecosDoPacote) return false;
         if (zumbiNoServidor is bool sabido) return sabido;
         zumbiNoServidor = NoPacote("models/magnatas/mutante");
         Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(zumbiNoServidor.Value ? "sim" : "não, o mutante fica com o próprio boneco")}.");
@@ -494,6 +513,7 @@ public partial class ModoDeDiversao
     /// <summary>A queda do guerreiro veio depois do zumbi: com o pacote antigo no servidor, o corpo cai do jeito normal.</summary>
     private bool MorteNoServidor()
     {
+        if (!UsarBonecosDoPacote) return false;
         if (morteNoServidor is bool sabido) return sabido;
         morteNoServidor = NoPacote("models/magnatas/mutante/morte");
         Console.WriteLine($"[Magnatas] Queda do guerreiro no servidor: {(morteNoServidor.Value ? "sim" : "não")}.");

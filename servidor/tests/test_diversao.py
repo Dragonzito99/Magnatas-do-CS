@@ -1596,3 +1596,32 @@ def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
 def test_a_cena_da_morte_so_aparece_quando_o_pacote_do_servidor_tem_o_modelo():
     assert 'NoPacote("models/magnatas/mutante/morte")' in CODIGO_DA_MUTACAO
     assert 'NoPacote("models/magnatas/mutante")' in CODIGO_DA_MUTACAO
+
+
+def test_bonecos_do_pacote_desligados_enquanto_o_jogo_de_cada_um_pode_ter_outra_versao():
+    # Com o pacote do servidor numa versão e o do jogador em outra, o mesmo boneco tinha esqueletos diferentes e o jogo
+    # de quem virava mutante fechava ("OnPreserveEntity"). Até cada versão ter caminho próprio, o mutante fica com o
+    # próprio boneco e o corpo cai do jeito normal.
+    assert "private static readonly bool UsarBonecosDoPacote = false;" in CODIGO_DA_MUTACAO
+    for metodo in ["bool ZumbiNoServidor", "bool MorteNoServidor"]:
+        assert "if (!UsarBonecosDoPacote) return false;" in metodo_da_mutacao(metodo)
+    precache = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("OnServerPrecacheResources"):][:400]
+    assert "if (!UsarBonecosDoPacote) return;" in precache
+
+
+def test_no_fantasma_ninguem_ve_o_nome_do_inimigo_ao_mirar():
+    assert valor("mp_playerid", "fantasma") == "1"
+    comeca = CODIGO_DO_FANTASMA[CODIGO_DO_FANTASMA.index("void ComecarRodadaDoFantasma"):]
+    comeca = comeca[:comeca.index(FIM_DO_METODO)]
+    # A troca de mapa volta as configurações ao padrão: o plugin religa a cada rodada.
+    assert 'Server.ExecuteCommand("mp_playerid 1")' in comeca
+
+
+def test_o_placar_de_cima_conta_as_rodadas_da_mutacao():
+    encerra = metodo_da_mutacao("void EncerrarRodadaDaMutacao")
+    assert encerra.index("vitoriasDosMutantes++") < encerra.index("MostrarPlacarDaMutacao()")
+    placar = metodo_da_mutacao("void MostrarPlacarDaMutacao")
+    assert "time.Score = vitoriasDosHumanos" in placar and "time.Score = vitoriasDosMutantes" in placar
+    assert 'SetStateChanged(time, "CTeam", "m_iScore")' in placar
+    zera = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("vitoriasDosMutantes = 0;"):][:120]
+    assert "MostrarPlacarDaMutacao();" in zera
