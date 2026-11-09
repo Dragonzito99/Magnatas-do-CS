@@ -711,6 +711,29 @@ public partial class ModoDeDiversao
         foreach (var comando in new[] { "bot_difficulty 1", "bot_join_team any", "bot_join_after_player 0", "bot_quota_mode fill", "bot_quota 10" }) Server.ExecuteCommand(comando);
     }
 
+    /// <summary>Só para teste: encerra a rodada agora, de um dos jeitos, para achar o que derruba o servidor.</summary>
+    [ConsoleCommand("magnatas_teste_fim", "Teste: encerra a rodada (terminate_t, terminate_empate ou entidade_t)")]
+    [CommandHelper(minArgs: 1, whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void EncerrarParaTeste(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        var jeito = comando.GetArg(1);
+        rodadaEmAndamento = false;
+        if (jeito == "terminate_t") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.TerroristsWin);
+        else if (jeito == "terminate_empate") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.RoundDraw);
+        else if (jeito == "entidade_t")
+        {
+            var fim = Utilities.CreateEntityByName<CBaseEntity>("game_round_end");
+            if (fim == null)
+            {
+                comando.ReplyToCommand("fim=sem_entidade");
+                return;
+            }
+            fim.DispatchSpawn();
+            fim.AcceptInput("EndRound_TerroristsWin", value: SegundosEntreRodadas.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+        comando.ReplyToCommand($"fim={jeito}");
+    }
+
     /// <summary>Só para teste: o mutante fica com o próprio boneco até o próximo mapa, para ver se a queda vem do zumbi.</summary>
     [ConsoleCommand("magnatas_mutacao_sem_zumbi", "Teste: mutante sem o boneco do zumbi até trocar de mapa")]
     [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
