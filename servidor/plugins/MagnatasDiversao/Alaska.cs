@@ -92,13 +92,13 @@ public partial class ModoDeDiversao
         rodadasDeAlaska = 0;
         vitoriasCtNoAlaska = 0;
         vitoriasTrNoAlaska = 0;
-        empateDoAlaska?.Kill();
+        Parar(ref empateDoAlaska);
     }
 
     private void ComecarRodadaDeAlaska()
     {
         // O relógio da partida de mata-mata do mapa anterior continuaria correndo e trocaria de mapa no meio do Alaska.
-        fimDaPartida?.Kill();
+        Parar(ref fimDaPartida);
         if (!regrasDoAlaskaAplicadas)
         {
             regrasDoAlaskaAplicadas = true;
@@ -118,9 +118,10 @@ public partial class ModoDeDiversao
         // pelo plugin derrubou o servidor quando o dono entrou.
 
         // Sem objetivo no mapa, o jogo daria a vitória ao CT quando o tempo acaba. Aqui, tempo esgotado é empate.
-        empateDoAlaska?.Kill();
+        Parar(ref empateDoAlaska);
         empateDoAlaska = AddTimer(MinutosDaRodadaDeAlaska * 60f - 0.5f, () =>
         {
+            empateDoAlaska = null;
             if (NoMapaDeRodadas) RegrasDoJogo()?.TerminateRound(SegundosDoEmpate, RoundEndReason.RoundDraw);
         });
     }
@@ -141,7 +142,7 @@ public partial class ModoDeDiversao
     public HookResult AoTerminarRodadaDeAlaska(EventRoundEnd evento, GameEventInfo informacao)
     {
         if (!NoMapaDeRodadas || !regrasDoAlaskaAplicadas || partidaEncerrada) return HookResult.Continue;
-        empateDoAlaska?.Kill();
+        Parar(ref empateDoAlaska);
         if (evento.Winner == (int)CsTeam.CounterTerrorist) vitoriasCtNoAlaska++;
         else if (evento.Winner == (int)CsTeam.Terrorist) vitoriasTrNoAlaska++;
         rodadasDeAlaska++;

@@ -258,7 +258,7 @@ def test_aquecimento_nao_inicia_a_contagem():
 
 def test_so_um_relogio_por_partida():
     # Sem desligar o anterior, recarregar o plugin ou reiniciar a rodada deixaria dois relógios rodando.
-    assert CODIGO_DO_PLUGIN.index("fimDaPartida?.Kill()") < CODIGO_DO_PLUGIN.index("fimDaPartida = AddTimer")
+    assert CODIGO_DO_PLUGIN.index("Parar(ref fimDaPartida)") < CODIGO_DO_PLUGIN.index("fimDaPartida = AddTimer")
 
 
 def test_zerar_o_placar_a_cada_20_minutos_so_no_cada_um_por_si():
@@ -834,8 +834,8 @@ def test_humanos_vencem_no_fim_do_tempo():
 
 
 def test_so_um_relogio_por_rodada():
-    assert CODIGO_DA_MUTACAO.index("fimDaRodada?.Kill()") < CODIGO_DA_MUTACAO.index("fimDaRodada = AddTimer")
-    assert CODIGO_DA_MUTACAO.index("relogioDoSorteio?.Kill()") < CODIGO_DA_MUTACAO.index("relogioDoSorteio = AddTimer")
+    assert CODIGO_DA_MUTACAO.index("Parar(ref fimDaRodada)") < CODIGO_DA_MUTACAO.index("fimDaRodada = AddTimer")
+    assert CODIGO_DA_MUTACAO.index("Parar(ref relogioDoSorteio)") < CODIGO_DA_MUTACAO.index("relogioDoSorteio = AddTimer")
 
 
 def test_a_rodada_nao_termina_duas_vezes():
@@ -1300,7 +1300,7 @@ def test_alaska_nao_cria_nem_apaga_entidades():
 def test_o_relogio_do_mata_mata_nao_encerra_o_alaska():
     # O relógio da partida anterior do Equipe continuaria correndo e trocaria de mapa no meio do Alaska.
     inicio = codigo_do_alaska()[codigo_do_alaska().index("void ComecarRodadaDeAlaska"):]
-    assert "fimDaPartida?.Kill()" in inicio
+    assert "Parar(ref fimDaPartida)" in inicio
 
 
 def test_alaska_tira_o_jogador_da_escada_falsa_das_portas():
@@ -1374,7 +1374,7 @@ def test_a_contagem_toca_o_som_para_todos_e_acaba_quando_o_mutante_aparece():
     assert 'SomDaContagem = "magnatas.contagem_mutacao"' in CODIGO_DA_MUTACAO
     comeca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):CODIGO_DA_MUTACAO.index("void SortearMutantes")]
     # O som termina junto com o sorteio.
-    assert "AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, TocarContagem)" in comeca
+    assert "AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, () =>" in comeca and "TocarContagem();" in comeca
     assert "MostrarContagem, TimerFlags.REPEAT" in comeca
     toca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TocarContagem"):]
     toca = toca[:toca.index(FIM_DO_METODO)]
@@ -1383,9 +1383,9 @@ def test_a_contagem_toca_o_som_para_todos_e_acaba_quando_o_mutante_aparece():
 
 def test_a_contagem_nao_sobra_de_uma_rodada_para_outra():
     for timer in ["relogioDaContagem", "somDaContagem"]:
-        assert CODIGO_DA_MUTACAO.index(f"{timer}?.Kill()") < CODIGO_DA_MUTACAO.index(f"{timer} = AddTimer")
+        assert CODIGO_DA_MUTACAO.index(f"Parar(ref {timer})") < CODIGO_DA_MUTACAO.index(f"{timer} = AddTimer")
         for trecho in ["void EncerrarRodadaDaMutacao", "EventRoundPrestart"]:
-            assert f"{timer}?.Kill()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(trecho):]
+            assert f"Parar(ref {timer})" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(trecho):]
 
 
 def test_a_partida_so_comeca_com_dois_jogadores():
@@ -1529,3 +1529,26 @@ def test_o_adm_desliga_o_zumbi_so_pelo_console_do_servidor():
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_mutacao_sem_zumbi"'):][:700]
     assert "CommandUsage.SERVER_ONLY" in trecho
     assert "zumbiNoServidor = false" in trecho
+
+
+CODIGO_DO_ALASKA = (RAIZ / "plugins" / "MagnatasDiversao" / "Alaska.cs").read_text(encoding="utf-8")
+TODO_O_PLUGIN = CODIGO_DO_PLUGIN + CODIGO_DA_MUTACAO + CODIGO_DO_ALASKA + CODIGO_DO_FANTASMA
+
+
+def test_nenhum_temporizador_e_parado_sem_passar_pelo_parar():
+    # Parar um temporizador de uma vez só que já disparou estraga a memória e derruba o servidor (provado com bots).
+    import re
+    assert re.findall(r"\w+\?\.Kill\(\)", TODO_O_PLUGIN) == ["relogio?.Kill()"]
+    parar = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("static void Parar(ref"):][:300]
+    assert "relogio?.Kill();" in parar and "relogio = null;" in parar
+
+
+def test_temporizador_de_uma_vez_so_se_esquece_ao_disparar():
+    import re
+    for campo in ["relogioDoSorteio", "fimDaRodada", "somDaContagem", "empateDoAlaska", "fimDaPartida"]:
+        criacao = re.search(campo + r" = AddTimer\([^;]*?=>\s*\{\s*" + campo + r" = null;", TODO_O_PLUGIN, re.S)
+        assert criacao, campo
+
+
+def test_o_comando_de_teste_dos_jeitos_de_encerrar_saiu():
+    assert "magnatas_teste_fim" not in CODIGO_DA_MUTACAO

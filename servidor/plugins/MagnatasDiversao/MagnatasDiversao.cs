@@ -108,8 +108,19 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private string? mapaAtualDaOficina;
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
+    /// <summary>
+    /// Para o temporizador e esquece dele. Parar de novo um temporizador de uma vez só que já disparou estraga a memória
+    /// do servidor: foi o que derrubou o servidor e o jogo de quem estava na Mutação no fim da rodada (provado com bots).
+    /// Por isso cada temporizador de uma vez só também se esquece ao disparar.
+    /// </summary>
+    private static void Parar(ref CounterStrikeSharp.API.Modules.Timers.Timer? relogio)
+    {
+        relogio?.Kill();
+        relogio = null;
+    }
+
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.8.5";
+    public override string ModuleVersion => "1.8.6";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -194,10 +205,14 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         abatesCt = 0;
         abatesTr = 0;
         MostrarNoPlacar();
-        fimDaPartida?.Kill();
+        Parar(ref fimDaPartida);
         // O mesmo valor do relógio da tela, para os dois chegarem juntos ao fim.
         var minutos = ConVar<float>.Find("mp_roundtime")?.Value ?? MinutosSeFaltarORelogio;
-        fimDaPartida = AddTimer(minutos * 60f, () => EncerrarPartidaDeEquipe(minutos));
+        fimDaPartida = AddTimer(minutos * 60f, () =>
+        {
+            fimDaPartida = null;
+            EncerrarPartidaDeEquipe(minutos);
+        });
     }
 
     private void MostrarNoPlacar()

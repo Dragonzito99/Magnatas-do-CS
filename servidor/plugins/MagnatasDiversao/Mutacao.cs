@@ -105,10 +105,10 @@ public partial class ModoDeDiversao
         // O console recusa este comando, e o mapa pode reverter ao carregar. Por isso o plugin liga a cada rodada.
         var municao = ConVar<int>.Find("sv_infinite_ammo");
         if (municao != null) municao.Value = MunicaoDeReservaInfinita;
-        relogioDoSorteio?.Kill();
-        fimDaRodada?.Kill();
-        relogioDaContagem?.Kill();
-        somDaContagem?.Kill();
+        Parar(ref relogioDoSorteio);
+        Parar(ref fimDaRodada);
+        Parar(ref relogioDaContagem);
+        Parar(ref somDaContagem);
         infeccoes.Clear();
         corridas.Clear();
         if (testeComBots) ChamarBotsDoTeste();
@@ -141,16 +141,25 @@ public partial class ModoDeDiversao
 
         relogioDoSorteio = AddTimer(SegundosParaEspalhar, () =>
         {
+            relogioDoSorteio = null;
             tempoDeEspalharAcabou = true;
             SortearMutantes();
         });
         // O mesmo valor do relógio da tela, para os dois chegarem juntos ao fim.
         var minutos = ConVar<float>.Find("mp_roundtime")?.Value ?? MinutosDaRodadaSeFaltarORelogio;
-        fimDaRodada = AddTimer(minutos * 60f, () => EncerrarRodadaDaMutacao(RoundEndReason.CTsWin));
+        fimDaRodada = AddTimer(minutos * 60f, () =>
+        {
+            fimDaRodada = null;
+            EncerrarRodadaDaMutacao(RoundEndReason.CTsWin);
+        });
 
         segundosAteOMutante = (int)SegundosParaEspalhar;
         relogioDaContagem = AddTimer(1f, MostrarContagem, TimerFlags.REPEAT);
-        somDaContagem = AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, TocarContagem);
+        somDaContagem = AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, () =>
+        {
+            somDaContagem = null;
+            TocarContagem();
+        });
         foreach (var pessoa in Pessoas()) pessoa.PrintToChat($" [Magnatas] Espalhem-se: o mutante aparece em {SegundosParaEspalhar:0} segundos.");
     }
 
@@ -258,10 +267,10 @@ public partial class ModoDeDiversao
     {
         if (!rodadaEmAndamento) return;
         rodadaEmAndamento = false;
-        relogioDoSorteio?.Kill();
-        fimDaRodada?.Kill();
-        relogioDaContagem?.Kill();
-        somDaContagem?.Kill();
+        Parar(ref relogioDoSorteio);
+        Parar(ref fimDaRodada);
+        Parar(ref relogioDaContagem);
+        Parar(ref somDaContagem);
 
         var humanosVenceram = motivo == RoundEndReason.CTsWin;
         if (humanosVenceram) vitoriasDosHumanos++;
@@ -663,8 +672,8 @@ public partial class ModoDeDiversao
         rodadaEmAndamento = false;
         var portadorAnterior = portadorDaSuperArma;
         portadorDaSuperArma = null;
-        relogioDaContagem?.Kill();
-        somDaContagem?.Kill();
+        Parar(ref relogioDaContagem);
+        Parar(ref somDaContagem);
         infeccoes.Clear();
         corridas.Clear();
         // Os mutantes e o portador dourado voltam à cor e ao tamanho normais. Os outros ficam como estão: mexer em todo
@@ -709,60 +718,6 @@ public partial class ModoDeDiversao
         // Os bots entram sem esperar a pessoa escolher o time. Forçar um bot enquanto ela carregava fez o jogo tirar e
         // recriar bots sem parar, e o servidor caiu.
         foreach (var comando in new[] { "bot_difficulty 1", "bot_join_team any", "bot_join_after_player 0", "bot_quota_mode fill", "bot_quota 10" }) Server.ExecuteCommand(comando);
-    }
-
-    /// <summary>Só para teste: encerra a rodada agora, de um dos jeitos, para achar o que derruba o servidor.</summary>
-    [ConsoleCommand("magnatas_teste_fim", "Teste: encerra a rodada (terminate_t, terminate_empate, entidade_t ou todos_t)")]
-    [CommandHelper(minArgs: 1, whoCanExecute: CommandUsage.SERVER_ONLY)]
-    public void EncerrarParaTeste(CCSPlayerController? chamador, CommandInfo comando)
-    {
-        var jeito = comando.GetArg(1);
-        // Com a rodada marcada como parada, a conferência do fim não encerra nada depois da transformação.
-        rodadaEmAndamento = false;
-        if (jeito == "terminate_t") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.TerroristsWin);
-        else if (jeito == "terminate_empate") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.RoundDraw);
-        else if (jeito == "todos_t")
-        {
-            // Sem encerrar a rodada: todos viram mutantes, para ver se os bots sem nenhum inimigo derrubam o servidor.
-            foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }).ToList())
-                TransformarEmMutante(jogador, null);
-        }
-        else if (jeito == "encerrar_agora")
-        {
-            rodadaEmAndamento = true;
-            EncerrarRodadaDaMutacao(RoundEndReason.TerroristsWin);
-        }
-        else if (jeito == "encerrar_timer")
-        {
-            rodadaEmAndamento = true;
-            AddTimer(EsperaParaConferirOFim, () => EncerrarRodadaDaMutacao(RoundEndReason.TerroristsWin));
-        }
-        else if (jeito == "terminate_timer")
-        {
-            AddTimer(EsperaParaConferirOFim, () => RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.TerroristsWin));
-        }
-        else if (jeito == "parar_timers_timer")
-        {
-            AddTimer(EsperaParaConferirOFim, () =>
-            {
-                relogioDoSorteio?.Kill();
-                fimDaRodada?.Kill();
-                relogioDaContagem?.Kill();
-                somDaContagem?.Kill();
-            });
-        }
-        else if (jeito == "entidade_t")
-        {
-            var fim = Utilities.CreateEntityByName<CBaseEntity>("game_round_end");
-            if (fim == null)
-            {
-                comando.ReplyToCommand("fim=sem_entidade");
-                return;
-            }
-            fim.DispatchSpawn();
-            fim.AcceptInput("EndRound_TerroristsWin", value: SegundosEntreRodadas.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        }
-        comando.ReplyToCommand($"fim={jeito}");
     }
 
     /// <summary>Só para teste: o mutante fica com o próprio boneco até o próximo mapa, para ver se a queda vem do zumbi.</summary>
