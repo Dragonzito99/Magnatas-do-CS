@@ -1,6 +1,6 @@
 """Grava o guerreiro com a animação de morte do Meshy (esqueleto Mixamo) em FBX, na pasta do pacote, para o modelo de cena.
 
-Uso: blender -b --python exportar_morte.py -- "<arquivo animado.fbx>"
+Uso: blender -b --python exportar_morte.py -- "<arquivo animado.fbx>"  (MUTANTE_ANIMACAO=<fbx> usa a queda de outro boneco)
 Depois: python montar_morte.py e compilar models/magnatas/mutante/morte/guerreiro_morte.vmdl.
 
 O DMX do Blender Source Tools estragava a animação desse esqueleto (o corpo esticava); o compilador do CS2 lê o FBX
@@ -19,10 +19,30 @@ ALTURA = 75.0
 # o boneco do jogador (74); com 366,5 a da v1 saiu pequena.
 UNIDADES_POR_METRO = 100.0
 
+# Boneco sem animação de morte própria (o nível 3): MUTANTE_ANIMACAO aponta para o FBX de outro boneco do Meshy, e a
+# queda dele passa para este pelos nomes dos ossos do Mixamo. Ossos que só um deles tem ficam parados.
+ANIMACAO = os.environ.get('MUTANTE_ANIMACAO')
+
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.fbx(filepath=ORIGEM)
 malha = next(o for o in bpy.data.objects if o.type == 'MESH')
-acao = bpy.data.actions[0]
+if ANIMACAO:
+    proprias = set(bpy.data.actions)
+    antes = set(bpy.data.objects)
+    bpy.ops.import_scene.fbx(filepath=ANIMACAO)
+    acao = next(a for a in bpy.data.actions if a not in proprias)
+    for o in [o for o in bpy.data.objects if o not in antes]:
+        bpy.data.objects.remove(o)
+    base = next(o for o in bpy.data.objects if o.type == 'ARMATURE')
+    base.animation_data_create().action = acao
+    if hasattr(base.animation_data, 'action_slot') and acao.slots:
+        base.animation_data.action_slot = acao.slots[0]
+    for a in proprias:
+        bpy.data.actions.remove(a)
+    ossos = {b.name for b in base.data.bones}
+    print('OSSOS DA QUEDA', sum(1 for nome in {f.data_path.split('"')[1] for f in getattr(acao, 'fcurves', []) if '"' in f.data_path} if nome in ossos))
+else:
+    acao = bpy.data.actions[0]
 acao.name = 'morte'
 # O compilador troca este nome pelo material do mutante (o remap fica no vmdl).
 malha.data.materials[0].name = 'mutante_corpo'

@@ -86,12 +86,12 @@ public partial class ModoDeDiversao
     private bool? morteNoServidor;
     // Quando o mutante morre, o corpo some e no lugar cai o guerreiro de cena tocando a animação do Meshy. O CS2 não toca
     // animação de morte no jogador (o corpo vira boneco de pano), então a queda é um modelo à parte que some sozinho.
-    // A queda de cada nível; o nível 3 ainda não tem animação de morrer e cai do jeito normal do jogo.
+    // A queda de cada nível. O nível 3 não veio com animação de morrer e usa a do nível 2 no próprio corpo.
     private static readonly string?[] QuedaDoNivel =
     {
         $"{PastaDoMutante}/nivel1/morte/guerreiro_morte.vmdl",
         $"{PastaDoMutante}/nivel2/morte/guerreiro_morte.vmdl",
-        null,
+        $"{PastaDoMutante}/nivel3/morte/guerreiro_morte.vmdl",
     };
     private const float SegundosDaCenaDaMorte = 4f;
     private const float TamanhoDoHumano = 1f;
@@ -547,7 +547,7 @@ public partial class ModoDeDiversao
     {
         if (!UsarBonecosDoPacote) return false;
         if (morteNoServidor is bool sabido) return sabido;
-        morteNoServidor = NoPacote(PacoteDoMutante, $"{PastaDoMutante}/nivel1/morte");
+        morteNoServidor = NoPacote(PacoteDoMutante, $"{PastaDoMutante}/nivel3/morte");
         Console.WriteLine($"[Magnatas] Queda do guerreiro no servidor: {(morteNoServidor.Value ? "sim" : "não")}.");
         return morteNoServidor.Value;
     }

@@ -1603,7 +1603,7 @@ def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
 
 
 def test_a_cena_da_morte_so_aparece_quando_o_pacote_do_servidor_tem_o_modelo():
-    assert 'NoPacote(PacoteDoMutante, $"{PastaDoMutante}/nivel1/morte")' in CODIGO_DA_MUTACAO
+    assert 'NoPacote(PacoteDoMutante, $"{PastaDoMutante}/nivel3/morte")' in CODIGO_DA_MUTACAO
     assert 'NoPacote(PacoteDoMutante, PastaDoMutante)' in CODIGO_DA_MUTACAO
 
 
@@ -1653,7 +1653,10 @@ def test_cada_nivel_do_mutante_tem_o_proprio_boneco_e_queda():
     sobe = metodo_da_mutacao("void SubirDeNivel")
     assert "if (ZumbiNoServidor()) corpo.SetModel(ModeloDoNivel(novo.Nivel));" in sobe
     quedas = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("QuedaDoNivel ="):][:300]
-    assert "nivel1/morte" in quedas and "nivel2/morte" in quedas and "null," in quedas
+    assert "nivel1/morte" in quedas and "nivel2/morte" in quedas and "nivel3/morte" in quedas
+    # O nível 3 usa a queda do nível 2 (o dono escolheu, 09/11). A conferência do pacote olha a queda do nível 3, a
+    # última a entrar: se o servidor ainda tiver o pacote de antes, nenhum nível mostra a queda, em vez de faltar uma.
+    assert 'NoPacote(PacoteDoMutante, $"{PastaDoMutante}/nivel3/morte")' in CODIGO_DA_MUTACAO
 
 
 def test_teste_sem_mudar_o_tamanho_dos_bonecos_durante_o_jogo():
