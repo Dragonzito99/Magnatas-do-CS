@@ -109,7 +109,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaPartida;
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.8.4";
+    public override string ModuleVersion => "1.8.5";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 

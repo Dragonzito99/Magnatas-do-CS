@@ -737,6 +737,20 @@ public partial class ModoDeDiversao
             rodadaEmAndamento = true;
             AddTimer(EsperaParaConferirOFim, () => EncerrarRodadaDaMutacao(RoundEndReason.TerroristsWin));
         }
+        else if (jeito == "terminate_timer")
+        {
+            AddTimer(EsperaParaConferirOFim, () => RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.TerroristsWin));
+        }
+        else if (jeito == "parar_timers_timer")
+        {
+            AddTimer(EsperaParaConferirOFim, () =>
+            {
+                relogioDoSorteio?.Kill();
+                fimDaRodada?.Kill();
+                relogioDaContagem?.Kill();
+                somDaContagem?.Kill();
+            });
+        }
         else if (jeito == "entidade_t")
         {
             var fim = Utilities.CreateEntityByName<CBaseEntity>("game_round_end");
