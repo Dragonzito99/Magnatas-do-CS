@@ -41,9 +41,10 @@ public partial class ModoDeDiversao
     private const float SegundosParaEspalhar = 15f;
     // O som da contagem começa antes e termina junto com o sorteio. Na tela, só os últimos 10 segundos.
     private const string SomDaContagem = "magnatas.contagem_mutacao";
-    // Gravados pelo dono: um para a vitória dos Magnatas (os humanos, CT) e outro para a dos mutantes.
-    private const string SomDaVitoriaDosMagnatas = "magnatas.vitoria_magnatas";
-    private const string SomDaVitoriaDosMutantes = "magnatas.vitoria_mutantes";
+    // Gravados pelo dono: um para a vitória dos Magnatas (os humanos, CT) e outro para a dos mutantes. No pacote os dois
+    // arquivos ficaram trocados (o dono ouviu o dos Magnatas quando os mutantes venceram): a troca é feita aqui.
+    private const string SomDaVitoriaDosMagnatas = "magnatas.vitoria_mutantes";
+    private const string SomDaVitoriaDosMutantes = "magnatas.vitoria_magnatas";
     private const float SegundosDoSomDaContagem = 11.5f;
     private const int SegundosDaContagemNaTela = 10;
     // Sozinho não há o que jogar: a rodada fica parada, sem contar, até chegar mais alguém.

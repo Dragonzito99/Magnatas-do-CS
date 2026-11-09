@@ -1634,8 +1634,9 @@ def test_o_placar_de_cima_conta_as_rodadas_da_mutacao():
 
 
 def test_o_fim_da_rodada_toca_o_som_de_quem_venceu():
-    assert 'SomDaVitoriaDosMagnatas = "magnatas.vitoria_magnatas";' in CODIGO_DA_MUTACAO
-    assert 'SomDaVitoriaDosMutantes = "magnatas.vitoria_mutantes";' in CODIGO_DA_MUTACAO
+    # Os arquivos do pacote ficaram trocados: o dono ouviu o som dos Magnatas quando os mutantes venceram.
+    assert 'SomDaVitoriaDosMagnatas = "magnatas.vitoria_mutantes";' in CODIGO_DA_MUTACAO
+    assert 'SomDaVitoriaDosMutantes = "magnatas.vitoria_magnatas";' in CODIGO_DA_MUTACAO
     encerra = metodo_da_mutacao("void EncerrarRodadaDaMutacao")
     assert "TocarParaTodos(humanosVenceram ? SomDaVitoriaDosMagnatas : SomDaVitoriaDosMutantes);" in encerra
     toca = metodo_da_mutacao("void TocarParaTodos")
