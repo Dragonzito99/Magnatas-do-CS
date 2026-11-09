@@ -3,8 +3,9 @@ import os, shutil, re
 
 REF = r'G:\Magnatas-ferramentas\cs2ref\agents\models\ctm_sas'
 SAIDA = r'G:\Magnatas-ferramentas\zumbi\saida'
-ADDON = r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\magnatas_sons'
-PASTA = 'models/magnatas/mutante'
+# Cada versão do boneco vai num pacote da Oficina próprio e numa pasta própria (ver LEIAME.md).
+ADDON = os.path.join(r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons', os.environ.get('MUTANTE_ADDON', 'magnatas_sons'))
+PASTA = os.environ.get('MUTANTE_PASTA', 'models/magnatas/mutante')
 DESTINO = os.path.join(ADDON, *PASTA.split('/'))
 os.makedirs(os.path.join(DESTINO, 'materials'), exist_ok=True)
 

@@ -9,7 +9,9 @@ direto e acerta. O modelo de cena tem esqueleto próprio: não é o boneco do jo
 import bpy, sys, os, mathutils
 
 ORIGEM = sys.argv[sys.argv.index('--') + 1]
-DESTINO = r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\magnatas_sons\models\magnatas\mutante\morte\guerreiro_morte.fbx'
+ADDON = os.environ.get('MUTANTE_ADDON', 'magnatas_sons')
+PASTA = os.environ.get('MUTANTE_PASTA', 'models/magnatas/mutante')
+DESTINO = os.path.join(r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons', ADDON, *PASTA.split('/'), 'morte', 'guerreiro_morte.fbx')
 # Mesma altura do boneco do mutante no jogo (75 polegadas).
 ALTURA = 75.0
 # Medido: com escala 1, cada metro do Blender vira 366,5 unidades no jogo depois de compilado.

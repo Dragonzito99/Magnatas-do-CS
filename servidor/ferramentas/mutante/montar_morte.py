@@ -7,8 +7,9 @@ Usa o material do mutante (models/magnatas/mutante/materials/mutante_corpo.vmat)
 import os
 
 SAIDA = r'G:\Magnatas-ferramentas\zumbi\saida_morte'
-ADDON = r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\magnatas_sons'
-PASTA = 'models/magnatas/mutante/morte'
+ADDON = os.path.join(r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons', os.environ.get('MUTANTE_ADDON', 'magnatas_sons'))
+PASTA_DO_MUTANTE = os.environ.get('MUTANTE_PASTA', 'models/magnatas/mutante')
+PASTA = PASTA_DO_MUTANTE + '/morte'
 DESTINO = os.path.join(ADDON, *PASTA.split('/'))
 os.makedirs(DESTINO, exist_ok=True)
 
@@ -31,7 +32,7 @@ VMDL = '''<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} f
 						[
 							{
 								from = "mutante_corpo.vmat"
-								to = "models/magnatas/mutante/materials/mutante_corpo.vmat"
+								to = "PASTA_DO_MUTANTE/materials/mutante_corpo.vmat"
 							},
 						]
 						use_global_default = false
@@ -75,7 +76,7 @@ VMDL = '''<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} f
 		base_model_name = ""
 	}
 }
-'''.replace('PASTA', PASTA)
+'''.replace('PASTA_DO_MUTANTE', PASTA_DO_MUTANTE).replace('PASTA', PASTA)
 with open(os.path.join(DESTINO, 'guerreiro_morte.vmdl'), 'w', encoding='utf-8', newline='\n') as arquivo:
     arquivo.write(VMDL)
 print('pronto', sorted(os.listdir(DESTINO)))
