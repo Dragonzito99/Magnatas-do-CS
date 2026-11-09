@@ -727,6 +727,16 @@ public partial class ModoDeDiversao
             foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }).ToList())
                 TransformarEmMutante(jogador, null);
         }
+        else if (jeito == "encerrar_agora")
+        {
+            rodadaEmAndamento = true;
+            EncerrarRodadaDaMutacao(RoundEndReason.TerroristsWin);
+        }
+        else if (jeito == "encerrar_timer")
+        {
+            rodadaEmAndamento = true;
+            AddTimer(EsperaParaConferirOFim, () => EncerrarRodadaDaMutacao(RoundEndReason.TerroristsWin));
+        }
         else if (jeito == "entidade_t")
         {
             var fim = Utilities.CreateEntityByName<CBaseEntity>("game_round_end");
