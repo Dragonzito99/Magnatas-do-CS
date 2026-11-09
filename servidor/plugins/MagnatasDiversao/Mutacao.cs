@@ -291,7 +291,10 @@ public partial class ModoDeDiversao
         if (jogador is not { IsValid: true } || jogador.Slot != portadorDaSuperArma || !evento.Weapon.Contains("negev")) return HookResult.Continue;
         Server.NextFrame(() =>
         {
-            var arma = jogador.IsValid ? jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value : null;
+            // Quem virou mutante nesse meio tempo já está perdendo a Negev: mexer nela mandava aos jogos uma arma que
+            // não existia mais e fechava o jogo de quem estava no servidor ("CopyExistingEntity").
+            if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot != portadorDaSuperArma) return;
+            var arma = jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value;
             if (arma is not { IsValid: true } || arma.DesignerName != ArmaEspecial) return;
             arma.Clip1 = PenteDaSuperArma;
             Utilities.SetStateChanged(arma, "CBasePlayerWeapon", "m_iClip1");
