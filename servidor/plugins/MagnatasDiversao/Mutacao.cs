@@ -712,7 +712,7 @@ public partial class ModoDeDiversao
     }
 
     /// <summary>Só para teste: encerra a rodada agora, de um dos jeitos, para achar o que derruba o servidor.</summary>
-    [ConsoleCommand("magnatas_teste_fim", "Teste: encerra a rodada (terminate_t, terminate_empate ou entidade_t)")]
+    [ConsoleCommand("magnatas_teste_fim", "Teste: encerra a rodada (terminate_t, terminate_empate, entidade_t ou todos_t)")]
     [CommandHelper(minArgs: 1, whoCanExecute: CommandUsage.SERVER_ONLY)]
     public void EncerrarParaTeste(CCSPlayerController? chamador, CommandInfo comando)
     {
@@ -720,6 +720,12 @@ public partial class ModoDeDiversao
         rodadaEmAndamento = false;
         if (jeito == "terminate_t") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.TerroristsWin);
         else if (jeito == "terminate_empate") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.RoundDraw);
+        else if (jeito == "todos_t")
+        {
+            // Sem encerrar a rodada: todos viram mutantes, para ver se os bots sem nenhum inimigo derrubam o servidor.
+            foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }))
+                jogador.SwitchTeam(CsTeam.Terrorist);
+        }
         else if (jeito == "entidade_t")
         {
             var fim = Utilities.CreateEntityByName<CBaseEntity>("game_round_end");
