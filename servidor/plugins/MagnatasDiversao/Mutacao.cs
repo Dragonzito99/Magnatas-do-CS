@@ -75,6 +75,10 @@ public partial class ModoDeDiversao
     private bool? zumbiNoServidor;
     // Chave para desligar os bonecos do pacote de uma vez, se uma versão nova der problema.
     private static readonly bool UsarBonecosDoPacote = true;
+    // Desligado para teste (09/11): o jogo de quem estava no servidor fechava na transformação e no reinício da rodada,
+    // os dois momentos em que o plugin mexe no esqueleto para mudar o tamanho. Com isso desligado, o mutante fica do
+    // tamanho normal e o guerreiro caído não é aumentado.
+    private static readonly bool MudarTamanhoEmJogo = false;
     private bool? morteNoServidor;
     // Quando o mutante morre, o corpo some e no lugar cai o guerreiro de cena tocando a animação do Meshy. O CS2 não toca
     // animação de morte no jogador (o corpo vira boneco de pano), então a queda é um modelo à parte que some sozinho.
@@ -609,6 +613,7 @@ public partial class ModoDeDiversao
 
     private static void MudarTamanho(CBaseEntity corpo, float tamanho)
     {
+        if (!MudarTamanhoEmJogo) return;
         var esqueleto = corpo.CBodyComponent?.SceneNode?.GetSkeletonInstance();
         if (esqueleto == null) return;
         esqueleto.Scale = tamanho;

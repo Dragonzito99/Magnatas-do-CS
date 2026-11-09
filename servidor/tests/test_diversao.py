@@ -1648,3 +1648,11 @@ def test_o_boneco_vem_do_pacote_proprio_da_versao():
     assert 'ModeloDaMorte = "models/magnatas/mutante_v1/morte/guerreiro_morte.vmdl";' in CODIGO_DA_MUTACAO
     assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1")' in CODIGO_DA_MUTACAO
     assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1/morte")' in CODIGO_DA_MUTACAO
+
+
+def test_teste_sem_mudar_o_tamanho_dos_bonecos_durante_o_jogo():
+    # Suspeita das quedas do jogo na transformação e no reinício da rodada: mexer no esqueleto para mudar o tamanho.
+    assert "private static readonly bool MudarTamanhoEmJogo = false;" in CODIGO_DA_MUTACAO
+    muda = metodo_da_mutacao("static void MudarTamanho(")
+    assert "if (!MudarTamanhoEmJogo) return;" in muda
+    assert muda.index("if (!MudarTamanhoEmJogo) return;") < muda.index("GetSkeletonInstance()")
