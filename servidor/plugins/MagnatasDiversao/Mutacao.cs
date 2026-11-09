@@ -717,14 +717,15 @@ public partial class ModoDeDiversao
     public void EncerrarParaTeste(CCSPlayerController? chamador, CommandInfo comando)
     {
         var jeito = comando.GetArg(1);
+        // Com a rodada marcada como parada, a conferência do fim não encerra nada depois da transformação.
         rodadaEmAndamento = false;
         if (jeito == "terminate_t") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.TerroristsWin);
         else if (jeito == "terminate_empate") RegrasDoJogo()?.TerminateRound(SegundosEntreRodadas, RoundEndReason.RoundDraw);
         else if (jeito == "todos_t")
         {
             // Sem encerrar a rodada: todos viram mutantes, para ver se os bots sem nenhum inimigo derrubam o servidor.
-            foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }))
-                jogador.SwitchTeam(CsTeam.Terrorist);
+            foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist }).ToList())
+                TransformarEmMutante(jogador, null);
         }
         else if (jeito == "entidade_t")
         {
