@@ -45,6 +45,7 @@ public partial class ModoDeDiversao
     private const int SegundosDaContagemNaTela = 10;
     // Sozinho não há o que jogar: a rodada fica parada, sem contar, até chegar mais alguém.
     private const int MinimoDeJogadores = 2;
+    private const float EsperaParaConferirOFim = 0.5f;
     // O teste com bots precisa de um mapa com o caminho que os bots seguem; os da Mutação não têm.
     private const string MapaDoTeste = "de_dust2";
     private const float IntervaloDoAvisoDeEspera = 2f;
@@ -420,7 +421,9 @@ public partial class ModoDeDiversao
         AplicarAtributosDoMutante(jogador);
         jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Você virou mutante!</font>", SegundosDoAvisoDeMutante);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
-        ConferirFimDaRodada();
+        // Encerrar a rodada no mesmo instante em que as armas do infectado saem, ainda dentro do golpe, derrubava o jogo
+        // de quem estava no servidor ("OnPreserveEntity") na infecção do último humano. O fim vem logo depois.
+        AddTimer(EsperaParaConferirOFim, ConferirFimDaRodada);
     }
 
     private void ContarTransformacao(CCSPlayerController autor)

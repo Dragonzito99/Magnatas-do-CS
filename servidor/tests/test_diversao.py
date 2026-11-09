@@ -1507,3 +1507,12 @@ def test_o_teste_volta_para_a_dust_2_se_o_mapa_da_oficina_abrir_por_cima():
     assert "testeComBots && mapa != MapaDoTeste" in ouvinte
     assert 'changelevel {MapaDoTeste}' in ouvinte
     assert 'MapaDoTeste = "de_dust2";' in CODIGO_DA_MUTACAO
+
+
+def test_o_fim_da_rodada_nao_acontece_no_mesmo_instante_da_infeccao():
+    # Tirar as armas de quem virou mutante e encerrar a rodada no mesmo instante, dentro do golpe, derrubava o jogo
+    # de quem estava no servidor ("OnPreserveEntity") na infecção do último humano.
+    transforma = metodo_da_mutacao("void TransformarEmMutante")
+    assert "ConferirFimDaRodada();" not in transforma
+    assert "AddTimer(EsperaParaConferirOFim, ConferirFimDaRodada)" in transforma
+    assert "EsperaParaConferirOFim = 0.5f;" in CODIGO_DA_MUTACAO
