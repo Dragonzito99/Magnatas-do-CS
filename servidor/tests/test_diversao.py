@@ -1069,7 +1069,7 @@ def test_equipe_nunca_dorme_com_varios_mapas():
 SONS_DE_ABATE = RAIZ / "plugins" / "MagnatasDiversao" / "SonsDeAbate.cs"
 PACOTE_DE_SONS = "3835000213"
 # Cada versão do boneco é um item novo da Oficina, que nunca é atualizado (ver servidor/ferramentas/mutante/LEIAME.md).
-PACOTE_DO_MUTANTE = "3836525270"
+PACOTE_DO_MUTANTE = "3836643990"
 
 
 def codigo_dos_sons():
@@ -1222,10 +1222,10 @@ def test_a_super_negev_some_na_rodada_seguinte():
 
 def test_o_mutante_usa_o_zumbi_do_pacote_e_fica_maior():
     # O boneco blindado do jogo virou um arquivo vazio numa atualização do CS2. O zumbi vem no pacote da Oficina.
-    assert 'ModeloDoMutante = "models/magnatas/mutante_v1/mutante.vmdl"' in CODIGO_DA_MUTACAO
+    assert 'ModeloDoNivel(int nivel) => $"{PastaDoMutante}/nivel{nivel}/mutante.vmdl"' in CODIGO_DA_MUTACAO
     # Sem tingir: a cor é a do próprio zumbi.
     assert "Color.FromArgb(255, 255, 255, 255), new NivelDoMutante[]" in CODIGO_DA_MUTACAO
-    assert "AddResource(ModeloDoMutante)" in CODIGO_DA_MUTACAO
+    assert "manifesto.AddResource(ModeloDoNivel(nivel.Nivel))" in CODIGO_DA_MUTACAO
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     assert "nivel.Tamanho" in trecho
     prepara = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):]
@@ -1239,11 +1239,11 @@ def test_sem_o_zumbi_no_servidor_o_mutante_nao_troca_de_boneco():
     assert "ModeloDeReserva" not in CODIGO_DA_MUTACAO
     confere = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("bool ZumbiNoServidor"):]
     confere = confere[:confere.index(FIM_DO_METODO)]
-    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1")' in confere
+    assert 'NoPacote(PacoteDoMutante, PastaDoMutante)' in confere
     assert "_dir.vpk" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("static bool NoPacote("):][:600]
     aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     aplica = aplica[:aplica.index(FIM_DO_METODO)]
-    assert "if (zumbi) corpo.SetModel(ModeloDoMutante);" in aplica
+    assert "if (zumbi) corpo.SetModel(ModeloDoNivel(nivel.Nivel));" in aplica
     assert "zumbi ? mutanteDaRodada.Cor : CorDaReserva" in aplica
     assert "zumbiNoServidor = null" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void LigarMutacao"):]
 
@@ -1577,9 +1577,9 @@ def test_a_super_negev_entra_depois_que_o_fuzil_saiu():
 
 
 def test_mutante_que_morre_cai_com_a_animacao_do_guerreiro():
-    assert 'ModeloDaMorte = "models/magnatas/mutante_v1/morte/guerreiro_morte.vmdl";' in CODIGO_DA_MUTACAO
-    precache = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("OnServerPrecacheResources"):][:300]
-    assert "AddResource(ModeloDaMorte)" in precache
+    assert '$"{PastaDoMutante}/nivel1/morte/guerreiro_morte.vmdl",' in CODIGO_DA_MUTACAO
+    precache = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("OnServerPrecacheResources"):][:600]
+    assert "if (queda != null) manifesto.AddResource(queda);" in precache
     morte = metodo_da_mutacao("HookResult AoMorrerNaMutacao")
     # Só quem já era mutante: humano que morre de queda vira mutante sem a cena.
     assert "var eraMutante = jogador.Team == CsTeam.Terrorist;" in morte
@@ -1593,7 +1593,8 @@ def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
     # Trocar o modelo antes de a entidade nascer dava erro interno no servidor a cada morte (SetupModel, entidade
     # ainda "em preparo"): o modelo, o lugar e a animação vão junto na criação.
     assert "SetModel(" not in cena and "Teleport(" not in cena
-    assert 'valores.SetString("model", ModeloDaMorte);' in cena
+    assert 'valores.SetString("model", modeloDaQueda);' in cena
+    assert "if (modeloDaQueda == null) return;" in cena
     assert 'valores.SetString("DefaultAnim", "morte");' in cena
     assert "queda.DispatchSpawn(valores);" in cena
     assert "Color.FromArgb(0," in cena and "m_clrRender" in cena
@@ -1602,8 +1603,8 @@ def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
 
 
 def test_a_cena_da_morte_so_aparece_quando_o_pacote_do_servidor_tem_o_modelo():
-    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1/morte")' in CODIGO_DA_MUTACAO
-    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1")' in CODIGO_DA_MUTACAO
+    assert 'NoPacote(PacoteDoMutante, $"{PastaDoMutante}/nivel1/morte")' in CODIGO_DA_MUTACAO
+    assert 'NoPacote(PacoteDoMutante, PastaDoMutante)' in CODIGO_DA_MUTACAO
 
 
 def test_a_chave_dos_bonecos_do_pacote_desliga_o_boneco_e_a_queda_de_uma_vez():
@@ -1645,10 +1646,14 @@ def test_o_fim_da_rodada_toca_o_som_de_quem_venceu():
 
 def test_o_boneco_vem_do_pacote_proprio_da_versao():
     assert f'PacoteDoMutante = "{PACOTE_DO_MUTANTE}";' in CODIGO_DA_MUTACAO
-    assert 'ModeloDoMutante = "models/magnatas/mutante_v1/mutante.vmdl";' in CODIGO_DA_MUTACAO
-    assert 'ModeloDaMorte = "models/magnatas/mutante_v1/morte/guerreiro_morte.vmdl";' in CODIGO_DA_MUTACAO
-    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1")' in CODIGO_DA_MUTACAO
-    assert 'NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1/morte")' in CODIGO_DA_MUTACAO
+    assert 'PastaDoMutante = "models/magnatas/mutante_v2";' in CODIGO_DA_MUTACAO
+
+
+def test_cada_nivel_do_mutante_tem_o_proprio_boneco_e_queda():
+    sobe = metodo_da_mutacao("void SubirDeNivel")
+    assert "if (ZumbiNoServidor()) corpo.SetModel(ModeloDoNivel(novo.Nivel));" in sobe
+    quedas = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("QuedaDoNivel ="):][:300]
+    assert "nivel1/morte" in quedas and "nivel2/morte" in quedas and "null," in quedas
 
 
 def test_teste_sem_mudar_o_tamanho_dos_bonecos_durante_o_jogo():

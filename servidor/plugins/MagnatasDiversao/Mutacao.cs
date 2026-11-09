@@ -67,8 +67,11 @@ public partial class ModoDeDiversao
     // O boneco vem num pacote da Oficina só dele, um item novo para cada versão, que nunca é atualizado: a Steam entrega
     // atualizações ao servidor e ao jogo de cada um em horas diferentes, e o mesmo boneco com esqueletos diferentes
     // fechava o jogo de quem virava mutante ("OnPreserveEntity", 08/11 às 23:02 e 23:05). Item novo, todos baixam igual.
-    private const string PacoteDoMutante = "3836525270";
-    private const string ModeloDoMutante = "models/magnatas/mutante_v1/mutante.vmdl";
+    private const string PacoteDoMutante = "3836643990";
+    // Um boneco por nível (v2): o mutante troca de boneco quando sobe de nível, em vez de crescer. Mudar o tamanho
+    // durante o jogo fechava o jogo de quem estava no servidor (provado no teste de 09/11: sem isso, nenhuma queda).
+    private const string PastaDoMutante = "models/magnatas/mutante_v2";
+    private static string ModeloDoNivel(int nivel) => $"{PastaDoMutante}/nivel{nivel}/mutante.vmdl";
     // Sem o zumbi no servidor (o pacote novo ainda não chegou), o mutante ficaria sem áreas de acerto e sem animação.
     // Trocar para outro boneco do jogo fazia o jogo de quem estava no servidor parar para carregar o modelo e cair
     // ("OnPreserveEntity"). Então, sem o zumbi, o mutante fica com o próprio boneco, verde e maior.
@@ -83,7 +86,13 @@ public partial class ModoDeDiversao
     private bool? morteNoServidor;
     // Quando o mutante morre, o corpo some e no lugar cai o guerreiro de cena tocando a animação do Meshy. O CS2 não toca
     // animação de morte no jogador (o corpo vira boneco de pano), então a queda é um modelo à parte que some sozinho.
-    private const string ModeloDaMorte = "models/magnatas/mutante_v1/morte/guerreiro_morte.vmdl";
+    // A queda de cada nível; o nível 3 ainda não tem animação de morrer e cai do jeito normal do jogo.
+    private static readonly string?[] QuedaDoNivel =
+    {
+        $"{PastaDoMutante}/nivel1/morte/guerreiro_morte.vmdl",
+        $"{PastaDoMutante}/nivel2/morte/guerreiro_morte.vmdl",
+        null,
+    };
     private const float SegundosDaCenaDaMorte = 4f;
     private const float TamanhoDoHumano = 1f;
 
@@ -418,8 +427,8 @@ public partial class ModoDeDiversao
         RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
         {
             if (!UsarBonecosDoPacote) return;
-            manifesto.AddResource(ModeloDoMutante);
-            manifesto.AddResource(ModeloDaMorte);
+            foreach (var nivel in mutanteDaRodada.Niveis) manifesto.AddResource(ModeloDoNivel(nivel.Nivel));
+            foreach (var queda in QuedaDoNivel) if (queda != null) manifesto.AddResource(queda);
         });
         RegisterListener<Listeners.OnMapStart>(mapa =>
         {
@@ -516,7 +525,7 @@ public partial class ModoDeDiversao
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
         var zumbi = ZumbiNoServidor();
-        if (zumbi) corpo.SetModel(ModeloDoMutante);
+        if (zumbi) corpo.SetModel(ModeloDoNivel(nivel.Nivel));
         MudarTamanho(corpo, nivel.Tamanho);
         corpo.Render = zumbi ? mutanteDaRodada.Cor : CorDaReserva;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
@@ -528,7 +537,7 @@ public partial class ModoDeDiversao
     {
         if (!UsarBonecosDoPacote) return false;
         if (zumbiNoServidor is bool sabido) return sabido;
-        zumbiNoServidor = NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1");
+        zumbiNoServidor = NoPacote(PacoteDoMutante, PastaDoMutante);
         Console.WriteLine($"[Magnatas] Zumbi do pacote no servidor: {(zumbiNoServidor.Value ? "sim" : "não, o mutante fica com o próprio boneco")}.");
         return zumbiNoServidor.Value;
     }
@@ -538,7 +547,7 @@ public partial class ModoDeDiversao
     {
         if (!UsarBonecosDoPacote) return false;
         if (morteNoServidor is bool sabido) return sabido;
-        morteNoServidor = NoPacote(PacoteDoMutante, "models/magnatas/mutante_v1/morte");
+        morteNoServidor = NoPacote(PacoteDoMutante, $"{PastaDoMutante}/nivel1/morte");
         Console.WriteLine($"[Magnatas] Queda do guerreiro no servidor: {(morteNoServidor.Value ? "sim" : "não")}.");
         return morteNoServidor.Value;
     }
@@ -577,6 +586,7 @@ public partial class ModoDeDiversao
             Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
             corpo.VelocityModifier = VelocidadeDe(mutante);
             MudarTamanho(corpo, novo.Tamanho);
+            if (ZumbiNoServidor()) corpo.SetModel(ModeloDoNivel(novo.Nivel));
         }
         var nome = System.Net.WebUtility.HtmlEncode(mutante.PlayerName);
         foreach (var pessoa in Pessoas())
@@ -737,6 +747,8 @@ public partial class ModoDeDiversao
     private void MostrarQuedaDoMutante(CCSPlayerController jogador)
     {
         if (!MorteNoServidor()) return;
+        var modeloDaQueda = QuedaDoNivel[Math.Clamp(NivelDe(jogador).Nivel, 1, QuedaDoNivel.Length) - 1];
+        if (modeloDaQueda == null) return;
         var corpo = jogador.PlayerPawn.Value;
         if (corpo is not { IsValid: true } || corpo.AbsOrigin == null || corpo.AbsRotation == null) return;
         var lugar = new Vector(corpo.AbsOrigin.X, corpo.AbsOrigin.Y, corpo.AbsOrigin.Z);
@@ -751,7 +763,7 @@ public partial class ModoDeDiversao
         if (queda == null) return;
         // Tudo vai na criação: trocar o modelo antes de a entidade nascer dava erro interno no servidor a cada morte.
         var valores = new CEntityKeyValues();
-        valores.SetString("model", ModeloDaMorte);
+        valores.SetString("model", modeloDaQueda);
         valores.SetVector("origin", lugar);
         valores.SetAngle("angles", giro);
         valores.SetString("DefaultAnim", "morte");
