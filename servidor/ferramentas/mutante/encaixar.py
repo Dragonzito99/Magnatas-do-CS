@@ -2,7 +2,8 @@
 import bpy, sys, math, mathutils, os
 
 ORIGEM_ZUMBI = sys.argv[sys.argv.index('--') + 1] if '--' in sys.argv else r'G:\Downloads_do_C\Zombie Teste.fbx'
-SAIDA = r'G:\Magnatas-ferramentas\zumbi\saida'
+# Pasta de trabalho de cada boneco (MUTANTE_SAIDA), para um não apagar o outro.
+SAIDA = os.environ.get('MUTANTE_SAIDA', r'G:\Magnatas-ferramentas\zumbi\saida')
 os.makedirs(SAIDA, exist_ok=True)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)

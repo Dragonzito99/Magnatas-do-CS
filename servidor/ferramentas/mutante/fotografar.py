@@ -1,6 +1,7 @@
 import bpy, math, mathutils, sys, os
 
-SAIDA = r'G:\Magnatas-ferramentas\zumbi\saida'
+# Pasta de trabalho de cada boneco (MUTANTE_SAIDA), para um não apagar o outro.
+SAIDA = os.environ.get('MUTANTE_SAIDA', r'G:\Magnatas-ferramentas\zumbi\saida')
 bpy.ops.wm.open_mainfile(filepath=os.path.join(SAIDA, 'mutante.blend'))
 cena = bpy.context.scene
 cena.render.engine = 'BLENDER_WORKBENCH'

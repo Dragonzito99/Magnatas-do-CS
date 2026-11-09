@@ -2,7 +2,8 @@
 import os, shutil, re
 
 REF = r'G:\Magnatas-ferramentas\cs2ref\agents\models\ctm_sas'
-SAIDA = r'G:\Magnatas-ferramentas\zumbi\saida'
+# Pasta de trabalho de cada boneco (MUTANTE_SAIDA), para um não apagar o outro.
+SAIDA = os.environ.get('MUTANTE_SAIDA', r'G:\Magnatas-ferramentas\zumbi\saida')
 # Cada versão do boneco vai num pacote da Oficina próprio e numa pasta própria (ver LEIAME.md).
 ADDON = os.path.join(r'G:\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons', os.environ.get('MUTANTE_ADDON', 'magnatas_sons'))
 PASTA = os.environ.get('MUTANTE_PASTA', 'models/magnatas/mutante')
@@ -24,7 +25,9 @@ for tipo in TIPOS:
             os.remove(destino)
         print('SEM TEXTURA', tipo)
         continue
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', os.path.join(SAIDA, achadas[tipo]), '-pix_fmt', 'gray' if tipo in ('roughness', 'metallic') else 'rgb24',
+    # Texturas de 4K e 8K do Meshy ficam em 2048, como as dos bonecos do jogo.
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', os.path.join(SAIDA, achadas[tipo]),
+                    '-vf', "scale='min(2048,iw)':-1", '-pix_fmt', 'gray' if tipo in ('roughness', 'metallic') else 'rgb24',
                     destino], check=True)
 
 # Braços de primeira pessoa, kit e animações de ferramenta continuam os do SAS.

@@ -3,7 +3,8 @@ import bpy, sys, os
 # Pasta do boneco no pacote; cada versão do boneco tem a sua (ver LEIAME.md).
 PASTA = os.environ.get('MUTANTE_PASTA', 'models/magnatas/mutante')
 
-SAIDA = r'G:\Magnatas-ferramentas\zumbi\saida'
+# Pasta de trabalho de cada boneco (MUTANTE_SAIDA), para um não apagar o outro.
+SAIDA = os.environ.get('MUTANTE_SAIDA', r'G:\Magnatas-ferramentas\zumbi\saida')
 bpy.ops.wm.open_mainfile(filepath=os.path.join(SAIDA, 'mutante.blend'))
 sys.path.append(r'G:\Magnatas-ferramentas\bst\BlenderSourceTools-master')
 import io_scene_valvesource
