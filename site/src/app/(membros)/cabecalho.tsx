@@ -14,6 +14,7 @@ export function Cabecalho({
   sino,
   casosDaEquipe,
   testes = false,
+  grana = null,
 }: {
   usuario: UsuarioPublico;
   patente: Patente;
@@ -23,6 +24,8 @@ export function Cabecalho({
   casosDaEquipe: number | null;
   /** Só o Adm vê a aba Testes no menu. */
   testes?: boolean;
+  /** O saldo de Grana; vazio enquanto a loja está fechada para esta conta. */
+  grana?: number | null;
 }) {
   return (
     <header className="cabecalho">
@@ -39,6 +42,13 @@ export function Cabecalho({
                 </svg>
                 Painel ADM
                 {casosDaEquipe > 0 && <small className="contador-do-painel">{casosDaEquipe}</small>}
+              </Link>
+            )}
+            {grana !== null && (
+              <Link href="/bau" className="saldo-de-grana" title="Sua Grana. Abre o baú e o extrato.">
+                <span aria-hidden="true">$</span>
+                <b>{grana.toLocaleString('pt-BR')}</b>
+                <small>Grana</small>
               </Link>
             )}
             {sino}
@@ -76,7 +86,7 @@ export function Cabecalho({
           </div>
         </div>
       </div>
-      <MenuPrincipal discord={discord} testes={testes} />
+      <MenuPrincipal discord={discord} testes={testes} loja={grana !== null} />
     </header>
   );
 }

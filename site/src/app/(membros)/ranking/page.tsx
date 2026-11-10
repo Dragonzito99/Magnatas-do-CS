@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
+import { moldurasDe } from '@/dominio/loja';
 import { mvpsDoPeriodo, periodoDeBrasilia } from '@/dominio/mvps';
 import {
   lerMes,
@@ -37,15 +38,16 @@ const METAL = { 1: 'ouro', 2: 'prata', 3: 'bronze' } as const;
 type LugarDoPodio = { posicao: number; jogador: { id: string; apelido: string; avatarUrl: string | null }; detalhe: ReactNode; numero: string };
 
 /** O pódio do rascunho: segundo, primeiro no meio e terceiro, cada um com a cor da sua medalha. */
-function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
+async function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
   const ordem = [lugares[1], lugares[0], lugares[2]].filter(Boolean);
   if (ordem.length === 0) return null;
+  const molduras = await moldurasDe(obterBd(), ordem.map((lugar) => lugar.jogador.id));
   return (
     <div className={`podio-ranking com-${ordem.length}`}>
       {ordem.map((lugar) => (
         <div key={lugar.jogador.id} className={`podio-lugar ${METAL[lugar.posicao as 1 | 2 | 3]}`}>
           <span className="podio-pos">{lugar.posicao}º</span>
-          <Avatar usuario={lugar.jogador} />
+          <Avatar usuario={lugar.jogador} moldura={molduras.get(lugar.jogador.id)} />
           <Link className="podio-nome" href={`/jogadores/${lugar.jogador.id}`}>
             {lugar.jogador.apelido}
           </Link>

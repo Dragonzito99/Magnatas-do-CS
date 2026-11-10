@@ -12,7 +12,8 @@
     "db:migrar": "tsx scripts/migrar.ts",
     "adm:criar": "tsx scripts/criar-adm.ts",
     "servidor:criar": "tsx scripts/criar-servidor.ts",
-    "noticia:publicar": "tsx scripts/publicar-noticia.ts"
+    "noticia:publicar": "tsx scripts/publicar-noticia.ts",
+    "grana:abrir": "tsx scripts/abrir-grana.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

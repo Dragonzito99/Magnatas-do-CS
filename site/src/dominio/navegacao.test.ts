@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { DESTINO_DO_JOGAR, ITENS_DO_MENU, itemAtivo, mostrarAvisoDeSala } from './navegacao';
+import { DESTINO_DO_JOGAR, ITENS_DO_MENU, itemAtivo, itensDoMenu, mostrarAvisoDeSala } from './navegacao';
 
 test('o menu de cima não tem as áreas da equipe nem o "Seja um Magnata"', () => {
   const nomes = ITENS_DO_MENU.map((item) => item.nome);
@@ -12,6 +12,18 @@ test('Magnata Shop fica no menu como "em breve", sem levar a lugar nenhum', () =
   const item = ITENS_DO_MENU.find((candidato) => candidato.nome === 'Magnata Shop');
   expect(item).toMatchObject({ emBreve: true });
   expect(item).not.toHaveProperty('href');
+});
+
+test('com a loja aberta, Magnata Shop leva à loja e ao baú', () => {
+  const item = itensDoMenu(true).find((candidato) => candidato.nome === 'Magnata Shop');
+  expect(item).toMatchObject({ href: '/loja', destaque: true });
+  expect(item?.emBreve).toBeFalsy();
+  expect(item?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
+    ['Loja', '/loja'],
+    ['Meu baú', '/bau'],
+  ]);
+  expect(itensDoMenu(false)).toBe(ITENS_DO_MENU);
+  expect(itensDoMenu(true).map((candidato) => candidato.nome)).toEqual(ITENS_DO_MENU.map((candidato) => candidato.nome));
 });
 
 test('Clãs saiu do "em breve" e abre Meu clã, Procurar, Ranking e Criar', () => {

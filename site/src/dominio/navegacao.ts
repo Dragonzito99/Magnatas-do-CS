@@ -39,6 +39,22 @@ export const ITENS_DO_MENU: ItemDoMenu[] = [
   { nome: 'Magnata Shop', emBreve: true, destaque: true },
 ];
 
+const MAGNATA_SHOP: ItemDoMenu = {
+  nome: 'Magnata Shop',
+  href: '/loja',
+  destaque: true,
+  filhos: [
+    { nome: 'Loja', href: '/loja' },
+    { nome: 'Meu baú', href: '/bau' },
+  ],
+};
+
+/** Enquanto a loja não abre para todos (só o Adm vê), Magnata Shop continua "em breve" no menu. */
+export function itensDoMenu(loja: boolean): ItemDoMenu[] {
+  if (!loja) return ITENS_DO_MENU;
+  return ITENS_DO_MENU.map((item) => (item.nome === MAGNATA_SHOP.nome ? MAGNATA_SHOP : item));
+}
+
 // Salas, mix e Diversão ficam juntos na tela Jogar, com filtros.
 export const DESTINO_DO_JOGAR = '/jogar';
 

@@ -5203,3 +5203,214 @@ a.cartao-destaque:hover {
 .selo-do-cla {
   font-weight: 600;
 }
+
+/* Magnata Shop e Baú */
+.saldo-de-grana {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--ouro);
+  background: var(--ouro-fraco);
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.45);
+  text-decoration: none;
+  line-height: 30px;
+}
+
+.saldo-de-grana span {
+  font-weight: 800;
+}
+
+.saldo-de-grana small {
+  color: var(--tinta-2);
+  font-size: 11px;
+}
+
+.grana-destaque {
+  color: var(--ouro);
+}
+
+.secao-loja {
+  margin-top: 26px;
+}
+
+.cabeca-secao-loja {
+  margin-bottom: 12px;
+}
+
+.cabeca-secao-loja h2 {
+  font-size: 18px;
+}
+
+.itens-loja {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.cartao-loja {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--painel);
+  box-shadow: 0 0 0 1px var(--linha);
+}
+
+.cartao-loja.vencido {
+  opacity: 0.6;
+}
+
+.previa-loja {
+  display: grid;
+  place-items: center;
+  min-height: 74px;
+  padding: 12px;
+  border-radius: 9px;
+  background: #05030a;
+}
+
+.previa-loja .avatar {
+  width: 52px;
+  height: 52px;
+}
+
+.previa-chat {
+  font-family: var(--fonte-mono), ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  color: #e8e8e8;
+  overflow-wrap: anywhere;
+}
+
+.etiqueta-do-chat,
+.aviso-de-entrada {
+  color: #e4ae39;
+}
+
+.nome-loja {
+  display: grid;
+  gap: 2px;
+}
+
+.nome-loja small {
+  color: var(--tinta-2);
+}
+
+.precos-loja {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.preco-loja {
+  display: grid;
+  gap: 2px;
+  padding: 7px 4px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ouro-fraco);
+  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.45);
+  color: var(--tinta);
+  font-size: 11px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.preco-loja b {
+  color: var(--ouro);
+  font-size: 14px;
+}
+
+.preco-loja:hover {
+  filter: brightness(1.2);
+}
+
+.preco-loja.sem-saldo {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--tinta-2);
+  cursor: not-allowed;
+}
+
+.preco-loja.sem-saldo b {
+  color: var(--tinta-2);
+}
+
+.em-uso {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--verde);
+  color: #04140a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tabela-extrato {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tabela-extrato th,
+.tabela-extrato td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--linha);
+  text-align: left;
+}
+
+.tabela-extrato th {
+  color: var(--tinta-2);
+  font-weight: 600;
+}
+
+.tabela-extrato .ganho {
+  color: var(--verde);
+  font-weight: 700;
+}
+
+.tabela-extrato .gasto {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+.tabela-rolavel {
+  overflow-x: auto;
+}
+
+/* Molduras da Magnata Shop: a borda fica na própria foto, sem mexer no tamanho dela. */
+.avatar.moldura {
+  outline-offset: 2px;
+}
+
+.avatar.moldura-dourada {
+  outline: 3px solid #f5b301;
+  box-shadow: 0 0 12px rgba(245, 179, 1, 0.7);
+}
+
+.avatar.moldura-neon {
+  outline: 3px solid #d946ef;
+  box-shadow: 0 0 14px #d946ef, 0 0 4px #22d3ee;
+}
+
+.avatar.moldura-fogo {
+  outline: 3px solid #ff5a1f;
+  box-shadow: 0 0 14px rgba(255, 90, 31, 0.85), 0 -4px 12px rgba(255, 196, 0, 0.6);
+}
+
+.avatar.moldura-gelo {
+  outline: 3px solid #7dd3fc;
+  box-shadow: 0 0 14px rgba(125, 211, 252, 0.8);
+}
+
+@media (max-width: 860px) {
+  .saldo-de-grana small {
+    display: none;
+  }
+}

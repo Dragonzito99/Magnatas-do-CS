@@ -9,6 +9,7 @@ import { fotoDoMapa } from '@/dominio/diversao';
 import { elogiosDoJogador } from '@/dominio/elogios';
 import { claDoUsuario } from '@/dominio/clas';
 import { fichaDoJogador, kdDe, ultimasPartidasDoPerfil } from '@/dominio/ficha';
+import { moldurasDe } from '@/dominio/loja';
 import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { PATENTES, patenteDe } from '@/dominio/xp';
@@ -54,11 +55,12 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
   if (!z.uuid().safeParse(id).success) notFound();
   const ficha = await fichaDoJogador(obterBd(), usuario, id);
   if (!ficha) notFound();
-  const [elogios, ultimas, claDele, meuCla] = await Promise.all([
+  const [elogios, ultimas, claDele, meuCla, molduras] = await Promise.all([
     elogiosDoJogador(obterBd(), id),
     ultimasPartidasDoPerfil(obterBd(), id),
     claDoUsuario(obterBd(), id),
     claDoUsuario(obterBd(), usuario.id),
+    moldurasDe(obterBd(), [id]),
   ]);
   // Dono ou Capitão chama daqui quem ainda não tem clã.
   const possoChamar = !!meuCla && meuCla.cargo !== 'membro' && !claDele && usuario.id !== id;
@@ -70,7 +72,7 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
     <>
       <section className="capa-perfil">
         <div className="capa-perfil-linha">
-          <Avatar usuario={jogador} />
+          <Avatar usuario={jogador} moldura={molduras.get(id)} />
           <div className="capa-perfil-nome">
             <h1>
               <span className="ficha-nome">{jogador.apelido}</span>

@@ -2,16 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { DESTINO_DO_JOGAR, ITENS_DO_MENU, itemAtivo } from '@/dominio/navegacao';
+import { DESTINO_DO_JOGAR, itemAtivo, itensDoMenu } from '@/dominio/navegacao';
 
 /** O Discord entra no submenu da Comunidade quando o endereço estiver configurado. A aba Testes só aparece para o Adm. */
-export function MenuPrincipal({ discord, testes = false }: { discord: string | null; testes?: boolean }) {
+export function MenuPrincipal({ discord, testes = false, loja = false }: { discord: string | null; testes?: boolean; loja?: boolean }) {
   const caminho = usePathname();
   return (
     <nav className="menu-principal" aria-label="Áreas">
       <div className="largura menu-principal-linha">
         <div className="menu-itens">
-          {ITENS_DO_MENU.map((item) =>
+          {itensDoMenu(loja).map((item) =>
             item.href ? (
               <div key={item.nome} className="item-com-submenu">
                 <Link

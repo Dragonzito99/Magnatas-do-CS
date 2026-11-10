@@ -5,6 +5,7 @@ import { obterBd } from '@/bd/conexao';
 import { enderecoDoDiscord } from '@/dominio/discord';
 import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
 import { partidaAtualDe } from '@/dominio/partidas';
+import { lojaAberta } from '@/dominio/loja';
 import { minhaSala } from '@/dominio/salas';
 import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
@@ -36,6 +37,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         sino={<Sino notificacoes={notificacoes} />}
         casosDaEquipe={pode(usuario, 'ver_equipe') ? casosDe(notificacoes) : null}
         testes={pode(usuario, 'testar_competitivo') || pode(usuario, 'testar_mutacao')}
+        grana={lojaAberta(usuario) ? usuario.grana : null}
       />
       <main className="conteudo largura">
         <AvisoDePartida />
