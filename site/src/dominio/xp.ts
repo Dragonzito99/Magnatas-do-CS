@@ -3,6 +3,7 @@ import type { Bd } from '@/bd/conexao';
 import { usuarios, xpPartidas } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
 import { granaDoXp, lancarGrana } from './grana';
+import { NIVEIS, nivelAtivo } from './membros';
 
 export const XP_MAXIMO_POR_PARTIDA = 1100;
 const XP_POR_JOGAR = 300;
@@ -139,7 +140,10 @@ export async function lancarXp(tx: Transacao, ganhos: GanhoDePartida[]): Promise
       .returning({ id: xpPartidas.id });
     if (!novo) continue;
     // A Grana da partida vem junto do XP, com a mesma referência: a partida que já pagou não paga de novo.
-    await lancarGrana(tx, { usuarioId: ganho.usuarioId, tipo: 'partida', quantidade: granaDoXp(xp), referencia: ganho.referencia });
+    // Membro ganha a mais, pelo nível que tem no dia da partida.
+    const nivel = await nivelAtivo(tx, ganho.usuarioId);
+    const grana = Math.floor(granaDoXp(xp) * (1 + (nivel ? NIVEIS[nivel].bonusGrana : 0)) + 1e-9);
+    await lancarGrana(tx, { usuarioId: ganho.usuarioId, tipo: 'partida', quantidade: grana, referencia: ganho.referencia, detalhes: nivel ? { nivel } : undefined });
     const [conta] = await tx
       .update(usuarios)
       .set({ xpTotal: sql`${usuarios.xpTotal} + ${xp}` })
