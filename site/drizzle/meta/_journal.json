@@ -183,6 +183,13 @@
       "when": 1794180468264,
       "tag": "0025_quedas_do_jogo",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794269053478,
+      "tag": "0026_grana_e_loja",
+      "breakpoints": true
     }
   ]
 }

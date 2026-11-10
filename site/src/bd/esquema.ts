@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const papel = pgEnum('papel', ['jogador', 'gm', 'adm']);
 export const estadoUsuario = pgEnum('estado_usuario', ['aguardando_verificacao', 'ativo', 'suspenso', 'banido']);
@@ -23,8 +23,10 @@ export const usuarios = pgTable('usuarios', {
   saiuDeClaEm: timestamp('saiu_de_cla_em', { withTimezone: true }),
   // A patente mais alta que a pessoa já viu no perfil, para o sino avisar só da nova.
   patenteVista: integer('patente_vista').notNull().default(1),
+  // A Grana é a soma do livro-caixa (lancamentos_de_grana), guardada aqui para ler rápido; muda só junto de uma linha nova.
+  grana: integer('grana').notNull().default(0),
   criadoEm: criadoEm(),
-});
+}, (tabela) => [check('usuarios_grana_nao_negativa', sql`${tabela.grana} >= 0`)]);
 
 export const origemXp = pgEnum('origem_xp', ['partida', 'diversao']);
 export const resultadoXp = pgEnum('resultado_xp', ['vitoria', 'empate', 'derrota']);
@@ -49,6 +51,50 @@ export const xpPartidas = pgTable(
     criadoEm: criadoEm(),
   },
   (tabela) => [unique('xp_partidas_conta_referencia').on(tabela.usuarioId, tabela.referencia), index('xp_partidas_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],
+);
+
+export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste']);
+
+/**
+ * O livro-caixa da Grana: uma linha por ganho ou gasto, nunca editada nem apagada. A referência (a partida, o código
+ * da compra) não se repete na mesma conta e no mesmo tipo, então nada paga nem cobra duas vezes.
+ */
+export const lancamentosDeGrana = pgTable(
+  'lancamentos_de_grana',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    tipo: tipoGrana('tipo').notNull(),
+    quantidade: integer('quantidade').notNull(),
+    referencia: text('referencia').notNull(),
+    // Compra: item, dias e preço pago. Ajuste: o motivo.
+    detalhes: jsonb('detalhes'),
+    // Quem fez o ajuste no Painel ADM.
+    atorId: uuid('ator_id').references(() => usuarios.id),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [
+    unique('lancamentos_de_grana_conta_tipo_referencia').on(tabela.usuarioId, tabela.tipo, tabela.referencia),
+    index('lancamentos_de_grana_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm),
+    check('lancamentos_de_grana_quantidade_nao_zero', sql`${tabela.quantidade} <> 0`),
+  ],
+);
+
+/** O baú: cada item que a conta tem, até quando vale (vazio é para sempre) e se está em uso. */
+export const itensDoJogador = pgTable(
+  'itens_do_jogador',
+  {
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    itemId: text('item_id').notNull(),
+    expiraEm: timestamp('expira_em', { withTimezone: true }),
+    usando: boolean('usando').notNull().default(false),
+    atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.usuarioId, tabela.itemId] })],
 );
 
 export const convites = pgTable('convites', {
@@ -553,5 +599,7 @@ export type Servidor = typeof servidores.$inferSelect;
 export type ServidorDiversao = typeof servidoresDiversao.$inferSelect;
 export type EstadoDaDiversao = typeof estadosDaDiversao.$inferSelect;
 export type Convite = typeof convites.$inferSelect;
+export type LancamentoDeGrana = typeof lancamentosDeGrana.$inferSelect;
+export type ItemDoJogador = typeof itensDoJogador.$inferSelect;
 export type Papel = Usuario['papel'];
 export type EstadoUsuario = Usuario['estado'];
