@@ -109,17 +109,23 @@ public partial class ModoDeDiversao
     // Azul enquanto o escudo vale, para os humanos saberem que não adianta atirar.
     private static readonly Color CorDoEscudo = Color.FromArgb(255, 80, 160, 255);
     private bool? blindadoNoServidor;
-    // Quem pega a super Negev vira o herói (dono, 10/11/2026). Vem no pacote dos personagens, o mesmo dos bonecos
-    // próprios do MagnatasVisual; sem ele, o portador fica dourado como antes.
+    // Pacote dos personagens (dono, 10/11/2026): quem pega a super Negev vira o herói, e as contas com boneco próprio
+    // (campo boneco no site) jogam de humano com ele. Na Mutação só este plugin troca o corpo, uma troca por vez: o
+    // MagnatasVisual vestir o boneco e a Mutação trocar para o zumbi 0,1 s depois derrubou o servidor (WriteEnterPVS,
+    // 10/11 19:54). Sem o pacote, o portador fica dourado e cada um com o boneco do jogo, como antes.
     private const string PacoteDosPersonagens = "3837571705";
     private const string PastaDoHeroi = "models/magnatas/heroi_v1";
     private const string ModeloDoHeroi = $"{PastaDoHeroi}/mutante.vmdl";
-    private bool? heroiNoServidor;
-    // Desligado: trocar o boneco do humano e depois para o zumbi derrubou a Mutação (WriteEnterPVS, 10/11/2026 19:54).
-    private static readonly bool UsarHeroi = false;
+    private static readonly string[] BonecosProprios = { "models/magnatas/marfioso_v1/mutante.vmdl", "models/magnatas/adm_v1/mutante.vmdl" };
+    private bool? personagensNoServidor;
+    // Chave para desligar o herói de uma vez, se ele der problema.
+    private static readonly bool UsarHeroi = true;
     // O mutante que cada conta comprou, perguntado ao site a cada rodada. Os de teste vão pela vaga (bots não têm conta).
     private readonly Dictionary<ulong, string> skinsPorConta = new();
     private readonly Dictionary<int, string> skinsDeTeste = new();
+    // O boneco próprio de cada conta, perguntado junto com o mutante. Os de teste vão pela vaga.
+    private readonly Dictionary<ulong, string> bonecosPorConta = new();
+    private readonly Dictionary<int, string> bonecosDeTeste = new();
     // Por vaga: até quando o escudo vale e quando o G volta a funcionar.
     private readonly Dictionary<int, (float Fim, float Recarga)> escudos = new();
     private const float TamanhoDoHumano = 1f;
@@ -130,6 +136,8 @@ public partial class ModoDeDiversao
     private const float EmpurraoDaSuperArma = 3f;
     private const float EmpurraoMaximoDaSuperArma = 600f;
     private static readonly Color CorDoPortador = Color.FromArgb(255, 255, 200, 40);
+    // Tempo para o jogo de quem vai ganhar a Negev trocar para a faca antes de o fuzil sair da mão.
+    private const float EsperaParaTrocarDeArma = 0.3f;
     private int? portadorDaSuperArma;
     private bool superArmaSorteada;
 
@@ -301,38 +309,70 @@ public partial class ModoDeDiversao
 
     private void EntregarSuperArma(CCSPlayerController jogador)
     {
-        var corpo = jogador.PlayerPawn.Value;
-        if (corpo?.WeaponServices?.MyWeapons == null) return;
-        foreach (var item in corpo.WeaponServices.MyWeapons.ToList())
-        {
-            var arma = item.Value;
-            if (arma != null && ArmasDoHumano.Contains(arma.DesignerName)) arma.Remove();
-        }
+        if (jogador.PlayerPawn.Value?.WeaponServices?.MyWeapons == null) return;
         portadorDaSuperArma = jogador.Slot;
-        // O fuzil só sai de verdade no fim do quadro: com a vaga ainda ocupada, a Negev não entrava e o portador
-        // ficava sem arma. Ela vem no quadro seguinte, se ele ainda for o portador e estiver vivo como humano.
-        Server.NextFrame(() =>
+        // Apagar o fuzil que está na mão e dar a Negev no quadro seguinte fechou o jogo de quem ganhou
+        // ("OnPreserveEntity", 10/11 20:01): o jogo dele ainda usava a arma apagada. Agora a faca vai para a mão,
+        // o fuzil sai depois que o jogo já trocou, e a Negev vem no quadro seguinte (com a vaga ainda ocupada, ela
+        // não entrava).
+        jogador.ExecuteClientCommand("slot3");
+        AddTimer(EsperaParaTrocarDeArma, () =>
         {
             if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot != portadorDaSuperArma) return;
-            jogador.GiveNamedItem(ArmaEspecial);
-            jogador.ExecuteClientCommand("slot1");
+            var corpo = jogador.PlayerPawn.Value;
+            if (corpo?.WeaponServices?.MyWeapons == null) return;
+            foreach (var item in corpo.WeaponServices.MyWeapons.ToList())
+            {
+                var arma = item.Value;
+                if (arma != null && ArmasDoHumano.Contains(arma.DesignerName)) arma.Remove();
+            }
+            Server.NextFrame(() =>
+            {
+                if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot != portadorDaSuperArma) return;
+                var atual = jogador.PlayerPawn.Value;
+                if (atual == null) return;
+                jogador.GiveNamedItem(ArmaEspecial);
+                jogador.ExecuteClientCommand("slot1");
+                // O herói já se destaca pelo boneco: sem o tom dourado por cima. A próxima rodada devolve o de cada um.
+                if (HeroiNoServidor()) atual.SetModel(ModeloDoHeroi);
+                else
+                {
+                    atual.Render = CorDoPortador;
+                    Utilities.SetStateChanged(atual, "CBaseModelEntity", "m_clrRender");
+                }
+            });
         });
-        // O herói já se destaca pelo boneco: sem o tom dourado por cima. A próxima rodada devolve o boneco de cada um.
-        if (HeroiNoServidor()) corpo.SetModel(ModeloDoHeroi);
-        else
-        {
-            corpo.Render = CorDoPortador;
-            Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
-        }
     }
 
-    private bool HeroiNoServidor()
+    private bool HeroiNoServidor() => UsarHeroi && PersonagensNoServidor();
+
+    private bool PersonagensNoServidor()
     {
-        if (!UsarHeroi || !UsarBonecosDoPacote || !PacoteDosPersonagens.All(char.IsDigit)) return false;
-        if (heroiNoServidor is bool sabido) return sabido;
-        heroiNoServidor = NoPacote(PacoteDosPersonagens, PastaDoHeroi);
-        Console.WriteLine($"[Magnatas] Herói da super Negev no servidor: {(heroiNoServidor.Value ? "sim" : "não, o portador fica dourado")}.");
-        return heroiNoServidor.Value;
+        if (!UsarBonecosDoPacote || !PacoteDosPersonagens.All(char.IsDigit)) return false;
+        if (personagensNoServidor is bool sabido) return sabido;
+        personagensNoServidor = NoPacote(PacoteDosPersonagens, PastaDoHeroi);
+        Console.WriteLine($"[Magnatas] Personagens (herói e bonecos próprios) no servidor: {(personagensNoServidor.Value ? "sim" : "não")}.");
+        return personagensNoServidor.Value;
+    }
+
+    /// <summary>O boneco próprio da conta (ou o de teste da vaga), se é um da lista e o pacote está no servidor.</summary>
+    private string? BonecoProprioDe(CCSPlayerController jogador)
+    {
+        if (!PersonagensNoServidor()) return null;
+        var boneco = bonecosDeTeste.TryGetValue(jogador.Slot, out var deTeste) ? deTeste
+            : bonecosPorConta.TryGetValue(jogador.SteamID, out var proprio) ? proprio : null;
+        return boneco != null && BonecosProprios.Contains(boneco) ? boneco : null;
+    }
+
+    /// <summary>
+    /// O humano com boneco próprio ganha ele ao nascer, no mesmo instante em que recebe as armas: uma troca só. Virar
+    /// mutante depois é outra troca, segundos mais tarde, como a de qualquer humano.
+    /// </summary>
+    private void VestirBonecoProprio(CCSPlayerController jogador)
+    {
+        if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot == portadorDaSuperArma) return;
+        var boneco = BonecoProprioDe(jogador);
+        if (boneco != null) jogador.PlayerPawn.Value?.SetModel(boneco);
     }
 
     /// <summary>A cada tiro do portador o pente volta a ficar cheio: a super Negev nunca recarrega.</summary>
@@ -473,7 +513,11 @@ public partial class ModoDeDiversao
             if (!UsarBonecosDoPacote) return;
             foreach (var nivel in mutanteDaRodada.Niveis) manifesto.AddResource(ModeloDoNivel(nivel.Nivel));
             foreach (var queda in QuedaDoNivel) if (queda != null) manifesto.AddResource(queda);
-            if (HeroiNoServidor()) manifesto.AddResource(ModeloDoHeroi);
+            if (PersonagensNoServidor())
+            {
+                manifesto.AddResource(ModeloDoHeroi);
+                foreach (var boneco in BonecosProprios) manifesto.AddResource(boneco);
+            }
             if (!BlindadoNoServidor()) return;
             foreach (var nivel in NiveisComBonecoDoBlindado)
             {
@@ -487,7 +531,7 @@ public partial class ModoDeDiversao
             zumbiNoServidor = null;
             morteNoServidor = null;
             blindadoNoServidor = null;
-            heroiNoServidor = null;
+            personagensNoServidor = null;
             // Ao ligar, o servidor abre o mapa da Oficina por último: se o teste já tinha pedido a Dust 2, ela era trocada.
             if (testeComBots && mapa != MapaDoTeste) AddTimer(1f, () => Server.ExecuteCommand($"changelevel {MapaDoTeste}"));
         });
@@ -976,7 +1020,7 @@ public partial class ModoDeDiversao
     /// <summary>Pergunta ao site qual mutante cada conta comprou e está usando. Site fora do ar: todos ficam com o comum.</summary>
     private async Task BuscarMutantesDaLoja(List<ulong> contas)
     {
-        if (Config.SiteUrl == "" || Config.Token == "" || contas.Count == 0 || !BlindadoNoServidor()) return;
+        if (Config.SiteUrl == "" || Config.Token == "" || contas.Count == 0 || (!BlindadoNoServidor() && !PersonagensNoServidor())) return;
         try
         {
             using var pedido = new HttpRequestMessage(HttpMethod.Get, $"{Config.SiteUrl.TrimEnd('/')}/api/servidor/visuais?steamids={string.Join(",", contas)}");
@@ -989,10 +1033,12 @@ public partial class ModoDeDiversao
             }
             using var dados = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
             var achados = new Dictionary<ulong, string>();
+            var bonecos = new Dictionary<ulong, string>();
             foreach (var conta in dados.RootElement.EnumerateObject())
             {
-                if (ulong.TryParse(conta.Name, out var id) && conta.Value.TryGetProperty("mutante", out var mutante) && mutante.GetString() is { } nome)
-                    achados[id] = nome;
+                if (!ulong.TryParse(conta.Name, out var id)) continue;
+                if (conta.Value.TryGetProperty("mutante", out var mutante) && mutante.GetString() is { } nome) achados[id] = nome;
+                if (conta.Value.TryGetProperty("boneco", out var boneco) && boneco.GetString() is { } caminho) bonecos[id] = caminho;
             }
             Server.NextFrame(() =>
             {
@@ -1000,6 +1046,8 @@ public partial class ModoDeDiversao
                 {
                     if (achados.TryGetValue(conta, out var nome)) skinsPorConta[conta] = nome;
                     else skinsPorConta.Remove(conta);
+                    if (bonecos.TryGetValue(conta, out var caminho)) bonecosPorConta[conta] = caminho;
+                    else bonecosPorConta.Remove(conta);
                 }
             });
         }
@@ -1022,6 +1070,23 @@ public partial class ModoDeDiversao
             if (skin == "blindado") skinsDeTeste[bot.Slot] = skin;
             else skinsDeTeste.Remove(bot.Slot);
             comando.ReplyToCommand($"vaga={bot.Slot} skin={SkinDe(bot) ?? "comum"}");
+        }
+    }
+
+    /// <summary>Só para teste: põe (ou tira, com "nenhum") um boneco próprio nos bots, todos ou só o da vaga dada.</summary>
+    [ConsoleCommand("magnatas_mutacao_boneco", "Teste: boneco próprio nos bots (adm|marfioso|nenhum [vaga])")]
+    [CommandHelper(minArgs: 1, usage: "<adm|marfioso|nenhum> [vaga]", whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void BonecoDeTeste(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        if (Config.Regra != "mutacao") return;
+        var nome = comando.GetArg(1);
+        var boneco = BonecosProprios.FirstOrDefault(caminho => caminho.Contains($"/{nome}_v"));
+        int? vaga = comando.ArgCount > 2 && int.TryParse(comando.GetArg(2), out var numero) ? numero : null;
+        foreach (var bot in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: true } && (vaga == null || jogador.Slot == vaga)))
+        {
+            if (boneco != null) bonecosDeTeste[bot.Slot] = boneco;
+            else bonecosDeTeste.Remove(bot.Slot);
+            comando.ReplyToCommand($"vaga={bot.Slot} boneco={BonecoProprioDe(bot) ?? "do jogo"}");
         }
     }
 

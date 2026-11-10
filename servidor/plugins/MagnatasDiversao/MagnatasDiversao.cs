@@ -480,6 +480,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
             AddTimer(EsperaAposNascer, () =>
             {
                 if (jogador != null && EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador);
+                else if (jogador != null) VestirBonecoProprio(jogador);
                 EntregarArmaDoHumano(jogador);
             });
         }

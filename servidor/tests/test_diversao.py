@@ -1117,9 +1117,8 @@ def test_o_servidor_carrega_os_sons_do_pacote():
 @pytest.mark.parametrize("servidor", SERVIDORES)
 def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
     # A Mutação também manda baixar os pacotes do mutante comum e do Blindado da loja, que só ela usa.
-    # A Mutação fica sem o pacote dos personagens: com ele, o jogo do Adm fechou (OnPreserveEntity, 10/11 20:01).
     esperado = (
-        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO}"'
+        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS}"'
         if servidor == "mutacao"
         else f'"{PACOTE_DE_SONS},{PACOTE_DOS_PERSONAGENS}"'
     )
@@ -1751,7 +1750,7 @@ def test_quem_pega_a_super_negev_vira_o_heroi_quando_o_pacote_chegou():
     assert 'PastaDoHeroi = "models/magnatas/heroi_v1"' in CODIGO_DA_MUTACAO
     entregar = metodo_da_mutacao("private void EntregarSuperArma(")
     assert "HeroiNoServidor()" in entregar
-    assert "corpo.SetModel(ModeloDoHeroi)" in entregar
+    assert ".SetModel(ModeloDoHeroi)" in entregar
     # Sem o pacote, o portador continua dourado como antes.
     assert "CorDoPortador" in entregar
     assert "manifesto.AddResource(ModeloDoHeroi)" in CODIGO_DA_MUTACAO
@@ -1769,6 +1768,31 @@ def test_o_competitivo_tambem_baixa_o_pacote_dos_personagens():
     assert f'PacoteDosPersonagens = "{PACOTE_DOS_PERSONAGENS}"' in visual
 
 
-def test_heroi_desligado_enquanto_a_troca_de_boneco_derruba_a_mutacao():
-    assert "private static readonly bool UsarHeroi = false;" in CODIGO_DA_MUTACAO
-    assert "!UsarHeroi" in metodo_da_mutacao("private bool HeroiNoServidor(")
+def test_a_super_negev_vem_sem_apagar_o_fuzil_que_esta_na_mao():
+    # Apagar o fuzil na mão e dar a Negev no quadro seguinte fechou o jogo do Adm (OnPreserveEntity, 10/11 20:01).
+    entregar = metodo_da_mutacao("private void EntregarSuperArma(")
+    assert entregar.index('ExecuteClientCommand("slot3")') < entregar.index("arma.Remove()")
+    assert "AddTimer(EsperaParaTrocarDeArma" in entregar
+    assert entregar.index("arma.Remove()") < entregar.index("GiveNamedItem(ArmaEspecial)")
+
+
+def test_na_mutacao_o_boneco_proprio_vem_da_propria_mutacao_uma_troca_por_vez():
+    # Antes o MagnatasVisual vestia o boneco e a Mutação trocava para o zumbi 0,1 s depois: o servidor caiu
+    # (WriteEnterPVS, 10/11 19:54). Agora só a Mutação troca o corpo, no mesmo ponto em que já cuida do nascimento.
+    assert "private static readonly bool UsarHeroi = true;" in CODIGO_DA_MUTACAO
+    for boneco in ["models/magnatas/marfioso_v1/mutante.vmdl", "models/magnatas/adm_v1/mutante.vmdl"]:
+        assert f'"{boneco}"' in CODIGO_DA_MUTACAO
+    nascer = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("public HookResult AoNascer("):]
+    trecho = nascer[nascer.index('Config.Regra == "mutacao"'):nascer.index("return HookResult.Continue;")]
+    assert "AplicarAtributosDoMutante(jogador)" in trecho
+    assert trecho.index("AplicarAtributosDoMutante(jogador)") < trecho.index("else if (jogador != null) VestirBonecoProprio(jogador)")
+    vestir = metodo_da_mutacao("private void VestirBonecoProprio(")
+    assert "BonecoProprioDe(jogador)" in vestir
+    assert ".SetModel(" in vestir
+    boneco = metodo_da_mutacao("private string? BonecoProprioDe(")
+    assert "PersonagensNoServidor()" in boneco
+    assert "BonecosProprios.Contains(" in boneco
+    buscar = metodo_da_mutacao("private async Task BuscarMutantesDaLoja(")
+    assert 'TryGetProperty("boneco"' in buscar
+    assert "manifesto.AddResource(boneco)" in CODIGO_DA_MUTACAO
+    assert 'ConsoleCommand("magnatas_mutacao_boneco"' in CODIGO_DA_MUTACAO
