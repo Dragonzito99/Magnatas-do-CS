@@ -5232,6 +5232,142 @@ a.cartao-destaque:hover {
   color: var(--ouro);
 }
 
+/* Volta do Mercado Pago: um cartão no meio, com o selo do resultado */
+.retorno-pagamento {
+  --cor-do-retorno: var(--verde);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(100%, 520px);
+  margin: 32px auto;
+  padding: 36px 28px 28px;
+  border-radius: 16px;
+  text-align: center;
+  background: var(--brilho);
+  box-shadow: 0 0 0 1px var(--linha-forte), 0 0 40px rgba(168, 85, 247, 0.22);
+}
+
+.retorno-pagamento.confirmando {
+  --cor-do-retorno: var(--ouro);
+}
+
+.retorno-pagamento.assinatura {
+  --cor-do-retorno: var(--ouro);
+}
+
+.retorno-pagamento.recusado {
+  --cor-do-retorno: #f87171;
+}
+
+.selo-do-retorno {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--cor-do-retorno);
+  background: color-mix(in srgb, var(--cor-do-retorno) 14%, transparent);
+  box-shadow: inset 0 0 0 2px var(--cor-do-retorno), 0 0 28px color-mix(in srgb, var(--cor-do-retorno) 35%, transparent);
+}
+
+.retorno-pagamento.confirmando .selo-do-retorno::after {
+  content: '';
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--ouro) 30%, transparent);
+  border-top-color: var(--ouro);
+  animation: girar-retorno 0.9s linear infinite;
+}
+
+@keyframes girar-retorno {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .retorno-pagamento.confirmando .selo-do-retorno::after {
+    animation: none;
+  }
+}
+
+.retorno-pagamento .sobretitulo {
+  color: var(--cor-do-retorno);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.retorno-pagamento h1 {
+  font: italic 700 40px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.ganho-do-retorno {
+  color: var(--tinta-2);
+  font-size: 18px;
+}
+
+.ganho-do-retorno b {
+  display: block;
+  color: var(--ouro);
+  font: italic 700 56px/1 var(--fonte-titulo), sans-serif;
+  text-shadow: 0 0 24px rgba(245, 179, 1, 0.35);
+}
+
+.resumo-do-retorno {
+  display: grid;
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 10px;
+  background: var(--painel-2);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.resumo-do-retorno div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.resumo-do-retorno div + div {
+  border-top: 1px solid var(--linha);
+}
+
+.resumo-do-retorno dt {
+  color: var(--tinta-2);
+}
+
+.resumo-do-retorno dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.acoes-do-retorno {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .retorno-pagamento h1 {
+    font-size: 30px;
+  }
+
+  .acoes-do-retorno,
+  .acoes-do-retorno .botao {
+    width: 100%;
+  }
+}
+
 .secao-loja {
   margin-top: 26px;
 }

@@ -7,7 +7,7 @@ import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { assinaturaConfere, type MercadoPago, type PagamentoMp } from '@/pagamento/mercadopago';
 import { SemPermissao } from './equipe';
 import { lancarMoeda } from './grana';
-import { abrirPedido, assinar, cancelarAssinatura, JaEhMembro, PACOTES, processarAssinatura, processarMensalidade, processarPagamento, receberAviso } from './pagamentos';
+import { abrirPedido, assinar, cancelarAssinatura, JaEhMembro, PACOTES, pedidoDoUsuario, processarAssinatura, processarMensalidade, processarPagamento, receberAviso } from './pagamentos';
 
 let bd: Bd;
 let mp: MercadoPagoFalso;
@@ -65,6 +65,17 @@ async function pedidoPago(dono: Usuario, pacote: keyof typeof PACOTES = 'pequeno
   mp.pagamentos.set(id, { id, status: 'approved', transaction_amount: valor ?? PACOTES[pacote].precoCentavos / 100, external_reference: pedido.id });
   return { pedido, id };
 }
+
+test('a tela de volta do pagamento só acha o pedido do próprio dono', async () => {
+  const dono = await conta();
+  const { pedido, id } = await pedidoPago(dono);
+  expect(await pedidoDoUsuario(bd, dono.id, pedido.id)).toMatchObject({ pacote: 'pequeno', magcoins: 100, estado: 'aberto' });
+  await processarPagamento(bd, mp, id);
+  expect(await pedidoDoUsuario(bd, dono.id, pedido.id)).toMatchObject({ estado: 'pago' });
+  expect(await pedidoDoUsuario(bd, (await conta()).id, pedido.id)).toBeNull();
+  expect(await pedidoDoUsuario(bd, dono.id, 'nao-e-um-id')).toBeNull();
+  expect(await pedidoDoUsuario(bd, dono.id, undefined)).toBeNull();
+});
 
 test('os pacotes aprovados pelo dono', () => {
   expect(PACOTES).toMatchObject({

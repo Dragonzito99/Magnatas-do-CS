@@ -52,6 +52,18 @@ export async function abrirPedido(bd: Bd, mp: MercadoPago, usuario: Pick<Usuario
   return preferencia.init_point;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** O pedido que o Mercado Pago devolve na volta do pagamento, só se for dessa pessoa. */
+export async function pedidoDoUsuario(bd: Bd, usuarioId: string, pedidoId: string | undefined) {
+  if (!pedidoId || !UUID.test(pedidoId)) return null;
+  const [pedido] = await bd
+    .select()
+    .from(pedidos)
+    .where(and(eq(pedidos.id, pedidoId), eq(pedidos.usuarioId, usuarioId)));
+  return pedido ?? null;
+}
+
 /**
  * Um aviso de pagamento: busca o pagamento na API e decide. Aprovado, com o valor do pacote e um pedido aberto, credita
  * as MagCoins (uma vez: a referência é o id do pagamento). Estornado ou contestado depois de pago, tira de volta.
