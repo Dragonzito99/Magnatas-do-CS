@@ -4,7 +4,7 @@ import type { Bd } from '@/bd/conexao';
 import { auditoria, lancamentosDeGrana, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { SemPermissao } from './equipe';
-import { abrirGrana, ajustarGrana, buscarContasDaGrana, divergencias, extrato, granaDoXp, lancarGrana, SaldoInsuficiente } from './grana';
+import { abrirGrana, ajustarGrana, buscarContasDaGrana, divergencias, extrato, granaDoXp, lancarGrana, lancarMoeda, SaldoInsuficiente } from './grana';
 import { lancarXp, type GanhoDePartida } from './xp';
 
 let bd: Bd;
@@ -104,7 +104,7 @@ test('a conferência acusa saldo diferente da soma das linhas', async () => {
   await bd.transaction((tx) => lancarGrana(tx, { usuarioId: conta.id, tipo: 'ajuste', quantidade: 100, referencia: 'a' }));
   expect(await divergencias(bd)).toEqual([]);
   await bd.update(usuarios).set({ grana: 150 }).where(eq(usuarios.id, conta.id));
-  expect(await divergencias(bd)).toEqual([{ usuarioId: conta.id, apelido: conta.apelido, saldo: 150, soma: 100 }]);
+  expect(await divergencias(bd)).toEqual([{ usuarioId: conta.id, apelido: conta.apelido, moeda: 'grana', saldo: 150, soma: 100 }]);
 });
 
 test('só o Adm ajusta Grana, com motivo, e o ajuste vai para a auditoria', async () => {
@@ -142,4 +142,26 @@ test('a busca do Painel acha contas pelo apelido, com o saldo, e sem termo mostr
   ]);
   expect((await buscarContasDaGrana(bd, ''))[0]).toMatchObject({ id: rica.id, grana: 900 });
   expect(await buscarContasDaGrana(bd, '%')).toEqual([]);
+});
+
+test('MagCoin entra no mesmo livro-caixa, mas no saldo dela, sem mexer na Grana', async () => {
+  const conta = await criarUsuario(bd);
+  await bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'pagamento', quantidade: 100, referencia: 'mp-1' }));
+  await bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'pagamento', quantidade: 100, referencia: 'mp-1' }));
+  const atual = await recarregar(bd, conta);
+  expect([atual.magcoin, atual.grana]).toEqual([100, 0]);
+  await expect(
+    bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'compra', quantidade: -101, referencia: 'c' })),
+  ).rejects.toBeInstanceOf(SaldoInsuficiente);
+});
+
+test('extrato e conferência separam as moedas', async () => {
+  const conta = await criarUsuario(bd);
+  await bd.transaction((tx) => lancarGrana(tx, { usuarioId: conta.id, tipo: 'ajuste', quantidade: 30, referencia: 'g' }));
+  await bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'pagamento', quantidade: 100, referencia: 'm' }));
+  expect((await extrato(bd, conta.id)).map((linha) => linha.quantidade)).toEqual([30]);
+  expect((await extrato(bd, conta.id, { moeda: 'magcoin' })).map((linha) => [linha.quantidade, linha.saldo])).toEqual([[100, 100]]);
+  expect(await divergencias(bd)).toEqual([]);
+  await bd.update(usuarios).set({ magcoin: 7 }).where(eq(usuarios.id, conta.id));
+  expect(await divergencias(bd)).toEqual([{ usuarioId: conta.id, apelido: conta.apelido, moeda: 'magcoin', saldo: 7, soma: 100 }]);
 });
