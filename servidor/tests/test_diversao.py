@@ -1694,6 +1694,7 @@ def test_o_blindado_tem_boneco_pacote_proprio_e_escudo_de_2_4_6_segundos():
     assert 'private const string PastaDoBlindado = "models/magnatas/blindado_v1";' in CODIGO_DA_MUTACAO
     assert "private static readonly float[] SegundosDoEscudo = { 2f, 4f, 6f };" in CODIGO_DA_MUTACAO
     assert "private const float SegundosDeRecargaDoEscudo = 15f;" in CODIGO_DA_MUTACAO
+    assert "private static readonly int[] NiveisComBonecoDoBlindado = { 1, 2, 3 };" in CODIGO_DA_MUTACAO
 
 
 def test_o_plugin_pergunta_ao_site_qual_mutante_cada_um_comprou():

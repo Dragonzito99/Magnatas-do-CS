@@ -102,8 +102,8 @@ public partial class ModoDeDiversao
     // desligado e quem comprou vira o mutante comum.
     private const string PacoteDoBlindado = "";
     private const string PastaDoBlindado = "models/magnatas/blindado_v1";
-    // Por enquanto só o nível 1 tem boneco; os níveis 2 e 3 usam o do nível mais alto que existir.
-    private static readonly int[] NiveisComBonecoDoBlindado = { 1 };
+    // Um boneco por nível: Cyber Hulk, Toxic Warlord e Venomclaw Titan. Se faltar um, vale o do nível mais alto que existir.
+    private static readonly int[] NiveisComBonecoDoBlindado = { 1, 2, 3 };
     private static readonly float[] SegundosDoEscudo = { 2f, 4f, 6f };
     private const float SegundosDeRecargaDoEscudo = 15f;
     // Azul enquanto o escudo vale, para os humanos saberem que não adianta atirar.
