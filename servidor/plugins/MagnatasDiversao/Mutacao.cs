@@ -38,6 +38,8 @@ public partial class ModoDeDiversao
     private const float IntervaloDaBarra = 0.25f;
     private const int BlocosDaBarra = 12;
     private readonly HashSet<int> barrasDePoder = new();
+    // Cartão de cada vaga (mutante, herói) e até quando ele fica na tela.
+    private readonly Dictionary<int, (string Html, float Ate)> cartoes = new();
     // A partir do nível 2, o mutante corre mais rápido por alguns segundos ao apertar G (o "largar arma" do jogo).
     private const int NivelDaCorrida = 2;
     private const float BonusDaCorrida = 0.5f;
@@ -352,9 +354,7 @@ public partial class ModoDeDiversao
                 {
                     if (jogador is { IsValid: true, PawnIsAlive: true } && jogador.Slot == portadorDaSuperArma) jogador.ExecuteClientCommand("slot1");
                 });
-                jogador.PrintToCenterHtml(
-                    "<font color='#ffc828' class='fontSize-l'>Você é o HERÓI!</font><br><font color='#ffffff'>Super Negev: empurra os mutantes para longe</font><br><font color='#f5b301'>Não deixe encostarem em você</font>",
-                    SegundosDoAvisoDoMutante);
+                MostrarCartao(jogador, Cartao("HERÓI", "#ffc828", "Super Negev: empurra os mutantes para longe", "Não deixe encostarem em você"));
                 jogador.PrintToChat(" [Magnatas] Você é o HERÓI: a super Negev empurra os mutantes para longe. Cuide da munição!");
             });
         });
@@ -731,10 +731,23 @@ public partial class ModoDeDiversao
         var g = blindado
             ? $"G: escudo, {SegundosDoEscudo[0]:0} s sem levar dano"
             : $"G: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
-        jogador.PrintToCenterHtml(
-            $"<font color='#6eff6e' class='fontSize-l'>{titulo}</font><br><font color='#ffffff'>Faca: acerte os humanos para infectar</font><br><font color='#f5b301'>{g}</font>",
-            SegundosDoAvisoDoMutante);
+        MostrarCartao(jogador, Cartao(blindado ? "BLINDADO" : "MUTANTE", "#6eff6e", "Faca: acerte os humanos para infectar", g));
         jogador.PrintToChat($" [Magnatas] {titulo} Faca: acerte os humanos para infectar. {g}.");
+    }
+
+    /// <summary>Cartão no meio da tela: título grande, um traço e as linhas do que fazer.</summary>
+    private static string Cartao(string titulo, string cor, string linha, string destaque) =>
+        $"<font color='{cor}' class='fontSize-xl'>{titulo}</font><br><font color='{cor}'>━━━━━━━━━━━━━━━━</font><br>" +
+        $"<font color='#ffffff'>{linha}</font><br><font color='#f5b301'>{destaque}</font>";
+
+    /// <summary>
+    /// O CS2 apaga logo a mensagem do meio da tela, então o cartão é reenviado junto com a barra do G até o tempo dele
+    /// acabar (o dono só via o texto no chat, 10/11/2026).
+    /// </summary>
+    private void MostrarCartao(CCSPlayerController jogador, string html)
+    {
+        cartoes[jogador.Slot] = (html, Server.CurrentTime + SegundosDoAvisoDoMutante);
+        jogador.PrintToCenterHtml(html, 1);
     }
 
     private HookResult AoApertarG(CCSPlayerController? jogador, CommandInfo comando)
@@ -764,6 +777,17 @@ public partial class ModoDeDiversao
     private void MostrarBarrasDePoder()
     {
         var agora = Server.CurrentTime;
+        // Cartões ainda valendo, de quem não está com a barra do G (a barra fica por cima).
+        foreach (var (vaga, cartao) in cartoes.ToList())
+        {
+            var dono = Utilities.GetPlayerFromSlot(vaga);
+            if (agora >= cartao.Ate || dono is not { IsValid: true, PawnIsAlive: true } || barrasDePoder.Contains(vaga))
+            {
+                cartoes.Remove(vaga);
+                continue;
+            }
+            dono.PrintToCenterHtml(cartao.Html, 1);
+        }
         foreach (var vaga in barrasDePoder.ToList())
         {
             var jogador = Utilities.GetPlayerFromSlot(vaga);

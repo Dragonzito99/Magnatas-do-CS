@@ -1858,3 +1858,14 @@ def test_barra_do_poder_do_g_esvazia_no_uso_e_enche_na_recarga():
     assert "barrasDePoder.Remove(" in barra
     desenho = metodo_da_mutacao("private static string BarraDePoder(")
     assert "BlocosDaBarra" in desenho
+
+
+def test_o_aviso_do_mutante_e_do_heroi_e_um_cartao_que_fica_na_tela():
+    # O CS2 apaga logo a mensagem do meio da tela; o dono viu só o texto no chat (10/11/2026). O cartão é reenviado
+    # junto com a barra do G até o tempo dele acabar.
+    assert "MostrarCartao(jogador," in metodo_da_mutacao("private void AvisarOQueOMutanteFaz(")
+    assert "MostrarCartao(jogador," in metodo_da_mutacao("private void EntregarSuperArma(")
+    cartao = metodo_da_mutacao("private static string Cartao(")
+    assert "━" in cartao and "fontSize-xl" in cartao
+    tela = metodo_da_mutacao("private void MostrarBarrasDePoder(")
+    assert "cartoes" in tela
