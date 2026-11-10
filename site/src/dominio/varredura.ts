@@ -1,4 +1,5 @@
 import { rm } from 'node:fs/promises';
+import { apagarEnderecosVencidos } from './envios';
 import path from 'node:path';
 import { and, eq, inArray, isNotNull, isNull, lte, ne, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
@@ -222,6 +223,8 @@ export async function varrer(
     // Vem antes de apagar, porque a denúncia nova protege a gravação da partida.
     () => converterChamadosSemResposta(bd),
     () => apagarGravacoesVencidas(bd, pasta, agora),
+    // Endereço do Premium só fica guardado enquanto precisa (90 dias depois do fim).
+    () => apagarEnderecosVencidos(bd, agora),
   ];
   for (const etapa of etapas) {
     try {
