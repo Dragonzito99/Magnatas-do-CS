@@ -25,8 +25,13 @@ export const usuarios = pgTable('usuarios', {
   patenteVista: integer('patente_vista').notNull().default(1),
   // A Grana é a soma do livro-caixa (lancamentos_de_grana), guardada aqui para ler rápido; muda só junto de uma linha nova.
   grana: integer('grana').notNull().default(0),
+  // MagCoin: comprada com dinheiro de verdade. Mesmo livro-caixa da Grana, coluna `moeda`.
+  magcoin: integer('magcoin').notNull().default(0),
   criadoEm: criadoEm(),
-}, (tabela) => [check('usuarios_grana_nao_negativa', sql`${tabela.grana} >= 0`)]);
+}, (tabela) => [
+  check('usuarios_grana_nao_negativa', sql`${tabela.grana} >= 0`),
+  check('usuarios_magcoin_nao_negativa', sql`${tabela.magcoin} >= 0`),
+]);
 
 export const origemXp = pgEnum('origem_xp', ['partida', 'diversao']);
 export const resultadoXp = pgEnum('resultado_xp', ['vitoria', 'empate', 'derrota']);
@@ -53,7 +58,8 @@ export const xpPartidas = pgTable(
   (tabela) => [unique('xp_partidas_conta_referencia').on(tabela.usuarioId, tabela.referencia), index('xp_partidas_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],
 );
 
-export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste']);
+export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste', 'pagamento', 'mensalidade', 'estorno']);
+export const moeda = pgEnum('moeda', ['grana', 'magcoin']);
 
 /**
  * O livro-caixa da Grana: uma linha por ganho ou gasto, nunca editada nem apagada. A referência (a partida, o código
@@ -66,6 +72,7 @@ export const lancamentosDeGrana = pgTable(
     usuarioId: uuid('usuario_id')
       .notNull()
       .references(() => usuarios.id),
+    moeda: moeda('moeda').notNull().default('grana'),
     tipo: tipoGrana('tipo').notNull(),
     quantidade: integer('quantidade').notNull(),
     referencia: text('referencia').notNull(),
@@ -76,7 +83,7 @@ export const lancamentosDeGrana = pgTable(
     criadoEm: criadoEm(),
   },
   (tabela) => [
-    unique('lancamentos_de_grana_conta_tipo_referencia').on(tabela.usuarioId, tabela.tipo, tabela.referencia),
+    unique('lancamentos_conta_moeda_tipo_referencia').on(tabela.usuarioId, tabela.moeda, tabela.tipo, tabela.referencia),
     index('lancamentos_de_grana_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm),
     check('lancamentos_de_grana_quantidade_nao_zero', sql`${tabela.quantidade} <> 0`),
   ],
@@ -96,6 +103,92 @@ export const itensDoJogador = pgTable(
   },
   (tabela) => [primaryKey({ columns: [tabela.usuarioId, tabela.itemId] })],
 );
+
+export const pacoteDeMagcoin = pgEnum('pacote_de_magcoin', ['pequeno', 'medio', 'grande']);
+export const estadoDoPedido = pgEnum('estado_do_pedido', ['aberto', 'pago', 'estornado']);
+
+/** Uma compra de MagCoin pelo Mercado Pago. O crédito só sai quando a API do Mercado Pago diz que foi aprovado. */
+export const pedidos = pgTable('pedidos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id')
+    .notNull()
+    .references(() => usuarios.id),
+  pacote: pacoteDeMagcoin('pacote').notNull(),
+  valorCentavos: integer('valor_centavos').notNull(),
+  magcoins: integer('magcoins').notNull(),
+  estado: estadoDoPedido('estado').notNull().default('aberto'),
+  // Um pagamento do Mercado Pago só paga um pedido.
+  mpPagamentoId: text('mp_pagamento_id').unique(),
+  pagoEm: timestamp('pago_em', { withTimezone: true }),
+  criadoEm: criadoEm(),
+});
+
+export const nivelDeMembro = pgEnum('nivel_de_membro', ['bronze', 'prata', 'ouro', 'premium']);
+export const estadoDaAssinatura = pgEnum('estado_da_assinatura', ['pendente', 'ativa', 'cancelada']);
+
+/** Membro ou Premium: cobrança mensal no Mercado Pago. As vantagens valem até `pago_ate`. */
+export const assinaturas = pgTable('assinaturas', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id')
+    .notNull()
+    .references(() => usuarios.id),
+  nivel: nivelDeMembro('nivel').notNull(),
+  // A API de assinatura do Mercado Pago pede o e-mail da conta de quem paga.
+  email: text('email').notNull(),
+  mpAssinaturaId: text('mp_assinatura_id').unique(),
+  estado: estadoDaAssinatura('estado').notNull().default('pendente'),
+  pagoAte: timestamp('pago_ate', { withTimezone: true }),
+  mensalidadesPagas: integer('mensalidades_pagas').notNull().default(0),
+  canceladaEm: timestamp('cancelada_em', { withTimezone: true }),
+  criadoEm: criadoEm(),
+});
+
+/** Cada mensalidade aprovada, uma linha por pagamento do Mercado Pago. */
+export const mensalidades = pgTable('mensalidades', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  assinaturaId: uuid('assinatura_id')
+    .notNull()
+    .references(() => assinaturas.id),
+  mpPagamentoId: text('mp_pagamento_id').notNull().unique(),
+  valorCentavos: integer('valor_centavos').notNull(),
+  pagoEm: timestamp('pago_em', { withTimezone: true }).notNull(),
+  criadoEm: criadoEm(),
+});
+
+/** Endereço do Premium para os produtos em casa. Só a pessoa e o Adm veem; apagado 90 dias depois do fim. */
+export const enderecos = pgTable('enderecos', {
+  usuarioId: uuid('usuario_id')
+    .primaryKey()
+    .references(() => usuarios.id),
+  nome: text('nome').notNull(),
+  cep: text('cep').notNull(),
+  rua: text('rua').notNull(),
+  numero: text('numero').notNull(),
+  complemento: text('complemento'),
+  bairro: text('bairro').notNull(),
+  cidade: text('cidade').notNull(),
+  uf: text('uf').notNull(),
+  telefone: text('telefone').notNull(),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const estadoDoEnvio = pgEnum('estado_do_envio', ['pendente', 'enviado']);
+
+/** Um pacote do clube para um assinante Premium: nasce com a mensalidade e o Adm marca como enviado. */
+export const envios = pgTable('envios', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id')
+    .notNull()
+    .references(() => usuarios.id),
+  mensalidadeId: uuid('mensalidade_id')
+    .notNull()
+    .unique()
+    .references(() => mensalidades.id),
+  estado: estadoDoEnvio('estado').notNull().default('pendente'),
+  rastreio: text('rastreio'),
+  enviadoEm: timestamp('enviado_em', { withTimezone: true }),
+  criadoEm: criadoEm(),
+});
 
 export const convites = pgTable('convites', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -601,5 +694,8 @@ export type EstadoDaDiversao = typeof estadosDaDiversao.$inferSelect;
 export type Convite = typeof convites.$inferSelect;
 export type LancamentoDeGrana = typeof lancamentosDeGrana.$inferSelect;
 export type ItemDoJogador = typeof itensDoJogador.$inferSelect;
+export type Pedido = typeof pedidos.$inferSelect;
+export type Assinatura = typeof assinaturas.$inferSelect;
+export type Envio = typeof envios.$inferSelect;
 export type Papel = Usuario['papel'];
 export type EstadoUsuario = Usuario['estado'];
