@@ -5,8 +5,8 @@ import type { Bd } from '@/bd/conexao';
 import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { ContaSemAcesso } from './disponibilidade';
-import { lancarGrana, SaldoInsuficiente } from './grana';
-import { bauDe, CATALOGO, comprarItem, DIAS_A_VENDA, ItemInvalido, lojaAberta, moldurasDe, PRECOS, tirarItem, usarItem, visuaisDe } from './loja';
+import { lancarGrana, lancarMoeda, SaldoInsuficiente } from './grana';
+import { bauDe, CATALOGO, comprarItem, comprarParaSempre, DIAS_A_VENDA, itemDoCatalogo, ItemInvalido, JaEhSeu, lojaAberta, moldurasDe, PRECOS, PRECOS_MAGCOIN, tirarItem, usarItem, visuaisDe } from './loja';
 
 let bd: Bd;
 const DIA = 24 * 60 * 60 * 1000;
@@ -200,4 +200,55 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
   expect((await recarregar(bd, conta)).grana).toBe(1800);
   await usarItem(bd, conta, 'mutante-blindado', AGORA);
   expect(await visuaisDe(bd, [conta.steamid64], AGORA)).toEqual({ [conta.steamid64]: { mutante: 'blindado' } });
+});
+
+async function contaComMagcoin(magcoin: number): Promise<Usuario> {
+  const conta = await criarUsuario(bd, { estado: 'ativo' });
+  await bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'pagamento', quantidade: magcoin, referencia: 'mp' }));
+  return recarregar(bd, conta);
+}
+
+test('preço para sempre em MagCoin: 150 nos itens de aparência e 300 no mutante', () => {
+  expect(PRECOS_MAGCOIN).toEqual({ cor: 150, etiqueta: 150, aviso: 150, moldura: 150, mutante: 300 });
+});
+
+test('comprar com MagCoin dá o item para sempre e cobra uma vez pelo mesmo código', async () => {
+  const conta = await contaComMagcoin(400);
+  const codigo = randomUUID();
+  expect(await comprarParaSempre(bd, conta, { itemId: 'mutante-blindado', codigo })).toBe('comprado');
+  expect(await comprarParaSempre(bd, conta, { itemId: 'mutante-blindado', codigo })).toBe('repetido');
+  const atual = await recarregar(bd, conta);
+  expect([atual.magcoin, atual.grana]).toEqual([100, 0]);
+  expect((await posse(conta, 'mutante-blindado'))?.expiraEm).toBeNull();
+});
+
+test('item que já é para sempre não se compra de novo, e comprar por dias não tira o para sempre', async () => {
+  const conta = await contaComMagcoin(400);
+  await comprarParaSempre(bd, conta, { itemId: 'cor-verde', codigo: randomUUID() });
+  await expect(comprarParaSempre(bd, conta, { itemId: 'cor-verde', codigo: randomUUID() })).rejects.toBeInstanceOf(JaEhSeu);
+  expect((await recarregar(bd, conta)).magcoin).toBe(250);
+});
+
+test('item que estava por dias vira para sempre', async () => {
+  const conta = await contaCom(500);
+  await bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'pagamento', quantidade: 150, referencia: 'mp' }));
+  await comprar(conta, 'cor-verde', 3);
+  await comprarParaSempre(bd, conta, { itemId: 'cor-verde', codigo: randomUUID() });
+  expect((await posse(conta, 'cor-verde'))?.expiraEm).toBeNull();
+});
+
+test('sem MagCoin suficiente, nada muda', async () => {
+  const conta = await contaComMagcoin(100);
+  await expect(comprarParaSempre(bd, conta, { itemId: 'cor-verde', codigo: randomUUID() })).rejects.toBeInstanceOf(SaldoInsuficiente);
+  expect(await posse(conta, 'cor-verde')).toBeUndefined();
+});
+
+test('itens dos membros não estão à venda, nem por Grana nem por MagCoin', async () => {
+  const conta = await contaComMagcoin(400);
+  for (const id of ['etiqueta-apoiador', 'moldura-ouro']) {
+    expect(itemDoCatalogo(id)?.venda).toBe(false);
+    await expect(comprarParaSempre(bd, conta, { itemId: id, codigo: randomUUID() })).rejects.toBeInstanceOf(ItemInvalido);
+    await expect(comprar(conta, id, 1)).rejects.toBeInstanceOf(ItemInvalido);
+  }
+  expect(itemDoCatalogo('mutante-blindado')?.lancamento).toBe(true);
 });

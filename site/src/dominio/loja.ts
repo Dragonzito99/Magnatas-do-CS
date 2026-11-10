@@ -1,8 +1,8 @@
 import { and, eq, inArray, ne } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { itensDoJogador, usuarios, type Usuario } from '@/bd/esquema';
+import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd/esquema';
 import { exigirAtivo } from './disponibilidade';
-import { lancarGrana } from './grana';
+import { lancarGrana, lancarMoeda } from './grana';
 
 /**
  * A Magnata Shop, primeira etapa: só itens de aparência, comprados com Grana por tempo. Nada aqui imita skin, arma,
@@ -23,6 +23,9 @@ export const PRECOS: Record<TipoDeItem, Record<DiasAVenda, number>> = {
   mutante: { 1: 200, 3: 550, 5: 850, 9: 1350 },
 };
 
+/** Para sempre, com MagCoin (dono, 10/11/2026): R$ 15 nos itens de aparência e R$ 30 no mutante. */
+export const PRECOS_MAGCOIN: Record<TipoDeItem, number> = { cor: 150, etiqueta: 150, aviso: 150, moldura: 150, mutante: 300 };
+
 export const NOME_DO_TIPO: Record<TipoDeItem, string> = {
   cor: 'Cor do nome',
   etiqueta: 'Etiqueta no chat',
@@ -41,6 +44,10 @@ export type ItemDaLoja = {
   corCss?: string;
   /** Foto do boneco, para a prévia dos mutantes. */
   imagem?: string;
+  /** Falso nos itens que só os membros ganham: não aparecem na loja nem se compram. */
+  venda?: boolean;
+  /** Item de lançamento: o Premium ganha para sempre. */
+  lancamento?: boolean;
   /** Os bonecos de cada nível, andando, que a vitrine mostra um depois do outro. */
   evolucoes?: { nivel: number; nome: string; imagem: string; escudo: number }[];
 };
@@ -59,11 +66,15 @@ export const CATALOGO: readonly ItemDaLoja[] = [
   { id: 'etiqueta-don', tipo: 'etiqueta', nome: '[DON]', valor: '[DON]' },
   { id: 'etiqueta-patrao', tipo: 'etiqueta', nome: '[PATRÃO]', valor: '[PATRÃO]' },
   { id: 'etiqueta-lenda', tipo: 'etiqueta', nome: '[LENDA]', valor: '[LENDA]' },
+  // Só dos membros (Bronze em diante), enquanto a assinatura vale.
+  { id: 'etiqueta-apoiador', tipo: 'etiqueta', nome: '[APOIADOR]', valor: '[APOIADOR]', venda: false },
   { id: 'aviso-entrada', tipo: 'aviso', nome: 'Aviso de entrada', valor: '★ {apelido} chegou' },
   { id: 'moldura-dourada', tipo: 'moldura', nome: 'Dourada', valor: 'dourada' },
   { id: 'moldura-neon', tipo: 'moldura', nome: 'Neon', valor: 'neon' },
   { id: 'moldura-fogo', tipo: 'moldura', nome: 'Fogo', valor: 'fogo' },
   { id: 'moldura-gelo', tipo: 'moldura', nome: 'Gelo', valor: 'gelo' },
+  // Exclusiva do Ouro e do Premium.
+  { id: 'moldura-ouro', tipo: 'moldura', nome: 'Ouro exclusiva', valor: 'ouro', venda: false },
   // O valor é o nome do mutante no plugin da Mutação: o boneco e o poder no G vêm dele.
   {
     id: 'mutante-blindado',
@@ -71,6 +82,7 @@ export const CATALOGO: readonly ItemDaLoja[] = [
     nome: 'Cyber Hulk (Blindado)',
     valor: 'blindado',
     imagem: '/loja/mutante-blindado.webp',
+    lancamento: true,
     evolucoes: [
       { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', escudo: 2 },
       { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', escudo: 4 },
@@ -87,6 +99,15 @@ export class ItemInvalido extends Error {
     super('Esse item não está à venda desse jeito.');
   }
 }
+
+export class JaEhSeu extends Error {
+  constructor() {
+    super('Esse item já é seu para sempre.');
+  }
+}
+
+/** Itens que aparecem na loja (os dos membros ficam de fora). */
+export const ITENS_A_VENDA = () => CATALOGO.filter((item) => item.venda !== false);
 
 export function itemDoCatalogo(itemId: string): ItemDaLoja | undefined {
   return CATALOGO.find((item) => item.id === itemId);
@@ -112,7 +133,7 @@ export async function comprarItem(
 ): Promise<'comprado' | 'repetido'> {
   const item = itemDoCatalogo(pedido.itemId);
   const dias = DIAS_A_VENDA.find((opcao) => opcao === pedido.dias);
-  if (!item || !dias || !FORMATO_DO_CODIGO.test(pedido.codigo)) throw new ItemInvalido();
+  if (!item || item.venda === false || !dias || !FORMATO_DO_CODIGO.test(pedido.codigo)) throw new ItemInvalido();
   const preco = PRECOS[item.tipo][dias];
 
   return bd.transaction(async (tx) => {
@@ -139,6 +160,49 @@ export async function comprarItem(
       .insert(itensDoJogador)
       .values({ usuarioId: usuario.id, itemId: item.id, expiraEm, atualizadoEm: agora })
       .onConflictDoUpdate({ target: [itensDoJogador.usuarioId, itensDoJogador.itemId], set: { expiraEm, atualizadoEm: agora } });
+    return 'comprado';
+  });
+}
+
+/**
+ * Compra com MagCoin: o item fica para sempre. O mesmo código é a mesma compra; item que já é para sempre não se compra
+ * de novo; o que estava por dias vira para sempre.
+ */
+export async function comprarParaSempre(
+  bd: Bd,
+  usuario: Pick<Usuario, 'id'>,
+  pedido: { itemId: string; codigo: string },
+  agora: Date = new Date(),
+): Promise<'comprado' | 'repetido'> {
+  const item = itemDoCatalogo(pedido.itemId);
+  if (!item || item.venda === false || !FORMATO_DO_CODIGO.test(pedido.codigo)) throw new ItemInvalido();
+  const preco = PRECOS_MAGCOIN[item.tipo];
+
+  return bd.transaction(async (tx) => {
+    await exigirAtivo(tx, usuario);
+    await tx.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.id, usuario.id)).for('update');
+    const [repetida] = await tx
+      .select({ id: lancamentosDeGrana.id })
+      .from(lancamentosDeGrana)
+      .where(and(eq(lancamentosDeGrana.usuarioId, usuario.id), eq(lancamentosDeGrana.moeda, 'magcoin'), eq(lancamentosDeGrana.tipo, 'compra'), eq(lancamentosDeGrana.referencia, pedido.codigo)));
+    if (repetida) return 'repetido';
+    const [atual] = await tx
+      .select({ expiraEm: itensDoJogador.expiraEm })
+      .from(itensDoJogador)
+      .where(and(eq(itensDoJogador.usuarioId, usuario.id), eq(itensDoJogador.itemId, item.id)));
+    if (atual && atual.expiraEm === null) throw new JaEhSeu();
+    await lancarMoeda(tx, {
+      moeda: 'magcoin',
+      usuarioId: usuario.id,
+      tipo: 'compra',
+      quantidade: -preco,
+      referencia: pedido.codigo,
+      detalhes: { itemId: item.id, paraSempre: true, preco },
+    });
+    await tx
+      .insert(itensDoJogador)
+      .values({ usuarioId: usuario.id, itemId: item.id, expiraEm: null, atualizadoEm: agora })
+      .onConflictDoUpdate({ target: [itensDoJogador.usuarioId, itensDoJogador.itemId], set: { expiraEm: null, atualizadoEm: agora } });
     return 'comprado';
   });
 }
