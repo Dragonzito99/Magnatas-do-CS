@@ -61,8 +61,8 @@ Por isso a primeira etapa já nasce com o livro-caixa, a proteção contra cobra
   `grana >= 0`. Se faltar saldo, o banco recusa e nada é gravado.
 - **Compra** trava a linha da conta (`select ... for update`) antes de conferir o saldo, para duas compras ao mesmo
   tempo não usarem o mesmo dinheiro.
-- **Conferência**: a varredura que já roda no site compara, de tempos em tempos, `usuarios.grana` com a soma das linhas
-  de cada conta. Se alguma não bater, registra no Painel ADM para a equipe ver. Nunca corrige sozinha.
+- **Conferência**: a parte Grana do Painel ADM compara, toda vez que abre, `usuarios.grana` com a soma das linhas de
+  cada conta. Se alguma não bater, mostra um alerta vermelho. Nunca corrige sozinha.
 - O preço pago fica gravado na linha da compra: mudar a tabela depois não mexe no passado.
 
 ## Itens da primeira versão
