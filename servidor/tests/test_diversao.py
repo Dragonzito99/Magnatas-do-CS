@@ -1117,10 +1117,11 @@ def test_o_servidor_carrega_os_sons_do_pacote():
 @pytest.mark.parametrize("servidor", SERVIDORES)
 def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
     # A Mutação também manda baixar os pacotes do mutante comum e do Blindado da loja, que só ela usa.
-    # O pacote dos personagens fica de fora enquanto a Steam não liberar o download para servidores: com um item
-    # negado na lista, o MultiAddonManager tentava de novo e recarregava o mapa sem parar (10/11/2026).
-    assert PACOTE_DOS_PERSONAGENS not in valor("mm_extra_addons", servidor)
-    esperado = f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO}"' if servidor == "mutacao" else f'"{PACOTE_DE_SONS}"'
+    esperado = (
+        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS}"'
+        if servidor == "mutacao"
+        else f'"{PACOTE_DE_SONS},{PACOTE_DOS_PERSONAGENS}"'
+    )
     assert valor("mm_extra_addons", servidor) == esperado
     # Sem isso, cada troca de mapa do Equipe x Equipe faria todo mundo reconectar para conferir o pacote.
     assert valor("mm_cache_clients_with_addons", servidor) == "1"
@@ -1755,12 +1756,14 @@ def test_quem_pega_a_super_negev_vira_o_heroi_quando_o_pacote_chegou():
     assert "manifesto.AddResource(ModeloDoHeroi)" in CODIGO_DA_MUTACAO
 
 
-def test_o_heroi_usa_o_pacote_dos_personagens():
-    assert f'PacoteDosPersonagens = "{PACOTE_DOS_PERSONAGENS}"' in CODIGO_DA_MUTACAO
+def test_a_mutacao_baixa_o_pacote_dos_personagens_que_o_heroi_usa():
+    pacote = re.search(r'PacoteDosPersonagens = "(\d+)"', CODIGO_DA_MUTACAO).group(1)
+    assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")
 
 
-def test_o_competitivo_ainda_nao_baixa_o_pacote_dos_personagens():
+def test_o_competitivo_tambem_baixa_o_pacote_dos_personagens():
     competitivo = (RAIZ / "config" / "server.cfg").read_text(encoding="utf-8")
-    assert PACOTE_DOS_PERSONAGENS not in competitivo
+    assert f'mm_extra_addons "{PACOTE_DOS_PERSONAGENS}"' in competitivo
+    assert "mm_cache_clients_with_addons 1" in competitivo
     visual = (RAIZ / "plugins" / "MagnatasVisual" / "MagnatasVisual.cs").read_text(encoding="utf-8")
     assert f'PacoteDosPersonagens = "{PACOTE_DOS_PERSONAGENS}"' in visual
