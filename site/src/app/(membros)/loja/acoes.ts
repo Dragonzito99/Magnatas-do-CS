@@ -16,11 +16,12 @@ export async function comprar(dados: FormData): Promise<void> {
   try {
     await comprarItem(obterBd(), usuario, { itemId, dias: Number(dados.get('dias')), codigo: String(dados.get('codigo') ?? '') });
   } catch (erro) {
-    if (erro instanceof SaldoInsuficiente) redirect('/loja?erro=saldo');
+    const voltar = `/loja?item=${encodeURIComponent(itemId)}`;
+    if (erro instanceof SaldoInsuficiente) redirect(`${voltar}&erro=saldo`);
     if (erro instanceof ItemInvalido) redirect('/loja?erro=item');
-    if (erro instanceof ContaSemAcesso) redirect('/loja?erro=conta');
+    if (erro instanceof ContaSemAcesso) redirect(`${voltar}&erro=conta`);
     throw erro;
   }
   revalidatePath('/', 'layout');
-  redirect(`/loja?comprado=${encodeURIComponent(itemId)}`);
+  redirect(`/loja?item=${encodeURIComponent(itemId)}&comprado=1`);
 }

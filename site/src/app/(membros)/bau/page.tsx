@@ -20,6 +20,14 @@ export default async function Bau({ searchParams }: { searchParams: Promise<{ er
 
   return (
     <div className="tela-jogar">
+      <nav className="abas-da-loja" aria-label="Magnata Shop">
+        <Link href="/loja" className="aba-da-loja">
+          Loja
+        </Link>
+        <Link href="/bau" className="aba-da-loja" aria-current="page">
+          Meu baú
+        </Link>
+      </nav>
       <div className="topo-jogar">
         <h1>Meu baú</h1>
         <p className="apoio">

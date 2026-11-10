@@ -5442,3 +5442,239 @@ a.cartao-destaque:hover {
   margin: 6px 0 0;
   padding-left: 18px;
 }
+
+/* Magnata Shop como vitrine: conta e prévia à esquerda, prateleira à direita. */
+.abas-da-loja {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.aba-da-loja {
+  padding: 9px 22px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, #2a1b44, #150c25);
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+  color: var(--tinta-2);
+  font: italic 700 16px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.aba-da-loja[aria-current='page'] {
+  background: linear-gradient(180deg, #ffcf33, #e88f00);
+  box-shadow: 0 0 14px rgba(245, 179, 1, 0.35);
+  color: var(--sobre-ouro);
+}
+
+.vitrine {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.lado-da-loja {
+  display: grid;
+  gap: 14px;
+}
+
+.caixa-da-loja {
+  border-radius: 12px;
+  background: linear-gradient(180deg, #1a0f2c, #0d0718);
+  box-shadow: inset 0 0 0 1px var(--linha-forte), 0 8px 24px rgba(0, 0, 0, 0.35);
+  padding: 14px;
+}
+
+.caixa-da-loja h2 {
+  margin: -14px -14px 12px;
+  padding: 9px 14px;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.08));
+  border-bottom: 1px solid var(--linha-forte);
+  font: italic 700 15px/1.2 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.saldo-da-loja {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: #05030a;
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.saldo-da-loja b {
+  color: var(--ouro);
+  font-size: 18px;
+}
+
+.saldo-da-loja.apagado {
+  color: var(--tinta-2);
+}
+
+.saldo-da-loja small {
+  font-size: 11px;
+}
+
+.previa-da-loja {
+  display: grid;
+  gap: 12px;
+}
+
+.palco-da-previa {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  padding: 16px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.28), transparent 65%), #05030a;
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.previa-moldura {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.previa-moldura .avatar {
+  width: 110px;
+  height: 110px;
+  font-size: 30px;
+}
+
+.chat-de-mentira {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  font-family: var(--fonte-mono), ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  color: #e8e8e8;
+}
+
+.nome-comum {
+  color: #9fb7d6;
+}
+
+.tenho {
+  color: var(--verde);
+  font-style: normal;
+}
+
+.prateleira {
+  min-width: 0;
+}
+
+.filtros-da-loja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.filtro-da-loja {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #0b0614;
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+  color: var(--tinta-2);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.filtro-da-loja[aria-current='page'] {
+  background: var(--ouro-fraco);
+  box-shadow: inset 0 0 0 1px var(--ouro);
+  color: var(--ouro);
+}
+
+.filtro-da-loja.apagado {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.filtro-da-loja em {
+  font-size: 10px;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.itens-da-prateleira {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.item-da-prateleira {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 72px auto;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #1c1230, #110a1f);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--tinta);
+  text-decoration: none;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.item-da-prateleira:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px var(--linha-forte), 0 0 12px rgba(168, 85, 247, 0.25);
+}
+
+.item-da-prateleira.escolhido {
+  box-shadow: inset 0 0 0 2px var(--ouro), 0 0 14px rgba(245, 179, 1, 0.3);
+}
+
+.tipo-do-item {
+  justify-self: start;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--roxo-fraco);
+  color: var(--tinta-2);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.miniatura-do-item {
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: #05030a;
+  overflow: hidden;
+  padding: 0 8px;
+}
+
+.miniatura-do-item .avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.rodape-do-item {
+  display: grid;
+}
+
+.rodape-do-item small {
+  color: var(--tinta-2);
+}
+
+@media (max-width: 860px) {
+  .vitrine {
+    grid-template-columns: 1fr;
+  }
+
+  .palco-da-previa {
+    min-height: 140px;
+  }
+}
