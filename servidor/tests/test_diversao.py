@@ -1206,9 +1206,12 @@ def test_um_humano_sorteado_ganha_a_super_negev_junto_com_o_sorteio_dos_mutantes
     assert "pegou a super Negev" in sorteio
 
 
-def test_a_super_negev_nao_acaba_a_municao_e_empurra_mais():
-    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventWeaponFire"):]
-    assert '"m_iClip1"' in trecho
+def test_a_super_negev_recarrega_normal_e_empurra_mais():
+    # Munição infinita ficava forte demais (dono, 10/11/2026), e encher o pente a cada tiro já tinha fechado jogos
+    # ("CopyExistingEntity", 09/11). A Negev agora gasta e recarrega como qualquer arma.
+    assert "EventWeaponFire" not in CODIGO_DA_MUTACAO
+    assert "m_iClip1" not in CODIGO_DA_MUTACAO
+    assert "munição infinita" not in CODIGO_DA_MUTACAO
     empurrao = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("HookResult AoAtingirMutante"):]
     assert "EmpurraoDaSuperArma" in empurrao
 
@@ -1674,16 +1677,6 @@ def test_teste_sem_mudar_o_tamanho_dos_bonecos_durante_o_jogo():
     muda = metodo_da_mutacao("static void MudarTamanho(")
     assert "if (!MudarTamanhoEmJogo) return;" in muda
     assert muda.index("if (!MudarTamanhoEmJogo) return;") < muda.index("GetSkeletonInstance()")
-
-
-def test_o_pente_da_negev_so_enche_se_a_pessoa_ainda_e_o_portador_humano():
-    # O pente enche no quadro seguinte ao tiro. Se o portador virava mutante nesse meio tempo, a Negev já estava sendo
-    # apagada, e mexer nela mandava aos jogos uma arma que não existia mais: "CopyExistingEntity: missing client
-    # entity" (09/11, duas vezes com quem estava de Negev).
-    atira = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("HookResult AoAtirarNaMutacao"):]
-    proximo = atira[atira.index("Server.NextFrame("):atira.index("arma.Clip1 = PenteDaSuperArma;")]
-    assert "jogador.Slot != portadorDaSuperArma" in proximo
-    assert "PawnIsAlive: true, Team: CsTeam.CounterTerrorist" in proximo
 
 
 def test_comando_de_teste_sobe_um_bot_mutante_de_nivel_para_o_dono_ver():

@@ -136,9 +136,9 @@ public partial class ModoDeDiversao
     private readonly Dictionary<int, (float Fim, float Recarga)> escudos = new();
     private const float TamanhoDoHumano = 1f;
 
-    // Um humano por rodada ganha a super Negev: não acaba a munição e empurra o mutante bem mais longe.
+    // Um humano por rodada ganha a super Negev: empurra o mutante bem mais longe. A munição é a normal: infinita ficava
+    // forte demais (dono, 10/11/2026), e encher o pente a cada tiro já tinha fechado jogos ("CopyExistingEntity", 09/11).
     private const string ArmaEspecial = "weapon_negev";
-    private const int PenteDaSuperArma = 150;
     private const float EmpurraoDaSuperArma = 3f;
     private const float EmpurraoMaximoDaSuperArma = 600f;
     private static readonly Color CorDoPortador = Color.FromArgb(255, 255, 200, 40);
@@ -353,9 +353,9 @@ public partial class ModoDeDiversao
                     if (jogador is { IsValid: true, PawnIsAlive: true } && jogador.Slot == portadorDaSuperArma) jogador.ExecuteClientCommand("slot1");
                 });
                 jogador.PrintToCenterHtml(
-                    "<font color='#ffc828' class='fontSize-l'>Você é o HERÓI!</font><br><font color='#ffffff'>Super Negev: munição infinita e empurra os mutantes</font><br><font color='#f5b301'>Não deixe encostarem em você</font>",
+                    "<font color='#ffc828' class='fontSize-l'>Você é o HERÓI!</font><br><font color='#ffffff'>Super Negev: empurra os mutantes para longe</font><br><font color='#f5b301'>Não deixe encostarem em você</font>",
                     SegundosDoAvisoDoMutante);
-                jogador.PrintToChat(" [Magnatas] Você é o HERÓI: a super Negev não acaba a munição e empurra os mutantes para longe.");
+                jogador.PrintToChat(" [Magnatas] Você é o HERÓI: a super Negev empurra os mutantes para longe. Cuide da munição!");
             });
         });
     }
@@ -389,26 +389,6 @@ public partial class ModoDeDiversao
         if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot == portadorDaSuperArma) return;
         var boneco = BonecoProprioDe(jogador);
         if (boneco != null) jogador.PlayerPawn.Value?.SetModel(boneco);
-    }
-
-    /// <summary>A cada tiro do portador o pente volta a ficar cheio: a super Negev nunca recarrega.</summary>
-    [GameEventHandler]
-    public HookResult AoAtirarNaMutacao(EventWeaponFire evento, GameEventInfo informacao)
-    {
-        if (Config.Regra != "mutacao") return HookResult.Continue;
-        var jogador = evento.Userid;
-        if (jogador is not { IsValid: true } || jogador.Slot != portadorDaSuperArma || !evento.Weapon.Contains("negev")) return HookResult.Continue;
-        Server.NextFrame(() =>
-        {
-            // Quem virou mutante nesse meio tempo já está perdendo a Negev: mexer nela mandava aos jogos uma arma que
-            // não existia mais e fechava o jogo de quem estava no servidor ("CopyExistingEntity").
-            if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot != portadorDaSuperArma) return;
-            var arma = jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value;
-            if (arma is not { IsValid: true } || arma.DesignerName != ArmaEspecial) return;
-            arma.Clip1 = PenteDaSuperArma;
-            Utilities.SetStateChanged(arma, "CBasePlayerWeapon", "m_iClip1");
-        });
-        return HookResult.Continue;
     }
 
     /// <summary>O encerrar da rodada pelo plugin não soma ponto para o time: o placar de cima mostra as rodadas de cada lado.</summary>
