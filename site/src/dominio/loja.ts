@@ -41,6 +41,8 @@ export type ItemDaLoja = {
   corCss?: string;
   /** Foto do boneco, para a prévia dos mutantes. */
   imagem?: string;
+  /** Os bonecos de cada nível, andando, que a vitrine mostra um depois do outro. */
+  evolucoes?: { nivel: number; nome: string; imagem: string; escudo: number }[];
 };
 
 export const CATALOGO: readonly ItemDaLoja[] = [
@@ -63,7 +65,18 @@ export const CATALOGO: readonly ItemDaLoja[] = [
   { id: 'moldura-fogo', tipo: 'moldura', nome: 'Fogo', valor: 'fogo' },
   { id: 'moldura-gelo', tipo: 'moldura', nome: 'Gelo', valor: 'gelo' },
   // O valor é o nome do mutante no plugin da Mutação: o boneco e o poder no G vêm dele.
-  { id: 'mutante-blindado', tipo: 'mutante', nome: 'Cyber Hulk (Blindado)', valor: 'blindado', imagem: '/loja/mutante-blindado.webp' },
+  {
+    id: 'mutante-blindado',
+    tipo: 'mutante',
+    nome: 'Cyber Hulk (Blindado)',
+    valor: 'blindado',
+    imagem: '/loja/mutante-blindado.webp',
+    evolucoes: [
+      { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', escudo: 2 },
+      { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', escudo: 4 },
+      { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', escudo: 6 },
+    ],
+  },
 ];
 
 const DIA_MS = 24 * 60 * 60 * 1000;

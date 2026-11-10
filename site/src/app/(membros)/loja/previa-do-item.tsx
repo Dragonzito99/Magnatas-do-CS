@@ -1,6 +1,7 @@
 import type { Usuario } from '@/bd/esquema';
 import type { ItemDaLoja } from '@/dominio/loja';
 import { Avatar } from '../avatar';
+import { EvolucoesDoMutante } from './evolucoes-do-mutante';
 
 /** Como o item fica no jogo ou no site, com o apelido de quem está olhando. */
 export function PreviaDoItem({ item, usuario }: { item: ItemDaLoja; usuario: Pick<Usuario, 'apelido' | 'avatarUrl'> }) {
@@ -26,6 +27,7 @@ export function PreviaDoItem({ item, usuario }: { item: ItemDaLoja; usuario: Pic
  * moldura aparece na foto grande. Os mutantes, quando chegarem, mostram o boneco aqui.
  */
 export function PreviaGrande({ item, usuario }: { item: ItemDaLoja; usuario: Pick<Usuario, 'apelido' | 'avatarUrl'> }) {
+  if (item.tipo === 'mutante' && item.evolucoes) return <EvolucoesDoMutante evolucoes={item.evolucoes} />;
   // eslint-disable-next-line @next/next/no-img-element
   if (item.tipo === 'mutante') return <img className="foto-do-mutante grande" src={item.imagem} alt={item.nome} />;
   if (item.tipo === 'moldura')

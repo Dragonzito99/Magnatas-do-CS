@@ -190,6 +190,11 @@ test('a moldura em uso e valendo aparece pelo id da conta', async () => {
 test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mutante usar', async () => {
   const blindado = CATALOGO.find((item) => item.id === 'mutante-blindado');
   expect(blindado).toMatchObject({ tipo: 'mutante', valor: 'blindado', imagem: '/loja/mutante-blindado.webp' });
+  expect(blindado?.evolucoes).toEqual([
+    { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', escudo: 2 },
+    { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', escudo: 4 },
+    { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', escudo: 6 },
+  ]);
   const conta = await contaCom(2000);
   await comprar(conta, 'mutante-blindado', 1);
   expect((await recarregar(bd, conta)).grana).toBe(1800);
