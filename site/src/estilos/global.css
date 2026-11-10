@@ -5678,3 +5678,13 @@ a.cartao-destaque:hover {
     min-height: 140px;
   }
 }
+
+.foto-do-mutante {
+  height: 68px;
+  width: auto;
+  object-fit: contain;
+}
+
+.foto-do-mutante.grande {
+  height: 260px;
+}

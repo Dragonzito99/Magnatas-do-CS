@@ -9,7 +9,7 @@ import { lancarGrana } from './grana';
  * faca, luva, patente ou medalha da Valve (regra dela, o servidor perderia a licença).
  */
 
-export type TipoDeItem = 'cor' | 'etiqueta' | 'aviso' | 'moldura';
+export type TipoDeItem = 'cor' | 'etiqueta' | 'aviso' | 'moldura' | 'mutante';
 export const DIAS_A_VENDA = [1, 3, 5, 9] as const;
 export type DiasAVenda = (typeof DIAS_A_VENDA)[number];
 
@@ -19,6 +19,8 @@ export const PRECOS: Record<TipoDeItem, Record<DiasAVenda, number>> = {
   etiqueta: { 1: 100, 3: 250, 5: 380, 9: 600 },
   aviso: { 1: 60, 3: 150, 5: 230, 9: 370 },
   moldura: { 1: 80, 3: 200, 5: 300, 9: 480 },
+  // Mutante com poder custa mais (dono, 10/11/2026).
+  mutante: { 1: 200, 3: 550, 5: 850, 9: 1350 },
 };
 
 export const NOME_DO_TIPO: Record<TipoDeItem, string> = {
@@ -26,6 +28,7 @@ export const NOME_DO_TIPO: Record<TipoDeItem, string> = {
   etiqueta: 'Etiqueta no chat',
   aviso: 'Aviso de entrada',
   moldura: 'Moldura do perfil',
+  mutante: 'Mutante',
 };
 
 export type ItemDaLoja = {
@@ -36,6 +39,8 @@ export type ItemDaLoja = {
   valor: string;
   /** Para a prévia no site. */
   corCss?: string;
+  /** Foto do boneco, para a prévia dos mutantes. */
+  imagem?: string;
 };
 
 export const CATALOGO: readonly ItemDaLoja[] = [
@@ -57,6 +62,8 @@ export const CATALOGO: readonly ItemDaLoja[] = [
   { id: 'moldura-neon', tipo: 'moldura', nome: 'Neon', valor: 'neon' },
   { id: 'moldura-fogo', tipo: 'moldura', nome: 'Fogo', valor: 'fogo' },
   { id: 'moldura-gelo', tipo: 'moldura', nome: 'Gelo', valor: 'gelo' },
+  // O valor é o nome do mutante no plugin da Mutação: o boneco e o poder no G vêm dele.
+  { id: 'mutante-blindado', tipo: 'mutante', nome: 'Cyber Hulk (Blindado)', valor: 'blindado', imagem: '/loja/mutante-blindado.webp' },
 ];
 
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -169,7 +176,7 @@ export async function bauDe(bd: Bd, usuarioId: string, agora: Date = new Date())
   return bau.sort((a, b) => Number(a.vencido) - Number(b.vencido) || ordem(a) - ordem(b));
 }
 
-export type Visual = { cor?: string; etiqueta?: string; aviso?: boolean; moldura?: string };
+export type Visual = { cor?: string; etiqueta?: string; aviso?: boolean; moldura?: string; mutante?: string };
 
 /** O que cada conta ativa está usando e ainda vale, pronto para o servidor e para as telas. */
 export async function visuaisDe(bd: Bd, steamids: string[], agora: Date = new Date()): Promise<Record<string, Visual>> {
@@ -188,6 +195,7 @@ export async function visuaisDe(bd: Bd, steamids: string[], agora: Date = new Da
     if (item.tipo === 'etiqueta') visual.etiqueta = item.valor;
     if (item.tipo === 'aviso') visual.aviso = true;
     if (item.tipo === 'moldura') visual.moldura = item.valor;
+    if (item.tipo === 'mutante') visual.mutante = item.valor;
   }
   return visuais;
 }

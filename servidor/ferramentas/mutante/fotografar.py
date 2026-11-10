@@ -29,6 +29,11 @@ def foto(nome, posicao, alvo=(0, 0, 38)):
 foto('frente.png', (200, 0, 38))
 foto('lado.png', (0, 200, 38))
 
+# A foto da loja: de três quartos e sem fundo, para a prévia da Magnata Shop.
+cena.render.film_transparent = True
+foto('vitrine.png', (170, 100, 45))
+cena.render.film_transparent = False
+
 # Dobra joelhos, cotovelos e gira a cabeça, para ver se a malha acompanha os ossos do CS2.
 bpy.context.view_layer.objects.active = arm
 bpy.ops.object.mode_set(mode='POSE')

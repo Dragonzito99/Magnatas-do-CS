@@ -33,11 +33,12 @@ test('os preços são os da tabela aprovada pelo dono', () => {
     etiqueta: { 1: 100, 3: 250, 5: 380, 9: 600 },
     aviso: { 1: 60, 3: 150, 5: 230, 9: 370 },
     moldura: { 1: 80, 3: 200, 5: 300, 9: 480 },
+    mutante: { 1: 200, 3: 550, 5: 850, 9: 1350 },
   });
 });
 
 test('o catálogo tem os quatro tipos, ids únicos, e nenhuma etiqueta parece cargo da equipe', () => {
-  expect(new Set(CATALOGO.map((item) => item.tipo))).toEqual(new Set(['cor', 'etiqueta', 'aviso', 'moldura']));
+  expect(new Set(CATALOGO.map((item) => item.tipo))).toEqual(new Set(['cor', 'etiqueta', 'aviso', 'moldura', 'mutante']));
   expect(new Set(CATALOGO.map((item) => item.id)).size).toBe(CATALOGO.length);
   for (const item of CATALOGO.filter((candidato) => candidato.tipo === 'etiqueta')) {
     expect(item.valor).not.toMatch(/ADM|GM|STAFF|EQUIPE|MOD/i);
@@ -184,4 +185,14 @@ test('a moldura em uso e valendo aparece pelo id da conta', async () => {
   await usarItem(bd, outra, 'moldura-gelo', AGORA);
   const molduras = await moldurasDe(bd, [conta.id, outra.id], new Date(AGORA.getTime() + 2 * DIA));
   expect([...molduras]).toEqual([[conta.id, 'fogo']]);
+});
+
+test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mutante usar', async () => {
+  const blindado = CATALOGO.find((item) => item.id === 'mutante-blindado');
+  expect(blindado).toMatchObject({ tipo: 'mutante', valor: 'blindado', imagem: '/loja/mutante-blindado.webp' });
+  const conta = await contaCom(2000);
+  await comprar(conta, 'mutante-blindado', 1);
+  expect((await recarregar(bd, conta)).grana).toBe(1800);
+  await usarItem(bd, conta, 'mutante-blindado', AGORA);
+  expect(await visuaisDe(bd, [conta.steamid64], AGORA)).toEqual({ [conta.steamid64]: { mutante: 'blindado' } });
 });

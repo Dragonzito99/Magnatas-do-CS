@@ -4,6 +4,8 @@ import { Avatar } from '../avatar';
 
 /** Como o item fica no jogo ou no site, com o apelido de quem está olhando. */
 export function PreviaDoItem({ item, usuario }: { item: ItemDaLoja; usuario: Pick<Usuario, 'apelido' | 'avatarUrl'> }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  if (item.tipo === 'mutante') return <img className="foto-do-mutante" src={item.imagem} alt={item.nome} />;
   if (item.tipo === 'moldura') return <Avatar usuario={usuario} moldura={item.valor} />;
   if (item.tipo === 'aviso') return <span className="previa-chat aviso-de-entrada">{item.valor.replace('{apelido}', usuario.apelido)}</span>;
   if (item.tipo === 'etiqueta')
@@ -24,6 +26,8 @@ export function PreviaDoItem({ item, usuario }: { item: ItemDaLoja; usuario: Pic
  * moldura aparece na foto grande. Os mutantes, quando chegarem, mostram o boneco aqui.
  */
 export function PreviaGrande({ item, usuario }: { item: ItemDaLoja; usuario: Pick<Usuario, 'apelido' | 'avatarUrl'> }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  if (item.tipo === 'mutante') return <img className="foto-do-mutante grande" src={item.imagem} alt={item.nome} />;
   if (item.tipo === 'moldura')
     return (
       <div className="previa-moldura">
