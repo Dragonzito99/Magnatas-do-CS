@@ -5,6 +5,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { bauDe, CATALOGO, DIAS_A_VENDA, itemDoCatalogo, lojaAberta, NOME_DO_TIPO, PRECOS, type TipoDeItem } from '@/dominio/loja';
 import { BotaoConfirmar } from '../botao-confirmar';
+import { AbasDaLoja } from './abas-da-loja';
 import { comprar } from './acoes';
 import { PreviaDoItem, PreviaGrande } from './previa-do-item';
 
@@ -49,14 +50,7 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
 
   return (
     <div className="tela-jogar">
-      <nav className="abas-da-loja" aria-label="Magnata Shop">
-        <Link href="/loja" className="aba-da-loja" aria-current="page">
-          Loja
-        </Link>
-        <Link href="/bau" className="aba-da-loja">
-          Meu baú
-        </Link>
-      </nav>
+      <AbasDaLoja atual="loja" />
 
       <div className="vitrine">
         <aside className="lado-da-loja">

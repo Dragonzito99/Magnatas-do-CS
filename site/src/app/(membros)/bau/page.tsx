@@ -2,13 +2,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
-import { extrato } from '@/dominio/grana';
 import { bauDe, lojaAberta, NOME_DO_TIPO } from '@/dominio/loja';
-import { motivoDaLinha } from '@/dominio/textos-da-grana';
 import { PreviaDoItem } from '../loja/previa-do-item';
 import { tirar, usar } from './acoes';
 
-const quando = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 const dias = (quantidade: number) => (quantidade === 1 ? '1 dia' : `${quantidade} dias`);
 
 export default async function Bau({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
@@ -16,20 +13,12 @@ export default async function Bau({ searchParams }: { searchParams: Promise<{ er
   if (!lojaAberta(usuario)) redirect('/inicio');
   const { erro } = await searchParams;
   const bd = obterBd();
-  const [bau, linhas] = await Promise.all([bauDe(bd, usuario.id), extrato(bd, usuario.id)]);
+  const bau = await bauDe(bd, usuario.id);
 
   return (
     <div className="tela-jogar">
-      <nav className="abas-da-loja" aria-label="Magnata Shop">
-        <Link href="/loja" className="aba-da-loja">
-          Loja
-        </Link>
-        <Link href="/bau" className="aba-da-loja" aria-current="page">
-          Meu baú
-        </Link>
-      </nav>
       <div className="topo-jogar">
-        <h1>Meu baú</h1>
+        <h1>Baú</h1>
         <p className="apoio">
           Escolha o que usar. Nos servidores, a troca vale a partir da próxima rodada. Saldo:{' '}
           <b className="grana-destaque">{usuario.grana.toLocaleString('pt-BR')} Grana</b>.
@@ -80,41 +69,9 @@ export default async function Bau({ searchParams }: { searchParams: Promise<{ er
         )}
       </section>
 
-      <section className="secao-loja">
-        <div className="cabeca-secao-loja">
-          <h2>Extrato da Grana</h2>
-          <p className="apoio">Cada ganho e cada gasto, do mais novo para o mais antigo.</p>
-        </div>
-        {linhas.length === 0 ? (
-          <p className="apoio">Nenhum movimento ainda. Jogue uma partida para ganhar Grana.</p>
-        ) : (
-          <div className="tabela-rolavel">
-            <table className="tabela-extrato">
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Motivo</th>
-                  <th>Grana</th>
-                  <th>Saldo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {linhas.map((linha) => (
-                  <tr key={linha.id}>
-                    <td>{quando.format(linha.criadoEm)}</td>
-                    <td>{motivoDaLinha(linha)}</td>
-                    <td className={linha.quantidade > 0 ? 'ganho' : 'gasto'}>
-                      {linha.quantidade > 0 ? '+' : ''}
-                      {linha.quantidade.toLocaleString('pt-BR')}
-                    </td>
-                    <td>{linha.saldo.toLocaleString('pt-BR')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <p className="apoio">
+        O que você comprou e cada ganho de Grana ficam em <Link href="/compras">Minhas compras</Link>.
+      </p>
     </div>
   );
 }

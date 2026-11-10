@@ -14,16 +14,18 @@ test('Magnata Shop fica no menu como "em breve", sem levar a lugar nenhum', () =
   expect(item).not.toHaveProperty('href');
 });
 
-test('com a loja aberta, Magnata Shop leva à loja e ao baú', () => {
-  const item = itensDoMenu(true).find((candidato) => candidato.nome === 'Magnata Shop');
-  expect(item).toMatchObject({ href: '/loja', destaque: true });
-  expect(item?.emBreve).toBeFalsy();
-  expect(item?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
+test('com a loja aberta, Magnata Shop leva à loja e às compras, e o Baú fica ao lado', () => {
+  const itens = itensDoMenu(true);
+  const loja = itens.find((candidato) => candidato.nome === 'Magnata Shop');
+  expect(loja).toMatchObject({ href: '/loja', destaque: true });
+  expect(loja?.emBreve).toBeFalsy();
+  expect(loja?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
     ['Loja', '/loja'],
-    ['Meu baú', '/bau'],
+    ['Minhas compras', '/compras'],
   ]);
+  expect(itens.map((candidato) => candidato.nome)).toEqual([...ITENS_DO_MENU.map((candidato) => candidato.nome), 'Baú']);
+  expect(itens.at(-1)).toMatchObject({ nome: 'Baú', href: '/bau' });
   expect(itensDoMenu(false)).toBe(ITENS_DO_MENU);
-  expect(itensDoMenu(true).map((candidato) => candidato.nome)).toEqual(ITENS_DO_MENU.map((candidato) => candidato.nome));
 });
 
 test('Clãs saiu do "em breve" e abre Meu clã, Procurar, Ranking e Criar', () => {

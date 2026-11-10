@@ -45,7 +45,7 @@ export function Cabecalho({
               </Link>
             )}
             {grana !== null && (
-              <Link href="/bau" className="saldo-de-grana" title="Sua Grana. Abre o baú e o extrato.">
+              <Link href="/compras" className="saldo-de-grana" title="Sua Grana. Abre Minhas compras.">
                 <span aria-hidden="true">$</span>
                 <b>{grana.toLocaleString('pt-BR')}</b>
                 <small>Grana</small>
