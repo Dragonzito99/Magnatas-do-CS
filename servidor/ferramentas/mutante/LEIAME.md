@@ -29,3 +29,20 @@ python montar_morte.py
 ```
 
 Depois compilar `materials/mutante_corpo.vmat`, `mutante.vmdl` e `morte/guerreiro_morte.vmdl` com `-addon magnatas_mutante`.
+
+## Personagens próprios e o herói
+
+O pacote `magnatas_personagens` (item 3837571705) traz os bonecos de uma conta só (Ministro Marfioso e o Adm), que o
+MagnatasVisual veste em todo servidor, e o herói da super Negev da Mutação. Mesmo caminho do mutante, uma pasta por
+personagem (`models/magnatas/<nome>_v1`), e cada versão nova vira item novo. O site guarda o caminho do boneco na conta
+(`usuarios.boneco`) e o plugin só aceita caminhos da lista dele.
+
+Gestos (animações extras do Meshy, como dança, flexão e salto mortal), num modelo de cena próprio:
+
+```
+export MUTANTE_ADDON=magnatas_personagens MUTANTE_PASTA=models/magnatas/adm_v1
+blender -b --python exportar_gestos.py -- "<fbx animado>" danca=All_Night_Dance flexao=push_up mortal=Backflip_Jump
+python montar_gestos.py danca:sem_repetir flexao:repetir mortal:sem_repetir
+```
+
+Depois compilar `gestos/gestos.vmdl`. O jogador chama com `css_danca`, `css_flexao` e `css_mortal` (ou `!danca` no chat).

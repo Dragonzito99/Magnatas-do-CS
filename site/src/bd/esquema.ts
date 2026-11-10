@@ -27,6 +27,8 @@ export const usuarios = pgTable('usuarios', {
   grana: integer('grana').notNull().default(0),
   // MagCoin: comprada com dinheiro de verdade. Mesmo livro-caixa da Grana, coluna `moeda`.
   magcoin: integer('magcoin').notNull().default(0),
+  // Personagem feito só para essa conta (caminho do .vmdl no pacote da Oficina): o servidor veste ao nascer.
+  boneco: text('boneco'),
   criadoEm: criadoEm(),
 }, (tabela) => [
   check('usuarios_grana_nao_negativa', sql`${tabela.grana} >= 0`),

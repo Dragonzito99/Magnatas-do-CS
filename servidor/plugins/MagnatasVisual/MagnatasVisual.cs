@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -31,11 +32,16 @@ public sealed class Visual
 
     [JsonPropertyName("aviso")]
     public bool Aviso { get; init; }
+
+    /// <summary>Personagem feito só para essa conta (caminho do .vmdl).</summary>
+    [JsonPropertyName("boneco")]
+    public string? Boneco { get; init; }
 }
 
 /// <summary>
 /// A Magnata Shop no jogo: cor do nome e etiqueta no chat, e o aviso quando o jogador entra. Instalado no competitivo;
-/// a Diversão copia os addons do competitivo a cada início, então vale nos dois. Nunca mexe em arma, skin ou inventário.
+/// a Diversão copia os addons do competitivo a cada início, então vale nos dois. Nunca mexe em arma, skin ou inventário;
+/// o único boneco que troca é o personagem próprio de uma conta, da lista fechada abaixo.
 /// </summary>
 public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
 {
@@ -58,7 +64,39 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
         ["LightBlue"] = ChatColors.LightBlue,
     };
 
+    // Personagens feitos para uma conta só (campo boneco no site). Cada versão vai numa pasta nova do pacote dos
+    // personagens, um item da Oficina que todo servidor manda baixar (mm_extra_addons). Caminho que não estiver aqui não
+    // vira modelo. Gestos: o modelo de cena com as animações extras do personagem (ver ferramentas/mutante).
+    private sealed record Boneco(string Pacote, string? Gestos);
+    private const string PacoteDosPersonagens = "3837571705";
+    private static readonly Dictionary<string, Boneco> Bonecos = new()
+    {
+        ["models/magnatas/marfioso_v1/mutante.vmdl"] = new(PacoteDosPersonagens, null),
+        ["models/magnatas/adm_v1/mutante.vmdl"] = new(PacoteDosPersonagens, "models/magnatas/adm_v1/gestos/gestos.vmdl"),
+    };
+    // Quanto dura cada gesto (a flexão repete três vezes).
+    private static readonly Dictionary<string, float> SegundosDosGestos = new()
+    {
+        ["danca"] = 8.2f,
+        ["flexao"] = 4.5f,
+        ["mortal"] = 4.1f,
+    };
+
+    /// <summary>Um gesto tocando: o modelo de cena e o que o corpo e a arma tinham antes de sumir.</summary>
+    private sealed class GestoEmAndamento
+    {
+        public required CDynamicProp Cena { get; init; }
+        public required CCSPlayerPawn Corpo { get; init; }
+        public required Color Cor { get; init; }
+        public required RenderMode_t ModoDeDesenho { get; init; }
+        public CBasePlayerWeapon? Arma { get; init; }
+        public Color CorDaArma { get; init; }
+        public RenderMode_t ModoDaArma { get; init; }
+    }
+
     // Lidos e escritos só na linha principal do servidor.
+    private readonly Dictionary<string, bool> bonecosNoServidor = new();
+    private readonly Dictionary<int, GestoEmAndamento> gestos = new();
     private readonly Dictionary<ulong, Visual> visuais = new();
     private readonly HashSet<ulong> avisados = new();
 
@@ -76,6 +114,149 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
         RegisterEventHandler<EventPlayerConnectFull>(AoEntrar);
         RegisterEventHandler<EventRoundStart>(AoComecarRodada);
         RegisterEventHandler<EventPlayerDisconnect>(AoSair);
+        RegisterEventHandler<EventPlayerSpawn>(AoNascer);
+        RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
+        {
+            foreach (var (modelo, boneco) in Bonecos)
+            {
+                manifesto.AddResource(modelo);
+                if (boneco.Gestos != null) manifesto.AddResource(boneco.Gestos);
+            }
+        });
+        // Comandos de console: dá para pôr numa tecla (bind 7 css_danca), ou escrever !danca no chat.
+        AddCommand("css_danca", "Dança (boneco próprio)", (jogador, _) => FazerGesto(jogador, "danca"));
+        AddCommand("css_flexao", "Flexão (boneco próprio)", (jogador, _) => FazerGesto(jogador, "flexao"));
+        AddCommand("css_mortal", "Salto mortal (boneco próprio)", (jogador, _) => FazerGesto(jogador, "mortal"));
+        RegisterEventHandler<EventPlayerHurt>((evento, _) => PararGestoDe(evento.Userid, devolverCorpo: true));
+        RegisterEventHandler<EventPlayerDeath>((evento, _) => PararGestoDe(evento.Userid, devolverCorpo: false));
+        RegisterEventHandler<EventRoundPrestart>((_, _) =>
+        {
+            foreach (var vaga in gestos.Keys.ToList()) EncerrarGesto(vaga, devolverCorpo: true);
+            return HookResult.Continue;
+        });
+    }
+
+    private HookResult AoNascer(EventPlayerSpawn evento, GameEventInfo informacao)
+    {
+        var jogador = evento.Userid;
+        // No quadro seguinte o corpo já existe; a Mutação veste o zumbi só 0,1 s depois, e fica por cima.
+        if (jogador is { IsValid: true, IsBot: false } && jogador.SteamID > 0) Server.NextFrame(() => VestirBoneco(jogador));
+        return HookResult.Continue;
+    }
+
+    /// <summary>O boneco próprio da conta, se ela tem um da lista e o pacote dele já está neste servidor.</summary>
+    private Boneco? BonecoNoServidor(CCSPlayerController jogador, Visual visual)
+    {
+        if (visual.Boneco == null || !Bonecos.TryGetValue(visual.Boneco, out var boneco)) return null;
+        if (!bonecosNoServidor.TryGetValue(visual.Boneco, out var noServidor))
+        {
+            noServidor = NoPacote(boneco.Pacote, Path.GetDirectoryName(visual.Boneco)!.Replace('\\', '/'));
+            bonecosNoServidor[visual.Boneco] = noServidor;
+            Console.WriteLine($"[Magnatas] Boneco {visual.Boneco} no servidor: {(noServidor ? "sim" : "não")}.");
+        }
+        return noServidor ? boneco : null;
+    }
+
+    /// <summary>Veste o personagem próprio da conta, se ela tem um e o pacote dele já está neste servidor.</summary>
+    private void VestirBoneco(CCSPlayerController jogador)
+    {
+        if (jogador is not { IsValid: true, PawnIsAlive: true }) return;
+        if (!visuais.TryGetValue(jogador.SteamID, out var visual) || visual.Boneco == null) return;
+        if (!Bonecos.TryGetValue(visual.Boneco, out _)) return;
+        if (BonecoNoServidor(jogador, visual) != null) jogador.PlayerPawn.Value?.SetModel(visual.Boneco);
+    }
+
+    /// <summary>
+    /// O corpo some e para, e no lugar dele o modelo de cena toca o gesto. Os outros veem; quem faz continua em
+    /// primeira pessoa. Acaba sozinho, ou antes se tomar dano, morrer ou a rodada recomeçar.
+    /// </summary>
+    private void FazerGesto(CCSPlayerController? jogador, string gesto)
+    {
+        if (jogador is not { IsValid: true, PawnIsAlive: true } || gestos.ContainsKey(jogador.Slot)) return;
+        if (!visuais.TryGetValue(jogador.SteamID, out var visual)) return;
+        var boneco = BonecoNoServidor(jogador, visual);
+        if (boneco == null || boneco.Gestos == null) return;
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo is not { IsValid: true } || corpo.AbsOrigin == null || corpo.AbsRotation == null) return;
+
+        var cena = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic");
+        if (cena == null) return;
+        // Tudo vai na criação, como a queda do mutante: trocar o modelo depois de nascer dava erro no servidor.
+        var valores = new CEntityKeyValues();
+        valores.SetString("model", boneco.Gestos);
+        valores.SetVector("origin", new Vector(corpo.AbsOrigin.X, corpo.AbsOrigin.Y, corpo.AbsOrigin.Z));
+        valores.SetAngle("angles", new QAngle(0, corpo.AbsRotation.Y, 0));
+        valores.SetString("DefaultAnim", gesto);
+        valores.SetInt("solid", 0);
+        cena.DispatchSpawn(valores);
+
+        var arma = corpo.WeaponServices?.ActiveWeapon.Value;
+        var atual = new GestoEmAndamento
+        {
+            Cena = cena,
+            Corpo = corpo,
+            Cor = corpo.Render,
+            ModoDeDesenho = corpo.RenderMode,
+            Arma = arma,
+            CorDaArma = arma?.Render ?? Color.White,
+            ModoDaArma = arma?.RenderMode ?? RenderMode_t.kRenderNormal,
+        };
+        gestos[jogador.Slot] = atual;
+        Desenhar(corpo, RenderMode_t.kRenderTransAlpha, Color.FromArgb(0, 255, 255, 255));
+        if (arma != null) Desenhar(arma, RenderMode_t.kRenderTransAlpha, Color.FromArgb(0, 255, 255, 255));
+        corpo.MoveType = MoveType_t.MOVETYPE_NONE;
+        corpo.ActualMoveType = MoveType_t.MOVETYPE_NONE;
+        Utilities.SetStateChanged(corpo, "CBaseEntity", "m_MoveType");
+
+        var vaga = jogador.Slot;
+        AddTimer(SegundosDosGestos[gesto], () =>
+        {
+            if (gestos.TryGetValue(vaga, out var ainda) && ainda == atual) EncerrarGesto(vaga, devolverCorpo: true);
+        });
+    }
+
+    private HookResult PararGestoDe(CCSPlayerController? jogador, bool devolverCorpo)
+    {
+        if (jogador is { IsValid: true }) EncerrarGesto(jogador.Slot, devolverCorpo);
+        return HookResult.Continue;
+    }
+
+    /// <summary>Tira o modelo de cena e devolve o corpo como estava. Quem morreu fica como a morte deixou.</summary>
+    private void EncerrarGesto(int vaga, bool devolverCorpo)
+    {
+        if (!gestos.Remove(vaga, out var gesto)) return;
+        if (gesto.Cena.IsValid) gesto.Cena.Remove();
+        if (!devolverCorpo || !gesto.Corpo.IsValid) return;
+        Desenhar(gesto.Corpo, gesto.ModoDeDesenho, gesto.Cor);
+        if (gesto.Arma is { IsValid: true }) Desenhar(gesto.Arma, gesto.ModoDaArma, gesto.CorDaArma);
+        gesto.Corpo.MoveType = MoveType_t.MOVETYPE_WALK;
+        gesto.Corpo.ActualMoveType = MoveType_t.MOVETYPE_WALK;
+        Utilities.SetStateChanged(gesto.Corpo, "CBaseEntity", "m_MoveType");
+    }
+
+    private static void Desenhar(CBaseModelEntity entidade, RenderMode_t modo, Color cor)
+    {
+        entidade.RenderMode = modo;
+        entidade.Render = cor;
+        Utilities.SetStateChanged(entidade, "CBaseModelEntity", "m_nRenderMode");
+        Utilities.SetStateChanged(entidade, "CBaseModelEntity", "m_clrRender");
+    }
+
+    /// <summary>O pacote da Oficina chega ao servidor ao ligar; a lista de arquivos dele diz se o boneco veio.</summary>
+    private static bool NoPacote(string pacote, string caminho)
+    {
+        foreach (var raiz in new[] { Server.GameDirectory, Path.GetDirectoryName(Server.GameDirectory) ?? "" })
+        {
+            var lista = Path.Combine(raiz, "bin", "linuxsteamrt64", "steamapps", "workshop", "content", "730", pacote, $"{pacote}_dir.vpk");
+            try
+            {
+                if (File.Exists(lista) && System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(lista)).Contains(caminho)) return true;
+            }
+            catch (Exception erro) when (erro is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+        return false;
     }
 
     private static IEnumerable<CCSPlayerController> Pessoas() =>
@@ -98,6 +279,7 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
     private HookResult AoSair(EventPlayerDisconnect evento, GameEventInfo informacao)
     {
         var jogador = evento.Userid;
+        if (jogador is { IsValid: true }) EncerrarGesto(jogador.Slot, devolverCorpo: false);
         if (jogador is { IsValid: true } && jogador.SteamID > 0)
         {
             avisados.Remove(jogador.SteamID);
@@ -140,6 +322,8 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
         if (!avisar) return;
         foreach (var jogador in Pessoas().Where(pessoa => contas.Contains(pessoa.SteamID)))
         {
+            // Quem entra já vivo (aquecimento) nasceu antes de o site responder.
+            VestirBoneco(jogador);
             if (!visuais.TryGetValue(jogador.SteamID, out var visual) || !visual.Aviso || !avisados.Add(jogador.SteamID)) continue;
             Server.PrintToChatAll($" {ChatColors.Gold}★ {CorDoNome(visual)}{jogador.PlayerName}{ChatColors.Gold} chegou");
         }

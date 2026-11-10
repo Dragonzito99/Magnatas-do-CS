@@ -109,6 +109,12 @@ public partial class ModoDeDiversao
     // Azul enquanto o escudo vale, para os humanos saberem que não adianta atirar.
     private static readonly Color CorDoEscudo = Color.FromArgb(255, 80, 160, 255);
     private bool? blindadoNoServidor;
+    // Quem pega a super Negev vira o herói (dono, 10/11/2026). Vem no pacote dos personagens, o mesmo dos bonecos
+    // próprios do MagnatasVisual; sem ele, o portador fica dourado como antes.
+    private const string PacoteDosPersonagens = "3837571705";
+    private const string PastaDoHeroi = "models/magnatas/heroi_v1";
+    private const string ModeloDoHeroi = $"{PastaDoHeroi}/mutante.vmdl";
+    private bool? heroiNoServidor;
     // O mutante que cada conta comprou, perguntado ao site a cada rodada. Os de teste vão pela vaga (bots não têm conta).
     private readonly Dictionary<ulong, string> skinsPorConta = new();
     private readonly Dictionary<int, string> skinsDeTeste = new();
@@ -309,8 +315,22 @@ public partial class ModoDeDiversao
             jogador.GiveNamedItem(ArmaEspecial);
             jogador.ExecuteClientCommand("slot1");
         });
-        corpo.Render = CorDoPortador;
-        Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
+        // O herói já se destaca pelo boneco: sem o tom dourado por cima. A próxima rodada devolve o boneco de cada um.
+        if (HeroiNoServidor()) corpo.SetModel(ModeloDoHeroi);
+        else
+        {
+            corpo.Render = CorDoPortador;
+            Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
+        }
+    }
+
+    private bool HeroiNoServidor()
+    {
+        if (!UsarBonecosDoPacote || !PacoteDosPersonagens.All(char.IsDigit)) return false;
+        if (heroiNoServidor is bool sabido) return sabido;
+        heroiNoServidor = NoPacote(PacoteDosPersonagens, PastaDoHeroi);
+        Console.WriteLine($"[Magnatas] Herói da super Negev no servidor: {(heroiNoServidor.Value ? "sim" : "não, o portador fica dourado")}.");
+        return heroiNoServidor.Value;
     }
 
     /// <summary>A cada tiro do portador o pente volta a ficar cheio: a super Negev nunca recarrega.</summary>
@@ -451,6 +471,7 @@ public partial class ModoDeDiversao
             if (!UsarBonecosDoPacote) return;
             foreach (var nivel in mutanteDaRodada.Niveis) manifesto.AddResource(ModeloDoNivel(nivel.Nivel));
             foreach (var queda in QuedaDoNivel) if (queda != null) manifesto.AddResource(queda);
+            if (HeroiNoServidor()) manifesto.AddResource(ModeloDoHeroi);
             if (!BlindadoNoServidor()) return;
             foreach (var nivel in NiveisComBonecoDoBlindado)
             {
@@ -464,6 +485,7 @@ public partial class ModoDeDiversao
             zumbiNoServidor = null;
             morteNoServidor = null;
             blindadoNoServidor = null;
+            heroiNoServidor = null;
             // Ao ligar, o servidor abre o mapa da Oficina por último: se o teste já tinha pedido a Dust 2, ela era trocada.
             if (testeComBots && mapa != MapaDoTeste) AddTimer(1f, () => Server.ExecuteCommand($"changelevel {MapaDoTeste}"));
         });

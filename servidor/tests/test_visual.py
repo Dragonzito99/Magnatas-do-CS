@@ -88,3 +88,56 @@ def test_compilar_instala_o_plugin_e_grava_a_config_protegida():
     assert "configs/plugins/MagnatasVisual" in COMPILAR
     assert "chmod 600" in COMPILAR[COMPILAR.index("configs/plugins/MagnatasVisual"):]
     assert '"$SITE_URL"' in COMPILAR and '"$SERVIDOR_TOKEN"' in COMPILAR
+
+
+BONECO_DO_MARFIOSO = "models/magnatas/marfioso_v1/mutante.vmdl"
+
+
+def test_boneco_proprio_so_de_uma_lista_fechada_e_carregado_com_o_mapa():
+    texto = codigo()
+    assert f'["{BONECO_DO_MARFIOSO}"] = new(PacoteDosPersonagens, null)' in texto
+    assert '["models/magnatas/adm_v1/mutante.vmdl"] = new(PacoteDosPersonagens, "models/magnatas/adm_v1/gestos/gestos.vmdl")' in texto
+    assert "OnServerPrecacheResources" in texto
+    vestir = metodo("private void VestirBoneco(")
+    # Caminho que o site mandar e não estiver na lista não vira modelo (um modelo desconhecido derruba o jogo de quem vê).
+    assert "Bonecos.TryGetValue(visual.Boneco" in vestir
+    assert "BonecoNoServidor(" in vestir
+    assert "NoPacote(" in metodo("private Boneco? BonecoNoServidor(")
+    assert ".SetModel(visual.Boneco)" in vestir
+
+
+def test_veste_o_boneco_ao_nascer_e_logo_depois_de_entrar():
+    assert "EventPlayerSpawn" in codigo()
+    nascer = metodo("private HookResult AoNascer(")
+    # Antes da Mutação (0,1 s depois de nascer), para o mutante que renasce ficar com o zumbi.
+    assert "Server.NextFrame(() => VestirBoneco(" in nascer
+    guardar = metodo("private void Guardar(")
+    assert "VestirBoneco(" in guardar
+    # A busca de cada rodada não troca o boneco de ninguém (o mutante ficaria com o boneco próprio).
+    assert guardar.index("if (!avisar) return;") < guardar.index("VestirBoneco(")
+
+
+def test_gestos_do_boneco_proprio_por_comando_que_da_para_por_numa_tecla():
+    texto = codigo()
+    for gesto in ["danca", "flexao", "mortal"]:
+        assert f'AddCommand("css_{gesto}"' in texto
+    fazer = metodo("private void FazerGesto(")
+    # Só quem tem boneco com gestos, vivo, e um gesto por vez.
+    assert "boneco.Gestos == null" in fazer
+    assert "PawnIsAlive" in fazer
+    assert "gestos.ContainsKey(jogador.Slot)" in fazer
+    # O corpo some e para; no lugar, o modelo de cena toca o gesto, criado já com tudo (como a queda do mutante).
+    assert 'valores.SetString("DefaultAnim", gesto)' in fazer
+    assert "MoveType_t.MOVETYPE_NONE" in fazer
+    assert "AddTimer(" in fazer
+
+
+def test_o_gesto_acaba_ao_tomar_dano_morrer_ou_trocar_de_rodada_e_devolve_o_que_tinha():
+    texto = codigo()
+    for evento in ["EventPlayerHurt", "EventPlayerDeath", "EventRoundPrestart"]:
+        assert evento in texto
+    encerrar = metodo("private void EncerrarGesto(")
+    assert "gesto.Cena.Remove()" in encerrar
+    # Volta a cor e o modo de desenho de antes (a Mutação pinta mutante e portador).
+    assert "gesto.Cor" in encerrar and "gesto.ModoDeDesenho" in encerrar
+    assert "MoveType_t.MOVETYPE_WALK" in encerrar

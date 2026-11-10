@@ -202,6 +202,15 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
   expect(await visuaisDe(bd, [conta.steamid64], AGORA)).toEqual({ [conta.steamid64]: { mutante: 'blindado' } });
 });
 
+test('o boneco próprio vai junto com os itens, só da conta dele e só enquanto ativa', async () => {
+  const BONECO = 'models/magnatas/marfioso_v1/mutante.vmdl';
+  const dono = await criarUsuario(bd, { estado: 'ativo', boneco: BONECO });
+  const outra = await contaCom(1000);
+  expect(await visuaisDe(bd, [dono.steamid64, outra.steamid64], AGORA)).toEqual({ [dono.steamid64]: { boneco: BONECO } });
+  await bd.update(usuarios).set({ estado: 'banido' }).where(eq(usuarios.id, dono.id));
+  expect(await visuaisDe(bd, [dono.steamid64], AGORA)).toEqual({});
+});
+
 async function contaComMagcoin(magcoin: number): Promise<Usuario> {
   const conta = await criarUsuario(bd, { estado: 'ativo' });
   await bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'pagamento', quantidade: magcoin, referencia: 'mp' }));

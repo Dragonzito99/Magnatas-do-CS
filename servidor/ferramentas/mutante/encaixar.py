@@ -101,7 +101,9 @@ bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
 # 4. Troca os nomes dos grupos de peso do Mixamo pelos ossos do CS2.
 MAPA = {'Hips': 'pelvis', 'Spine': 'spine_1', 'Spine1': 'spine_2', 'Spine2': 'spine_3', 'Neck': 'neck_0', 'Head': 'head_0',
-        'HeadTop_End': 'head_0', 'Bone_016': 'head_0', 'headfront': 'head_0'}
+        'HeadTop_End': 'head_0', 'Bone_016': 'head_0', 'headfront': 'head_0',
+        # Ossos extras do Meshy presos às mãos (o que o personagem segura): Purple Majesty, do Ministro Marfioso.
+        'Bone_035': 'hand_L', 'Bone_036': 'hand_R'}
 for lado, l in (('Left', 'L'), ('Right', 'R')):
     MAPA.update({f'{lado}Shoulder': f'clavicle_{l}', f'{lado}Arm': f'arm_upper_{l}', f'{lado}ForeArm': f'arm_lower_{l}',
                  f'{lado}Hand': f'hand_{l}', f'{lado}UpLeg': f'leg_upper_{l}', f'{lado}Leg': f'leg_lower_{l}',

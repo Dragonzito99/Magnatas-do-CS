@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd/esquema';
 import { exigirAtivo } from './disponibilidade';
@@ -253,7 +253,7 @@ export async function bauDe(bd: Bd, usuarioId: string, agora: Date = new Date())
   return bau.sort((a, b) => Number(a.vencido) - Number(b.vencido) || ordem(a) - ordem(b));
 }
 
-export type Visual = { cor?: string; etiqueta?: string; aviso?: boolean; moldura?: string; mutante?: string };
+export type Visual = { cor?: string; etiqueta?: string; aviso?: boolean; moldura?: string; mutante?: string; boneco?: string };
 
 /** O que cada conta ativa está usando e ainda vale, pronto para o servidor e para as telas. */
 export async function visuaisDe(bd: Bd, steamids: string[], agora: Date = new Date()): Promise<Record<string, Visual>> {
@@ -274,6 +274,11 @@ export async function visuaisDe(bd: Bd, steamids: string[], agora: Date = new Da
     if (item.tipo === 'moldura') visual.moldura = item.valor;
     if (item.tipo === 'mutante') visual.mutante = item.valor;
   }
+  const bonecos = await bd
+    .select({ steamid64: usuarios.steamid64, boneco: usuarios.boneco })
+    .from(usuarios)
+    .where(and(inArray(usuarios.steamid64, steamids), eq(usuarios.estado, 'ativo'), isNotNull(usuarios.boneco)));
+  for (const { steamid64, boneco } of bonecos) if (boneco) (visuais[steamid64] ??= {}).boneco = boneco;
   return visuais;
 }
 
