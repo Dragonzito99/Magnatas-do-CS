@@ -100,7 +100,7 @@ public partial class ModoDeDiversao
     // Mutante da Magnata Shop: quem compra e põe em uso no baú vira o Cyber Hulk, e o G liga um escudo em vez da corrida
     // (dono, 10/11/2026). Vem num pacote da Oficina só dele; vazio enquanto o item não existe, e aí o Blindado fica
     // desligado e quem comprou vira o mutante comum.
-    private const string PacoteDoBlindado = "";
+    private const string PacoteDoBlindado = "3837109609";
     private const string PastaDoBlindado = "models/magnatas/blindado_v1";
     // Um boneco por nível: Cyber Hulk, Toxic Warlord e Venomclaw Titan. Se faltar um, vale o do nível mais alto que existir.
     private static readonly int[] NiveisComBonecoDoBlindado = { 1, 2, 3 };

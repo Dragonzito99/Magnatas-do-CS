@@ -1,3 +1,4 @@
+import re
 import pathlib
 
 import pytest
@@ -1731,3 +1732,8 @@ def test_o_g_do_blindado_liga_o_escudo_desde_o_nivel_1_com_recarga():
 def test_o_escudo_bloqueia_o_dano_no_mutante():
     dano = metodo_da_mutacao("private HookResult AoReceberDano(")
     assert dano.index("EscudoLigado(") < dano.index("corpo.TeamNum != (byte)CsTeam.CounterTerrorist")
+
+
+def test_a_mutacao_baixa_o_pacote_do_blindado_que_o_plugin_usa():
+    pacote = re.search(r'PacoteDoBlindado = "(\d+)"', CODIGO_DA_MUTACAO).group(1)
+    assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")
