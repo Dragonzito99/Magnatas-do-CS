@@ -141,3 +141,10 @@ def test_o_gesto_acaba_ao_tomar_dano_morrer_ou_trocar_de_rodada_e_devolve_o_que_
     # Volta a cor e o modo de desenho de antes (a Mutação pinta mutante e portador).
     assert "gesto.Cor" in encerrar and "gesto.ModoDeDesenho" in encerrar
     assert "MoveType_t.MOVETYPE_WALK" in encerrar
+
+
+def test_confere_de_novo_a_cada_mapa_se_o_pacote_chegou():
+    # O pacote novo chega numa troca de mapa: sem limpar, o "não chegou" da primeira conferência ficava para sempre.
+    texto = codigo()
+    assert "Listeners.OnMapStart" in texto
+    assert "bonecosNoServidor.Clear()" in texto

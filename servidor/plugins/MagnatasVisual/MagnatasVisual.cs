@@ -123,6 +123,8 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
                 if (boneco.Gestos != null) manifesto.AddResource(boneco.Gestos);
             }
         });
+        // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
+        RegisterListener<Listeners.OnMapStart>(_ => bonecosNoServidor.Clear());
         // Comandos de console: dá para pôr numa tecla (bind 7 css_danca), ou escrever !danca no chat.
         AddCommand("css_danca", "Dança (boneco próprio)", (jogador, _) => FazerGesto(jogador, "danca"));
         AddCommand("css_flexao", "Flexão (boneco próprio)", (jogador, _) => FazerGesto(jogador, "flexao"));
