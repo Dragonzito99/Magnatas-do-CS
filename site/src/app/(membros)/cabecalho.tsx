@@ -15,6 +15,7 @@ export function Cabecalho({
   casosDaEquipe,
   testes = false,
   grana = null,
+  magcoin = 0,
 }: {
   usuario: UsuarioPublico;
   patente: Patente;
@@ -26,6 +27,7 @@ export function Cabecalho({
   testes?: boolean;
   /** O saldo de Grana; vazio enquanto a loja está fechada para esta conta. */
   grana?: number | null;
+  magcoin?: number;
 }) {
   return (
     <header className="cabecalho">
@@ -49,6 +51,13 @@ export function Cabecalho({
                 <span aria-hidden="true">$</span>
                 <b>{grana.toLocaleString('pt-BR')}</b>
                 <small>Grana</small>
+              </Link>
+            )}
+            {grana !== null && (
+              <Link href="/apoio" className="saldo-de-grana saldo-de-magcoin" title="Suas MagCoins. Abre o apoio.">
+                <span aria-hidden="true">M</span>
+                <b>{magcoin.toLocaleString('pt-BR')}</b>
+                <small>MagCoin</small>
               </Link>
             )}
             {sino}

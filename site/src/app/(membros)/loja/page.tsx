@@ -3,16 +3,18 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
-import { bauDe, CATALOGO, DIAS_A_VENDA, itemDoCatalogo, lojaAberta, NOME_DO_TIPO, PRECOS, type TipoDeItem } from '@/dominio/loja';
+import { bauDe, DIAS_A_VENDA, itemDoCatalogo, ITENS_A_VENDA, lojaAberta, NOME_DO_TIPO, PRECOS, PRECOS_MAGCOIN, type TipoDeItem } from '@/dominio/loja';
 import { BotaoConfirmar } from '../botao-confirmar';
 import { AbasDaLoja } from './abas-da-loja';
-import { comprar } from './acoes';
+import { comprar, comprarComMagcoin } from './acoes';
 import { PreviaDoItem, PreviaGrande } from './previa-do-item';
 
 const ERROS: Record<string, string> = {
   saldo: 'Grana insuficiente para essa compra.',
   item: 'Esse item não está à venda desse jeito.',
   conta: 'Sua conta não pode comprar agora.',
+  magcoin: 'MagCoins insuficientes. Compre um pacote em Apoie o clube.',
+  'ja-seu': 'Esse item já é seu para sempre.',
 };
 
 const EXPLICACAO: Record<TipoDeItem, string> = {
@@ -45,8 +47,10 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
   const aba = ABAS.find((opcao) => opcao.valor === pedida)?.valor ?? 'todos';
   const bau = await bauDe(obterBd(), usuario.id);
   const tenho = new Map(bau.filter((posse) => !posse.vencido).map((posse) => [posse.item.id, posse]));
-  const itens = CATALOGO.filter((item) => aba === 'todos' || item.tipo === aba);
-  const escolhido = (pedido ? itemDoCatalogo(pedido) : undefined) ?? itens[0];
+  const itens = ITENS_A_VENDA().filter((item) => aba === 'todos' || item.tipo === aba);
+  const pedidoAVenda = pedido ? itemDoCatalogo(pedido) : undefined;
+  const escolhido = (pedidoAVenda?.venda === false ? undefined : pedidoAVenda) ?? itens[0];
+  const precoParaSempre = PRECOS_MAGCOIN[escolhido.tipo];
   const posse = tenho.get(escolhido.id);
   const endereco = (item: string) => `/loja?${new URLSearchParams({ ...(aba !== 'todos' ? { aba } : {}), item }).toString()}`;
 
@@ -62,11 +66,13 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
               <span>Grana</span>
               <b>{usuario.grana.toLocaleString('pt-BR')}</b>
             </div>
-            <div className="saldo-da-loja apagado">
+            <div className="saldo-da-loja">
               <span>MagCoin</span>
-              <small>em breve</small>
+              <b>{usuario.magcoin.toLocaleString('pt-BR')}</b>
             </div>
-            <p className="apoio">Ganhe jogando: 1 Grana a cada 10 XP.</p>
+            <p className="apoio">
+              Grana: ganhe jogando (1 a cada 10 XP), vale por dias. MagCoin: <Link href="/apoio">compre aqui</Link>, vale para sempre.
+            </p>
           </section>
 
           <section className="caixa-da-loja previa-da-loja" aria-live="polite">
@@ -117,6 +123,24 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
                 );
               })}
             </form>
+            {posse?.diasRestantes !== null && (
+              <form action={comprarComMagcoin} className="para-sempre">
+                <input type="hidden" name="itemId" value={escolhido.id} />
+                <input type="hidden" name="codigo" value={randomUUID()} />
+                {precoParaSempre > usuario.magcoin ? (
+                  <Link href="/apoio" className="preco-loja para-sempre-botao sem-saldo">
+                    Para sempre: <b>{precoParaSempre} MagCoins</b> (comprar MagCoin)
+                  </Link>
+                ) : (
+                  <BotaoConfirmar
+                    className="preco-loja para-sempre-botao"
+                    mensagem={`Comprar ${NOME_DO_TIPO[escolhido.tipo]} ${escolhido.nome} para sempre, por ${precoParaSempre} MagCoins?`}
+                  >
+                    Para sempre: <b>{precoParaSempre} MagCoins</b>
+                  </BotaoConfirmar>
+                )}
+              </form>
+            )}
           </section>
         </aside>
 

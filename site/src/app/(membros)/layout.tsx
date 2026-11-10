@@ -38,6 +38,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         casosDaEquipe={pode(usuario, 'ver_equipe') ? casosDe(notificacoes) : null}
         testes={pode(usuario, 'testar_competitivo') || pode(usuario, 'testar_mutacao')}
         grana={lojaAberta(usuario) ? usuario.grana : null}
+        magcoin={usuario.magcoin}
       />
       <main className="conteudo largura">
         <AvisoDePartida />

@@ -1,15 +1,17 @@
 import Link from 'next/link';
 
-/** As duas abas da Magnata Shop, iguais ao submenu: a loja e o que a pessoa já comprou. O Baú fica no menu ao lado. */
-export function AbasDaLoja({ atual }: { atual: 'loja' | 'compras' }) {
+/** As abas da Magnata Shop, iguais ao submenu: a loja, o que a pessoa já comprou e o apoio. O Baú fica no menu ao lado. */
+export function AbasDaLoja({ atual }: { atual: 'loja' | 'compras' | 'apoio' }) {
+  const aba = (destino: 'loja' | 'compras' | 'apoio', href: string, nome: string) => (
+    <Link href={href} className="aba-da-loja" aria-current={atual === destino ? 'page' : undefined}>
+      {nome}
+    </Link>
+  );
   return (
     <nav className="abas-da-loja" aria-label="Magnata Shop">
-      <Link href="/loja" className="aba-da-loja" aria-current={atual === 'loja' ? 'page' : undefined}>
-        Loja
-      </Link>
-      <Link href="/compras" className="aba-da-loja" aria-current={atual === 'compras' ? 'page' : undefined}>
-        Minhas compras
-      </Link>
+      {aba('loja', '/loja', 'Loja')}
+      {aba('compras', '/compras', 'Minhas compras')}
+      {aba('apoio', '/apoio', 'Apoie o clube')}
     </nav>
   );
 }

@@ -5761,3 +5761,146 @@ a.cartao-destaque:hover {
 .palco-da-previa:has(.evolucoes-do-mutante) {
   background: #05030a;
 }
+
+/* Apoie o clube */
+.saldo-de-magcoin span {
+  color: #7dd3fc;
+}
+
+.planos-de-apoio {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.plano-de-apoio {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #1c1230, #110a1f);
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+}
+
+.plano-de-apoio.premium {
+  box-shadow: inset 0 0 0 2px var(--ouro), 0 0 18px rgba(245, 179, 1, 0.25);
+}
+
+.plano-de-apoio input {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--linha-forte);
+  background: var(--painel-2);
+  color: var(--tinta);
+}
+
+.valor-do-plano {
+  font: italic 700 22px/1.1 var(--fonte-titulo), sans-serif;
+  color: var(--ouro);
+}
+
+.preco-do-plano {
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.vantagens {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.minha-assinatura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.endereco-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.endereco-premium input {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--linha-forte);
+  background: var(--painel-2);
+  color: var(--tinta);
+}
+
+.lista-de-envios {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--tinta-2);
+}
+
+.perguntas-de-apoio {
+  display: grid;
+  gap: 8px;
+}
+
+.perguntas-de-apoio summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.para-sempre {
+  display: grid;
+}
+
+.para-sempre-botao {
+  display: block;
+  padding: 9px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.envio-pendente {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.envio-pendente address {
+  font-style: normal;
+  color: var(--tinta-2);
+}
+
+.avatar.moldura-ouro {
+  outline: 3px solid #ffd54a;
+  box-shadow: 0 0 0 5px rgba(245, 179, 1, 0.35), 0 0 18px rgba(255, 213, 74, 0.8);
+}
+
+.selo.selo-de-membro {
+  font-weight: 700;
+}
+
+.selo-de-membro.bronze {
+  color: #e0a070;
+  box-shadow: inset 0 0 0 1px #c47a3f;
+}
+
+.selo-de-membro.prata {
+  color: #e2e8f0;
+  box-shadow: inset 0 0 0 1px #a0aec0;
+}
+
+.selo-de-membro.ouro,
+.selo-de-membro.premium {
+  color: var(--ouro);
+  box-shadow: inset 0 0 0 1px var(--ouro);
+}
+
+.botao:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}

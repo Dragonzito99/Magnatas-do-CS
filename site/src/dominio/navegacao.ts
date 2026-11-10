@@ -46,6 +46,7 @@ const MAGNATA_SHOP: ItemDoMenu = {
   filhos: [
     { nome: 'Loja', href: '/loja' },
     { nome: 'Minhas compras', href: '/compras' },
+    { nome: 'Apoie o clube', href: '/apoio' },
   ],
 };
 

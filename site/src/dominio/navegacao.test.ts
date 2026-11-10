@@ -22,6 +22,7 @@ test('com a loja aberta, Magnata Shop leva à loja e às compras, e o Baú fica 
   expect(loja?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
     ['Loja', '/loja'],
     ['Minhas compras', '/compras'],
+    ['Apoie o clube', '/apoio'],
   ]);
   expect(itens.map((candidato) => candidato.nome)).toEqual([...ITENS_DO_MENU.map((candidato) => candidato.nome), 'Baú']);
   expect(itens.at(-1)).toMatchObject({ nome: 'Baú', href: '/bau' });
