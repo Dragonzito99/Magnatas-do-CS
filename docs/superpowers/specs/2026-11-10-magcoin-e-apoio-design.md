@@ -85,7 +85,8 @@ O dono quer que a comunidade **apoie o clube** e ganhe algo em troca:
 
 ## Produtos em casa (Premium)
 
-- A cada **2 mensalidades pagas** do Premium, nasce um envio pendente para aquela conta.
+- O **primeiro envio** nasce assim que a primeira mensalidade do Premium é aprovada; depois, um a cada 2 mensalidades
+  (a 1ª, a 3ª, a 5ª...), decisão do dono. O primeiro mês serão acessórios impressos em 3D.
 - O assinante cadastra o **endereço** na página de apoio (nome de quem recebe, CEP, rua, número, complemento, bairro,
   cidade, UF, telefone para a transportadora). Só a própria pessoa e o Adm veem.
 - Painel ADM, parte **Envios**: os pendentes com endereço; o Adm marca "enviado" com o código de rastreio. O assinante
@@ -115,7 +116,7 @@ O dono quer que a comunidade **apoie o clube** e ganhe algo em troca:
 - Mensalidade aprovada estende `pago_ate`, credita as MagCoins do mês uma vez e (Premium) dá os itens de lançamento.
 - Vantagens somem depois de `pago_ate`.
 - Bônus de Grana certo por nível.
-- Envio nasce a cada 2 mensalidades do Premium; endereço só para a pessoa e o Adm; apagado depois de 90 dias.
+- Envio nasce na 1ª mensalidade do Premium e depois na 3ª, 5ª...; endereço só para a pessoa e o Adm; apagado depois de 90 dias.
 
 ## Ordem
 
@@ -128,7 +129,6 @@ O dono quer que a comunidade **apoie o clube** e ganhe algo em troca:
 ## Decisões minhas (o dono pode mudar)
 
 - 3 dias de folga depois do vencimento da mensalidade, para o cartão ter tempo de passar.
-- O envio nasce a cada 2 mensalidades pagas (e não no primeiro mês), para ninguém assinar um mês só para receber.
 - A etiqueta comprada tem prioridade sobre a `[APOIADOR]`.
 - Endereço apagado 90 dias depois do fim do Premium.
 - O pacote de MagCoin é pago uma vez (PIX ou cartão); as assinaturas são mensais no cartão, que é o que o Mercado Pago
