@@ -34,12 +34,18 @@ public partial class ModoDeDiversao
     private static readonly Color CorDoHumano = Color.FromArgb(255, 255, 255, 255);
     private const int VidaDoHumano = 100;
     private const float IntervaloDaVelocidade = 0.5f;
+    // Barra do poder do G na tela (dono, 10/11/2026): esvazia enquanto a corrida ou o escudo vale, enche na recarga.
+    private const float IntervaloDaBarra = 0.25f;
+    private const int BlocosDaBarra = 12;
+    private readonly HashSet<int> barrasDePoder = new();
     // A partir do nível 2, o mutante corre mais rápido por alguns segundos ao apertar G (o "largar arma" do jogo).
     private const int NivelDaCorrida = 2;
     private const float BonusDaCorrida = 0.5f;
     private const float SegundosDaCorrida = 3f;
     private const float SegundosDeRecargaDaCorrida = 12f;
     private const int SegundosDoAvisoDeMutante = 3;
+    // O aviso do que o mutante e o herói fazem tem mais linhas: fica mais tempo na tela.
+    private const int SegundosDoAvisoDoMutante = 6;
     private const float SegundosParaEspalhar = 15f;
     // O som da contagem começa antes e termina junto com o sorteio. Na tela, só os últimos 10 segundos.
     private const string SomDaContagem = "magnatas.contagem_mutacao";
@@ -303,6 +309,9 @@ public partial class ModoDeDiversao
         var nome = System.Net.WebUtility.HtmlEncode(sorteado.PlayerName);
         foreach (var pessoa in Pessoas())
         {
+            pessoa.PrintToChat($" [Magnatas] {sorteado.PlayerName} pegou a super Negev e virou o herói!");
+            // Na tela só para os outros humanos: o mutante recém-sorteado está lendo o que ele faz, e o herói, o dele.
+            if (pessoa.Team == CsTeam.Terrorist || pessoa.Slot == sorteado.Slot) continue;
             pessoa.PrintToCenterHtml($"<font color='#ffc828' class='fontSize-l'>{nome} pegou a super Negev!</font>", SegundosDoAvisoDeMutante);
         }
     }
@@ -326,20 +335,27 @@ public partial class ModoDeDiversao
                 var arma = item.Value;
                 if (arma != null && ArmasDoHumano.Contains(arma.DesignerName)) arma.Remove();
             }
+            // Como na infecção: o boneco troca junto com a saída das armas, e a arma nova vem depois. O herói já se
+            // destaca pelo boneco, sem o tom dourado por cima; a próxima rodada devolve o de cada um.
+            if (HeroiNoServidor()) corpo.SetModel(ModeloDoHeroi);
+            else
+            {
+                corpo.Render = CorDoPortador;
+                Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
+            }
             Server.NextFrame(() =>
             {
                 if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.CounterTerrorist } || jogador.Slot != portadorDaSuperArma) return;
-                var atual = jogador.PlayerPawn.Value;
-                if (atual == null) return;
                 jogador.GiveNamedItem(ArmaEspecial);
-                jogador.ExecuteClientCommand("slot1");
-                // O herói já se destaca pelo boneco: sem o tom dourado por cima. A próxima rodada devolve o de cada um.
-                if (HeroiNoServidor()) atual.SetModel(ModeloDoHeroi);
-                else
+                // A troca para a Negev espera ela chegar na mão; no mesmo quadro o herói ficava de faca.
+                AddTimer(EsperaParaTrocarDeArma, () =>
                 {
-                    atual.Render = CorDoPortador;
-                    Utilities.SetStateChanged(atual, "CBaseModelEntity", "m_clrRender");
-                }
+                    if (jogador is { IsValid: true, PawnIsAlive: true } && jogador.Slot == portadorDaSuperArma) jogador.ExecuteClientCommand("slot1");
+                });
+                jogador.PrintToCenterHtml(
+                    "<font color='#ffc828' class='fontSize-l'>Você é o HERÓI!</font><br><font color='#ffffff'>Super Negev: munição infinita e empurra os mutantes</font><br><font color='#f5b301'>Não deixe encostarem em você</font>",
+                    SegundosDoAvisoDoMutante);
+                jogador.PrintToChat(" [Magnatas] Você é o HERÓI: a super Negev não acaba a munição e empurra os mutantes para longe.");
             });
         });
     }
@@ -516,6 +532,7 @@ public partial class ModoDeDiversao
     private void LigarMutacao(bool hotReload)
     {
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
+        AddTimer(IntervaloDaBarra, MostrarBarrasDePoder, TimerFlags.REPEAT);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
@@ -605,8 +622,7 @@ public partial class ModoDeDiversao
         corridas.Remove(jogador.Slot);
         escudos.Remove(jogador.Slot);
         AplicarAtributosDoMutante(jogador);
-        jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Você virou mutante!</font>", SegundosDoAvisoDeMutante);
-        if (SkinDe(jogador) == "blindado") jogador.PrintToChat($" [Magnatas] Você é o Blindado: aperte G e fique {SegundosDoEscudo[0]:0} s sem levar dano.");
+        AvisarOQueOMutanteFaz(jogador);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
         // Encerrar a rodada no mesmo instante em que as armas do infectado saem, ainda dentro do golpe, derrubava o jogo
         // de quem estava no servidor ("OnPreserveEntity") na infecção do último humano. O fim vem logo depois.
@@ -699,7 +715,8 @@ public partial class ModoDeDiversao
             Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
             corpo.VelocityModifier = VelocidadeDe(mutante);
             MudarTamanho(corpo, novo.Tamanho);
-            if (ZumbiNoServidor()) corpo.SetModel(ModeloDe(mutante, novo.Nivel));
+            // O boneco do nível novo vem quando ele renascer (AplicarAtributosDoMutante): trocar com o mutante vivo e de
+            // faca na mão fechou o jogo dele ("CopyExistingEntity: missing client entity", 10/11/2026).
         }
         var nome = System.Net.WebUtility.HtmlEncode(mutante.PlayerName);
         foreach (var pessoa in Pessoas())
@@ -723,12 +740,33 @@ public partial class ModoDeDiversao
     /// O G do mutante a partir do nível 2 é a corrida, e não larga a faca. Para os humanos, o G continua largando a arma.
     /// O fim da corrida vem pelo ManterVelocidadeDosMutantes, que reaplica a velocidade a cada meio segundo.
     /// </summary>
+    /// <summary>
+    /// Na tela e no chat, o que o mutante faz. O G parecia não funcionar: a corrida só libera no nível 2 e nada avisava
+    /// (dono, 10/11/2026).
+    /// </summary>
+    private void AvisarOQueOMutanteFaz(CCSPlayerController jogador)
+    {
+        var blindado = SkinDe(jogador) == "blindado";
+        var titulo = blindado ? "Você é o BLINDADO!" : "Você virou MUTANTE!";
+        var g = blindado
+            ? $"G: escudo, {SegundosDoEscudo[0]:0} s sem levar dano"
+            : $"G: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
+        jogador.PrintToCenterHtml(
+            $"<font color='#6eff6e' class='fontSize-l'>{titulo}</font><br><font color='#ffffff'>Faca: acerte os humanos para infectar</font><br><font color='#f5b301'>{g}</font>",
+            SegundosDoAvisoDoMutante);
+        jogador.PrintToChat($" [Magnatas] {titulo} Faca: acerte os humanos para infectar. {g}.");
+    }
+
     private HookResult AoApertarG(CCSPlayerController? jogador, CommandInfo comando)
     {
         if (jogador == null || !EhMutanteDeVerdade(jogador)) return HookResult.Continue;
         // O Blindado troca a corrida pelo escudo, que já vale no nível 1.
         if (SkinDe(jogador) == "blindado") return LigarEscudo(jogador);
-        if (NivelDe(jogador).Nivel < NivelDaCorrida) return HookResult.Handled;
+        if (NivelDe(jogador).Nivel < NivelDaCorrida)
+        {
+            jogador.PrintToCenterHtml($"<font color='#f5b301'>A corrida libera no nível {NivelDaCorrida}: infecte um humano</font>", 2);
+            return HookResult.Handled;
+        }
         var agora = Server.CurrentTime;
         if (corridas.TryGetValue(jogador.Slot, out var corrida) && agora < corrida.Recarga)
         {
@@ -738,8 +776,49 @@ public partial class ModoDeDiversao
         corridas[jogador.Slot] = (agora + SegundosDaCorrida, agora + SegundosDeRecargaDaCorrida);
         var corpo = jogador.PlayerPawn.Value;
         if (corpo != null) corpo.VelocityModifier = VelocidadeDe(jogador);
-        jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Correndo!</font>", (int)SegundosDaCorrida);
+        barrasDePoder.Add(jogador.Slot);
         return HookResult.Handled;
+    }
+
+    /// <summary>A barra de cada mutante que usou o G: gastando, carregando e, no fim, "G pronto!".</summary>
+    private void MostrarBarrasDePoder()
+    {
+        var agora = Server.CurrentTime;
+        foreach (var vaga in barrasDePoder.ToList())
+        {
+            var jogador = Utilities.GetPlayerFromSlot(vaga);
+            var blindado = jogador != null && SkinDe(jogador) == "blindado";
+            (float Fim, float Recarga) poder;
+            if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }
+                || !(blindado ? escudos.TryGetValue(vaga, out poder) : corridas.TryGetValue(vaga, out poder)))
+            {
+                barrasDePoder.Remove(vaga);
+                continue;
+            }
+            var (fim, recarga) = poder;
+            var inicio = recarga - (blindado ? SegundosDeRecargaDoEscudo : SegundosDeRecargaDaCorrida);
+            if (agora < fim)
+            {
+                var nome = blindado ? "Escudo" : "Correndo";
+                var cor = blindado ? "#50a0ff" : "#6eff6e";
+                jogador.PrintToCenterHtml(BarraDePoder(nome, cor, (fim - agora) / Math.Max(fim - inicio, 0.1f)), 1);
+            }
+            else if (agora < recarga)
+            {
+                jogador.PrintToCenterHtml(BarraDePoder("Carregando", "#f5b301", (agora - fim) / Math.Max(recarga - fim, 0.1f)), 1);
+            }
+            else
+            {
+                jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>G pronto!</font>", 1);
+                barrasDePoder.Remove(vaga);
+            }
+        }
+    }
+
+    private static string BarraDePoder(string nome, string cor, float cheia)
+    {
+        var blocos = (int)Math.Round(Math.Clamp(cheia, 0f, 1f) * BlocosDaBarra);
+        return $"<font color='{cor}'>{nome}</font><br><font color='{cor}' class='fontSize-l'>{new string('█', blocos)}</font><font color='#555555' class='fontSize-l'>{new string('█', BlocosDaBarra - blocos)}</font>";
     }
 
     private static void MudarTamanho(CBaseEntity corpo, float tamanho)
@@ -1015,7 +1094,7 @@ public partial class ModoDeDiversao
             corpo.Render = CorDoEscudo;
             Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
         }
-        jogador.PrintToCenterHtml("<font color='#50a0ff' class='fontSize-l'>Blindado!</font>", (int)segundos);
+        barrasDePoder.Add(jogador.Slot);
         AddTimer(segundos, () =>
         {
             // Morto, o corpo está invisível para a queda: a cor volta pelo AplicarAtributosDoMutante quando renascer.

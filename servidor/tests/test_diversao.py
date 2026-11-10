@@ -1659,7 +1659,8 @@ def test_o_boneco_vem_do_pacote_proprio_da_versao():
 
 def test_cada_nivel_do_mutante_tem_o_proprio_boneco_e_queda():
     sobe = metodo_da_mutacao("void SubirDeNivel")
-    assert "if (ZumbiNoServidor()) corpo.SetModel(ModeloDe(mutante, novo.Nivel));" in sobe
+    # O boneco do nível vem ao renascer, não ao subir (CopyExistingEntity, 10/11/2026).
+    assert "SetModel(" not in sobe
     quedas = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("QuedaDoNivel ="):][:300]
     assert "nivel1/morte" in quedas and "nivel2/morte" in quedas and "nivel3/morte" in quedas
     # O nível 3 usa a queda do nível 2 (o dono escolheu, 09/11). A conferência do pacote olha a queda do nível 3, a
@@ -1723,7 +1724,7 @@ def test_o_blindado_so_vale_com_o_pacote_dele_no_servidor():
 
 def test_o_mutante_da_loja_usa_o_proprio_boneco_e_a_propria_queda():
     assert "corpo.SetModel(ModeloDe(jogador, nivel.Nivel))" in metodo_da_mutacao("private void AplicarAtributosDoMutante(")
-    assert "corpo.SetModel(ModeloDe(mutante, novo.Nivel))" in metodo_da_mutacao("private void SubirDeNivel(")
+    assert "SetModel(" not in metodo_da_mutacao("private void SubirDeNivel(")
     assert "QuedaDe(jogador)" in metodo_da_mutacao("private void MostrarQuedaDoMutante(")
 
 
@@ -1812,3 +1813,55 @@ def test_quem_chega_depois_do_sorteio_assiste_de_ct_ate_a_proxima_rodada():
     assert assistir.index("return;") < assistir.index("RenascerComoMutante")
     # Quem já jogava e morreu de humano continua voltando como mutante.
     assert "AddTimer(mutanteDaRodada.SegundosParaRenascer, () => RenascerComoMutante(jogador))" in sorteio
+
+
+def test_quem_vira_mutante_ve_na_tela_o_que_o_mutante_faz():
+    # Pedido do dono (10/11/2026): o G parecia não funcionar, porque a corrida só libera no nível 2 e nada avisava.
+    virar = metodo_da_mutacao("private void TransformarEmMutante(")
+    assert "AvisarOQueOMutanteFaz(jogador)" in virar
+    aviso = metodo_da_mutacao("private void AvisarOQueOMutanteFaz(")
+    assert "PrintToCenterHtml(" in aviso and "PrintToChat(" in aviso
+    assert "Faca" in aviso and "G:" in aviso
+    assert 'SkinDe(jogador) == "blindado"' in aviso
+    assert "NivelDaCorrida" in aviso
+    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    corrida = g[g.index("NivelDe(jogador).Nivel < NivelDaCorrida"):]
+    assert corrida.index("PrintToCenterHtml(") < corrida.index("return HookResult.Handled")
+
+
+def test_o_heroi_fica_com_a_negev_na_mao_e_ve_que_e_o_heroi():
+    entregar = metodo_da_mutacao("private void EntregarSuperArma(")
+    dar = entregar[entregar.index("GiveNamedItem(ArmaEspecial)"):]
+    # A troca para a Negev espera ela chegar na mão; antes ia no mesmo quadro e o herói ficava de faca.
+    assert dar.index("AddTimer(EsperaParaTrocarDeArma") < dar.index('ExecuteClientCommand("slot1")')
+    assert "Você é o HERÓI" in entregar
+    # O aviso de quem pegou a Negev não cobre o aviso de quem acabou de virar mutante.
+    sortear = metodo_da_mutacao("private void SortearSuperArma(")
+    assert "Team == CsTeam.Terrorist" in sortear
+
+
+def test_subir_de_nivel_nao_troca_o_corpo_com_o_mutante_vivo():
+    # Trocar o boneco do Blindado ao chegar no nível 2, vivo e de faca na mão, fechou o jogo do Adm
+    # ("CopyExistingEntity: missing client entity 125", 10/11/2026). O boneco do nível vem quando ele renascer.
+    subir = metodo_da_mutacao("private void SubirDeNivel(")
+    assert "SetModel(" not in subir
+    assert "corpo.SetModel(ModeloDe(jogador, nivel.Nivel))" in metodo_da_mutacao("private void AplicarAtributosDoMutante(")
+
+
+def test_o_heroi_troca_de_corpo_junto_com_a_saida_do_fuzil():
+    # Como na infecção: as armas saem e o boneco troca no mesmo instante; a arma nova vem depois.
+    entregar = metodo_da_mutacao("private void EntregarSuperArma(")
+    assert entregar.index("arma.Remove()") < entregar.index(".SetModel(ModeloDoHeroi)") < entregar.index("GiveNamedItem(ArmaEspecial)")
+
+
+def test_barra_do_poder_do_g_esvazia_no_uso_e_enche_na_recarga():
+    # Pedido do dono (10/11/2026): uma barra na tela mostrando o poder sendo gasto e carregando.
+    assert "AddTimer(IntervaloDaBarra, MostrarBarrasDePoder, TimerFlags.REPEAT)" in CODIGO_DA_MUTACAO
+    for metodo in ("private HookResult AoApertarG(", "private HookResult LigarEscudo("):
+        assert "barrasDePoder.Add(jogador.Slot)" in metodo_da_mutacao(metodo)
+    barra = metodo_da_mutacao("private void MostrarBarrasDePoder(")
+    assert "agora < fim" in barra and "agora < recarga" in barra
+    assert "G pronto!" in barra
+    assert "barrasDePoder.Remove(" in barra
+    desenho = metodo_da_mutacao("private static string BarraDePoder(")
+    assert "BlocosDaBarra" in desenho
