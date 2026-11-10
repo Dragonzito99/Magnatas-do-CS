@@ -2,6 +2,7 @@ import { eq, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { usuarios, xpPartidas } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
+import { granaDoXp, lancarGrana } from './grana';
 
 export const XP_MAXIMO_POR_PARTIDA = 1100;
 const XP_POR_JOGAR = 300;
@@ -137,6 +138,8 @@ export async function lancarXp(tx: Transacao, ganhos: GanhoDePartida[]): Promise
       .onConflictDoNothing()
       .returning({ id: xpPartidas.id });
     if (!novo) continue;
+    // A Grana da partida vem junto do XP, com a mesma referência: a partida que já pagou não paga de novo.
+    await lancarGrana(tx, { usuarioId: ganho.usuarioId, tipo: 'partida', quantidade: granaDoXp(xp), referencia: ganho.referencia });
     const [conta] = await tx
       .update(usuarios)
       .set({ xpTotal: sql`${usuarios.xpTotal} + ${xp}` })
