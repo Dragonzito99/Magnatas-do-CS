@@ -115,6 +115,8 @@ public partial class ModoDeDiversao
     private const string PastaDoHeroi = "models/magnatas/heroi_v1";
     private const string ModeloDoHeroi = $"{PastaDoHeroi}/mutante.vmdl";
     private bool? heroiNoServidor;
+    // Desligado: trocar o boneco do humano e depois para o zumbi derrubou a Mutação (WriteEnterPVS, 10/11/2026 19:54).
+    private static readonly bool UsarHeroi = false;
     // O mutante que cada conta comprou, perguntado ao site a cada rodada. Os de teste vão pela vaga (bots não têm conta).
     private readonly Dictionary<ulong, string> skinsPorConta = new();
     private readonly Dictionary<int, string> skinsDeTeste = new();
@@ -326,7 +328,7 @@ public partial class ModoDeDiversao
 
     private bool HeroiNoServidor()
     {
-        if (!UsarBonecosDoPacote || !PacoteDosPersonagens.All(char.IsDigit)) return false;
+        if (!UsarHeroi || !UsarBonecosDoPacote || !PacoteDosPersonagens.All(char.IsDigit)) return false;
         if (heroiNoServidor is bool sabido) return sabido;
         heroiNoServidor = NoPacote(PacoteDosPersonagens, PastaDoHeroi);
         Console.WriteLine($"[Magnatas] Herói da super Negev no servidor: {(heroiNoServidor.Value ? "sim" : "não, o portador fica dourado")}.");

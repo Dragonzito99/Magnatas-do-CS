@@ -159,10 +159,16 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
         return noServidor ? boneco : null;
     }
 
+    /// <summary>
+    /// Na Mutação o corpo é da Mutação: trocar para o boneco próprio e, 0,1 s depois, para o zumbi derrubou o servidor
+    /// (WriteEnterPVS, 10/11/2026 19:54). A Diversão copia este plugin para a pasta de cada modo.
+    /// </summary>
+    private static bool NaMutacao() => Server.GameDirectory.Replace('\\', '/').Contains("/diversao/mutacao/");
+
     /// <summary>Veste o personagem próprio da conta, se ela tem um e o pacote dele já está neste servidor.</summary>
     private void VestirBoneco(CCSPlayerController jogador)
     {
-        if (jogador is not { IsValid: true, PawnIsAlive: true }) return;
+        if (jogador is not { IsValid: true, PawnIsAlive: true } || NaMutacao()) return;
         if (!visuais.TryGetValue(jogador.SteamID, out var visual) || visual.Boneco == null) return;
         if (!Bonecos.TryGetValue(visual.Boneco, out _)) return;
         if (BonecoNoServidor(jogador, visual) != null) jogador.PlayerPawn.Value?.SetModel(visual.Boneco);
@@ -174,7 +180,7 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
     /// </summary>
     private void FazerGesto(CCSPlayerController? jogador, string gesto)
     {
-        if (jogador is not { IsValid: true, PawnIsAlive: true } || gestos.ContainsKey(jogador.Slot)) return;
+        if (jogador is not { IsValid: true, PawnIsAlive: true } || gestos.ContainsKey(jogador.Slot) || NaMutacao()) return;
         if (!visuais.TryGetValue(jogador.SteamID, out var visual)) return;
         var boneco = BonecoNoServidor(jogador, visual);
         if (boneco == null || boneco.Gestos == null) return;

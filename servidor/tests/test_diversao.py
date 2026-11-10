@@ -1767,3 +1767,8 @@ def test_o_competitivo_tambem_baixa_o_pacote_dos_personagens():
     assert "mm_cache_clients_with_addons 1" in competitivo
     visual = (RAIZ / "plugins" / "MagnatasVisual" / "MagnatasVisual.cs").read_text(encoding="utf-8")
     assert f'PacoteDosPersonagens = "{PACOTE_DOS_PERSONAGENS}"' in visual
+
+
+def test_heroi_desligado_enquanto_a_troca_de_boneco_derruba_a_mutacao():
+    assert "private static readonly bool UsarHeroi = false;" in CODIGO_DA_MUTACAO
+    assert "!UsarHeroi" in metodo_da_mutacao("private bool HeroiNoServidor(")

@@ -148,3 +148,12 @@ def test_confere_de_novo_a_cada_mapa_se_o_pacote_chegou():
     texto = codigo()
     assert "Listeners.OnMapStart" in texto
     assert "bonecosNoServidor.Clear()" in texto
+
+
+def test_na_mutacao_nao_troca_boneco_nem_faz_gesto():
+    # Na Mutação a troca para o boneco próprio, seguida 0,1 s depois da troca para o zumbi, derrubou o servidor
+    # (WriteEnterPVS, 10/11/2026 19:54). Lá o corpo fica com a Mutação.
+    texto = codigo()
+    assert '"/diversao/mutacao/"' in texto
+    assert "NaMutacao()" in metodo("private void VestirBoneco(")
+    assert "NaMutacao()" in metodo("private void FazerGesto(")
