@@ -117,6 +117,8 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
         RegisterEventHandler<EventPlayerSpawn>(AoNascer);
         RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
         {
+            // A Mutação não baixa o pacote dos personagens: com ele, o jogo do Adm fechou (OnPreserveEntity, 10/11 20:01).
+            if (NaMutacao()) return;
             foreach (var (modelo, boneco) in Bonecos)
             {
                 manifesto.AddResource(modelo);

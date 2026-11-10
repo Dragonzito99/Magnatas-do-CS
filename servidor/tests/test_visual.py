@@ -157,3 +157,6 @@ def test_na_mutacao_nao_troca_boneco_nem_faz_gesto():
     assert '"/diversao/mutacao/"' in texto
     assert "NaMutacao()" in metodo("private void VestirBoneco(")
     assert "NaMutacao()" in metodo("private void FazerGesto(")
+    # Nem carrega os modelos lá: a Mutação não baixa o pacote dos personagens (OnPreserveEntity no jogo do Adm, 20:01).
+    precarga = texto[texto.index("OnServerPrecacheResources"):]
+    assert precarga.index("NaMutacao()") < precarga.index("manifesto.AddResource(modelo)")

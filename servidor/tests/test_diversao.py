@@ -1117,8 +1117,9 @@ def test_o_servidor_carrega_os_sons_do_pacote():
 @pytest.mark.parametrize("servidor", SERVIDORES)
 def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
     # A Mutação também manda baixar os pacotes do mutante comum e do Blindado da loja, que só ela usa.
+    # A Mutação fica sem o pacote dos personagens: com ele, o jogo do Adm fechou (OnPreserveEntity, 10/11 20:01).
     esperado = (
-        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS}"'
+        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO}"'
         if servidor == "mutacao"
         else f'"{PACOTE_DE_SONS},{PACOTE_DOS_PERSONAGENS}"'
     )
@@ -1756,9 +1757,8 @@ def test_quem_pega_a_super_negev_vira_o_heroi_quando_o_pacote_chegou():
     assert "manifesto.AddResource(ModeloDoHeroi)" in CODIGO_DA_MUTACAO
 
 
-def test_a_mutacao_baixa_o_pacote_dos_personagens_que_o_heroi_usa():
-    pacote = re.search(r'PacoteDosPersonagens = "(\d+)"', CODIGO_DA_MUTACAO).group(1)
-    assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")
+def test_o_heroi_aponta_para_o_pacote_dos_personagens():
+    assert f'PacoteDosPersonagens = "{PACOTE_DOS_PERSONAGENS}"' in CODIGO_DA_MUTACAO
 
 
 def test_o_competitivo_tambem_baixa_o_pacote_dos_personagens():
