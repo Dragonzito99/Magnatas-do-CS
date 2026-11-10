@@ -1813,7 +1813,7 @@ def test_quem_vira_mutante_ve_na_tela_o_que_o_mutante_faz():
     virar = metodo_da_mutacao("private void TransformarEmMutante(")
     assert "AvisarOQueOMutanteFaz(jogador)" in virar
     aviso = metodo_da_mutacao("private void AvisarOQueOMutanteFaz(")
-    assert "PrintToCenterHtml(" in aviso and "PrintToChat(" in aviso
+    assert "MostrarCartao(" in aviso and "PrintToChat(" in aviso
     assert "Faca" in aviso and "G:" in aviso
     assert 'SkinDe(jogador) == "blindado"' in aviso
     assert "NivelDaCorrida" in aviso
@@ -1847,17 +1847,19 @@ def test_o_heroi_troca_de_corpo_junto_com_a_saida_do_fuzil():
     assert entregar.index("arma.Remove()") < entregar.index(".SetModel(ModeloDoHeroi)") < entregar.index("GiveNamedItem(ArmaEspecial)")
 
 
-def test_barra_do_poder_do_g_esvazia_no_uso_e_enche_na_recarga():
-    # Pedido do dono (10/11/2026): uma barra na tela mostrando o poder sendo gasto e carregando.
-    assert "AddTimer(IntervaloDaBarra, MostrarBarrasDePoder, TimerFlags.REPEAT)" in CODIGO_DA_MUTACAO
-    for metodo in ("private HookResult AoApertarG(", "private HookResult LigarEscudo("):
-        assert "barrasDePoder.Add(jogador.Slot)" in metodo_da_mutacao(metodo)
-    barra = metodo_da_mutacao("private void MostrarBarrasDePoder(")
-    assert "agora < fim" in barra and "agora < recarga" in barra
-    assert "G pronto!" in barra
-    assert "barrasDePoder.Remove(" in barra
-    desenho = metodo_da_mutacao("private static string BarraDePoder(")
-    assert "BlocosDaBarra" in desenho
+def test_hud_do_poder_do_g_fica_na_tela_do_mutante():
+    # Pedido do dono (10/11/2026): ver sempre se o poder está pronto, sendo gasto ou carregando.
+    assert "AddTimer(IntervaloDaBarra, AtualizarTelaDaMutacao, TimerFlags.REPEAT)" in CODIGO_DA_MUTACAO
+    tela = metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
+    assert "Team: CsTeam.Terrorist" in tela
+    assert "HudDoPoder(" in tela
+    # O cartão de quem acabou de virar mutante fica por cima do HUD enquanto vale.
+    assert tela.index("cartoes.TryGetValue(") < tela.index("HudDoPoder(")
+    hud = metodo_da_mutacao("private string HudDoPoder(")
+    assert "agora < fim" in hud and "agora < recarga" in hud
+    assert "G PRONTO" in hud
+    assert "NivelDaCorrida" in hud
+    assert "BlocosDaBarra" in metodo_da_mutacao("private static string BarraDePoder(")
 
 
 def test_o_aviso_do_mutante_e_do_heroi_e_um_cartao_que_fica_na_tela():
@@ -1867,5 +1869,5 @@ def test_o_aviso_do_mutante_e_do_heroi_e_um_cartao_que_fica_na_tela():
     assert "MostrarCartao(jogador," in metodo_da_mutacao("private void EntregarSuperArma(")
     cartao = metodo_da_mutacao("private static string Cartao(")
     assert "━" in cartao and "fontSize-xl" in cartao
-    tela = metodo_da_mutacao("private void MostrarBarrasDePoder(")
+    tela = metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
     assert "cartoes" in tela

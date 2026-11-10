@@ -37,7 +37,6 @@ public partial class ModoDeDiversao
     // Barra do poder do G na tela (dono, 10/11/2026): esvazia enquanto a corrida ou o escudo vale, enche na recarga.
     private const float IntervaloDaBarra = 0.25f;
     private const int BlocosDaBarra = 12;
-    private readonly HashSet<int> barrasDePoder = new();
     // Cartão de cada vaga (mutante, herói) e até quando ele fica na tela.
     private readonly Dictionary<int, (string Html, float Ate)> cartoes = new();
     // A partir do nível 2, o mutante corre mais rápido por alguns segundos ao apertar G (o "largar arma" do jogo).
@@ -512,7 +511,7 @@ public partial class ModoDeDiversao
     private void LigarMutacao(bool hotReload)
     {
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
-        AddTimer(IntervaloDaBarra, MostrarBarrasDePoder, TimerFlags.REPEAT);
+        AddTimer(IntervaloDaBarra, AtualizarTelaDaMutacao, TimerFlags.REPEAT);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
@@ -737,8 +736,8 @@ public partial class ModoDeDiversao
 
     /// <summary>Cartão no meio da tela: título grande, um traço e as linhas do que fazer.</summary>
     private static string Cartao(string titulo, string cor, string linha, string destaque) =>
-        $"<font color='{cor}' class='fontSize-xl'>{titulo}</font><br><font color='{cor}'>━━━━━━━━━━━━━━━━</font><br>" +
-        $"<font color='#ffffff'>{linha}</font><br><font color='#f5b301'>{destaque}</font>";
+        $"<font color='{cor}'>━━━━━━━━━━━━━━━━</font><br><font color='{cor}' class='fontSize-xl'>»  {string.Join(' ', titulo.ToCharArray())}  «</font><br>" +
+        $"<font color='{cor}'>━━━━━━━━━━━━━━━━</font><br><font color='#ffffff'>{linha}</font><br><font color='#f5b301'>{destaque}</font>";
 
     /// <summary>
     /// O CS2 apaga logo a mensagem do meio da tela, então o cartão é reenviado junto com a barra do G até o tempo dele
@@ -769,60 +768,51 @@ public partial class ModoDeDiversao
         corridas[jogador.Slot] = (agora + SegundosDaCorrida, agora + SegundosDeRecargaDaCorrida);
         var corpo = jogador.PlayerPawn.Value;
         if (corpo != null) corpo.VelocityModifier = VelocidadeDe(jogador);
-        barrasDePoder.Add(jogador.Slot);
         return HookResult.Handled;
     }
 
-    /// <summary>A barra de cada mutante que usou o G: gastando, carregando e, no fim, "G pronto!".</summary>
-    private void MostrarBarrasDePoder()
+    /// <summary>
+    /// O que fica no meio da tela, reenviado a cada quarto de segundo (o CS2 apaga logo a mensagem): o cartão de quem
+    /// acabou de virar mutante ou herói e, para o mutante, o HUD do poder do G (dono, 10/11/2026).
+    /// </summary>
+    private void AtualizarTelaDaMutacao()
     {
         var agora = Server.CurrentTime;
-        // Cartões ainda valendo, de quem não está com a barra do G (a barra fica por cima).
-        foreach (var (vaga, cartao) in cartoes.ToList())
+        foreach (var vaga in cartoes.Where(item => agora >= item.Value.Ate).Select(item => item.Key).ToList()) cartoes.Remove(vaga);
+        foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: false, PawnIsAlive: true }))
         {
-            var dono = Utilities.GetPlayerFromSlot(vaga);
-            if (agora >= cartao.Ate || dono is not { IsValid: true, PawnIsAlive: true } || barrasDePoder.Contains(vaga))
+            if (cartoes.TryGetValue(jogador.Slot, out var cartao))
             {
-                cartoes.Remove(vaga);
+                jogador.PrintToCenterHtml(cartao.Html, 1);
                 continue;
             }
-            dono.PrintToCenterHtml(cartao.Html, 1);
+            if (jogador is { Team: CsTeam.Terrorist } && rodadaEmAndamento) jogador.PrintToCenterHtml(HudDoPoder(jogador, agora), 1);
         }
-        foreach (var vaga in barrasDePoder.ToList())
+    }
+
+    /// <summary>O poder do G do mutante: pronto (cheia), em uso (esvaziando), carregando (enchendo) ou ainda travado.</summary>
+    private string HudDoPoder(CCSPlayerController jogador, float agora)
+    {
+        var blindado = SkinDe(jogador) == "blindado";
+        if (!blindado && NivelDe(jogador).Nivel < NivelDaCorrida)
+            return BarraDePoder($"G libera no nível {NivelDaCorrida}", "#888888", 0f);
+        var temPoder = blindado ? escudos.TryGetValue(jogador.Slot, out var poder) : corridas.TryGetValue(jogador.Slot, out poder);
+        if (temPoder)
         {
-            var jogador = Utilities.GetPlayerFromSlot(vaga);
-            var blindado = jogador != null && SkinDe(jogador) == "blindado";
-            (float Fim, float Recarga) poder;
-            if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist }
-                || !(blindado ? escudos.TryGetValue(vaga, out poder) : corridas.TryGetValue(vaga, out poder)))
-            {
-                barrasDePoder.Remove(vaga);
-                continue;
-            }
             var (fim, recarga) = poder;
             var inicio = recarga - (blindado ? SegundosDeRecargaDoEscudo : SegundosDeRecargaDaCorrida);
             if (agora < fim)
-            {
-                var nome = blindado ? "Escudo" : "Correndo";
-                var cor = blindado ? "#50a0ff" : "#6eff6e";
-                jogador.PrintToCenterHtml(BarraDePoder(nome, cor, (fim - agora) / Math.Max(fim - inicio, 0.1f)), 1);
-            }
-            else if (agora < recarga)
-            {
-                jogador.PrintToCenterHtml(BarraDePoder("Carregando", "#f5b301", (agora - fim) / Math.Max(recarga - fim, 0.1f)), 1);
-            }
-            else
-            {
-                jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>G pronto!</font>", 1);
-                barrasDePoder.Remove(vaga);
-            }
+                return BarraDePoder(blindado ? "ESCUDO" : "CORRENDO", blindado ? "#50a0ff" : "#6eff6e", (fim - agora) / Math.Max(fim - inicio, 0.1f));
+            if (agora < recarga)
+                return BarraDePoder("CARREGANDO", "#f5b301", (agora - fim) / Math.Max(recarga - fim, 0.1f));
         }
+        return BarraDePoder("G PRONTO", "#6eff6e", 1f);
     }
 
     private static string BarraDePoder(string nome, string cor, float cheia)
     {
         var blocos = (int)Math.Round(Math.Clamp(cheia, 0f, 1f) * BlocosDaBarra);
-        return $"<font color='{cor}'>{nome}</font><br><font color='{cor}' class='fontSize-l'>{new string('█', blocos)}</font><font color='#555555' class='fontSize-l'>{new string('█', BlocosDaBarra - blocos)}</font>";
+        return $"<font color='{cor}'>» {nome} «</font><br><font color='{cor}' class='fontSize-l'>{new string('█', blocos)}</font><font color='#555555' class='fontSize-l'>{new string('█', BlocosDaBarra - blocos)}</font>";
     }
 
     private static void MudarTamanho(CBaseEntity corpo, float tamanho)
@@ -1098,7 +1088,6 @@ public partial class ModoDeDiversao
             corpo.Render = CorDoEscudo;
             Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
         }
-        barrasDePoder.Add(jogador.Slot);
         AddTimer(segundos, () =>
         {
             // Morto, o corpo está invisível para a queda: a cor volta pelo AplicarAtributosDoMutante quando renascer.
