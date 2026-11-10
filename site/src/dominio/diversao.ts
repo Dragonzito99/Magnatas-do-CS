@@ -88,6 +88,15 @@ export function estadoDoCartao(
   return servidor.sobDemanda && servidor.nomeNoServidor ? 'desligado_sob_demanda' : 'fora_do_ar';
 }
 
+/**
+ * Se o cartão mostra o botão de entrar. No teste do Adm (Dust 2 com bots, sem XP) os membros também entram, para
+ * testar junto (pedido do dono, 10/11/2026), desde que o servidor já responda e tenha vaga.
+ */
+export function entradaLiberada(servidor: { vagas: number }, estado: EstadoDoCartao, situacao: SituacaoDoServidor): boolean {
+  if (estado === 'aberto') return true;
+  return estado === 'em_teste' && situacao.ligado && situacao.jogando < servidor.vagas;
+}
+
 function aguardarNoMaximo<T>(promessa: Promise<T>, prazoMs: number, seEsgotar: T): Promise<T> {
   let relogio: ReturnType<typeof setTimeout> | undefined;
   const esgotado = new Promise<T>((resolver) => {

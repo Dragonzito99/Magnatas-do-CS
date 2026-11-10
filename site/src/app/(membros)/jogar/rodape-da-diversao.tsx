@@ -1,5 +1,5 @@
 import type { ServidorDiversao } from '@/bd/esquema';
-import { alvoDoServidor, comandoDeConectar, estadoDoCartao, linkDeEntrar, MODOS_DE_DIVERSAO, type SituacaoDoServidor } from '@/dominio/diversao';
+import { alvoDoServidor, comandoDeConectar, entradaLiberada, estadoDoCartao, linkDeEntrar, MODOS_DE_DIVERSAO, type SituacaoDoServidor } from '@/dominio/diversao';
 import type { EstadoNaTela } from '@/dominio/sob-demanda';
 import { BotaoCopiar } from '../botao-copiar';
 import { ligar } from '../diversao/acoes';
@@ -37,7 +37,8 @@ export function RodapeDoCartao({
 }) {
   const estado = estadoDoCartao(servidor, situacao, guardado?.estado, guardado?.teste);
   if (estado === 'em_breve') return <span className="etiqueta">Em breve</span>;
-  if (estado === 'em_teste') return <span className="etiqueta">Em teste pelo Adm</span>;
+  const etiquetaDoTeste = <span className="etiqueta">Teste do Adm: com bots, sem XP</span>;
+  if (estado === 'em_teste' && !entradaLiberada(servidor, estado, situacao)) return etiquetaDoTeste;
   if (estado === 'fora_do_ar') return <span className="etiqueta">Fora do ar</span>;
   if (estado === 'ligando') {
     return (
@@ -84,6 +85,7 @@ export function RodapeDoCartao({
   return (
     <>
       {vagas}
+      {estado === 'em_teste' && etiquetaDoTeste}
       <AvisarAoEntrar servidorId={servidor.id}>
         {comando && <BotaoCopiar texto={comando} />}
         <a className="botao ouro pequeno" href={link}>

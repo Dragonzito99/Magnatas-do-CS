@@ -4,7 +4,7 @@ import type { Bd } from '@/bd/conexao';
 import { estadosDaDiversao, servidoresDiversao, type ServidorDiversao, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { controladorFalso } from '@/servidor-jogo/controlador';
-import { estadoDoCartao, type SituacaoDoServidor } from './diversao';
+import { entradaLiberada, estadoDoCartao, type SituacaoDoServidor } from './diversao';
 import { SemPermissao } from './equipe';
 import type { ControleDaDiversao } from './sob-demanda';
 import { aplicarTestesDaMutacao, etapaDoTeste, MutacaoOcupada, pedirTesteDaMutacao } from './teste-mutacao';
@@ -111,10 +111,18 @@ describe('aplicarTestesDaMutacao', () => {
 });
 
 describe('na tela', () => {
-  test('o cartão da Mutação em teste não deixa ninguém entrar', () => {
+  test('o cartão da Mutação mostra que está em teste', () => {
     expect(estadoDoCartao(mutacao, { ligado: true, jogando: 1 }, 'ligado', 'ativo')).toBe('em_teste');
     expect(estadoDoCartao(mutacao, { ligado: false, jogando: 0 }, 'ligando', 'pedido')).toBe('em_teste');
     expect(estadoDoCartao(mutacao, { ligado: true, jogando: 1 }, 'ligado', null)).toBe('aberto');
+  });
+
+  test('no teste já ligado os membros podem entrar junto com os bots, até lotar (pedido do dono, 10/11/2026)', () => {
+    expect(entradaLiberada(mutacao, 'em_teste', { ligado: true, jogando: 1 })).toBe(true);
+    expect(entradaLiberada(mutacao, 'em_teste', { ligado: false, jogando: 0 })).toBe(false);
+    expect(entradaLiberada(mutacao, 'em_teste', { ligado: true, jogando: mutacao.vagas })).toBe(false);
+    expect(entradaLiberada(mutacao, 'aberto', { ligado: true, jogando: 1 })).toBe(true);
+    expect(entradaLiberada(mutacao, 'cheio', { ligado: true, jogando: mutacao.vagas })).toBe(false);
   });
 
   test('a aba Testes mostra em que pé está o teste', () => {
