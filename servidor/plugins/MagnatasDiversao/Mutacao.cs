@@ -439,8 +439,11 @@ public partial class ModoDeDiversao
         if (!testeComBots) AddTimer(SegundosMostrandoOVencedor - 1, TrocarDeMapa);
     }
 
-    /// <summary>Para quem entrou no meio ou morreu antes do sorteio: ninguém fica esperando morto até a próxima rodada.</summary>
-    private void ColocarNaRodada(CCSPlayerController? jogador)
+    /// <summary>
+    /// Para quem entrou no meio ou morreu: antes do sorteio nasce humano; depois, quem morreu volta mutante, e quem está
+    /// chegando assiste do CT até a próxima rodada (pedido do dono, 10/11/2026).
+    /// </summary>
+    private void ColocarNaRodada(CCSPlayerController? jogador, bool chegando = false)
     {
         if (esperandoJogadores)
         {
@@ -462,6 +465,12 @@ public partial class ModoDeDiversao
         if (!rodadaEmAndamento || jogador is not { IsValid: true, PawnIsAlive: false } || jogador.Team is not (CsTeam.Terrorist or CsTeam.CounterTerrorist)) return;
         if (sorteioFeito)
         {
+            if (chegando)
+            {
+                if (jogador.Team == CsTeam.Terrorist) jogador.SwitchTeam(CsTeam.CounterTerrorist);
+                jogador.PrintToChat(" [Magnatas] A rodada já está rolando: você assiste daqui e entra na próxima.");
+                return;
+            }
             if (jogador.Team == CsTeam.CounterTerrorist) jogador.SwitchTeam(CsTeam.Terrorist);
             AddTimer(mutanteDaRodada.SegundosParaRenascer, () => RenascerComoMutante(jogador));
             return;
@@ -477,7 +486,9 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "mutacao" || evento.Disconnect) return HookResult.Continue;
         var jogador = evento.Userid;
-        AddTimer(EsperaAposNascer, () => ColocarNaRodada(jogador));
+        // Chegando é quem vinha de nenhum time ou do espectador; as trocas que o próprio plugin faz vêm de CT ou TR.
+        var chegando = evento.Oldteam <= (int)CsTeam.Spectator;
+        AddTimer(EsperaAposNascer, () => ColocarNaRodada(jogador, chegando));
         return HookResult.Continue;
     }
 

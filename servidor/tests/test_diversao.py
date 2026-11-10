@@ -1796,3 +1796,19 @@ def test_na_mutacao_o_boneco_proprio_vem_da_propria_mutacao_uma_troca_por_vez():
     assert 'TryGetProperty("boneco"' in buscar
     assert "manifesto.AddResource(boneco)" in CODIGO_DA_MUTACAO
     assert 'ConsoleCommand("magnatas_mutacao_boneco"' in CODIGO_DA_MUTACAO
+
+
+def test_quem_chega_depois_do_sorteio_assiste_de_ct_ate_a_proxima_rodada():
+    # Pedido do dono (10/11/2026): com a partida rolando, quem chega fica no CT assistindo, em vez de nascer mutante.
+    escolher = metodo_da_mutacao("public HookResult AoEscolherTime(")
+    # Só quem chega (vinha de nenhum time ou do espectador); as trocas que o próprio plugin faz não contam.
+    assert "evento.Oldteam <= (int)CsTeam.Spectator" in escolher
+    assert "ColocarNaRodada(jogador, chegando)" in escolher
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ColocarNaRodada"):]
+    trecho = trecho[:trecho.index(FIM_DO_METODO)]
+    sorteio = trecho[trecho.index("if (sorteioFeito)"):trecho.index("Antes do sorteio")]
+    assistir = sorteio[sorteio.index("if (chegando)"):]
+    assert "SwitchTeam(CsTeam.CounterTerrorist)" in assistir
+    assert assistir.index("return;") < assistir.index("RenascerComoMutante")
+    # Quem já jogava e morreu de humano continua voltando como mutante.
+    assert "AddTimer(mutanteDaRodada.SegundosParaRenascer, () => RenascerComoMutante(jogador))" in sorteio
