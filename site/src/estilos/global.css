@@ -5756,3 +5756,8 @@ a.cartao-destaque:hover {
     transition: none;
   }
 }
+
+/* As animações das evoluções já vêm com este fundo: o quadro fica da mesma cor, sem emenda. */
+.palco-da-previa:has(.evolucoes-do-mutante) {
+  background: #05030a;
+}
