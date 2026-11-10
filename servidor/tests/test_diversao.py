@@ -1243,7 +1243,7 @@ def test_sem_o_zumbi_no_servidor_o_mutante_nao_troca_de_boneco():
     assert "_dir.vpk" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("static bool NoPacote("):][:600]
     aplica = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void AplicarAtributosDoMutante"):]
     aplica = aplica[:aplica.index(FIM_DO_METODO)]
-    assert "if (zumbi) corpo.SetModel(ModeloDoNivel(nivel.Nivel));" in aplica
+    assert "if (zumbi) corpo.SetModel(ModeloDe(jogador, nivel.Nivel));" in aplica
     assert "zumbi ? mutanteDaRodada.Cor : CorDaReserva" in aplica
     assert "zumbiNoServidor = null" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void LigarMutacao"):]
 
@@ -1588,7 +1588,7 @@ def test_mutante_que_morre_cai_com_a_animacao_do_guerreiro():
 
 def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
     cena = metodo_da_mutacao("void MostrarQuedaDoMutante")
-    assert "if (!MorteNoServidor()) return;" in cena
+    assert "if (!MorteNoServidor()) return null;" in metodo_da_mutacao("private string? QuedaDe(")
     assert 'CreateEntityByName<CDynamicProp>("prop_dynamic")' in cena
     # Trocar o modelo antes de a entidade nascer dava erro interno no servidor a cada morte (SetupModel, entidade
     # ainda "em preparo"): o modelo, o lugar e a animação vão junto na criação.
@@ -1651,7 +1651,7 @@ def test_o_boneco_vem_do_pacote_proprio_da_versao():
 
 def test_cada_nivel_do_mutante_tem_o_proprio_boneco_e_queda():
     sobe = metodo_da_mutacao("void SubirDeNivel")
-    assert "if (ZumbiNoServidor()) corpo.SetModel(ModeloDoNivel(novo.Nivel));" in sobe
+    assert "if (ZumbiNoServidor()) corpo.SetModel(ModeloDe(mutante, novo.Nivel));" in sobe
     quedas = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("QuedaDoNivel ="):][:300]
     assert "nivel1/morte" in quedas and "nivel2/morte" in quedas and "nivel3/morte" in quedas
     # O nível 3 usa a queda do nível 2 (o dono escolheu, 09/11). A conferência do pacote olha a queda do nível 3, a
@@ -1687,3 +1687,46 @@ def test_comando_de_teste_sobe_um_bot_mutante_de_nivel_para_o_dono_ver():
     assert "Team: CsTeam.Terrorist" in trecho
     assert "infeccoes[bot.Slot] = novo.InfeccoesParaChegar;" in trecho
     assert "SubirDeNivel(bot, antes, novo);" in trecho
+
+
+# Mutante da loja: Blindado (Cyber Hulk), aprovado pelo dono em 10/11/2026.
+def test_o_blindado_tem_boneco_pacote_proprio_e_escudo_de_2_4_6_segundos():
+    assert 'private const string PastaDoBlindado = "models/magnatas/blindado_v1";' in CODIGO_DA_MUTACAO
+    assert "private static readonly float[] SegundosDoEscudo = { 2f, 4f, 6f };" in CODIGO_DA_MUTACAO
+    assert "private const float SegundosDeRecargaDoEscudo = 15f;" in CODIGO_DA_MUTACAO
+
+
+def test_o_plugin_pergunta_ao_site_qual_mutante_cada_um_comprou():
+    busca = metodo_da_mutacao("private async Task BuscarMutantesDaLoja(")
+    assert "/api/servidor/visuais?steamids=" in busca
+    assert '"mutante"' in busca
+    assert "Server.NextFrame" in busca
+    assert "catch (Exception" in busca
+    assert "BuscarMutantesDaLoja(" in metodo_da_mutacao("private void ComecarRodadaDaMutacao(")
+
+
+def test_o_blindado_so_vale_com_o_pacote_dele_no_servidor():
+    skin = metodo_da_mutacao("private string? SkinDe(")
+    assert "BlindadoNoServidor()" in skin
+    confere = metodo_da_mutacao("private bool BlindadoNoServidor(")
+    assert "NoPacote(PacoteDoBlindado, PastaDoBlindado)" in confere
+
+
+def test_o_mutante_da_loja_usa_o_proprio_boneco_e_a_propria_queda():
+    assert "corpo.SetModel(ModeloDe(jogador, nivel.Nivel))" in metodo_da_mutacao("private void AplicarAtributosDoMutante(")
+    assert "corpo.SetModel(ModeloDe(mutante, novo.Nivel))" in metodo_da_mutacao("private void SubirDeNivel(")
+    assert "QuedaDe(jogador)" in metodo_da_mutacao("private void MostrarQuedaDoMutante(")
+
+
+def test_o_g_do_blindado_liga_o_escudo_desde_o_nivel_1_com_recarga():
+    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    assert g.index('SkinDe(jogador) == "blindado"') < g.index("NivelDaCorrida")
+    escudo = metodo_da_mutacao("private HookResult LigarEscudo(")
+    assert "SegundosDoEscudo[" in escudo
+    assert "SegundosDeRecargaDoEscudo" in escudo
+    assert "CorDoEscudo" in escudo
+
+
+def test_o_escudo_bloqueia_o_dano_no_mutante():
+    dano = metodo_da_mutacao("private HookResult AoReceberDano(")
+    assert dano.index("EscudoLigado(") < dano.index("corpo.TeamNum != (byte)CsTeam.CounterTerrorist")

@@ -1,4 +1,6 @@
 using System.Drawing;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
@@ -94,6 +96,24 @@ public partial class ModoDeDiversao
         $"{PastaDoMutante}/nivel3/morte/guerreiro_morte.vmdl",
     };
     private const float SegundosDaCenaDaMorte = 4f;
+
+    // Mutante da Magnata Shop: quem compra e põe em uso no baú vira o Cyber Hulk, e o G liga um escudo em vez da corrida
+    // (dono, 10/11/2026). Vem num pacote da Oficina só dele; vazio enquanto o item não existe, e aí o Blindado fica
+    // desligado e quem comprou vira o mutante comum.
+    private const string PacoteDoBlindado = "";
+    private const string PastaDoBlindado = "models/magnatas/blindado_v1";
+    // Por enquanto só o nível 1 tem boneco; os níveis 2 e 3 usam o do nível mais alto que existir.
+    private static readonly int[] NiveisComBonecoDoBlindado = { 1 };
+    private static readonly float[] SegundosDoEscudo = { 2f, 4f, 6f };
+    private const float SegundosDeRecargaDoEscudo = 15f;
+    // Azul enquanto o escudo vale, para os humanos saberem que não adianta atirar.
+    private static readonly Color CorDoEscudo = Color.FromArgb(255, 80, 160, 255);
+    private bool? blindadoNoServidor;
+    // O mutante que cada conta comprou, perguntado ao site a cada rodada. Os de teste vão pela vaga (bots não têm conta).
+    private readonly Dictionary<ulong, string> skinsPorConta = new();
+    private readonly Dictionary<int, string> skinsDeTeste = new();
+    // Por vaga: até quando o escudo vale e quando o G volta a funcionar.
+    private readonly Dictionary<int, (float Fim, float Recarga)> escudos = new();
     private const float TamanhoDoHumano = 1f;
 
     // Um humano por rodada ganha a super Negev: não acaba a munição e empurra o mutante bem mais longe.
@@ -139,6 +159,8 @@ public partial class ModoDeDiversao
         Parar(ref somDaContagem);
         infeccoes.Clear();
         corridas.Clear();
+        escudos.Clear();
+        _ = BuscarMutantesDaLoja(Pessoas().Select(pessoa => pessoa.SteamID).ToList());
         if (testeComBots) ChamarBotsDoTeste();
         if (JogadoresNaRodada() < MinimoDeJogadores)
         {
@@ -429,12 +451,19 @@ public partial class ModoDeDiversao
             if (!UsarBonecosDoPacote) return;
             foreach (var nivel in mutanteDaRodada.Niveis) manifesto.AddResource(ModeloDoNivel(nivel.Nivel));
             foreach (var queda in QuedaDoNivel) if (queda != null) manifesto.AddResource(queda);
+            if (!BlindadoNoServidor()) return;
+            foreach (var nivel in NiveisComBonecoDoBlindado)
+            {
+                manifesto.AddResource(ModeloDoBlindado(nivel));
+                manifesto.AddResource(QuedaDoBlindado(nivel));
+            }
         });
         RegisterListener<Listeners.OnMapStart>(mapa =>
         {
             // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
             zumbiNoServidor = null;
             morteNoServidor = null;
+            blindadoNoServidor = null;
             // Ao ligar, o servidor abre o mapa da Oficina por último: se o teste já tinha pedido a Dust 2, ela era trocada.
             if (testeComBots && mapa != MapaDoTeste) AddTimer(1f, () => Server.ExecuteCommand($"changelevel {MapaDoTeste}"));
         });
@@ -459,6 +488,9 @@ public partial class ModoDeDiversao
             if (autor == null || autor.DesignerName != "player") return HookResult.Continue;
 
             var corpo = new CCSPlayerPawn(alvo.Handle);
+            // Mutante com o escudo do Blindado ligado não leva dano de ninguém.
+            if (corpo.TeamNum == (byte)CsTeam.Terrorist && corpo.Controller.Value is { } dono && EscudoLigado(new CCSPlayerController(dono.Handle).Slot))
+                return HookResult.Handled;
             if (corpo.TeamNum != (byte)CsTeam.CounterTerrorist || autor.TeamNum != (byte)CsTeam.Terrorist) return HookResult.Continue;
 
             var controleDoAlvo = corpo.Controller.Value;
@@ -492,8 +524,10 @@ public partial class ModoDeDiversao
         transformacoes++;
         infeccoes.Remove(jogador.Slot);
         corridas.Remove(jogador.Slot);
+        escudos.Remove(jogador.Slot);
         AplicarAtributosDoMutante(jogador);
         jogador.PrintToCenterHtml("<font color='#6eff6e' class='fontSize-l'>Você virou mutante!</font>", SegundosDoAvisoDeMutante);
+        if (SkinDe(jogador) == "blindado") jogador.PrintToChat($" [Magnatas] Você é o Blindado: aperte G e fique {SegundosDoEscudo[0]:0} s sem levar dano.");
         if (autor is { IsValid: true }) ContarTransformacao(autor);
         // Encerrar a rodada no mesmo instante em que as armas do infectado saem, ainda dentro do golpe, derrubava o jogo
         // de quem estava no servidor ("OnPreserveEntity") na infecção do último humano. O fim vem logo depois.
@@ -525,7 +559,7 @@ public partial class ModoDeDiversao
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iMaxHealth");
         Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
         var zumbi = ZumbiNoServidor();
-        if (zumbi) corpo.SetModel(ModeloDoNivel(nivel.Nivel));
+        if (zumbi) corpo.SetModel(ModeloDe(jogador, nivel.Nivel));
         MudarTamanho(corpo, nivel.Tamanho);
         corpo.Render = zumbi ? mutanteDaRodada.Cor : CorDaReserva;
         Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
@@ -586,7 +620,7 @@ public partial class ModoDeDiversao
             Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
             corpo.VelocityModifier = VelocidadeDe(mutante);
             MudarTamanho(corpo, novo.Tamanho);
-            if (ZumbiNoServidor()) corpo.SetModel(ModeloDoNivel(novo.Nivel));
+            if (ZumbiNoServidor()) corpo.SetModel(ModeloDe(mutante, novo.Nivel));
         }
         var nome = System.Net.WebUtility.HtmlEncode(mutante.PlayerName);
         foreach (var pessoa in Pessoas())
@@ -594,7 +628,9 @@ public partial class ModoDeDiversao
             pessoa.PrintToCenterHtml($"<font color='#6eff6e' class='fontSize-l'>{nome} chegou ao nível {novo.Nivel}!</font>", SegundosDoAvisoDeMutante);
             pessoa.PrintToChat($" [Magnatas] {mutante.PlayerName} chegou ao nível {novo.Nivel} de mutação.");
         }
-        if (novo.Nivel == NivelDaCorrida) mutante.PrintToChat(" [Magnatas] Aperte G para correr mais rápido por alguns segundos.");
+        if (SkinDe(mutante) == "blindado")
+            mutante.PrintToChat($" [Magnatas] Seu escudo agora dura {SegundosDoEscudo[Math.Clamp(novo.Nivel, 1, SegundosDoEscudo.Length) - 1]:0} s.");
+        else if (novo.Nivel == NivelDaCorrida) mutante.PrintToChat(" [Magnatas] Aperte G para correr mais rápido por alguns segundos.");
     }
 
     /// <summary>A velocidade do nível, mais o bônus enquanto a corrida do G vale.</summary>
@@ -611,6 +647,8 @@ public partial class ModoDeDiversao
     private HookResult AoApertarG(CCSPlayerController? jogador, CommandInfo comando)
     {
         if (jogador == null || !EhMutanteDeVerdade(jogador)) return HookResult.Continue;
+        // O Blindado troca a corrida pelo escudo, que já vale no nível 1.
+        if (SkinDe(jogador) == "blindado") return LigarEscudo(jogador);
         if (NivelDe(jogador).Nivel < NivelDaCorrida) return HookResult.Handled;
         var agora = Server.CurrentTime;
         if (corridas.TryGetValue(jogador.Slot, out var corrida) && agora < corrida.Recarga)
@@ -746,8 +784,7 @@ public partial class ModoDeDiversao
     /// </summary>
     private void MostrarQuedaDoMutante(CCSPlayerController jogador)
     {
-        if (!MorteNoServidor()) return;
-        var modeloDaQueda = QuedaDoNivel[Math.Clamp(NivelDe(jogador).Nivel, 1, QuedaDoNivel.Length) - 1];
+        var modeloDaQueda = QuedaDe(jogador);
         if (modeloDaQueda == null) return;
         var corpo = jogador.PlayerPawn.Value;
         if (corpo is not { IsValid: true } || corpo.AbsOrigin == null || corpo.AbsRotation == null) return;
@@ -844,6 +881,124 @@ public partial class ModoDeDiversao
     {
         zumbiNoServidor = false;
         comando.ReplyToCommand("zumbi=False");
+    }
+
+    /// <summary>O mutante da loja que o jogador está usando, só se o pacote dele já chegou ao servidor.</summary>
+    private string? SkinDe(CCSPlayerController jogador)
+    {
+        var skin = skinsDeTeste.TryGetValue(jogador.Slot, out var deTeste) ? deTeste
+            : skinsPorConta.TryGetValue(jogador.SteamID, out var comprada) ? comprada : null;
+        return skin == "blindado" && BlindadoNoServidor() ? skin : null;
+    }
+
+    private bool BlindadoNoServidor()
+    {
+        if (!UsarBonecosDoPacote || PacoteDoBlindado == "") return false;
+        if (blindadoNoServidor is bool sabido) return sabido;
+        blindadoNoServidor = NoPacote(PacoteDoBlindado, PastaDoBlindado);
+        Console.WriteLine($"[Magnatas] Blindado da loja no servidor: {(blindadoNoServidor.Value ? "sim" : "não, quem comprou vira o mutante comum")}.");
+        return blindadoNoServidor.Value;
+    }
+
+    private static int NivelComBonecoDoBlindado(int nivel) => NiveisComBonecoDoBlindado.Where(existente => existente <= nivel).DefaultIfEmpty(1).Max();
+
+    private static string ModeloDoBlindado(int nivel) => $"{PastaDoBlindado}/nivel{NivelComBonecoDoBlindado(nivel)}/mutante.vmdl";
+
+    private static string QuedaDoBlindado(int nivel) => $"{PastaDoBlindado}/nivel{NivelComBonecoDoBlindado(nivel)}/morte/guerreiro_morte.vmdl";
+
+    private string ModeloDe(CCSPlayerController jogador, int nivel) => SkinDe(jogador) == "blindado" ? ModeloDoBlindado(nivel) : ModeloDoNivel(nivel);
+
+    /// <summary>A queda de cada nível; a do Blindado vem no pacote dele, a do comum só se a do pacote v2 chegou.</summary>
+    private string? QuedaDe(CCSPlayerController jogador)
+    {
+        var nivel = NivelDe(jogador).Nivel;
+        if (SkinDe(jogador) == "blindado") return QuedaDoBlindado(nivel);
+        if (!MorteNoServidor()) return null;
+        return QuedaDoNivel[Math.Clamp(nivel, 1, QuedaDoNivel.Length) - 1];
+    }
+
+    private bool EscudoLigado(int vaga) => escudos.TryGetValue(vaga, out var escudo) && Server.CurrentTime < escudo.Fim;
+
+    /// <summary>O G do Blindado: 2, 4 ou 6 segundos sem levar dano, conforme o nível, e 15 segundos até poder de novo.</summary>
+    private HookResult LigarEscudo(CCSPlayerController jogador)
+    {
+        var agora = Server.CurrentTime;
+        if (escudos.TryGetValue(jogador.Slot, out var escudo) && agora < escudo.Recarga)
+        {
+            jogador.PrintToCenterHtml($"<font color='#f5b301'>Escudo em {Math.Ceiling(escudo.Recarga - agora)} s</font>", 1);
+            return HookResult.Handled;
+        }
+        var segundos = SegundosDoEscudo[Math.Clamp(NivelDe(jogador).Nivel, 1, SegundosDoEscudo.Length) - 1];
+        escudos[jogador.Slot] = (agora + segundos, agora + SegundosDeRecargaDoEscudo);
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo != null)
+        {
+            corpo.Render = CorDoEscudo;
+            Utilities.SetStateChanged(corpo, "CBaseModelEntity", "m_clrRender");
+        }
+        jogador.PrintToCenterHtml("<font color='#50a0ff' class='fontSize-l'>Blindado!</font>", (int)segundos);
+        AddTimer(segundos, () =>
+        {
+            // Morto, o corpo está invisível para a queda: a cor volta pelo AplicarAtributosDoMutante quando renascer.
+            if (jogador is not { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist } || EscudoLigado(jogador.Slot)) return;
+            var atual = jogador.PlayerPawn.Value;
+            if (atual == null) return;
+            atual.Render = ZumbiNoServidor() ? mutanteDaRodada.Cor : CorDaReserva;
+            Utilities.SetStateChanged(atual, "CBaseModelEntity", "m_clrRender");
+        });
+        return HookResult.Handled;
+    }
+
+    /// <summary>Pergunta ao site qual mutante cada conta comprou e está usando. Site fora do ar: todos ficam com o comum.</summary>
+    private async Task BuscarMutantesDaLoja(List<ulong> contas)
+    {
+        if (Config.SiteUrl == "" || Config.Token == "" || contas.Count == 0 || !BlindadoNoServidor()) return;
+        try
+        {
+            using var pedido = new HttpRequestMessage(HttpMethod.Get, $"{Config.SiteUrl.TrimEnd('/')}/api/servidor/visuais?steamids={string.Join(",", contas)}");
+            pedido.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Config.Token);
+            using var resposta = await Site.SendAsync(pedido);
+            if (!resposta.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[Magnatas] O site recusou os mutantes da loja: {(int)resposta.StatusCode}.");
+                return;
+            }
+            using var dados = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+            var achados = new Dictionary<ulong, string>();
+            foreach (var conta in dados.RootElement.EnumerateObject())
+            {
+                if (ulong.TryParse(conta.Name, out var id) && conta.Value.TryGetProperty("mutante", out var mutante) && mutante.GetString() is { } nome)
+                    achados[id] = nome;
+            }
+            Server.NextFrame(() =>
+            {
+                foreach (var conta in contas)
+                {
+                    if (achados.TryGetValue(conta, out var nome)) skinsPorConta[conta] = nome;
+                    else skinsPorConta.Remove(conta);
+                }
+            });
+        }
+        catch (Exception erro)
+        {
+            Console.WriteLine($"[Magnatas] Falha ao buscar os mutantes da loja: {erro.GetType().Name}.");
+        }
+    }
+
+    /// <summary>Só para teste: põe (ou tira, com "nenhum") o mutante da loja nos bots, todos ou só o da vaga dada.</summary>
+    [ConsoleCommand("magnatas_mutacao_skin", "Teste: mutante da loja nos bots (blindado|nenhum [vaga])")]
+    [CommandHelper(minArgs: 1, usage: "<blindado|nenhum> [vaga]", whoCanExecute: CommandUsage.SERVER_ONLY)]
+    public void SkinDeTeste(CCSPlayerController? chamador, CommandInfo comando)
+    {
+        if (Config.Regra != "mutacao") return;
+        var skin = comando.GetArg(1);
+        int? vaga = comando.ArgCount > 2 && int.TryParse(comando.GetArg(2), out var numero) ? numero : null;
+        foreach (var bot in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: true } && (vaga == null || jogador.Slot == vaga)))
+        {
+            if (skin == "blindado") skinsDeTeste[bot.Slot] = skin;
+            else skinsDeTeste.Remove(bot.Slot);
+            comando.ReplyToCommand($"vaga={bot.Slot} skin={SkinDe(bot) ?? "comum"}");
+        }
     }
 
     /// <summary>Só para teste: sobe os bots mutantes vivos (ou só o da vaga dada) até o nível pedido, para ver o boneco de cada nível.</summary>
