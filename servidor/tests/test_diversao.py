@@ -1071,6 +1071,7 @@ SONS_DE_ABATE = RAIZ / "plugins" / "MagnatasDiversao" / "SonsDeAbate.cs"
 PACOTE_DE_SONS = "3835000213"
 # Cada versão do boneco é um item novo da Oficina, que nunca é atualizado (ver servidor/ferramentas/mutante/LEIAME.md).
 PACOTE_DO_MUTANTE = "3836643990"
+PACOTE_DO_BLINDADO = "3837109609"
 
 
 def codigo_dos_sons():
@@ -1113,8 +1114,8 @@ def test_o_servidor_carrega_os_sons_do_pacote():
 
 @pytest.mark.parametrize("servidor", SERVIDORES)
 def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
-    # A Mutação também manda baixar o pacote do mutante, que só ela usa.
-    esperado = f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE}"' if servidor == "mutacao" else f'"{PACOTE_DE_SONS}"'
+    # A Mutação também manda baixar os pacotes do mutante comum e do Blindado da loja, que só ela usa.
+    esperado = f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO}"' if servidor == "mutacao" else f'"{PACOTE_DE_SONS}"'
     assert valor("mm_extra_addons", servidor) == esperado
     # Sem isso, cada troca de mapa do Equipe x Equipe faria todo mundo reconectar para conferir o pacote.
     assert valor("mm_cache_clients_with_addons", servidor) == "1"
