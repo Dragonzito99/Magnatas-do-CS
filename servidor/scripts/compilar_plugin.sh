@@ -49,3 +49,22 @@ PASTA_DA_LISTA=$CASA/server/game/csgo/addons/counterstrikesharp/plugins/Magnatas
 install -d -o "$USUARIO" -g "$USUARIO" "$PASTA_DA_LISTA"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida-lista/MagnatasLista.dll" "$PASTA_DA_LISTA/"
 echo "Plugin da lista instalado no servidor do competitivo."
+
+# A Magnata Shop no chat (cor, etiqueta, aviso de entrada). Vai para o competitivo, e a Diversão copia os addons dele a
+# cada início. A config leva o endereço do site e o token dos servidores, então só o usuário cs2 lê.
+cp -r "$ORIGEM/plugins/MagnatasVisual" "$OBRA/visual"
+DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_CLI_HOME="$OBRA/casa" \
+  "$SDK/dotnet" build "$OBRA/visual" -c Release -o "$OBRA/saida-visual" -p:CssApi="$API" -v quiet --nologo
+PASTA_DO_VISUAL=$CASA/server/game/csgo/addons/counterstrikesharp/plugins/MagnatasVisual
+install -d -o "$USUARIO" -g "$USUARIO" "$PASTA_DO_VISUAL"
+install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida-visual/MagnatasVisual.dll" "$PASTA_DO_VISUAL/"
+CONFIG_DO_VISUAL=$CASA/server/game/csgo/addons/counterstrikesharp/configs/plugins/MagnatasVisual
+install -d -o "$USUARIO" -g "$USUARIO" "$CONFIG_DO_VISUAL"
+SITE_URL=""
+SERVIDOR_TOKEN=""
+# shellcheck disable=SC1091
+[ -f "$CASA/cs2.env" ] && source "$CASA/cs2.env"
+install -o "$USUARIO" -g "$USUARIO" -m 600 /dev/null "$CONFIG_DO_VISUAL/MagnatasVisual.json"
+chmod 600 "$CONFIG_DO_VISUAL/MagnatasVisual.json"
+printf '{ "SiteUrl": "%s", "Token": "%s", "ConfigVersion": 1 }\n' "$SITE_URL" "$SERVIDOR_TOKEN" > "$CONFIG_DO_VISUAL/MagnatasVisual.json"
+echo "Plugin do visual da loja instalado no servidor do competitivo."
