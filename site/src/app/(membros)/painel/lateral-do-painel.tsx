@@ -5,7 +5,7 @@ import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import { contagemDeCasos } from '@/dominio/denuncias';
 
-export type ParteDoPainel = 'resumo' | 'olho' | 'membros' | 'noticias';
+export type ParteDoPainel = 'resumo' | 'olho' | 'membros' | 'noticias' | 'grana';
 
 // O que ainda não tem tela fica listado, apagado, para a equipe saber o que vem por aí.
 const EM_BREVE = ['Punições', 'Partidas', 'Servidores', 'Suas ideias aqui'];
@@ -36,6 +36,7 @@ async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: Pa
       <small>Clube</small>
       {item('membros', '/equipe', 'Membros e cargos')}
       {pode(usuario, 'publicar_noticia') && item('noticias', '/equipe/noticias', 'Notícias')}
+      {pode(usuario, 'ajustar_grana') && item('grana', '/painel/grana', 'Grana')}
       <small>Em breve</small>
       {EM_BREVE.map((nome) => (
         <span key={nome} className="breve">

@@ -5414,3 +5414,31 @@ a.cartao-destaque:hover {
     display: none;
   }
 }
+
+.busca-grana,
+.ajuste-grana {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.busca-grana input,
+.ajuste-grana input {
+  min-width: 0;
+  flex: 1 1 180px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--linha-forte);
+  background: var(--painel-2);
+  color: var(--tinta);
+}
+
+.ajuste-grana .campo-curto {
+  flex: 0 1 130px;
+}
+
+.alerta-grana ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}

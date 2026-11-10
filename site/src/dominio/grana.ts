@@ -159,3 +159,22 @@ export async function saldoDe(bd: Bd, usuarioId: string): Promise<number> {
   const [conta] = await bd.select({ grana: usuarios.grana }).from(usuarios).where(eq(usuarios.id, usuarioId));
   return conta?.grana ?? 0;
 }
+
+/** Para o Painel ADM: contas pelo apelido (sem diferenciar maiúscula), com o saldo; sem termo, as de mais Grana. */
+export async function buscarContasDaGrana(bd: Bd, termo: string, limite = 30): Promise<{ id: string; apelido: string; grana: number }[]> {
+  const texto = termo.trim();
+  // Busca literal: % e _ digitados não viram curinga.
+  const filtro = texto ? sql`position(lower(${texto}) in lower(${usuarios.apelido})) > 0` : undefined;
+  return bd
+    .select({ id: usuarios.id, apelido: usuarios.apelido, grana: usuarios.grana })
+    .from(usuarios)
+    .where(filtro)
+    .orderBy(desc(usuarios.grana), usuarios.apelido)
+    .limit(limite);
+}
+
+/** Uma conta com o saldo, para o Painel ADM. */
+export async function contaDaGrana(bd: Bd, usuarioId: string): Promise<{ id: string; apelido: string; grana: number } | null> {
+  const [conta] = await bd.select({ id: usuarios.id, apelido: usuarios.apelido, grana: usuarios.grana }).from(usuarios).where(eq(usuarios.id, usuarioId));
+  return conta ?? null;
+}

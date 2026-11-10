@@ -4,7 +4,7 @@ import type { Bd } from '@/bd/conexao';
 import { auditoria, lancamentosDeGrana, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { SemPermissao } from './equipe';
-import { abrirGrana, ajustarGrana, divergencias, extrato, granaDoXp, lancarGrana, SaldoInsuficiente } from './grana';
+import { abrirGrana, ajustarGrana, buscarContasDaGrana, divergencias, extrato, granaDoXp, lancarGrana, SaldoInsuficiente } from './grana';
 import { lancarXp, type GanhoDePartida } from './xp';
 
 let bd: Bd;
@@ -128,4 +128,18 @@ test('ajuste que deixaria o saldo negativo é recusado', async () => {
   const alvo = await criarUsuario(bd, { estado: 'ativo' });
   await expect(ajustarGrana(bd, adm, alvo.id, -1, 'tirar')).rejects.toBeInstanceOf(SaldoInsuficiente);
   expect(await bd.select().from(auditoria).where(eq(auditoria.acao, 'ajustar_grana'))).toHaveLength(0);
+});
+
+test('a busca do Painel acha contas pelo apelido, com o saldo, e sem termo mostra as mais ricas', async () => {
+  const rica = await criarUsuario(bd, { apelido: 'Patrao_Rico' });
+  const pobre = await criarUsuario(bd, { apelido: 'patrao_pobre' });
+  await criarUsuario(bd, { apelido: 'outro' });
+  await bd.transaction((tx) => lancarGrana(tx, { usuarioId: rica.id, tipo: 'ajuste', quantidade: 900, referencia: 'r' }));
+  await bd.transaction((tx) => lancarGrana(tx, { usuarioId: pobre.id, tipo: 'ajuste', quantidade: 5, referencia: 'p' }));
+  expect((await buscarContasDaGrana(bd, 'patrao')).map((conta) => [conta.apelido, conta.grana])).toEqual([
+    ['Patrao_Rico', 900],
+    ['patrao_pobre', 5],
+  ]);
+  expect((await buscarContasDaGrana(bd, ''))[0]).toMatchObject({ id: rica.id, grana: 900 });
+  expect(await buscarContasDaGrana(bd, '%')).toEqual([]);
 });
