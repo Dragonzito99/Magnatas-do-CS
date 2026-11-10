@@ -1,0 +1,1 @@
+ALTER TYPE "public"."pacote_de_magcoin" ADD VALUE 'teste';

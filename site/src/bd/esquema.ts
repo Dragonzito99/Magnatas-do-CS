@@ -104,7 +104,7 @@ export const itensDoJogador = pgTable(
   (tabela) => [primaryKey({ columns: [tabela.usuarioId, tabela.itemId] })],
 );
 
-export const pacoteDeMagcoin = pgEnum('pacote_de_magcoin', ['pequeno', 'medio', 'grande']);
+export const pacoteDeMagcoin = pgEnum('pacote_de_magcoin', ['pequeno', 'medio', 'grande', 'teste']);
 export const estadoDoPedido = pgEnum('estado_do_pedido', ['aberto', 'pago', 'estornado']);
 
 /** Uma compra de MagCoin pelo Mercado Pago. O crédito só sai quando a API do Mercado Pago diz que foi aprovado. */

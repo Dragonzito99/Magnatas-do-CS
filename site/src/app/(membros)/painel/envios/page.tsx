@@ -8,7 +8,7 @@ import { marcar } from './acoes';
 
 const data = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'America/Sao_Paulo' });
 const reais = (centavos: number) => (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const NOME: Record<string, string> = { pequeno: 'Pacote pequeno', medio: 'Pacote médio', grande: 'Pacote grande', bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', premium: 'Premium' };
+const NOME: Record<string, string> = { pequeno: 'Pacote pequeno', medio: 'Pacote médio', grande: 'Pacote grande', teste: 'Teste do Adm', bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', premium: 'Premium' };
 
 /** Envios do Premium (com endereço) e as vendas do mês, para a nota fiscal. Só o Adm. */
 export default async function EnviosNoPainel() {

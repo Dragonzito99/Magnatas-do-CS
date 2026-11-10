@@ -3,7 +3,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { enderecoDe, enviosDe } from '@/dominio/envios';
 import { NIVEIS, ORDEM_DOS_NIVEIS, nivelAtivo } from '@/dominio/membros';
-import { minhaAssinatura, PACOTES } from '@/dominio/pagamentos';
+import { minhaAssinatura, PACOTES, pacotesPara } from '@/dominio/pagamentos';
 import { BotaoConfirmar } from '../botao-confirmar';
 import { AbasDaLoja } from '../loja/abas-da-loja';
 import { assinarNivel, cancelar, comprarPacote, salvarMeuEndereco } from './acoes';
@@ -92,7 +92,7 @@ export default async function Apoio({ searchParams }: { searchParams: Promise<{ 
           </p>
         </div>
         <div className="planos-de-apoio">
-          {(Object.keys(PACOTES) as (keyof typeof PACOTES)[]).map((pacote) => (
+          {pacotesPara(usuario).map((pacote) => (
             <form key={pacote} action={comprarPacote} className="plano-de-apoio">
               <input type="hidden" name="pacote" value={pacote} />
               <span className="tipo-do-item">{PACOTES[pacote].nome}</span>

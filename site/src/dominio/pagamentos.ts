@@ -1,9 +1,10 @@
 import { and, desc, eq, gt, inArray, or } from 'drizzle-orm';
+import { pode } from '@/auth/permissoes';
 import type { Bd } from '@/bd/conexao';
 import { assinaturas, pedidos, usuarios, type Usuario } from '@/bd/esquema';
 import { assinaturaConfere, type MercadoPago } from '@/pagamento/mercadopago';
 import { exigirAtivo } from './disponibilidade';
-import { registrarAuditoria } from './equipe';
+import { registrarAuditoria, SemPermissao } from './equipe';
 import { lancarMoeda } from './grana';
 import { aplicarMensalidade, NIVEIS, type NivelDeMembro } from './membros';
 
@@ -12,7 +13,14 @@ export const PACOTES = {
   pequeno: { nome: 'Pacote pequeno', precoCentavos: 1000, magcoins: 100 },
   medio: { nome: 'Pacote médio', precoCentavos: 2500, magcoins: 260 },
   grande: { nome: 'Pacote grande', precoCentavos: 5000, magcoins: 550 },
+  // Para o Adm conferir os pagamentos de verdade gastando pouco; ninguém mais vê nem compra.
+  teste: { nome: 'Teste do Adm', precoCentavos: 100, magcoins: 10, soAdm: true },
 } as const;
+
+/** Os pacotes que essa pessoa pode comprar: o de teste só aparece para quem pode ajustar a Grana (o Adm). */
+export function pacotesPara(usuario: Pick<Usuario, 'papel' | 'estado'>): Pacote[] {
+  return (Object.keys(PACOTES) as Pacote[]).filter((pacote) => !('soAdm' in PACOTES[pacote]) || pode(usuario, 'ajustar_grana'));
+}
 export type Pacote = keyof typeof PACOTES;
 
 export class JaEhMembro extends Error {
@@ -31,9 +39,10 @@ type Enderecos = { site: string };
 const centavos = (reais: number) => Math.round(reais * 100);
 
 /** Cria o pedido e devolve o endereço da página de pagamento do Mercado Pago (PIX ou cartão). */
-export async function abrirPedido(bd: Bd, mp: MercadoPago, usuario: Pick<Usuario, 'id'>, pacote: Pacote, enderecos: Enderecos): Promise<string> {
+export async function abrirPedido(bd: Bd, mp: MercadoPago, usuario: Pick<Usuario, 'id' | 'papel' | 'estado'>, pacote: Pacote, enderecos: Enderecos): Promise<string> {
   const dados = PACOTES[pacote];
   if (!dados) throw new Error('Pacote desconhecido.');
+  if (!pacotesPara(usuario).includes(pacote)) throw new SemPermissao();
   const pedido = await bd.transaction(async (tx) => {
     await exigirAtivo(tx, usuario);
     const [novo] = await tx.insert(pedidos).values({ usuarioId: usuario.id, pacote, valorCentavos: dados.precoCentavos, magcoins: dados.magcoins }).returning();

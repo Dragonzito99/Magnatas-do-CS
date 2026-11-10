@@ -28,6 +28,7 @@ export async function comprarPacote(dados: FormData): Promise<void> {
     destino = await abrirPedido(obterBd(), mp, usuario, pacote, enderecos);
   } catch (erro) {
     if (erro instanceof ContaSemAcesso) redirect('/apoio?erro=conta');
+    if (erro instanceof SemPermissao) redirect('/apoio?erro=pacote');
     console.error('[apoio] Falha ao abrir o pagamento:', erro instanceof Error ? erro.message : 'erro');
     redirect('/apoio?erro=mercadopago');
   }

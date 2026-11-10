@@ -5,6 +5,7 @@ import type { Bd } from '@/bd/conexao';
 import { assinaturas, auditoria, lancamentosDeGrana, pedidos, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { assinaturaConfere, type MercadoPago, type PagamentoMp } from '@/pagamento/mercadopago';
+import { SemPermissao } from './equipe';
 import { lancarMoeda } from './grana';
 import { abrirPedido, assinar, cancelarAssinatura, JaEhMembro, PACOTES, processarAssinatura, processarMensalidade, processarPagamento, receberAviso } from './pagamentos';
 
@@ -71,6 +72,16 @@ test('os pacotes aprovados pelo dono', () => {
     medio: { precoCentavos: 2500, magcoins: 260 },
     grande: { precoCentavos: 5000, magcoins: 550 },
   });
+});
+
+test('o pacote de teste de R$ 1 só abre para o Adm, e credita como os outros', async () => {
+  expect(PACOTES.teste).toMatchObject({ precoCentavos: 100, magcoins: 10, soAdm: true });
+  await expect(abrirPedido(bd, mp, await conta(), 'teste', ENDERECOS)).rejects.toThrow(SemPermissao);
+  expect(await bd.select().from(pedidos)).toHaveLength(0);
+  const adm = await criarUsuario(bd, { estado: 'ativo', papel: 'adm' });
+  const { id } = await pedidoPago(adm, 'teste');
+  await processarPagamento(bd, mp, id);
+  expect((await recarregar(bd, adm)).magcoin).toBe(10);
 });
 
 test('abrir um pedido leva para a página de pagamento do Mercado Pago', async () => {
