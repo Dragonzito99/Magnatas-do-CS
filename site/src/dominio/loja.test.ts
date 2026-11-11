@@ -240,7 +240,7 @@ async function contaComMagcoin(magcoin: number): Promise<Usuario> {
 }
 
 test('preço para sempre em MagCoin: 150 nos itens de aparência e 300 no mutante', () => {
-  expect(PRECOS_MAGCOIN).toEqual({ cor: 150, etiqueta: 150, aviso: 150, moldura: 150, mutante: 300 });
+  expect(PRECOS_MAGCOIN).toEqual({ cor: 50, etiqueta: 70, aviso: 50, moldura: 80, mutante: 150 });
 });
 
 test('comprar com MagCoin dá o item para sempre e cobra uma vez pelo mesmo código', async () => {
@@ -249,7 +249,7 @@ test('comprar com MagCoin dá o item para sempre e cobra uma vez pelo mesmo cód
   expect(await comprarParaSempre(bd, conta, { itemId: 'mutante-blindado', codigo })).toBe('comprado');
   expect(await comprarParaSempre(bd, conta, { itemId: 'mutante-blindado', codigo })).toBe('repetido');
   const atual = await recarregar(bd, conta);
-  expect([atual.magcoin, atual.grana]).toEqual([100, 0]);
+  expect([atual.magcoin, atual.grana]).toEqual([400 - PRECOS_MAGCOIN.mutante, 0]);
   expect((await posse(conta, 'mutante-blindado'))?.expiraEm).toBeNull();
 });
 
@@ -257,7 +257,7 @@ test('item que já é para sempre não se compra de novo, e comprar por dias nã
   const conta = await contaComMagcoin(400);
   await comprarParaSempre(bd, conta, { itemId: 'cor-verde', codigo: randomUUID() });
   await expect(comprarParaSempre(bd, conta, { itemId: 'cor-verde', codigo: randomUUID() })).rejects.toBeInstanceOf(JaEhSeu);
-  expect((await recarregar(bd, conta)).magcoin).toBe(250);
+  expect((await recarregar(bd, conta)).magcoin).toBe(400 - PRECOS_MAGCOIN.cor);
 });
 
 test('item que estava por dias vira para sempre', async () => {
@@ -269,7 +269,7 @@ test('item que estava por dias vira para sempre', async () => {
 });
 
 test('sem MagCoin suficiente, nada muda', async () => {
-  const conta = await contaComMagcoin(100);
+  const conta = await contaComMagcoin(PRECOS_MAGCOIN.cor - 10);
   await expect(comprarParaSempre(bd, conta, { itemId: 'cor-verde', codigo: randomUUID() })).rejects.toBeInstanceOf(SaldoInsuficiente);
   expect(await posse(conta, 'cor-verde')).toBeUndefined();
 });

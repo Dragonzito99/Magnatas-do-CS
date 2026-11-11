@@ -23,8 +23,8 @@ export const PRECOS: Record<TipoDeItem, Record<DiasAVenda, number>> = {
   mutante: { 1: 200, 3: 550, 5: 850, 9: 1350 },
 };
 
-/** Para sempre, com MagCoin (dono, 10/11/2026): R$ 15 nos itens de aparência e R$ 30 no mutante. */
-export const PRECOS_MAGCOIN: Record<TipoDeItem, number> = { cor: 150, etiqueta: 150, aviso: 150, moldura: 150, mutante: 300 };
+/** Para sempre, com MagCoin (100 = R$ 10). O dono achou R$ 15 numa moldura caro demais e escolheu estes (11/11/2026). */
+export const PRECOS_MAGCOIN: Record<TipoDeItem, number> = { cor: 50, etiqueta: 70, aviso: 50, moldura: 80, mutante: 150 };
 
 export const NOME_DO_TIPO: Record<TipoDeItem, string> = {
   cor: 'Cor do nome',
