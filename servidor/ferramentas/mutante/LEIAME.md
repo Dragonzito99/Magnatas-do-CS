@@ -49,3 +49,9 @@ python montar_gestos.py danca:sem_repetir flexao:repetir mortal:sem_repetir
 ```
 
 Depois compilar `gestos/gestos.vmdl`. O jogador chama com `css_danca`, `css_flexao` e `css_mortal` (ou `!danca` no chat).
+
+## Vitrine da loja (o mutante andando)
+
+`filmar_vitrine.py` grava os quadros com fundo transparente, e o `ffmpeg` junta tudo num `.webp` animado. Depois disso,
+rode sempre `python corrigir_webp.py <arquivo.webp>`. Ele faz cada quadro substituir o anterior; sem esse passo, alguns
+navegadores vão somando os quadros e o boneco aparece com várias cópias sobrepostas.
