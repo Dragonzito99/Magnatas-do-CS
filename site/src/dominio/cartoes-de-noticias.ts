@@ -29,7 +29,7 @@ export type CartaoDeNoticia = {
   confronto?: Confronto;
 };
 
-/** As logos dos times brasileiros acompanhados, baixadas da Liquipedia (dono, 11/11/2026). */
+/** As logos dos times brasileiros acompanhados e dos adversários mais comuns, baixadas da Liquipedia (dono, 11/11/2026). */
 const LOGO_DO_TIME: Record<string, string> = {
   FURIA: '/times/furia.png',
   MIBR: '/times/mibr.png',
@@ -39,6 +39,36 @@ const LOGO_DO_TIME: Record<string, string> = {
   Fluxo: '/times/fluxo.png',
   'RED Canids': '/times/red-canids.png',
   ODDIK: '/times/oddik.png',
+  // Os adversários de sempre, com o nome curto que a Liquipedia mostra nos jogos (dono, 11/11/2026). Time fora desta
+  // lista aparece só com o nome.
+  Vitality: '/times/vitality.png',
+  Falcons: '/times/falcons.png',
+  NAVI: '/times/navi.png',
+  Spirit: '/times/spirit.png',
+  MOUZ: '/times/mouz.png',
+  FaZe: '/times/faze.png',
+  G2: '/times/g2.png',
+  MongolZ: '/times/the-mongolz.png',
+  Aurora: '/times/aurora.png',
+  Liquid: '/times/liquid.png',
+  HEROIC: '/times/heroic.png',
+  GL: '/times/gamerlegion.png',
+  PV: '/times/parivision.png',
+  B8: '/times/b8.png',
+  BB: '/times/betboom.png',
+  NIP: '/times/nip.png',
+  Fnatic: '/times/fnatic.png',
+  BIG: '/times/big.png',
+  TYLOO: '/times/tyloo.png',
+  EF: '/times/eternal-fire.png',
+  FLY: '/times/flyquest.png',
+  NRG: '/times/nrg.png',
+  Wildcard: '/times/wildcard.png',
+  '9z': '/times/9z.png',
+  '100T': '/times/100-thieves.png',
+  Alliance: '/times/alliance.png',
+  MZP: '/times/metizport.png',
+  BESTIA: '/times/bestia.png',
 };
 
 const time = (nome: string): TimeNoConfronto => ({ nome, logo: LOGO_DO_TIME[nome] ?? null });

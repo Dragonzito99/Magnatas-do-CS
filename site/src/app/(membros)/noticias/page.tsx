@@ -44,7 +44,7 @@ function LogoDoTime({ time, tamanho }: { time: TimeNoConfronto; tamanho: number 
   return <img className="logo-do-time" src={time.logo} alt={time.nome} width={tamanho} height={tamanho} />;
 }
 
-/** No lugar da foto, os times: a logo do time BR e "contra Fulano"; BR x BR, as duas logos com o x no meio. */
+/** No lugar da foto, os times: as duas logos com o x no meio; time sem logo guardada aparece como "contra Fulano". */
 function ConfrontoNoCartao({ cartao }: { cartao: CartaoDeNoticia }) {
   const confronto = cartao.confronto!;
   const [br, outro] = confronto.time1.logo ? [confronto.time1, confronto.time2] : [confronto.time2, confronto.time1];

@@ -63,9 +63,16 @@ test('mais notícias do clube deixa de fora a que está aberta e para em três',
   expect(cartoes.every((cartao) => cartao.imagem.startsWith('/mapas/'))).toBe(true);
 });
 
-test('jogo de time BR traz a logo do time BR; BR x BR traz as duas, e time de fora fica sem logo', () => {
+test('jogo de time BR traz as duas logos quando o time de fora é conhecido; time desconhecido fica sem logo', () => {
+  // A logo do adversário também aparece (dono, 11/11/2026).
   const contra = cartoesDeNoticias({ clube: [], steam: [], jogos }, 'times').cartoes[0];
-  expect(contra.confronto).toEqual({ time1: { nome: 'FURIA', logo: '/times/furia.png' }, time2: { nome: 'NAVI', logo: null }, placar: '2:1' });
+  expect(contra.confronto).toEqual({ time1: { nome: 'FURIA', logo: '/times/furia.png' }, time2: { nome: 'NAVI', logo: '/times/navi.png' }, placar: '2:1' });
+  for (const [nome, arquivo] of [['Vitality', 'vitality'], ['Falcons', 'falcons'], ['MongolZ', 'the-mongolz'], ['Spirit', 'spirit']]) {
+    const jogo = cartoesDeNoticias({ clube: [], steam: [], jogos: [{ ...jogos[0], time2: nome }] }, 'times').cartoes[0];
+    expect(jogo.confronto?.time2).toEqual({ nome, logo: `/times/${arquivo}.png` });
+  }
+  const desconhecido = cartoesDeNoticias({ clube: [], steam: [], jogos: [{ ...jogos[0], time2: 'LowC' }] }, 'times').cartoes[0];
+  expect(desconhecido.confronto?.time2).toEqual({ nome: 'LowC', logo: null });
   const classico = cartoesDeNoticias({ clube: [], steam: [], jogos: [{ ...jogos[0], time1: 'Legacy', time2: 'FURIA', placar: null }] }, 'times').cartoes[0];
   expect(classico.confronto).toEqual({ time1: { nome: 'Legacy', logo: '/times/legacy.png' }, time2: { nome: 'FURIA', logo: '/times/furia.png' }, placar: null });
   expect(cartoesDeNoticias({ clube, steam, jogos }, 'clube').cartoes.every((cartao) => cartao.confronto === undefined)).toBe(true);
