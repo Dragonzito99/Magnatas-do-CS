@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
 import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { ContaSemAcesso } from './disponibilidade';
 import { lancarGrana, lancarMoeda, SaldoInsuficiente } from './grana';
-import { bauDe, CATALOGO, comprarItem, comprarParaSempre, DIAS_A_VENDA, itemDoCatalogo, ItemInvalido, JaEhSeu, lojaAberta, moldurasDe, PRECOS, PRECOS_MAGCOIN, tirarItem, usarItem, visuaisDe } from './loja';
+import { bauDe, CATALOGO, comprarItem, comprarParaSempre, DIAS_A_VENDA, fimDasOfertas, ITENS_A_VENDA, itemDoCatalogo, ItemInvalido, JaEhSeu, lojaAberta, maisComprados, moldurasDe, ofertasDoDia, PRECOS, PRECOS_MAGCOIN, precoDeHoje, RARIDADE, tirarItem, usarItem, visuaisDe } from './loja';
 
 let bd: Bd;
 const DIA = 24 * 60 * 60 * 1000;
@@ -260,4 +260,60 @@ test('itens dos membros não estão à venda, nem por Grana nem por MagCoin', as
     await expect(comprar(conta, id, 1)).rejects.toBeInstanceOf(ItemInvalido);
   }
   expect(itemDoCatalogo('mutante-blindado')?.lancamento).toBe(true);
+});
+
+test('raridade por tipo: cor comum, etiqueta e aviso raros, moldura épica, mutante lendário', () => {
+  expect(RARIDADE).toEqual({ cor: 'comum', etiqueta: 'raro', aviso: 'raro', moldura: 'epico', mutante: 'lendario' });
+});
+
+test('as ofertas do dia são 4 itens à venda, sem mutante, iguais para todos no mesmo dia de Brasília', () => {
+  const manha = new Date('2026-11-10T04:00:00Z'); // 01:00 em Brasília
+  const noite = new Date('2026-11-11T02:30:00Z'); // 23:30 em Brasília, mesmo dia
+  const ofertas = ofertasDoDia(manha);
+  expect(ofertas).toHaveLength(4);
+  expect(ofertasDoDia(noite)).toEqual(ofertas);
+  expect(new Set(ofertas.map((oferta) => oferta.itemId)).size).toBe(4);
+  expect(ofertas.map((oferta) => oferta.desconto)).toEqual([30, 25, 20, 20]);
+  const aVenda = new Set(ITENS_A_VENDA().filter((item) => item.tipo !== 'mutante').map((item) => item.id));
+  for (const oferta of ofertas) expect(aVenda.has(oferta.itemId)).toBe(true);
+});
+
+test('as ofertas mudam à meia-noite de Brasília', () => {
+  const dias = Array.from({ length: 7 }, (_, indice) => ofertasDoDia(new Date(Date.UTC(2026, 10, 10 + indice, 15))).map((oferta) => oferta.itemId).join());
+  expect(new Set(dias).size).toBeGreaterThan(1);
+  expect(fimDasOfertas(new Date('2026-11-10T04:00:00Z'))).toEqual(new Date('2026-11-11T03:00:00Z'));
+  expect(fimDasOfertas(new Date('2026-11-11T02:59:59Z'))).toEqual(new Date('2026-11-11T03:00:00Z'));
+});
+
+test('o preço de hoje tem o desconto da oferta só nos itens da oferta', () => {
+  const [oferta] = ofertasDoDia(AGORA);
+  const item = itemDoCatalogo(oferta.itemId)!;
+  expect(precoDeHoje(item, 3, AGORA)).toBe(Math.round((PRECOS[item.tipo][3] * (100 - oferta.desconto)) / 100));
+  const foraDaOferta = ITENS_A_VENDA().find((candidato) => candidato.tipo === 'mutante')!;
+  expect(precoDeHoje(foraDaOferta, 3, AGORA)).toBe(PRECOS.mutante[3]);
+});
+
+test('comprar um item da oferta cobra o preço com desconto e guarda o desconto', async () => {
+  const [oferta] = ofertasDoDia(AGORA);
+  const item = itemDoCatalogo(oferta.itemId)!;
+  const preco = precoDeHoje(item, 1, AGORA);
+  const conta = await contaCom(1000);
+  await comprar(conta, item.id, 1);
+  expect((await recarregar(bd, conta)).grana).toBe(1000 - preco);
+  const [linha] = await bd.select().from(lancamentosDeGrana).where(eq(lancamentosDeGrana.tipo, 'compra'));
+  expect(linha.detalhes).toEqual({ itemId: item.id, dias: 1, preco, desconto: oferta.desconto });
+});
+
+test('mais comprados: os itens com mais compras nos últimos 30 dias, sem contar ajustes', async () => {
+  const conta = await contaCom(5000);
+  await comprar(conta, 'moldura-fogo', 1);
+  await comprar(conta, 'moldura-fogo', 1);
+  await comprar(conta, 'etiqueta-don', 1);
+  for (let vez = 0; vez < 3; vez++) await comprar(conta, 'cor-azul', 1);
+  await bd
+    .update(lancamentosDeGrana)
+    .set({ criadoEm: new Date(AGORA.getTime() - 40 * DIA) })
+    .where(sql`${lancamentosDeGrana.detalhes}->>'itemId' = 'cor-azul'`);
+  await bd.transaction((tx) => lancarGrana(tx, { usuarioId: conta.id, tipo: 'ajuste', quantidade: -1, referencia: 'x', detalhes: { itemId: 'cor-roxa' } }));
+  expect(await maisComprados(bd, AGORA, 2)).toEqual(['moldura-fogo', 'etiqueta-don']);
 });

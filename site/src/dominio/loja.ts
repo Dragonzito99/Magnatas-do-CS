@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, ne } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, isNotNull, ne, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd/esquema';
 import { exigirAtivo } from './disponibilidade';
@@ -113,6 +113,72 @@ export function itemDoCatalogo(itemId: string): ItemDaLoja | undefined {
   return CATALOGO.find((item) => item.id === itemId);
 }
 
+export type Raridade = 'comum' | 'raro' | 'epico' | 'lendario';
+
+/** A cor do cartão na vitrine, como nas lojas de jogo (dono, 11/11/2026). Vai pelo tipo do item. */
+export const RARIDADE: Record<TipoDeItem, Raridade> = { cor: 'comum', etiqueta: 'raro', aviso: 'raro', moldura: 'epico', mutante: 'lendario' };
+export const NOME_DA_RARIDADE: Record<Raridade, string> = { comum: 'Comum', raro: 'Raro', epico: 'Épico', lendario: 'Lendário' };
+
+export type Oferta = { itemId: string; desconto: number };
+
+/** Desconto em % de cada oferta do dia, na ordem. Vale só para a Grana; o MagCoin não tem oferta. */
+const DESCONTOS_DO_DIA = [30, 25, 20, 20];
+/** Brasília não tem horário de verão desde 2019: o dia vira às 03:00 UTC. */
+const FUSO_DE_BRASILIA_MS = 3 * 60 * 60 * 1000;
+
+const diaDeBrasilia = (agora: Date) => new Date(agora.getTime() - FUSO_DE_BRASILIA_MS).toISOString().slice(0, 10);
+
+/** Um número fixo para cada dia, para sortear as mesmas ofertas para todos o dia inteiro. */
+function sementeDoDia(dia: string): () => number {
+  let semente = 2166136261;
+  for (const letra of dia) semente = Math.imul(semente ^ letra.charCodeAt(0), 16777619);
+  return () => {
+    semente = (semente + 0x6d2b79f5) | 0;
+    let mistura = Math.imul(semente ^ (semente >>> 15), 1 | semente);
+    mistura = (mistura + Math.imul(mistura ^ (mistura >>> 7), 61 | mistura)) ^ mistura;
+    return ((mistura ^ (mistura >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** As 4 ofertas do dia de Brasília: itens de aparência sorteados pela data, os mesmos para todos até a meia-noite. */
+export function ofertasDoDia(agora: Date = new Date()): Oferta[] {
+  const sorteio = sementeDoDia(diaDeBrasilia(agora));
+  const candidatos = ITENS_A_VENDA().filter((item) => item.tipo !== 'mutante');
+  for (let indice = candidatos.length - 1; indice > 0; indice--) {
+    const outro = Math.floor(sorteio() * (indice + 1));
+    [candidatos[indice], candidatos[outro]] = [candidatos[outro], candidatos[indice]];
+  }
+  return DESCONTOS_DO_DIA.map((desconto, indice) => ({ itemId: candidatos[indice].id, desconto }));
+}
+
+/** Quando as ofertas de hoje acabam: a próxima meia-noite de Brasília. */
+export function fimDasOfertas(agora: Date = new Date()): Date {
+  const [ano, mes, dia] = diaDeBrasilia(agora).split('-').map(Number);
+  return new Date(Date.UTC(ano, mes - 1, dia + 1) + FUSO_DE_BRASILIA_MS);
+}
+
+export function descontoDeHoje(item: Pick<ItemDaLoja, 'id'>, agora: Date = new Date()): number {
+  return ofertasDoDia(agora).find((oferta) => oferta.itemId === item.id)?.desconto ?? 0;
+}
+
+/** O preço em Grana agora, com o desconto da oferta do dia quando o item está nela. */
+export function precoDeHoje(item: Pick<ItemDaLoja, 'id' | 'tipo'>, dias: DiasAVenda, agora: Date = new Date()): number {
+  return Math.round((PRECOS[item.tipo][dias] * (100 - descontoDeHoje(item, agora))) / 100);
+}
+
+/** Os itens mais comprados com Grana ou MagCoin nos últimos 30 dias, do mais para o menos. */
+export async function maisComprados(bd: Bd, agora: Date = new Date(), limite = 2): Promise<string[]> {
+  const item = sql<string>`${lancamentosDeGrana.detalhes}->>'itemId'`;
+  const linhas = await bd
+    .select({ itemId: item, vezes: count() })
+    .from(lancamentosDeGrana)
+    .where(and(eq(lancamentosDeGrana.tipo, 'compra'), gte(lancamentosDeGrana.criadoEm, new Date(agora.getTime() - 30 * DIA_MS))))
+    .groupBy(item)
+    .orderBy(desc(count()), item)
+    .limit(limite);
+  return linhas.map((linha) => linha.itemId).filter((id) => itemDoCatalogo(id));
+}
+
 /** Até o dono abrir (LOJA_ABERTA=sim), só o Adm vê a loja, para testar no site de verdade. */
 export function lojaAberta(usuario: Pick<Usuario, 'papel' | 'estado'>, ambiente: Record<string, string | undefined> = process.env): boolean {
   if (usuario.estado !== 'ativo') return false;
@@ -134,7 +200,8 @@ export async function comprarItem(
   const item = itemDoCatalogo(pedido.itemId);
   const dias = DIAS_A_VENDA.find((opcao) => opcao === pedido.dias);
   if (!item || item.venda === false || !dias || !FORMATO_DO_CODIGO.test(pedido.codigo)) throw new ItemInvalido();
-  const preco = PRECOS[item.tipo][dias];
+  const preco = precoDeHoje(item, dias, agora);
+  const desconto = descontoDeHoje(item, agora);
 
   return bd.transaction(async (tx) => {
     await exigirAtivo(tx, usuario);
@@ -145,7 +212,7 @@ export async function comprarItem(
       tipo: 'compra',
       quantidade: -preco,
       referencia: pedido.codigo,
-      detalhes: { itemId: item.id, dias, preco },
+      detalhes: { itemId: item.id, dias, preco, ...(desconto ? { desconto } : {}) },
     });
     if (!lancado) return 'repetido';
 

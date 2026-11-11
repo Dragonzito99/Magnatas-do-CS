@@ -5442,46 +5442,6 @@ a.cartao-destaque:hover {
   color: var(--tinta-2);
 }
 
-.precos-loja {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-
-.preco-loja {
-  display: grid;
-  gap: 2px;
-  padding: 7px 4px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--ouro-fraco);
-  box-shadow: inset 0 0 0 1px rgba(245, 179, 1, 0.45);
-  color: var(--tinta);
-  font-size: 11px;
-  text-align: center;
-  cursor: pointer;
-}
-
-.preco-loja b {
-  color: var(--ouro);
-  font-size: 14px;
-}
-
-.preco-loja:hover {
-  filter: brightness(1.2);
-}
-
-.preco-loja.sem-saldo {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--linha);
-  color: var(--tinta-2);
-  cursor: not-allowed;
-}
-
-.preco-loja.sem-saldo b {
-  color: var(--tinta-2);
-}
-
 .em-uso {
   position: absolute;
   top: 10px;
@@ -5585,7 +5545,7 @@ a.cartao-destaque:hover {
   padding-left: 18px;
 }
 
-/* Magnata Shop como vitrine: conta e prévia à esquerda, prateleira à direita. */
+/* Abas da Magnata Shop (loja, compras, apoio) */
 .abas-da-loja {
   display: flex;
   gap: 6px;
@@ -5609,18 +5569,6 @@ a.cartao-destaque:hover {
   color: var(--sobre-ouro);
 }
 
-.vitrine {
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.lado-da-loja {
-  display: grid;
-  gap: 14px;
-}
-
 .caixa-da-loja {
   border-radius: 12px;
   background: linear-gradient(180deg, #1a0f2c, #0d0718);
@@ -5636,45 +5584,6 @@ a.cartao-destaque:hover {
   border-bottom: 1px solid var(--linha-forte);
   font: italic 700 15px/1.2 var(--fonte-titulo), sans-serif;
   text-transform: uppercase;
-}
-
-.saldo-da-loja {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  border-radius: 8px;
-  background: #05030a;
-  box-shadow: inset 0 0 0 1px var(--linha);
-}
-
-.saldo-da-loja b {
-  color: var(--ouro);
-  font-size: 18px;
-}
-
-.saldo-da-loja.apagado {
-  color: var(--tinta-2);
-}
-
-.saldo-da-loja small {
-  font-size: 11px;
-}
-
-.previa-da-loja {
-  display: grid;
-  gap: 12px;
-}
-
-.palco-da-previa {
-  display: grid;
-  place-items: center;
-  min-height: 200px;
-  padding: 16px;
-  border-radius: 10px;
-  background: radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.28), transparent 65%), #05030a;
-  box-shadow: inset 0 0 0 1px var(--linha);
 }
 
 .previa-moldura {
@@ -5705,79 +5614,6 @@ a.cartao-destaque:hover {
   color: #9fb7d6;
 }
 
-.tenho {
-  color: var(--verde);
-  font-style: normal;
-}
-
-.prateleira {
-  min-width: 0;
-}
-
-.filtros-da-loja {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.filtro-da-loja {
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: #0b0614;
-  box-shadow: inset 0 0 0 1px var(--linha-forte);
-  color: var(--tinta-2);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.filtro-da-loja[aria-current='page'] {
-  background: var(--ouro-fraco);
-  box-shadow: inset 0 0 0 1px var(--ouro);
-  color: var(--ouro);
-}
-
-.filtro-da-loja.apagado {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.filtro-da-loja em {
-  font-size: 10px;
-  font-style: normal;
-  text-transform: uppercase;
-}
-
-.itens-da-prateleira {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
-}
-
-.item-da-prateleira {
-  position: relative;
-  display: grid;
-  grid-template-rows: auto 72px auto;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #1c1230, #110a1f);
-  box-shadow: inset 0 0 0 1px var(--linha);
-  color: var(--tinta);
-  text-decoration: none;
-  transition: box-shadow 0.15s, transform 0.15s;
-}
-
-.item-da-prateleira:hover {
-  transform: translateY(-1px);
-  box-shadow: inset 0 0 0 1px var(--linha-forte), 0 0 12px rgba(168, 85, 247, 0.25);
-}
-
-.item-da-prateleira.escolhido {
-  box-shadow: inset 0 0 0 2px var(--ouro), 0 0 14px rgba(245, 179, 1, 0.3);
-}
-
 .tipo-do-item {
   justify-self: start;
   padding: 1px 7px;
@@ -5787,38 +5623,6 @@ a.cartao-destaque:hover {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-}
-
-.miniatura-do-item {
-  display: grid;
-  place-items: center;
-  border-radius: 6px;
-  background: #05030a;
-  overflow: hidden;
-  padding: 0 8px;
-}
-
-.miniatura-do-item .avatar {
-  width: 44px;
-  height: 44px;
-}
-
-.rodape-do-item {
-  display: grid;
-}
-
-.rodape-do-item small {
-  color: var(--tinta-2);
-}
-
-@media (max-width: 860px) {
-  .vitrine {
-    grid-template-columns: 1fr;
-  }
-
-  .palco-da-previa {
-    min-height: 140px;
-  }
 }
 
 .foto-do-mutante {
@@ -5899,9 +5703,601 @@ a.cartao-destaque:hover {
   }
 }
 
-/* As animações das evoluções já vêm com este fundo: o quadro fica da mesma cor, sem emenda. */
-.palco-da-previa:has(.evolucoes-do-mutante) {
+/*
+ * Magnata Shop como loja de jogo: uma grade de 12 colunas com espaço de 16px, um cartão só para todo item e a cor da
+ * raridade na faixa de baixo da prévia (cinza comum, azul raro, roxo épico, dourado lendário).
+ */
+.raridade-comum {
+  --raridade: #8a8f9c;
+}
+
+.raridade-raro {
+  --raridade: #4c8dff;
+}
+
+.raridade-epico {
+  --raridade: #b05cff;
+}
+
+.raridade-lendario {
+  --raridade: var(--ouro);
+}
+
+.carteira-da-shop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 20px;
+}
+
+.carteira-da-shop h1 {
+  margin-right: auto;
+  font: italic 700 40px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.moeda-da-shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--painel);
+  color: var(--tinta);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.moeda-da-shop i,
+.preco-da-shop i {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.moeda-da-shop i {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+.moeda-da-shop b {
+  font-size: 16px;
+}
+
+.moeda-da-shop small {
+  color: var(--tinta-2);
+  font-weight: 400;
+}
+
+.moeda-da-shop.grana i,
+.preco-da-shop.grana i {
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.moeda-da-shop.magcoin i,
+.preco-da-shop.magcoin i {
+  background: #7c3aed;
+  color: #fff;
+}
+
+.moeda-da-shop.comprar {
+  border-color: var(--ouro);
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 17px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+a.moeda-da-shop:hover {
+  filter: brightness(1.15);
+}
+
+.preco-da-shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+}
+
+.preco-da-shop i {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.preco-da-shop s {
+  color: var(--tinta-2);
+  font-weight: 400;
+}
+
+.topo-da-shop {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.destaque-da-shop {
+  grid-column: span 8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 380px;
+  padding: 28px;
+  overflow: hidden;
+  border-bottom: 4px solid var(--raridade);
+  background:
+    linear-gradient(90deg, rgba(7, 4, 13, 0.95), rgba(7, 4, 13, 0.6) 45%, transparent 75%),
+    radial-gradient(circle at 75% 40%, rgba(74, 222, 128, 0.25), transparent 55%),
+    #0d1a12;
+}
+
+.destaque-da-shop img {
+  position: absolute;
+  right: 4%;
+  bottom: 0;
+  height: 108%;
+  max-width: 55%;
+  object-fit: contain;
+  object-position: bottom;
+  pointer-events: none;
+}
+
+.destaque-da-shop > :not(img) {
+  position: relative;
+}
+
+.destaque-da-shop h2 {
+  max-width: 55%;
+  font: italic 700 52px/0.95 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.destaque-da-shop p {
+  max-width: 46%;
+  margin: 10px 0 18px;
+  color: #cfc6de;
+}
+
+.acoes-do-destaque {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.selo-da-raridade {
+  align-self: flex-start;
+  margin-bottom: 10px;
+  padding: 3px 8px;
+  background: var(--raridade);
+  color: #0a0612;
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.botao-da-shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--ouro);
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.botao-da-shop.vazado {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: var(--tinta);
+  font: 600 14px/1.3 var(--fonte-inter), sans-serif;
+  text-transform: none;
+}
+
+.botao-da-shop.vazado small {
+  color: var(--tinta-2);
+}
+
+.laterais-da-shop {
+  grid-column: span 4;
+  display: grid;
+  gap: 16px;
+}
+
+.secao-da-shop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 14px;
+  margin: 36px 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.secao-da-shop h2 {
+  font: italic 700 26px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.secao-da-shop a {
+  margin-left: auto;
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.relogio-das-ofertas {
+  color: var(--ouro);
+  font: 600 13px/1 var(--fonte-mono), ui-monospace, monospace;
+}
+
+.filtros-da-shop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.filtros-da-shop a {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--tinta-2);
+  font: italic 700 15px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.filtros-da-shop a:hover {
+  color: var(--tinta);
+}
+
+.filtros-da-shop a[aria-current='page'] {
+  border-color: var(--tinta);
+  background: var(--tinta);
+  color: #0a0612;
+}
+
+.grade-da-shop {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.grade-da-shop.quatro {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* O cartão de item, igual em toda a loja: prévia quadrada, faixa da raridade, tipo, nome e preço. */
+.cartao-da-shop {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+  color: var(--tinta);
+  text-decoration: none;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.cartao-da-shop:hover {
+  transform: translateY(-3px);
+  border-color: var(--raridade);
+}
+
+.palco-do-cartao {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0 10px;
+  overflow: hidden;
+  border-bottom: 3px solid var(--raridade);
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--raridade) 28%, transparent), transparent 70%), #0b0713;
+}
+
+.palco-do-cartao .avatar {
+  width: min(52%, 116px);
+  height: auto;
+  aspect-ratio: 1;
+  font-size: 28px;
+}
+
+.palco-do-cartao .foto-do-mutante {
+  align-self: end;
+  height: 92%;
+  max-width: 100%;
+}
+
+.palco-do-cartao .previa-chat {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+}
+
+.desconto-do-cartao,
+.tenho-do-cartao {
+  position: absolute;
+  top: 8px;
+  padding: 2px 6px;
+  font: 700 11px/1.4 var(--fonte-inter), sans-serif;
+}
+
+.desconto-do-cartao {
+  left: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--ouro);
+}
+
+.tenho-do-cartao {
+  right: 8px;
+  background: var(--verde);
+  color: #062b12;
+  text-transform: uppercase;
+}
+
+.dados-do-cartao {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px 12px;
+}
+
+.tipo-do-cartao {
+  color: var(--raridade);
+  font: italic 700 12px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nome-do-cartao {
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.preco-do-cartao small {
+  color: var(--tinta-2);
+}
+
+.selo-do-cartao {
+  justify-self: start;
+  margin-bottom: 4px;
+  padding: 3px 7px;
+  background: var(--tinta);
+  color: #0a0612;
+  font: italic 700 12px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.cartao-da-shop.deitado {
+  flex-direction: row;
+}
+
+.cartao-da-shop.deitado .palco-do-cartao {
+  flex: 0 0 46%;
+  aspect-ratio: auto;
+  border-bottom: 0;
+  border-right: 3px solid var(--raridade);
+}
+
+.cartao-da-shop.deitado .dados-do-cartao {
+  align-self: center;
+}
+
+/* A janela do item */
+.janela-da-shop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.fundo-da-janela {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 2, 8, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.caixa-da-janela {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  width: min(920px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border-top: 4px solid var(--raridade);
+  background: var(--painel);
+}
+
+.fechar-janela {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  z-index: 1;
+  color: var(--tinta-2);
+  font-size: 26px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.fechar-janela:hover {
+  color: var(--tinta);
+}
+
+.palco-da-janela {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 440px;
+  padding: 36px 20px 20px;
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--raridade) 27%, transparent), transparent 65%), #0b0713;
+}
+
+.palco-da-janela > .rotulo-da-janela {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+}
+
+.palco-da-janela:has(.evolucoes-do-mutante) {
   background: #05030a;
+}
+
+.palco-da-janela .chat-de-mentira {
+  max-width: 340px;
+}
+
+.dados-da-janela {
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+}
+
+.dados-da-janela h2 {
+  font: italic 700 40px/0.95 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.dados-da-janela > p {
+  margin: 10px 0 0;
+  color: #cfc6de;
+}
+
+.dados-da-janela .aviso {
+  margin-top: 12px;
+}
+
+.posse-na-janela {
+  color: var(--verde) !important;
+}
+
+.rotulo-da-janela {
+  display: block;
+  margin: 20px 0 8px;
+  color: var(--tinta-2);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.palco-da-janela > .rotulo-da-janela {
+  margin: 0;
+}
+
+.dias-da-janela {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dia-da-janela,
+.para-sempre-da-janela {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0b0713;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.dia-da-janela {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+}
+
+.dia-da-janela > span:first-child {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.dia-da-janela:hover,
+.para-sempre-da-janela:hover {
+  border-color: var(--ouro);
+}
+
+.dia-da-janela.sem-saldo,
+.para-sempre-da-janela.sem-saldo {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.para-sempre-da-janela {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  border-color: rgba(124, 58, 237, 0.6);
+  background: rgba(124, 58, 237, 0.12);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a.para-sempre-da-janela.sem-saldo {
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .grade-da-shop {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .destaque-da-shop,
+  .laterais-da-shop {
+    grid-column: 1 / -1;
+  }
+
+  .destaque-da-shop {
+    min-height: 320px;
+    padding: 20px;
+  }
+
+  .destaque-da-shop h2 {
+    max-width: 60%;
+    font-size: 40px;
+  }
+
+  .destaque-da-shop p {
+    max-width: 60%;
+  }
+
+  .grade-da-shop,
+  .grade-da-shop.quatro {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .caixa-da-janela {
+    grid-template-columns: 1fr;
+  }
+
+  .palco-da-janela {
+    min-height: 300px;
+  }
+
+  .carteira-da-shop h1 {
+    flex-basis: 100%;
+    font-size: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cartao-da-shop {
+    transition: none;
+  }
 }
 
 /* Apoie o clube */
@@ -5992,17 +6388,6 @@ a.cartao-destaque:hover {
 .perguntas-de-apoio summary {
   cursor: pointer;
   font-weight: 600;
-}
-
-.para-sempre {
-  display: grid;
-}
-
-.para-sempre-botao {
-  display: block;
-  padding: 9px;
-  font-size: 13px;
-  text-decoration: none;
 }
 
 .envio-pendente {
