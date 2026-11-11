@@ -9272,3 +9272,14 @@ a.titulo-da-linha:hover {
   cursor: not-allowed;
   transform: none;
 }
+
+/* Insígnias (dono, 11/11/2026): a que ainda não foi conquistada fica cinza e apagada. */
+.insignia {
+  flex: none;
+  vertical-align: middle;
+}
+
+.insignia-apagada {
+  filter: grayscale(1) brightness(0.45);
+  opacity: 0.55;
+}
