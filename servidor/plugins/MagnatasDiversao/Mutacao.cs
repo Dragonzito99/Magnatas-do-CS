@@ -1282,6 +1282,7 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "mutacao") return HookResult.Continue;
         var jogador = evento.Userid;
+        if (jogador is { IsBot: false }) Console.WriteLine($"[Magnatas] Pulo (evento) de {jogador.PlayerName}: healix={HealixComPulo(jogador, NivelDoPuloAlto)}.");
         if (jogador == null || !HealixComPulo(jogador, NivelDoPuloAlto)) return HookResult.Continue;
         Server.NextFrame(() =>
         {
@@ -1309,11 +1310,15 @@ public partial class ModoDeDiversao
             }
             var pulando = (jogador.Buttons & PlayerButtons.Jump) != 0;
             var noChao = (corpo.Flags & (uint)PlayerFlags.FL_ONGROUND) != 0;
+            // Registro provisório (11/11/2026): o dono apertava e o pulo duplo não saía.
+            if (!jogador.IsBot && pulando != segurandoPulo.Contains(jogador.Slot))
+                Console.WriteLine($"[Magnatas] Pulo de {jogador.PlayerName}: botao={pulando} chao={noChao} usado={puloDuploUsado.Contains(jogador.Slot)} z={corpo.AbsVelocity.Z:0} flags={corpo.Flags}.");
             if (noChao) puloDuploUsado.Remove(jogador.Slot);
             else if (pulando && !segurandoPulo.Contains(jogador.Slot) && puloDuploUsado.Add(jogador.Slot))
             {
                 var velocidade = corpo.AbsVelocity;
                 corpo.Teleport(null, null, new Vector(velocidade.X, velocidade.Y, ImpulsoDoPuloDuplo));
+                Console.WriteLine($"[Magnatas] Pulo duplo de {jogador.PlayerName}.");
             }
             if (pulando) segurandoPulo.Add(jogador.Slot);
             else segurandoPulo.Remove(jogador.Slot);
