@@ -6129,6 +6129,47 @@ a.moeda-da-shop:hover {
     #0d1a12;
 }
 
+.carrossel-da-shop {
+  grid-column: span 8;
+  position: relative;
+  display: grid;
+}
+
+.carrossel-da-shop .destaque-da-shop {
+  grid-column: auto;
+}
+
+.carrossel-da-shop .pontos-do-carrossel {
+  top: 16px;
+  right: 18px;
+  bottom: auto;
+  left: auto;
+}
+
+/* O Senhor do Vazio troca o verde do Cyber Hulk pelo roxo da fumaça dele. */
+.destaque-da-shop[data-mutante='fumaca'] {
+  background:
+    linear-gradient(90deg, rgba(7, 4, 13, 0.95), rgba(7, 4, 13, 0.6) 45%, transparent 75%),
+    radial-gradient(circle at 75% 40%, rgba(176, 124, 255, 0.35), transparent 55%),
+    #150d22;
+}
+
+.destaque-da-shop[data-mutante='fumaca'] img {
+  filter: brightness(1.35) drop-shadow(0 0 24px rgba(176, 124, 255, 0.45));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .carrossel-da-shop .destaque-da-shop {
+    animation: entrar-destaque 0.5s ease-out;
+  }
+}
+
+@keyframes entrar-destaque {
+  from {
+    opacity: 0;
+  }
+}
+
 .destaque-da-shop img {
   position: absolute;
   right: 4%;
@@ -8948,6 +8989,7 @@ a.titulo-da-linha:hover {
 }
 
 @media (max-width: 860px) {
+  .carrossel-da-shop,
   .destaque-da-shop,
   .laterais-da-shop {
     grid-column: 1 / -1;

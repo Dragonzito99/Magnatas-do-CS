@@ -206,7 +206,8 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
 test('o Senhor do Vazio está à venda: fumaça no E e um boneco por nível', async () => {
   const fumaca = CATALOGO.find((item) => item.id === 'mutante-fumaca');
   expect(fumaca).toMatchObject({ tipo: 'mutante', valor: 'fumaca', nome: 'Senhor do Vazio', imagem: '/loja/mutante-fumaca.webp' });
-  expect(fumaca?.lancamento).toBeFalsy();
+  // Os dois mutantes passam juntos no destaque da loja (dono, 11/11/2026).
+  expect(fumaca?.lancamento).toBe(true);
   expect(fumaca?.evolucoes).toEqual([
     { nivel: 1, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 8 s' },
     { nivel: 2, nome: 'Voidreaver Titan', imagem: '/loja/fumaca-2-andando.webp', poder: 'fumaça de 10 s' },

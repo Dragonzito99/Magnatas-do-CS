@@ -24,6 +24,7 @@ import {
 } from '@/dominio/loja';
 import { AbasDaLoja } from './abas-da-loja';
 import { CarteiraDaShop } from './carteira-da-shop';
+import { DestaquesDaShop } from './destaques-da-shop';
 import { JanelaDoItem } from './janela-do-item';
 import { Preco } from './preco-da-shop';
 import { PreviaDoItem } from './previa-do-item';
@@ -59,8 +60,9 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
   const tenho = new Map(bau.filter((posse) => !posse.vencido).map((posse) => [posse.item.id, posse]));
 
   const aVenda = ITENS_A_VENDA();
-  const destaque = aVenda.find((item) => item.lancamento) ?? aVenda[0];
-  const maisVendidos = vendidos.filter((id) => id !== destaque.id).slice(0, 2);
+  const lancamentos = aVenda.filter((item) => item.lancamento);
+  const destaques = lancamentos.length > 0 ? lancamentos : aVenda.slice(0, 1);
+  const maisVendidos = vendidos.filter((id) => !destaques.some((destaque) => destaque.id === id)).slice(0, 2);
   const laterais = [
     ...maisVendidos.map((id) => ({ id, selo: 'Mais comprado' })),
     ...LATERAIS_DE_SEMPRE.filter((id) => !maisVendidos.includes(id)).map((id) => ({ id, selo: 'Destaque' })),
@@ -95,23 +97,28 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
       <CarteiraDaShop titulo="Magnata Shop" usuario={usuario} />
 
       <div className="topo-da-shop">
-        <article className={`destaque-da-shop raridade-${RARIDADE[destaque.tipo]}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {destaque.imagem && <img src={destaque.imagem} alt="" />}
-          <span className="selo-da-raridade">{NOME_DA_RARIDADE[RARIDADE[destaque.tipo]]} · Lançamento</span>
-          <h2>{destaque.nome}</h2>
-          <p>
-            {destaque.descricao ?? NOME_DO_TIPO[destaque.tipo]}
-          </p>
-          <div className="acoes-do-destaque">
-            <Link className="botao-da-shop" href={enderecoDe(destaque)} scroll={false}>
-              Ver o {destaque.tipo === 'mutante' ? 'mutante' : 'item'}
-            </Link>
-            <span className="botao-da-shop vazado">
-              <Preco valor={precoDeHoje(destaque, 1, agora)} /> <small>/ 1 dia · ou {PRECOS_MAGCOIN[destaque.tipo]} MagCoin para sempre</small>
-            </span>
-          </div>
-        </article>
+        <DestaquesDaShop
+          nomes={destaques.map((destaque) => destaque.nome)}
+          destaques={destaques.map((destaque) => (
+            <article key={destaque.id} className={`destaque-da-shop raridade-${RARIDADE[destaque.tipo]}`} data-mutante={destaque.valor}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {destaque.imagem && <img src={destaque.imagem} alt="" />}
+              <span className="selo-da-raridade">{NOME_DA_RARIDADE[RARIDADE[destaque.tipo]]} · Lançamento</span>
+              <h2>{destaque.nome}</h2>
+              <p>
+                {destaque.descricao ?? NOME_DO_TIPO[destaque.tipo]}
+              </p>
+              <div className="acoes-do-destaque">
+                <Link className="botao-da-shop" href={enderecoDe(destaque)} scroll={false}>
+                  Ver o {destaque.tipo === 'mutante' ? 'mutante' : 'item'}
+                </Link>
+                <span className="botao-da-shop vazado">
+                  <Preco valor={precoDeHoje(destaque, 1, agora)} /> <small>/ 1 dia · ou {PRECOS_MAGCOIN[destaque.tipo]} MagCoin para sempre</small>
+                </span>
+              </div>
+            </article>
+          ))}
+        />
         <div className="laterais-da-shop">
           {laterais.map(({ item, selo }) => (
             <Link key={item.id} href={enderecoDe(item)} scroll={false} className={`cartao-da-shop deitado raridade-${RARIDADE[item.tipo]}`}>

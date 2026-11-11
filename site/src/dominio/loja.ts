@@ -100,6 +100,7 @@ export const CATALOGO: readonly ItemDaLoja[] = [
     nome: 'Senhor do Vazio',
     valor: 'fumaca',
     imagem: '/loja/mutante-fumaca.webp',
+    lancamento: true,
     descricao:
       'Na Mutação, você vira esse mutante. Aperte E e solta uma cortina de fumaça roxa de 8 s no nível 1, 10 s no nível 2 e 12 s no nível 3. Cada fumaça custa 10% da sua vida. Recarga de 15 s.',
     evolucoes: [
