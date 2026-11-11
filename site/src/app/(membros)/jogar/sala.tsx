@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import type { ClaResumido } from '@/dominio/clas';
 import type { DesafioDaSala, FormatoDoDesafio } from '@/dominio/desafios';
 import type { JuncaoDaSala } from '@/dominio/juncoes';
@@ -7,7 +6,6 @@ import { Avatar } from '../avatar';
 import { SiglaDoCla } from '../clas/sigla-do-cla';
 import { aceitar, aceitarJuntar, cancelar, cancelarJuntar, chamarParaDesafio, criar, entrar, expulsar, juntar, recusar, recusarJuntar, sair } from '../salas/acoes';
 
-const FOTO_DO_COMPETITIVO = '/mapas/dust2.webp';
 const kdEmTexto = (kd: number | undefined) => (kd ?? 0).toFixed(2);
 
 function segundosAte(data: Date): number {
@@ -205,40 +203,32 @@ export function BarraDaSala({
   );
 }
 
-export function CriarSalaCartao() {
+/** As 5 (ou 10) vagas em círculo: foto de quem já está, tracejado onde ainda falta gente. */
+export function VagasEmCirculo({ pessoas, total, tamanho = 'normal' }: { pessoas: { id: string; apelido: string; avatarUrl: string | null }[]; total: number; tamanho?: 'normal' | 'pequeno' }) {
   return (
-    <article className="cartao-jogar">
-      <div className="foto-jogar vazia">
-        <span className="selo-modo">Competitivo</span>
-      </div>
-      <div className="corpo-jogar">
-        <h2>Criar sala</h2>
-        <p>Monte o seu time de 5 e chame os amigos. Com a sala completa, desafie outra sala completa.</p>
-        <div className="rodape-jogar">
-          <span />
-          <form action={criar}>
-            <button type="submit" className="botao ouro pequeno">
-              Criar sala
-            </button>
-          </form>
-        </div>
-      </div>
-    </article>
+    <span className={`vagas-em-circulo ${tamanho}`} aria-label={`${pessoas.length} de ${total}`}>
+      {pessoas.slice(0, total).map((pessoa) => (
+        <span key={pessoa.id} className="vaga-cheia" title={pessoa.apelido}>
+          <Avatar usuario={pessoa} />
+        </span>
+      ))}
+      {Array.from({ length: Math.max(0, total - pessoas.length) }, (_, indice) => (
+        <span key={`livre-${indice}`} className="vaga-vazia" aria-hidden="true" />
+      ))}
+    </span>
   );
 }
 
-/** O que dá para fazer com outra sala: entrar, juntar a sua ou desafiar. */
-export function SalaCartao({ sala, kd, acao, clas }: { sala: SalaComMembros; kd: Map<string, number>; acao: React.ReactNode; clas: ClasDasPessoas }) {
+/** Uma sala aberta, em linha: nome, clã, como ela está, as vagas e o que dá para fazer com ela. */
+export function LinhaDaSala({ sala, kd, acao, clas }: { sala: SalaComMembros; kd: Map<string, number>; acao: React.ReactNode; clas: ClasDasPessoas }) {
   const total = sala.membros.length;
   const cla = claDaSala(sala, clas);
+  const media = total ? sala.membros.reduce((soma, membro) => soma + (kd.get(membro.id) ?? 0), 0) / total : 0;
+  const situacao = sala.partidaId ? 'Em partida' : total === TAMANHO_DA_SALA ? 'Completa · esperando desafio' : `Faltam ${TAMANHO_DA_SALA - total}`;
   return (
-    <article className="cartao-jogar">
-      <div className="foto-jogar">
-        <Image src={FOTO_DO_COMPETITIVO} alt="" width={480} height={270} />
-        <span className="selo-modo">Competitivo</span>
-      </div>
-      <div className="corpo-jogar">
-        <h2>
+    <div className="linha-da-sala">
+      <span>
+        <b>
           Sala de {sala.nome}
           {cla && (
             <>
@@ -246,34 +236,14 @@ export function SalaCartao({ sala, kd, acao, clas }: { sala: SalaComMembros; kd:
               <SiglaDoCla cla={cla} />
             </>
           )}
-        </h2>
-        <div className="vagas-sala">
-          {sala.membros.map((membro) => (
-            <span key={membro.id} className="vaga-sala" title={clas.get(membro.id) ? `[${clas.get(membro.id)!.sigla}] ${membro.apelido}` : membro.apelido}>
-              <Avatar usuario={membro} />
-              <small>{kdEmTexto(kd.get(membro.id))}</small>
-            </span>
-          ))}
-          {Array.from({ length: TAMANHO_DA_SALA - total }, (_, indice) => (
-            <span key={indice} className="vaga-sala">
-              <span className="avatar vaga-livre" aria-hidden="true">
-                +
-              </span>
-              <small>livre</small>
-            </span>
-          ))}
-        </div>
-        <div className="barra-ocupacao" aria-hidden="true">
-          <i style={{ width: `${(total / TAMANHO_DA_SALA) * 100}%` }} />
-        </div>
-        <div className="rodape-jogar">
-          <b className="ocupacao">
-            {total}/{TAMANHO_DA_SALA}
-          </b>
-          <div className="acoes">{acao}</div>
-        </div>
-      </div>
-    </article>
+        </b>
+        <small>
+          {situacao} · K/D médio {kdEmTexto(media)}
+        </small>
+      </span>
+      <VagasEmCirculo pessoas={sala.membros} total={TAMANHO_DA_SALA} tamanho="pequeno" />
+      <span className="acao-da-sala">{acao}</span>
+    </div>
   );
 }
 
@@ -299,7 +269,7 @@ export function BotaoDeDesafio({ salaId, opcoes }: { salaId: string; opcoes: For
           </option>
         ))}
       </select>
-      <button type="submit" className="botao ouro pequeno">
+      <button type="submit" className="botao-da-shop">
         Desafiar
       </button>
     </form>
@@ -312,8 +282,18 @@ export function BotaoDaSala({ tipo, salaId }: { tipo: 'entrar' | 'juntar' | 'des
   return (
     <form action={acao}>
       <input type="hidden" name="salaId" value={salaId} />
-      <button type="submit" className={tipo === 'entrar' ? 'botao ouro pequeno' : 'botao contorno pequeno'}>
+      <button type="submit" className={tipo === 'entrar' ? 'botao-da-shop' : 'botao-da-shop vazado'}>
         {nome}
+      </button>
+    </form>
+  );
+}
+
+export function BotaoCriarSala() {
+  return (
+    <form action={criar}>
+      <button type="submit" className="botao-da-shop">
+        Criar sala
       </button>
     </form>
   );

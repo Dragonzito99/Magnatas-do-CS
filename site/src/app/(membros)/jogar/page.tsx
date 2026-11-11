@@ -5,8 +5,9 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { ehCelular } from '@/dominio/aparelho';
 import { clasDosUsuarios } from '@/dominio/clas';
+import { membrosOnline } from '@/dominio/denuncias';
 import { desafiosDaSala, opcoesDeDesafio } from '@/dominio/desafios';
-import { estadoDoCartao, listarServidoresDaDiversao, mapaDoCartao } from '@/dominio/diversao';
+import { estadoDoCartao, listarServidoresDaDiversao, mapaDoCartao, MODOS_DE_DIVERSAO, type ModoDeDiversao } from '@/dominio/diversao';
 import { situacaoDasFaltas } from '@/dominio/faltas';
 import { kdDosJogadores } from '@/dominio/ficha';
 import { FILTROS_DO_JOGAR, lerFiltroDoJogar, mostraNoFiltro } from '@/dominio/jogar';
@@ -22,11 +23,19 @@ import { Atualizar } from '../atualizar';
 import { AvisoDeBloqueio } from '../aviso-de-bloqueio';
 import { entrar as entrarNoMix, sair as sairDoMix } from '../mix/acoes';
 import { OnlineAgora } from '../online-agora';
-import { ERROS_DA_DIVERSAO, nomeDoModo, RodapeDoCartao, SEM_RESPOSTA } from './rodape-da-diversao';
-import { BarraDaSala, BotaoDaSala, BotaoDeDesafio, CriarSalaCartao, SalaCartao } from './sala';
+import { ERROS_DA_DIVERSAO, RodapeDoCartao, SEM_RESPOSTA } from './rodape-da-diversao';
+import { BarraDaSala, BotaoCriarSala, BotaoDaSala, BotaoDeDesafio, LinhaDaSala, VagasEmCirculo } from './sala';
 
 const TOTAL_DO_MIX = 10;
 const FOTO_DO_MIX = '/mapas/mirage.webp';
+const FOTO_DA_SALA = '/mapas/dust2.webp';
+
+const DESCRICAO_DO_MODO: Record<ModoDeDiversao, string> = {
+  cada_um: 'Sem time: todo mundo contra todo mundo.',
+  equipe: 'Renasce na base. Ganha o time que fizer mais abates.',
+  mutacao: 'Quem é pego vira mutante. O último humano ganha a super Negev.',
+  fantasma: 'Invisíveis de faca contra armados.',
+};
 
 const ERROS: Record<string, string> = {
   cheia: 'Esta sala já está completa.',
@@ -49,7 +58,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   const filtro = lerFiltroDoJogar(texto);
   const bd = obterBd();
 
-  const [salas, minha, partida, faltas, mix, andamento, todosServidores] = await Promise.all([
+  const [salas, minha, partida, faltas, mix, andamento, todosServidores, online] = await Promise.all([
     listarSalas(bd),
     minhaSala(bd, usuario.id),
     partidaAtualDe(bd, usuario.id),
@@ -57,6 +66,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
     verMix(bd),
     partidasEmAndamento(bd),
     listarServidoresDaDiversao(bd),
+    membrosOnline(bd),
   ]);
   const [desafio] = minha ? await desafiosDaSala(bd, minha.id) : [];
   const juncoes = minha ? await juncoesDaSala(bd, minha.id) : [];
@@ -105,113 +115,178 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
     return null;
   }
 
+  const competitivoNaTela = mostraNoFiltro(filtro, 'competitivo') || mostraNoFiltro(filtro, 'mix');
+  const porModo = MODOS_DE_DIVERSAO.map((modo) => ({
+    modo,
+    itens: servidores.map((servidor, indice) => ({ servidor, indice })).filter(({ servidor }) => servidor.modo === modo.valor),
+  })).filter((grupo) => grupo.itens.length > 0);
+  const posso = !partida && !faltas.bloqueadoAte;
+
   return (
     <>
       {(minha || estouNoMix || algumEsperando || filtro === 'competitivo' || filtro === 'mix') && <Atualizar segundos={3} />}
       {minha && <BarraDaSala sala={minha} usuarioId={usuario.id} kd={kd} desafio={desafio} juncoes={juncoes} clas={clasNasSalas} />}
       <div className={minha ? 'tela-jogar com-sala' : 'tela-jogar'}>
         <AvisoDeBloqueio situacao={faltas} />
-        <div className="topo-jogar">
+        <div className="carteira-da-shop">
           <h1>Jogar</h1>
-          <p className="apoio">Escolha o que você quer jogar agora.</p>
+          <span className="moeda-da-shop clube-ao-vivo">
+            <i aria-hidden="true" />
+            <b>{online.length}</b>
+            <small>online</small>
+          </span>
+          <span className="moeda-da-shop">
+            <b>{mix.total}</b>
+            <small>na fila do mix</small>
+          </span>
+          <span className="moeda-da-shop">
+            <b>{andamento.length}</b>
+            <small>{andamento.length === 1 ? 'partida rolando' : 'partidas rolando'}</small>
+          </span>
         </div>
         {erro && ERROS[erro] && (
           <p role="alert" className="aviso">
             {ERROS[erro]}
           </p>
         )}
-        <nav className="filtros-jogar" aria-label="Modos de jogo">
+        <nav className="filtros-da-shop" aria-label="Modos de jogo">
           {FILTROS_DO_JOGAR.map((item) => (
-            <Link
-              key={item.nome}
-              className="filtro-jogar"
-              href={item.valor ? `/jogar?modo=${item.valor}` : '/jogar'}
-              aria-current={filtro === item.valor ? 'page' : undefined}
-            >
+            <Link key={item.nome} href={item.valor ? `/jogar?modo=${item.valor}` : '/jogar'} aria-current={filtro === item.valor ? 'page' : undefined}>
               {item.nome}
             </Link>
           ))}
         </nav>
 
-        <div className="grade-jogar">
-          {mostraNoFiltro(filtro, 'mix') && (
-            <article className="cartao-jogar">
-              <div className="foto-jogar">
-                <Image src={FOTO_DO_MIX} alt="" width={480} height={270} />
-                <span className="selo-modo ouro">Mix</span>
-              </div>
-              <div className="corpo-jogar">
-                <h2>Fila do mix</h2>
-                <p>Entre sozinho. Com 10 na fila, os times são sorteados e a partida começa.</p>
-                <div className="barra-ocupacao" aria-hidden="true">
-                  <i style={{ width: `${(mix.total / TOTAL_DO_MIX) * 100}%` }} />
-                </div>
-                <div className="rodape-jogar">
-                  <b className="ocupacao">
-                    {mix.total}/{TOTAL_DO_MIX}
-                  </b>
-                  {!partida &&
-                    (estouNoMix ? (
-                      <form action={sairDoMix}>
-                        <button type="submit" className="botao contorno pequeno">
-                          Sair da fila
-                        </button>
-                      </form>
-                    ) : faltas.bloqueadoAte || minha ? null : (
-                      <form action={entrarNoMix}>
-                        <button type="submit" className="botao ouro pequeno">
-                          Entrar na fila
-                        </button>
-                      </form>
-                    ))}
-                </div>
-              </div>
-            </article>
-          )}
-
-          {mostraNoFiltro(filtro, 'competitivo') && !minha && !partida && !faltas.bloqueadoAte && <CriarSalaCartao />}
-          {mostraNoFiltro(filtro, 'competitivo') && outras.map((sala) => <SalaCartao key={sala.id} sala={sala} kd={kd} acao={acaoDaSala(sala)} clas={clasNasSalas} />)}
-
-          {servidores.map((servidor, indice) => {
-            const mapa = mapaDoCartao(servidor, situacoes[indice]);
-            const ligado = situacoes[indice].ligado;
-            return (
-              <article key={servidor.id} className="cartao-jogar">
-                <div className="foto-jogar">
-                  <Image src={mapa.foto} alt={`Mapa ${mapa.nome}`} width={480} height={270} />
-                  <span className={ligado ? 'selo-modo verde' : 'selo-modo'}>{ligado ? 'Ao vivo' : nomeDoModo(servidor.modo)}</span>
-                </div>
-                <div className="corpo-jogar">
-                  <h2>{nomeDoModo(servidor.modo)}</h2>
-                  <p>{mapa.regra ?? servidor.armas}</p>
-                  <small className="apoio">{mapa.nome}</small>
-                  <div className="rodape-jogar rodape-servidor">
-                    <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} celular={celular} />
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {(filtro === null || filtro === 'mix' || filtro === 'competitivo') && andamento.length > 0 && (
-          <section className="painel">
-            <div className="cabeca-painel">
-              <h2>Rolando agora</h2>
-              <span>{andamento.length === 1 ? '1 partida' : `${andamento.length} partidas`}</span>
+        {competitivoNaTela && (
+          <>
+            <div className="secao-da-shop">
+              <h2>Competitivo</h2>
+              <span className="legenda-da-secao">Vale XP, patente e ranking · 5 contra 5</span>
             </div>
-            {andamento.map((item) => (
-              <div className="linha" key={item.id}>
-                <div>
-                  <Link href={`/partidas/${item.id}`}>{nomeDaPartida(item)}</Link>
-                  <small>{nomeDoMapa(item.mapa)}</small>
-                </div>
-                <span className="mono">
-                  {item.placar1} x {item.placar2}
-                </span>
+            <div className="blocos-do-competitivo">
+              {mostraNoFiltro(filtro, 'mix') && (
+                <article className="bloco-de-jogo ouro" style={{ backgroundImage: `url(${FOTO_DO_MIX})` }}>
+                  <span className="selo-do-bloco">Mix</span>
+                  <h3>Fila do Mix</h3>
+                  <p>Entre sozinho. Com 10 na fila, os times são sorteados e a partida começa.</p>
+                  <VagasEmCirculo pessoas={mix.jogadores} total={TOTAL_DO_MIX} />
+                  <div className="acao-do-bloco">
+                    {!partida &&
+                      (estouNoMix ? (
+                        <form action={sairDoMix}>
+                          <button type="submit" className="botao-da-shop vazado">
+                            Sair da fila
+                          </button>
+                        </form>
+                      ) : faltas.bloqueadoAte || minha ? null : (
+                        <form action={entrarNoMix}>
+                          <button type="submit" className="botao-da-shop">
+                            Entrar na fila
+                          </button>
+                        </form>
+                      ))}
+                    <span>
+                      <b>
+                        {mix.total}/{TOTAL_DO_MIX}
+                      </b>{' '}
+                      <small>{mix.total >= TOTAL_DO_MIX ? 'fila cheia' : `faltam ${TOTAL_DO_MIX - mix.total}`}</small>
+                    </span>
+                  </div>
+                </article>
+              )}
+              {mostraNoFiltro(filtro, 'competitivo') && (
+                <article className="bloco-de-jogo roxo" style={{ backgroundImage: `url(${FOTO_DA_SALA})` }}>
+                  <span className="selo-do-bloco">Sala 5x5</span>
+                  <h3>Jogue com o seu time</h3>
+                  <p>Monte uma sala de 5, chame os amigos e desafie outra sala completa. Com o seu clã, vale o ranking de clãs.</p>
+                  <div className="acao-do-bloco">
+                    {minha ? <span className="legenda-da-secao">Você já está numa sala.</span> : posso && <BotaoCriarSala />}
+                    <span>
+                      <b>{outras.length}</b> <small>{outras.length === 1 ? 'sala aberta' : 'salas abertas'}</small>
+                    </span>
+                  </div>
+                </article>
+              )}
+            </div>
+            {mostraNoFiltro(filtro, 'competitivo') && outras.length > 0 && (
+              <div className="salas-abertas">
+                {outras.map((sala) => (
+                  <LinhaDaSala key={sala.id} sala={sala} kd={kd} acao={acaoDaSala(sala)} clas={clasNasSalas} />
+                ))}
               </div>
-            ))}
-          </section>
+            )}
+          </>
+        )}
+
+        {porModo.length > 0 && (
+          <>
+            <div className="secao-da-shop">
+              <h2>Diversão</h2>
+              <span className="legenda-da-secao">Sem XP · liga na hora, em cerca de 1 minuto</span>
+            </div>
+            <div className="modos-da-diversao">
+              {porModo.map(({ modo, itens }) => {
+                const capa = mapaDoCartao(itens[0].servidor, situacoes[itens[0].indice]);
+                return (
+                  <article key={modo.valor} className={`modo-da-diversao modo-${modo.valor}`}>
+                    <div className="foto-do-modo">
+                      <Image src={capa.foto} alt="" width={400} height={300} />
+                      <span className="selo-do-bloco">{modo.nome}</span>
+                    </div>
+                    <div className="dados-do-modo">
+                      <h3>{modo.nome}</h3>
+                      <p>{DESCRICAO_DO_MODO[modo.valor]}</p>
+                      {itens.map(({ servidor, indice }) => {
+                        const mapa = mapaDoCartao(servidor, situacoes[indice]);
+                        return (
+                          <div key={servidor.id} className="variacao-da-diversao">
+                            <span>
+                              <b>{mapa.regra ?? servidor.armas}</b>
+                              <small>
+                                {mapa.nome}
+                                {situacoes[indice].ligado && <em className="no-ar"> · ao vivo</em>}
+                              </small>
+                            </span>
+                            <span className="rodape-da-variacao">
+                              <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} celular={celular} />
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {competitivoNaTela && andamento.length > 0 && (
+          <>
+            <div className="secao-da-shop">
+              <h2>Rolando agora</h2>
+              <span className="legenda-da-secao">{andamento.length === 1 ? '1 partida' : `${andamento.length} partidas`}</span>
+            </div>
+            <div className="partidas-ao-vivo">
+              {andamento.map((item) => (
+                <Link key={item.id} href={`/partidas/${item.id}`} className="partida-ao-vivo">
+                  <span className="topo-da-partida">
+                    <span>
+                      {nomeDaPartida(item)} · {nomeDoMapa(item.mapa)}
+                    </span>
+                    <em>Ao vivo</em>
+                  </span>
+                  <span className="placar-ao-vivo">
+                    <span>{item.nomeTime1 ?? 'Time 1'}</span>
+                    <b>
+                      {item.placar1 ?? 0} : {item.placar2 ?? 0}
+                    </b>
+                    <span>{item.nomeTime2 ?? 'Time 2'}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
         {filtro === 'competitivo' && <OnlineAgora />}
       </div>
