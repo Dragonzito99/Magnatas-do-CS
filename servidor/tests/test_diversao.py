@@ -1803,7 +1803,7 @@ def test_quem_vira_mutante_ve_na_tela_o_que_o_mutante_faz():
     aviso = metodo_da_mutacao("private void AvisarOQueOMutanteFaz(")
     assert "MostrarCartao(" in aviso and "PrintToChat(" in aviso
     assert "Faca" in aviso and "G:" in aviso
-    assert 'SkinDe(jogador) == "blindado"' in aviso
+    assert 'skin == "blindado"' in aviso and 'skin == "fumaca"' in aviso
     assert "NivelDaCorrida" in aviso
     g = metodo_da_mutacao("private HookResult AoApertarG(")
     corrida = g[g.index("NivelDe(jogador).Nivel < NivelDaCorrida"):]
@@ -1880,3 +1880,31 @@ def test_o_hud_e_repetido_a_cada_tick_para_nao_piscar_nem_sumir():
     assert "telas[" in atualizar
     assert "PrintToCenterHtml(" not in atualizar
     assert "<br>" not in metodo_da_mutacao("private static string BarraDePoder(")
+
+
+def test_o_senhor_do_vazio_tem_pacote_proprio_e_fumaca_de_8_10_12_segundos():
+    assert 'private const string PastaDaFumaca = "models/magnatas/fumaca_v1";' in CODIGO_DA_MUTACAO
+    assert "private static readonly float[] SegundosDaFumaca = { 8f, 10f, 12f };" in CODIGO_DA_MUTACAO
+    assert "private const float SegundosDeRecargaDaFumaca = 15f;" in CODIGO_DA_MUTACAO
+    assert "private const float VidaPorFumaca = 0.10f;" in CODIGO_DA_MUTACAO
+    confere = metodo_da_mutacao("private bool FumacaNoServidor(")
+    assert "NoPacote(PacoteDaFumaca, PastaDaFumaca)" in confere
+    assert 'PacoteDaFumaca == ""' in confere
+
+
+def test_o_g_do_senhor_do_vazio_solta_fumaca_desde_o_nivel_1_e_custa_vida():
+    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    assert g.index('SkinDe(jogador) == "fumaca"') < g.index("NivelDaCorrida")
+    fumaca = metodo_da_mutacao("private HookResult SoltarFumaca(")
+    assert fumaca.index("agora < fumaca.Recarga") < fumaca.index("corpo.Health -= custo")
+    assert "corpo.Health <= custo" in fumaca
+    assert '"smokegrenade_projectile"' in fumaca
+    assert "SmokeColor" in fumaca
+    assert "nuvem.Remove()" in fumaca
+
+
+def test_o_senhor_do_vazio_usa_o_proprio_boneco_e_aparece_no_hud():
+    assert '"fumaca" => ModeloDaFumaca(nivel)' in CODIGO_DA_MUTACAO
+    assert 'if (SkinDe(jogador) == "fumaca") return QuedaDaFumaca(nivel);' in CODIGO_DA_MUTACAO
+    assert '"FUMAÇA"' in metodo_da_mutacao("private string HudDoPoder(")
+    assert '"fumaca" when FumacaNoServidor()' in metodo_da_mutacao("private string? SkinDe(")

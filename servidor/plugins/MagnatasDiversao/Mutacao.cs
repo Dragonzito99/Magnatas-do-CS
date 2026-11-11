@@ -118,6 +118,18 @@ public partial class ModoDeDiversao
     // Azul enquanto o escudo vale, para os humanos saberem que não adianta atirar.
     private static readonly Color CorDoEscudo = Color.FromArgb(255, 80, 160, 255);
     private bool? blindadoNoServidor;
+    // Segundo mutante da Shop, o Senhor do Vazio (Voidforged Warlord): o G solta uma cortina de fumaça roxa em volta
+    // dele e custa vida, como o Smoke do CrossFire (dono, 11/11/2026). Pacote vazio enquanto o item da Oficina não existe:
+    // aí quem comprou vira o mutante comum.
+    private const string PacoteDaFumaca = "";
+    private const string PastaDaFumaca = "models/magnatas/fumaca_v1";
+    private static readonly int[] NiveisComBonecoDaFumaca = { 1 };
+    private static readonly float[] SegundosDaFumaca = { 8f, 10f, 12f };
+    private const float SegundosDeRecargaDaFumaca = 15f;
+    // Cada fumaça custa 10% da vida máxima do nível; com menos que isso, o G não solta.
+    private const float VidaPorFumaca = 0.10f;
+    private bool? fumacaNoServidor;
+    private readonly Dictionary<int, (float Fim, float Recarga)> fumacas = new();
     // Pacote dos personagens (dono, 10/11/2026): quem pega a super Negev vira o herói. Os bonecos próprios (ADM,
     // Marfioso) ficam fora da Mutação, a pedido do dono: trocar um boneco nosso por outro com o jogador vivo fechou o
     // jogo três vezes no dia (19:54, 20:37, 20:56), e o boneco do jogo virando zumbi nunca. Sem o pacote, o portador
@@ -183,6 +195,7 @@ public partial class ModoDeDiversao
         infeccoes.Clear();
         corridas.Clear();
         escudos.Clear();
+        fumacas.Clear();
         _ = BuscarMutantesDaLoja(Pessoas().Select(pessoa => pessoa.SteamID).ToList());
         if (testeComBots) ChamarBotsDoTeste();
         if (JogadoresNaRodada() < MinimoDeJogadores)
@@ -503,11 +516,21 @@ public partial class ModoDeDiversao
             foreach (var nivel in mutanteDaRodada.Niveis) manifesto.AddResource(ModeloDoNivel(nivel.Nivel));
             foreach (var queda in QuedaDoNivel) if (queda != null) manifesto.AddResource(queda);
             if (HeroiNoServidor()) manifesto.AddResource(ModeloDoHeroi);
-            if (!BlindadoNoServidor()) return;
-            foreach (var nivel in NiveisComBonecoDoBlindado)
+            if (BlindadoNoServidor())
             {
-                manifesto.AddResource(ModeloDoBlindado(nivel));
-                manifesto.AddResource(QuedaDoBlindado(nivel));
+                foreach (var nivel in NiveisComBonecoDoBlindado)
+                {
+                    manifesto.AddResource(ModeloDoBlindado(nivel));
+                    manifesto.AddResource(QuedaDoBlindado(nivel));
+                }
+            }
+            if (FumacaNoServidor())
+            {
+                foreach (var nivel in NiveisComBonecoDaFumaca)
+                {
+                    manifesto.AddResource(ModeloDaFumaca(nivel));
+                    manifesto.AddResource(QuedaDaFumaca(nivel));
+                }
             }
         });
         RegisterListener<Listeners.OnMapStart>(mapa =>
@@ -516,6 +539,7 @@ public partial class ModoDeDiversao
             zumbiNoServidor = null;
             morteNoServidor = null;
             blindadoNoServidor = null;
+            fumacaNoServidor = null;
             personagensNoServidor = null;
             // Ao ligar, o servidor abre o mapa da Oficina por último: se o teste já tinha pedido a Dust 2, ela era trocada.
             if (testeComBots && mapa != MapaDoTeste) AddTimer(1f, () => Server.ExecuteCommand($"changelevel {MapaDoTeste}"));
@@ -578,6 +602,7 @@ public partial class ModoDeDiversao
         infeccoes.Remove(jogador.Slot);
         corridas.Remove(jogador.Slot);
         escudos.Remove(jogador.Slot);
+        fumacas.Remove(jogador.Slot);
         AplicarAtributosDoMutante(jogador);
         AvisarOQueOMutanteFaz(jogador);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
@@ -683,6 +708,8 @@ public partial class ModoDeDiversao
         }
         if (SkinDe(mutante) == "blindado")
             mutante.PrintToChat($" [Magnatas] Seu escudo agora dura {SegundosDoEscudo[Math.Clamp(novo.Nivel, 1, SegundosDoEscudo.Length) - 1]:0} s.");
+        else if (SkinDe(mutante) == "fumaca")
+            mutante.PrintToChat($" [Magnatas] Sua fumaça agora dura {SegundosDaFumacaNoNivel(novo.Nivel):0} s.");
         else if (novo.Nivel == NivelDaCorrida) mutante.PrintToChat(" [Magnatas] Aperte G para correr mais rápido por alguns segundos.");
     }
 
@@ -703,12 +730,15 @@ public partial class ModoDeDiversao
     /// </summary>
     private void AvisarOQueOMutanteFaz(CCSPlayerController jogador)
     {
-        var blindado = SkinDe(jogador) == "blindado";
-        var titulo = blindado ? "Você é o BLINDADO!" : "Você virou MUTANTE!";
-        var g = blindado
+        var skin = SkinDe(jogador);
+        var titulo = skin == "blindado" ? "Você é o BLINDADO!" : skin == "fumaca" ? "Você é o SENHOR DO VAZIO!" : "Você virou MUTANTE!";
+        var g = skin == "blindado"
             ? $"G: escudo, {SegundosDoEscudo[0]:0} s sem levar dano"
-            : $"G: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
-        MostrarCartao(jogador, Cartao(blindado ? "BLINDADO" : "MUTANTE", "#6eff6e", "Faca: acerte os humanos para infectar", g));
+            : skin == "fumaca"
+                ? $"G: cortina de fumaça de {SegundosDaFumacaNoNivel(1):0} s (custa {VidaPorFumaca * 100:0}% da vida)"
+                : $"G: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
+        var nomeDoCartao = skin == "blindado" ? "BLINDADO" : skin == "fumaca" ? "VAZIO" : "MUTANTE";
+        MostrarCartao(jogador, Cartao(nomeDoCartao, skin == "fumaca" ? "#b07cff" : "#6eff6e", "Faca: acerte os humanos para infectar", g));
         jogador.PrintToChat($" [Magnatas] {titulo} Faca: acerte os humanos para infectar. {g}.");
     }
 
@@ -736,6 +766,8 @@ public partial class ModoDeDiversao
         if (!EhMutanteDeVerdade(jogador)) return HookResult.Continue;
         // O Blindado troca a corrida pelo escudo, que já vale no nível 1.
         if (SkinDe(jogador) == "blindado") return LigarEscudo(jogador);
+        // O Senhor do Vazio troca a corrida pela cortina de fumaça, que também já vale no nível 1.
+        if (SkinDe(jogador) == "fumaca") return SoltarFumaca(jogador);
         if (NivelDe(jogador).Nivel < NivelDaCorrida)
         {
             jogador.PrintToCenterHtml($"<font color='#f5b301'>A corrida libera no nível {NivelDaCorrida}: infecte um humano</font>", 2);
@@ -785,16 +817,20 @@ public partial class ModoDeDiversao
     /// <summary>O poder do G do mutante: pronto (cheia), em uso (esvaziando), carregando (enchendo) ou ainda travado.</summary>
     private string HudDoPoder(CCSPlayerController jogador, float agora)
     {
-        var blindado = SkinDe(jogador) == "blindado";
-        if (!blindado && NivelDe(jogador).Nivel < NivelDaCorrida)
+        var skin = SkinDe(jogador);
+        var blindado = skin == "blindado";
+        var fumaca = skin == "fumaca";
+        if (!blindado && !fumaca && NivelDe(jogador).Nivel < NivelDaCorrida)
             return BarraDePoder($"G libera no nível {NivelDaCorrida}", "#888888", 0f);
-        var temPoder = blindado ? escudos.TryGetValue(jogador.Slot, out var poder) : corridas.TryGetValue(jogador.Slot, out poder);
+        var temPoder = blindado ? escudos.TryGetValue(jogador.Slot, out var poder)
+            : fumaca ? fumacas.TryGetValue(jogador.Slot, out poder)
+            : corridas.TryGetValue(jogador.Slot, out poder);
         if (temPoder)
         {
             var (fim, recarga) = poder;
-            var inicio = recarga - (blindado ? SegundosDeRecargaDoEscudo : SegundosDeRecargaDaCorrida);
+            var inicio = recarga - (blindado ? SegundosDeRecargaDoEscudo : fumaca ? SegundosDeRecargaDaFumaca : SegundosDeRecargaDaCorrida);
             if (agora < fim)
-                return BarraDePoder(blindado ? "ESCUDO" : "CORRENDO", blindado ? "#50a0ff" : "#6eff6e", (fim - agora) / Math.Max(fim - inicio, 0.1f));
+                return BarraDePoder(blindado ? "ESCUDO" : fumaca ? "FUMAÇA" : "CORRENDO", blindado ? "#50a0ff" : fumaca ? "#b07cff" : "#6eff6e", (fim - agora) / Math.Max(fim - inicio, 0.1f));
             if (agora < recarga)
                 return BarraDePoder("CARREGANDO", "#f5b301", (agora - fim) / Math.Max(recarga - fim, 0.1f));
         }
@@ -1032,8 +1068,30 @@ public partial class ModoDeDiversao
     {
         var skin = skinsDeTeste.TryGetValue(jogador.Slot, out var deTeste) ? deTeste
             : skinsPorConta.TryGetValue(jogador.SteamID, out var comprada) ? comprada : null;
-        return skin == "blindado" && BlindadoNoServidor() ? skin : null;
+        return skin switch
+        {
+            "blindado" when BlindadoNoServidor() => skin,
+            "fumaca" when FumacaNoServidor() => skin,
+            _ => null,
+        };
     }
+
+    private bool FumacaNoServidor()
+    {
+        if (!UsarBonecosDoPacote || PacoteDaFumaca == "") return false;
+        if (fumacaNoServidor is bool sabido) return sabido;
+        fumacaNoServidor = NoPacote(PacoteDaFumaca, PastaDaFumaca);
+        Console.WriteLine($"[Magnatas] Senhor do Vazio da loja no servidor: {(fumacaNoServidor.Value ? "sim" : "não, quem comprou vira o mutante comum")}.");
+        return fumacaNoServidor.Value;
+    }
+
+    private static int NivelComBonecoDaFumaca(int nivel) => NiveisComBonecoDaFumaca.Where(existente => existente <= nivel).DefaultIfEmpty(1).Max();
+
+    private static string ModeloDaFumaca(int nivel) => $"{PastaDaFumaca}/nivel{NivelComBonecoDaFumaca(nivel)}/mutante.vmdl";
+
+    private static string QuedaDaFumaca(int nivel) => $"{PastaDaFumaca}/nivel{NivelComBonecoDaFumaca(nivel)}/morte/guerreiro_morte.vmdl";
+
+    private static float SegundosDaFumacaNoNivel(int nivel) => SegundosDaFumaca[Math.Clamp(nivel, 1, SegundosDaFumaca.Length) - 1];
 
     private bool BlindadoNoServidor()
     {
@@ -1050,13 +1108,19 @@ public partial class ModoDeDiversao
 
     private static string QuedaDoBlindado(int nivel) => $"{PastaDoBlindado}/nivel{NivelComBonecoDoBlindado(nivel)}/morte/guerreiro_morte.vmdl";
 
-    private string ModeloDe(CCSPlayerController jogador, int nivel) => SkinDe(jogador) == "blindado" ? ModeloDoBlindado(nivel) : ModeloDoNivel(nivel);
+    private string ModeloDe(CCSPlayerController jogador, int nivel) => SkinDe(jogador) switch
+    {
+        "blindado" => ModeloDoBlindado(nivel),
+        "fumaca" => ModeloDaFumaca(nivel),
+        _ => ModeloDoNivel(nivel),
+    };
 
     /// <summary>A queda de cada nível; a do Blindado vem no pacote dele, a do comum só se a do pacote v2 chegou.</summary>
     private string? QuedaDe(CCSPlayerController jogador)
     {
         var nivel = NivelDe(jogador).Nivel;
         if (SkinDe(jogador) == "blindado") return QuedaDoBlindado(nivel);
+        if (SkinDe(jogador) == "fumaca") return QuedaDaFumaca(nivel);
         if (!MorteNoServidor()) return null;
         return QuedaDoNivel[Math.Clamp(nivel, 1, QuedaDoNivel.Length) - 1];
     }
@@ -1092,10 +1156,57 @@ public partial class ModoDeDiversao
         return HookResult.Handled;
     }
 
+    /// <summary>
+    /// O G do Senhor do Vazio, como o Smoke do CrossFire: solta uma fumaça roxa em volta dele (8, 10 ou 12 s, conforme o
+    /// nível) e custa 10% da vida máxima. Com a vida baixa demais, ou na recarga de 15 s, não solta.
+    /// </summary>
+    private HookResult SoltarFumaca(CCSPlayerController jogador)
+    {
+        var agora = Server.CurrentTime;
+        if (fumacas.TryGetValue(jogador.Slot, out var fumaca) && agora < fumaca.Recarga)
+        {
+            jogador.PrintToCenterHtml($"<font color='#f5b301'>Fumaça em {Math.Ceiling(fumaca.Recarga - agora)} s</font>", 1);
+            return HookResult.Handled;
+        }
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo?.AbsOrigin == null) return HookResult.Handled;
+        var custo = Math.Max(1, (int)Math.Round(NivelDe(jogador).Vida * VidaPorFumaca));
+        if (corpo.Health <= custo)
+        {
+            jogador.PrintToCenterHtml("<font color='#ff6b6b'>Vida baixa demais para a fumaça</font>", 1);
+            return HookResult.Handled;
+        }
+        corpo.Health -= custo;
+        Utilities.SetStateChanged(corpo, "CBaseEntity", "m_iHealth");
+
+        var segundos = SegundosDaFumacaNoNivel(NivelDe(jogador).Nivel);
+        fumacas[jogador.Slot] = (agora + segundos, agora + SegundosDeRecargaDaFumaca);
+        var nuvem = Utilities.CreateEntityByName<CSmokeGrenadeProjectile>("smokegrenade_projectile");
+        if (nuvem == null) return HookResult.Handled;
+        var pe = corpo.AbsOrigin;
+        nuvem.TeamNum = corpo.TeamNum;
+        nuvem.Thrower.Raw = corpo.EntityHandle.Raw;
+        nuvem.OriginalThrower.Raw = corpo.EntityHandle.Raw;
+        nuvem.OwnerEntity.Raw = corpo.EntityHandle.Raw;
+        // Roxo do Vazio (0 a 255).
+        nuvem.SmokeColor.X = 120f;
+        nuvem.SmokeColor.Y = 40f;
+        nuvem.SmokeColor.Z = 200f;
+        nuvem.DispatchSpawn();
+        nuvem.Teleport(new Vector(pe.X, pe.Y, pe.Z + 8f), new QAngle(0, 0, 0), new Vector(0, 0, 0));
+        // Parada no chão e com a hora de estourar vencida, ela abre na hora em vez de rolar como granada.
+        nuvem.DetonateTime = agora;
+        AddTimer(segundos, () =>
+        {
+            if (nuvem.IsValid) nuvem.Remove();
+        });
+        return HookResult.Handled;
+    }
+
     /// <summary>Pergunta ao site qual mutante cada conta comprou e está usando. Site fora do ar: todos ficam com o comum.</summary>
     private async Task BuscarMutantesDaLoja(List<ulong> contas)
     {
-        if (Config.SiteUrl == "" || Config.Token == "" || contas.Count == 0 || !BlindadoNoServidor()) return;
+        if (Config.SiteUrl == "" || Config.Token == "" || contas.Count == 0 || (!BlindadoNoServidor() && !FumacaNoServidor())) return;
         try
         {
             using var pedido = new HttpRequestMessage(HttpMethod.Get, $"{Config.SiteUrl.TrimEnd('/')}/api/servidor/visuais?steamids={string.Join(",", contas)}");
@@ -1129,8 +1240,8 @@ public partial class ModoDeDiversao
     }
 
     /// <summary>Só para teste: põe (ou tira, com "nenhum") o mutante da loja nos bots, todos ou só o da vaga dada.</summary>
-    [ConsoleCommand("magnatas_mutacao_skin", "Teste: mutante da loja nos bots (blindado|nenhum [vaga])")]
-    [CommandHelper(minArgs: 1, usage: "<blindado|nenhum> [vaga]", whoCanExecute: CommandUsage.SERVER_ONLY)]
+    [ConsoleCommand("magnatas_mutacao_skin", "Teste: mutante da loja nos bots (blindado|fumaca|nenhum [vaga])")]
+    [CommandHelper(minArgs: 1, usage: "<blindado|fumaca|nenhum> [vaga]", whoCanExecute: CommandUsage.SERVER_ONLY)]
     public void SkinDeTeste(CCSPlayerController? chamador, CommandInfo comando)
     {
         if (Config.Regra != "mutacao") return;
@@ -1138,7 +1249,7 @@ public partial class ModoDeDiversao
         int? vaga = comando.ArgCount > 2 && int.TryParse(comando.GetArg(2), out var numero) ? numero : null;
         foreach (var bot in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: true } && (vaga == null || jogador.Slot == vaga)))
         {
-            if (skin == "blindado") skinsDeTeste[bot.Slot] = skin;
+            if (skin is "blindado" or "fumaca") skinsDeTeste[bot.Slot] = skin;
             else skinsDeTeste.Remove(bot.Slot);
             comando.ReplyToCommand($"vaga={bot.Slot} skin={SkinDe(bot) ?? "comum"}");
         }
