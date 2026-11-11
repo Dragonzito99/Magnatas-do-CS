@@ -8,6 +8,8 @@ import { Avatar } from '../avatar';
 import { SiglaDoCla } from '../clas/sigla-do-cla';
 import { convidar } from '../comunidade/acoes';
 import { aceitar, aceitarJuntar, cancelar, cancelarJuntar, chamarParaDesafio, criar, entrar, expulsar, juntar, recusar, recusarJuntar, sair } from '../salas/acoes';
+import type { ChaveDaInsignia } from '@/dominio/insignias';
+import { Insignia } from '../insignia';
 
 const kdEmTexto = (kd: number | undefined) => (kd ?? 0).toFixed(2);
 
@@ -128,6 +130,7 @@ export function BarraDaSala({
   juncoes,
   clas,
   amigos,
+  principais,
 }: {
   sala: SalaComMembros;
   usuarioId: string;
@@ -136,6 +139,8 @@ export function BarraDaSala({
   juncoes: JuncaoDaSala[];
   clas: ClasDasPessoas;
   amigos: Amigo[];
+  /** A insígnia principal de cada um, ao lado do nome (dono, 11/11/2026). */
+  principais: Map<string, ChaveDaInsignia>;
 }) {
   const souLider = sala.liderId === usuarioId;
   const cla = claDaSala(sala, clas);
@@ -169,6 +174,11 @@ export function BarraDaSala({
                 {clas.get(membro.id) && !cla && (
                   <>
                     <SiglaDoCla cla={clas.get(membro.id)!} />{' '}
+                  </>
+                )}
+                {principais.get(membro.id) && (
+                  <>
+                    <Insignia familia={principais.get(membro.id)!.familia} nivel={principais.get(membro.id)!.nivel} tamanho={18} />{' '}
                   </>
                 )}
                 {membro.apelido}

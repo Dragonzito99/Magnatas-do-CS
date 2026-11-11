@@ -7460,6 +7460,13 @@ a.para-sempre-da-janela.sem-saldo {
 }
 
 .nome-na-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nome-na-linha a {
   min-width: 0;
 }
 

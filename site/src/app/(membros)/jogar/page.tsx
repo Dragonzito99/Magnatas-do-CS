@@ -11,6 +11,7 @@ import { desafiosDaSala, opcoesDeDesafio } from '@/dominio/desafios';
 import { estadoDoCartao, listarServidoresDaDiversao, mapaDoCartao, MODOS_DE_DIVERSAO, type ModoDeDiversao } from '@/dominio/diversao';
 import { situacaoDasFaltas } from '@/dominio/faltas';
 import { kdDosJogadores } from '@/dominio/ficha';
+import { principaisDe } from '@/dominio/insignias';
 import { FILTROS_DO_JOGAR, lerFiltroDoJogar, mostraNoFiltro } from '@/dominio/jogar';
 import { juncoesDaSala } from '@/dominio/juncoes';
 import { verMix } from '@/dominio/mix';
@@ -75,7 +76,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   const juncoes = minha ? await juncoesDaSala(bd, minha.id) : [];
   const amigos = minha ? await amigosDe(bd, usuario.id) : [];
   const idsNasSalas = [...new Set(salas.flatMap((sala) => sala.membros.map((membro) => membro.id)))];
-  const [kd, clasNasSalas] = await Promise.all([kdDosJogadores(bd, idsNasSalas), clasDosUsuarios(bd, idsNasSalas)]);
+  const [kd, clasNasSalas, principais] = await Promise.all([kdDosJogadores(bd, idsNasSalas), clasDosUsuarios(bd, idsNasSalas), principaisDe(bd, idsNasSalas)]);
 
   const servidores = todosServidores.filter((servidor) => mostraNoFiltro(filtro, servidor.modo));
   const diversao = diversaoDoAmbiente(controladorDoAmbiente());
@@ -129,7 +130,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       {(minha || estouNoMix || algumEsperando || filtro === 'competitivo' || filtro === 'mix') && <Atualizar segundos={3} />}
-      {minha && <BarraDaSala sala={minha} usuarioId={usuario.id} kd={kd} desafio={desafio} juncoes={juncoes} clas={clasNasSalas} amigos={amigos} />}
+      {minha && <BarraDaSala sala={minha} usuarioId={usuario.id} kd={kd} desafio={desafio} juncoes={juncoes} clas={clasNasSalas} amigos={amigos} principais={principais} />}
       <div className={minha ? 'tela-jogar com-sala' : 'tela-jogar'}>
         <AvisoDeBloqueio situacao={faltas} />
         <div className="carteira-da-shop">

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
+import { principaisDe, type ChaveDaInsignia } from '@/dominio/insignias';
 import { moldurasDe } from '@/dominio/loja';
 import { mvpsDoPeriodo, periodoDeBrasilia } from '@/dominio/mvps';
 import {
@@ -21,6 +22,7 @@ import {
 import { patenteDe } from '@/dominio/xp';
 import { Avatar } from '../avatar';
 import { InsigniaDaPatente } from '../insignia-da-patente';
+import { Insignia } from '../insignia';
 
 const nomeDoMes = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const tituloDoMes = ({ ano, mes }: Mes) => {
@@ -33,6 +35,7 @@ const porcento = (parte: number, todo: number) => (todo > 0 ? Math.max(0, Math.m
 
 type Jogador = { id: string; apelido: string; avatarUrl: string | null };
 type Molduras = Map<string, string>;
+type Principais = Map<string, ChaveDaInsignia>;
 
 /** "Seu lugar": a posição de quem olha, em destaque, com quanto falta para passar quem está logo acima. */
 function SeuLugar({
@@ -131,7 +134,8 @@ function Barra({ texto, parte, todo }: { texto: string; parte: number; todo: num
 }
 
 /** Uma linha da lista: posição grande, foto, nome e as colunas de cada ranking. */
-function Linha({ posicao, jogador, eu, molduras, children }: { posicao: number; jogador: Jogador; eu: boolean; molduras: Molduras; children: ReactNode }) {
+function Linha({ posicao, jogador, eu, molduras, principais, children }: { posicao: number; jogador: Jogador; eu: boolean; molduras: Molduras; principais: Principais; children: ReactNode }) {
+  const principal = principais.get(jogador.id);
   return (
     <div role="row" className={eu ? 'linha-do-ranking minha' : 'linha-do-ranking'}>
       <span role="cell" className="posicao-na-linha">
@@ -141,6 +145,7 @@ function Linha({ posicao, jogador, eu, molduras, children }: { posicao: number; 
         <Avatar usuario={jogador} moldura={molduras.get(jogador.id)} />
       </span>
       <span role="cell" className="nome-na-linha">
+        {principal && <Insignia familia={principal.familia} nivel={principal.nivel} tamanho={22} />}
         <Link href={`/jogadores/${jogador.id}`}>{jogador.apelido}</Link>
       </span>
       {children}
@@ -167,6 +172,7 @@ async function RankingDaComunidade({ usuario }: { usuario: Usuario }) {
   const bd = obterBd();
   const linhas = await rankingDaComunidade(bd);
   const molduras = await moldurasDe(bd, [...linhas.map((linha) => linha.jogador.id), usuario.id]);
+  const principais = await principaisDe(bd, linhas.map((linha) => linha.jogador.id));
   const eu = minhaPosicao(linhas, usuario.id);
   const minha = linhas.find((linha) => linha.jogador.id === usuario.id);
   const acima = eu?.acima ? linhas[eu.posicao - 2] : undefined;
@@ -224,7 +230,7 @@ async function RankingDaComunidade({ usuario }: { usuario: Usuario }) {
         <div className="lista-do-ranking da-comunidade" role="table" aria-label="Ranking da comunidade">
           <Cabeca colunas={[{ nome: 'Patente', classe: 'so-computador' }, { nome: 'XP' }, { nome: 'Partidas', classe: 'numero-na-linha so-computador' }, { nome: 'Vitórias', classe: 'numero-na-linha so-computador' }]} />
           {linhas.map((linha) => (
-            <Linha key={linha.jogador.id} posicao={linha.posicao} jogador={linha.jogador} eu={linha.jogador.id === usuario.id} molduras={molduras}>
+            <Linha key={linha.jogador.id} posicao={linha.posicao} jogador={linha.jogador} eu={linha.jogador.id === usuario.id} molduras={molduras} principais={principais}>
               <span role="cell" className="patente-na-linha so-computador">
                 <InsigniaDaPatente patente={linha.patente} classe="insignia-mini" />
                 {linha.patente.nome}
@@ -252,6 +258,7 @@ async function RankingDeMvps({ usuario }: { usuario: Usuario }) {
   const agora = new Date();
   const linhas = await mvpsDoPeriodo(bd, periodoDeBrasilia(agora, 'mes'), 50);
   const molduras = await moldurasDe(bd, [...linhas.map((linha) => linha.id), usuario.id]);
+  const principais = await principaisDe(bd, linhas.map((linha) => linha.id));
   const indice = linhas.findIndex((linha) => linha.id === usuario.id);
   const minha = indice >= 0 ? linhas[indice] : undefined;
   const acima = indice > 0 ? linhas[indice - 1] : undefined;
@@ -302,7 +309,7 @@ async function RankingDeMvps({ usuario }: { usuario: Usuario }) {
         <div className="lista-do-ranking de-mvps" role="table" aria-label="Ranking de MVPs">
           <Cabeca colunas={[{ nome: 'Estrelas' }, { nome: 'Abates', classe: 'numero-na-linha so-computador' }, { nome: 'Partidas', classe: 'numero-na-linha so-computador' }]} />
           {linhas.map((linha, posicao) => (
-            <Linha key={linha.id} posicao={posicao + 1} jogador={linha} eu={linha.id === usuario.id} molduras={molduras}>
+            <Linha key={linha.id} posicao={posicao + 1} jogador={linha} eu={linha.id === usuario.id} molduras={molduras} principais={principais}>
               <span role="cell" className="estrelas-na-linha">
                 <Barra texto={`★ ${linha.mvps}`} parte={linha.mvps} todo={topo} />
               </span>
@@ -328,6 +335,7 @@ async function RankingDoMix({ usuario, texto }: { usuario: Usuario; texto: strin
   const mes = pedido && !antes(atual, pedido) ? pedido : atual;
   const [{ linhas, foraDoRanking }, primeiro] = await Promise.all([rankingDoMes(bd, mes), primeiroMesComPartida(bd)]);
   const molduras = await moldurasDe(bd, [...linhas.map((linha) => linha.jogador.id), usuario.id]);
+  const principais = await principaisDe(bd, linhas.map((linha) => linha.jogador.id));
   const podeVoltar = !!primeiro && antes(primeiro, mes);
   const podeAvancar = antes(mes, atual);
   const minha = linhas.find((linha) => linha.jogador.id === usuario.id);
@@ -402,7 +410,7 @@ async function RankingDoMix({ usuario, texto }: { usuario: Usuario; texto: strin
             ]}
           />
           {linhas.map((linha) => (
-            <Linha key={linha.jogador.id} posicao={linha.posicao} jogador={linha.jogador} eu={linha.jogador.id === usuario.id} molduras={molduras}>
+            <Linha key={linha.jogador.id} posicao={linha.posicao} jogador={linha.jogador} eu={linha.jogador.id === usuario.id} molduras={molduras} principais={principais}>
               <span role="cell" className="numero-na-linha so-computador">
                 {linha.partidas}
               </span>
