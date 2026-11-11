@@ -9711,6 +9711,11 @@ a.titulo-da-linha:hover {
   font-size: 11px;
 }
 
+.perfil-nivel .perfil-premio {
+  color: var(--verde);
+  line-height: 1.3;
+}
+
 /* Aba Baú */
 .perfil-bau {
   display: grid;

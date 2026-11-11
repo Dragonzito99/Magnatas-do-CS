@@ -1,9 +1,10 @@
-import { NOMES_DOS_NIVEIS, nomeDaInsignia, type ChaveDaInsignia, type InsigniaDaFamilia } from '@/dominio/insignias';
+import { faltamParaAProxima, NOMES_DOS_NIVEIS, nomeDaInsignia, textoDoPremio, type ChaveDaInsignia, type InsigniaDaFamilia } from '@/dominio/insignias';
 import { Insignia } from '../../insignia';
 import { escolherInsignia } from './acoes';
 import { MarcarInsigniasVistas } from './marcar-insignias-vistas';
 
 const numero = new Intl.NumberFormat('pt-BR');
+const dataCurta = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
 /**
  * A aba Insígnias: um resumo e uma linha por família, do Bronze à Lendária, com a barra até a próxima. No próprio
@@ -12,9 +13,10 @@ const numero = new Intl.NumberFormat('pt-BR');
 export function AbaInsignias({ familias, principal, total, proprio, temNovas }: { familias: InsigniaDaFamilia[]; principal: ChaveDaInsignia | null; total: number; proprio: boolean; temNovas: boolean }) {
   const maisAlta = familias.reduce((maior, familia) => Math.max(maior, familia.nivel), -1);
   const quantasNoMaisAlto = familias.filter((familia) => familia.nivel === maisAlta).length;
+  // A que já bateu a meta e só espera a próxima conferência não conta como "a mais perto".
   const maisPerto = familias
-    .filter((familia) => familia.proximaMeta !== null)
-    .map((familia) => ({ familia, faltam: familia.proximaMeta! - familia.contagem, parte: familia.contagem / familia.proximaMeta! }))
+    .filter((familia) => familia.proximaMeta !== null && (faltamParaAProxima(familia) ?? 0) > 0)
+    .map((familia) => ({ familia, faltam: faltamParaAProxima(familia) ?? 0, parte: familia.contagem / familia.proximaMeta! }))
     .sort((a, b) => b.parte - a.parte)[0];
 
   return (
@@ -49,12 +51,20 @@ export function AbaInsignias({ familias, principal, total, proprio, temNovas }: 
               <span className="perfil-mapa-barra">
                 <i style={{ width: `${Math.max(parte, 0)}%` }} />
               </span>
-              <small>{familia.proximaMeta === null ? 'Completa' : `Faltam ${numero.format(familia.proximaMeta - familia.contagem)} para ${NOMES_DOS_NIVEIS[familia.nivel + 1]}`}</small>
+              <small>
+                {familia.proximaMeta === null
+                  ? 'Completa'
+                  : faltamParaAProxima(familia) === 0
+                    ? `${NOMES_DOS_NIVEIS[familia.nivel + 1]} sai na próxima partida`
+                    : `Faltam ${numero.format(faltamParaAProxima(familia)!)} para ${NOMES_DOS_NIVEIS[familia.nivel + 1]}`}
+              </small>
             </div>
             <div className="perfil-niveis">
               {familia.metas.map((meta, nivel) => {
                 const tem = nivel <= familia.nivel;
                 const escolhida = principal?.familia === familia.familia && principal.nivel === nivel;
+                // O prêmio fica guardado na insígnia e aparece aqui (spec; revisão de 11/11/2026).
+                const conquistada = familia.conquistadas.find((item) => item.nivel === nivel);
                 const conteudo = (
                   <>
                     <Insignia familia={familia.familia} nivel={nivel} tamanho={64} apagada={!tem} />
@@ -63,6 +73,11 @@ export function AbaInsignias({ familias, principal, total, proprio, temNovas }: 
                       {escolhida && ' ★'}
                     </b>
                     <small>{numero.format(meta)}</small>
+                    {conquistada && (
+                      <small className="perfil-premio">
+                        {textoDoPremio(conquistada)} · {dataCurta.format(conquistada.conquistadaEm)}
+                      </small>
+                    )}
                   </>
                 );
                 if (proprio && tem && !escolhida) {

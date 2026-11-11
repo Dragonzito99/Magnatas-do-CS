@@ -9,8 +9,9 @@ const NOME_DO_NIVEL: Record<string, string> = { bronze: 'Bronze', prata: 'Prata'
 
 /** O motivo de cada linha do extrato, em palavras do jogador. */
 export function motivoDaLinha(linha: Linha): string {
-  const detalhes = (linha.detalhes ?? {}) as { itemId?: string; dias?: number; motivo?: string; paraSempre?: boolean; pacote?: string; nivel?: string };
+  const detalhes = (linha.detalhes ?? {}) as { itemId?: string; dias?: number; motivo?: string; paraSempre?: boolean; pacote?: string; nivel?: string; nome?: string };
   if (linha.tipo === 'partida') return 'Partida';
+  if (linha.tipo === 'insignia') return `Insígnia ${detalhes.nome ?? ''}`.trim();
   if (linha.tipo === 'abertura') return 'Abertura da loja: XP que você já tinha';
   if (linha.tipo === 'ajuste') return detalhes.motivo ? `Ajuste da equipe: ${detalhes.motivo}` : 'Ajuste da equipe';
   if (linha.tipo === 'pagamento') return `Compra de MagCoin: ${NOME_DO_PACOTE[detalhes.pacote ?? ''] ?? 'pacote'}`;

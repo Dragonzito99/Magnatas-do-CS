@@ -36,3 +36,7 @@ test('cada linha vira título e detalhe para a lista de compras, com o item quan
 test('o prêmio de insígnia aparece com o nome dela', () => {
   expect(descreverLinha({ tipo: 'insignia', referencia: 'insignia:estrela:2', detalhes: { nome: 'Estrela Ouro' } })).toEqual({ titulo: 'Insígnia', detalhe: 'Estrela Ouro' });
 });
+
+test('no painel da equipe, o prêmio de insígnia aparece com o nome dela, não como compra', () => {
+  expect(motivoDaLinha({ tipo: 'insignia', referencia: 'insignia:estrela:2', detalhes: { nome: 'Estrela Ouro' } })).toBe('Insígnia Estrela Ouro');
+});

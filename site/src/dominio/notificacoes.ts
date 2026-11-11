@@ -5,7 +5,7 @@ import { convitesDeSalaPara, pedidosDeAmizadePara } from './amigos';
 import { chamadosDe, claDoUsuario, pedidosDoCla } from './clas';
 import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala, type DesafioDaSala } from './desafios';
-import { insigniasNaoVistas } from './insignias';
+import { insigniasNaoVistas, textoDoPremio } from './insignias';
 import { partidaAtualDe } from './partidas';
 import { minhaSala } from './salas';
 import { patenteDe } from './xp';
@@ -84,7 +84,7 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
     const numero = new Intl.NumberFormat('pt-BR');
     const grana = novas.reduce((soma, item) => soma + item.grana, 0);
     const xp = novas.reduce((soma, item) => soma + item.xp, 0);
-    const texto = novas.length === 1 ? `Nova insígnia: ${novas[0].nome}` : `${novas.length} novas insígnias: +${numero.format(grana)} Grana e +${numero.format(xp)} XP`;
+    const texto = novas.length === 1 ? `Nova insígnia: ${novas[0].nome} (${textoDoPremio(novas[0])})` : `${novas.length} novas insígnias: +${numero.format(grana)} Grana e +${numero.format(xp)} XP`;
     lista.push({ tipo: 'insignia', texto, href: `/jogadores/${usuario.id}?aba=insignias`, quantidade: 1 });
   }
 

@@ -3,7 +3,7 @@ import type { Bd } from '@/bd/conexao';
 import { eq } from 'drizzle-orm';
 import { insigniasDoJogador, itensDoJogador, partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { conferirInsignias, conferirInsigniasDeTodos, contarFamilias, escolherPrincipal, InsigniaQueNaoTem, insigniasDe, marcarInsigniasVistas, principaisDe, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
+import { conferirInsignias, conferirInsigniasDeTodos, contarFamilias, faltamParaAProxima, textoDoPremio, escolherPrincipal, InsigniaQueNaoTem, insigniasDe, marcarInsigniasVistas, principaisDe, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
 import { ITENS_A_VENDA } from './loja';
 import { notificacoesDe } from './notificacoes';
 
@@ -168,4 +168,37 @@ test('a leitura das insígnias, a escolha da principal e o aviso no sino', async
   expect(avisos).toEqual([{ tipo: 'insignia', texto: '2 novas insígnias: +150 Grana e +700 XP', href: `/jogadores/${conta.id}?aba=insignias`, quantidade: 1 }]);
   await marcarInsigniasVistas(bd, conta.id);
   expect((await notificacoesDe(bd, atual, AGORA)).filter((item) => item.tipo === 'insignia')).toEqual([]);
+});
+
+test('o prêmio de uma insígnia em texto, com o mutante e os dias', () => {
+  expect(textoDoPremio({ grana: 50, xp: 200, mutanteId: null, mutanteDias: null })).toBe('+50 Grana e +200 XP');
+  expect(textoDoPremio({ grana: 200, xp: 1000, mutanteId: 'mutante-fumaca', mutanteDias: 3 })).toBe('+200 Grana, +1.000 XP e Senhor do Vazio por 3 dias');
+  expect(textoDoPremio({ grana: 800, xp: 5000, mutanteId: 'mutante-blindado', mutanteDias: null })).toBe('+800 Grana, +5.000 XP e Cyber Hulk (Blindado) para sempre');
+});
+
+test('a contagem que já passou da meta (antes da conferência) não mostra falta negativa', () => {
+  const familia = { contagem: 290, nivel: 0, proximaMeta: 250 };
+  expect(faltamParaAProxima(familia)).toBe(0);
+  expect(faltamParaAProxima({ contagem: 100, nivel: 0, proximaMeta: 250 })).toBe(150);
+  expect(faltamParaAProxima({ contagem: 100, nivel: 4, proximaMeta: null })).toBeNull();
+});
+
+test('o aviso de uma insígnia nova traz o prêmio', async () => {
+  const bd = await criarBancoDeTeste();
+  const conta = await criarUsuario(bd, { estado: 'ativo' });
+  await partidaDe(bd, conta.id, { venceu: false, hs: 50, k5: 0, mvps: 0 });
+  await bd.transaction((tx) => conferirInsignias(tx, [conta.id], AGORA, () => 0));
+  const [atual] = await bd.select().from(usuarios).where(eq(usuarios.id, conta.id));
+  const avisos = (await notificacoesDe(bd, atual, AGORA)).filter((item) => item.tipo === 'insignia');
+  expect(avisos.map((item) => item.texto)).toEqual(['Nova insígnia: Mira Bronze (+50 Grana e +200 XP)']);
+});
+
+test('a estreia confere uma conta por transação, para não travar com uma partida terminando junto', async () => {
+  const bd = await criarBancoDeTeste();
+  const contas = await Promise.all([1, 2].map(() => criarUsuario(bd, { estado: 'ativo' })));
+  for (const conta of contas) await partidaDe(bd, conta.id, { venceu: false, hs: 50, k5: 0, mvps: 0 });
+  let transacoes = 0;
+  const contando = { ...bd, transaction: ((fn: Parameters<Bd['transaction']>[0]) => { transacoes += 1; return bd.transaction(fn); }) as Bd['transaction'], select: bd.select.bind(bd) } as Bd;
+  expect(await conferirInsigniasDeTodos(contando)).toBe(2);
+  expect(transacoes).toBe(2);
 });

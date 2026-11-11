@@ -3,7 +3,7 @@ import type { Bd } from '@/bd/conexao';
 import { insigniasDoJogador, itensDoJogador, partidaJogadores, servidoresDiversao, usuarios, xpPartidas } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
 import { lancarGrana } from './grana';
-import { darItem, ITENS_A_VENDA } from './loja';
+import { darItem, itemDoCatalogo, ITENS_A_VENDA } from './loja';
 
 /**
  * Insígnias (dono, 11/11/2026), no jeito das Badges do CrossFire e com desenho nosso: 6 famílias com 5 níveis cada,
@@ -195,7 +195,9 @@ export async function conferirInsignias(
 }
 
 /** A estreia: confere todas as contas ativas, em lotes. Rodar de novo não paga nada. Devolve quantas insígnias saíram. */
-export async function conferirInsigniasDeTodos(bd: Bd, lote = 100, agora: Date = new Date()): Promise<number> {
+// Uma conta por transação: em lotes, a trava das contas podia cruzar com a de uma partida terminando junto, e o Postgres
+// derrubava uma das duas (revisão de 11/11/2026).
+export async function conferirInsigniasDeTodos(bd: Bd, lote = 1, agora: Date = new Date()): Promise<number> {
   const ids = (await bd.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.estado, 'ativo')).orderBy(usuarios.id)).map((conta) => conta.id);
   let total = 0;
   for (let inicio = 0; inicio < ids.length; inicio += lote) {
@@ -283,12 +285,12 @@ export async function escolherPrincipal(bd: Bd, usuarioId: string, familia: Fami
 }
 
 /** As conquistadas que a pessoa ainda não viu na aba Insígnias, com o prêmio, para o sino. */
-export async function insigniasNaoVistas(bd: Bd, usuarioId: string): Promise<{ nome: string; grana: number; xp: number }[]> {
+export async function insigniasNaoVistas(bd: Bd, usuarioId: string): Promise<{ nome: string; grana: number; xp: number; mutanteId: string | null; mutanteDias: number | null }[]> {
   const linhas = await bd
     .select()
     .from(insigniasDoJogador)
     .where(and(eq(insigniasDoJogador.usuarioId, usuarioId), isNull(insigniasDoJogador.vistaEm)));
-  return linhas.map((linha) => ({ nome: nomeDaInsignia(linha.familia as Familia, linha.nivel), grana: linha.grana, xp: linha.xp }));
+  return linhas.map((linha) => ({ nome: nomeDaInsignia(linha.familia as Familia, linha.nivel), grana: linha.grana, xp: linha.xp, mutanteId: linha.mutanteId, mutanteDias: linha.mutanteDias }));
 }
 
 export async function marcarInsigniasVistas(bd: Bd, usuarioId: string, agora: Date = new Date()): Promise<void> {
@@ -296,4 +298,23 @@ export async function marcarInsigniasVistas(bd: Bd, usuarioId: string, agora: Da
     .update(insigniasDoJogador)
     .set({ vistaEm: agora })
     .where(and(eq(insigniasDoJogador.usuarioId, usuarioId), isNull(insigniasDoJogador.vistaEm)));
+}
+
+const numeroEmTexto = new Intl.NumberFormat('pt-BR');
+
+/** O prêmio entregue com a insígnia, em texto: "+200 Grana, +1.000 XP e Senhor do Vazio por 3 dias". */
+export function textoDoPremio(premio: { grana: number; xp: number; mutanteId: string | null; mutanteDias: number | null }): string {
+  const partes = [`+${numeroEmTexto.format(premio.grana)} Grana`, `+${numeroEmTexto.format(premio.xp)} XP`];
+  const mutante = premio.mutanteId ? itemDoCatalogo(premio.mutanteId) : undefined;
+  if (mutante) partes.push(`${mutante.nome} ${premio.mutanteDias === null ? 'para sempre' : premio.mutanteDias === 1 ? 'por 1 dia' : `por ${premio.mutanteDias} dias`}`);
+  return partes.length === 2 ? partes.join(' e ') : `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`;
+}
+
+/**
+ * Quanto falta para o próximo nível. Nunca negativo: entre o resultado e a conferência a contagem pode já ter passado
+ * da meta (revisão de 11/11/2026). null = família completa.
+ */
+export function faltamParaAProxima(familia: { contagem: number; nivel: number; proximaMeta: number | null }): number | null {
+  if (familia.proximaMeta === null) return null;
+  return Math.max(0, familia.proximaMeta - familia.contagem);
 }
