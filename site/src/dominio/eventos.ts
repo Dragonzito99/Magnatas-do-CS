@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { tokenConfere } from '@/auth/token-servidor';
 import type { Bd } from '@/bd/conexao';
 import { partidaJogadores, partidas, usuarios, type Partida } from '@/bd/esquema';
+import { avisarNoDiscord, mensagemDoResultado } from './discord';
 import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 import { finalizarPartida } from './partidas';
 
@@ -104,19 +105,20 @@ async function gravarEstatisticas(tx: Transacao, partida: Partida, recebidos: z.
   }
 }
 
-export async function aplicarEvento(bd: Bd, evento: unknown): Promise<void> {
+/** Devolve a partida só quando ela acabou de ser encerrada com vencedor, para o aviso no Discord sair depois de gravar. */
+export async function aplicarEvento(bd: Bd, evento: unknown): Promise<Partida | null> {
   const lido = Evento.safeParse(evento);
-  if (!lido.success) return;
+  if (!lido.success) return null;
   const dados = lido.data;
 
-  await bd.transaction(async (tx) => {
+  return bd.transaction(async (tx): Promise<Partida | null> => {
     // Só partida em andamento muda, e a trava faz os eventos dela passarem um de cada vez.
     const [partida] = await tx
       .select()
       .from(partidas)
       .where(and(eq(partidas.numero, dados.matchid), inArray(partidas.estado, [...ESTADOS_ATIVOS_DE_PARTIDA])))
       .for('update');
-    if (!partida) return;
+    if (!partida) return null;
     await tx.update(partidas).set({ ultimoEventoEm: new Date() }).where(eq(partidas.id, partida.id));
 
     switch (dados.event) {
@@ -149,8 +151,10 @@ export async function aplicarEvento(bd: Bd, evento: unknown): Promise<void> {
             ? { estado: 'cancelada', vencedor: null }
             : { estado: 'encerrada', vencedor: dados.winner.team === 'team1' ? 1 : 2 },
         );
-        break;
+        if (dados.winner.team === 'none') break;
+        return (await tx.select().from(partidas).where(eq(partidas.id, partida.id)))[0] ?? null;
     }
+    return null;
   });
 }
 
@@ -183,6 +187,9 @@ export async function respostaDeEvento(bd: Bd, pedido: Request, tokenEsperado: s
   } catch {
     // Corpo inválido vira evento estranho, que é ignorado.
   }
-  await aplicarEvento(bd, evento);
+  const encerrada = await aplicarEvento(bd, evento);
+  // Sem esperar: o servidor de CS2 recebe o 200 na hora, e o Discord fora do ar não muda nada aqui.
+  const aviso = encerrada && mensagemDoResultado(encerrada, process.env.SITE_URL ?? 'http://localhost:3000');
+  if (aviso) void avisarNoDiscord(process.env.DISCORD_WEBHOOK_RESULTADOS, aviso);
   return new Response(null, { status: 200 });
 }

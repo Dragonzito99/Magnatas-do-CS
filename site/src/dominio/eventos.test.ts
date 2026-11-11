@@ -153,6 +153,18 @@ test('series_end devolve as salas, que podem jogar de novo', async () => {
   expect(livre.partidaId).toBeNull();
 });
 
+test('series_end devolve a partida encerrada, para o aviso no Discord; outros eventos e o cancelamento não devolvem nada', async () => {
+  expect(await aplicarEvento(bd, daPartida(going_live))).toBeNull();
+  const encerrada = await aplicarEvento(bd, daPartida(series_end));
+  expect(encerrada).toMatchObject({ id: partida.id, estado: 'encerrada', vencedor: 1 });
+  expect(await aplicarEvento(bd, daPartida(series_end))).toBeNull();
+});
+
+test('series_end cancelado não devolve partida', async () => {
+  await aplicarEvento(bd, daPartida(going_live));
+  expect(await aplicarEvento(bd, daPartida(series_end_cancelada))).toBeNull();
+});
+
 test('series_end com winner none marca como cancelada', async () => {
   await aplicarEvento(bd, daPartida(going_live));
   await aplicarEvento(bd, daPartida(series_end_cancelada));
@@ -191,7 +203,7 @@ test.each([
   { event: 'round_end', matchid: 1, team1: 'x' },
   { event: 'series_end', matchid: 1, winner: { team: 'time3' } },
 ])('evento estranho %j é ignorado sem erro', async (evento) => {
-  await expect(aplicarEvento(bd, evento)).resolves.toBeUndefined();
+  await expect(aplicarEvento(bd, evento)).resolves.toBeNull();
 });
 
 const pedidoDeEvento = (token: string, corpo: string) =>
