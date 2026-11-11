@@ -3,7 +3,7 @@ import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, denuncias, gravacoes, partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { pode } from '@/auth/permissoes';
-import { MODOS_DE_DIVERSAO, nomeDoMapaConhecido } from './diversao';
+import { fotoDoMapa, MODOS_DE_DIVERSAO, nomeDoMapaConhecido } from './diversao';
 import { nomeDoMapa } from './textos-da-partida';
 import { progressoDe } from './xp';
 
@@ -107,6 +107,8 @@ export type PartidaDoPerfil = {
   abates: number;
   mortes: number | null;
   xp: number;
+  /** A foto do mapa, quando o site conhece o mapa. */
+  foto: string | null;
 };
 
 const ULTIMAS_DO_PERFIL = 5;
@@ -145,6 +147,7 @@ export async function ultimasPartidasDoPerfil(bd: Bd, jogadorId: string, limite:
         mapa: linha.mapaDaPartida ? (nomeDoMapaConhecido(linha.mapaDaPartida) ?? nomeDoMapa(linha.mapaDaPartida)) : null,
         placar: temPlacar ? `${meu} x ${deles}` : null,
         mortes: linha.mortesNaPartida ?? linha.xp.mortes,
+        foto: fotoDoMapa(linha.mapaDaPartida),
       };
     }
     const porta = Number(linha.xp.referencia.split(':')[1]);
@@ -154,6 +157,7 @@ export async function ultimasPartidasDoPerfil(bd: Bd, jogadorId: string, limite:
       mapa: linha.xp.mapa ? (nomeDoMapaConhecido(linha.xp.mapa) ?? linha.xp.mapa) : null,
       placar: linha.xp.placar,
       mortes: linha.xp.mortes,
+      foto: fotoDoMapa(linha.xp.mapa),
     };
   });
 }

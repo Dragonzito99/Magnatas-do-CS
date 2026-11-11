@@ -1,28 +1,27 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
-import { fotoDoMapa } from '@/dominio/diversao';
-import { elogiosDoJogador } from '@/dominio/elogios';
 import { situacaoDaAmizade } from '@/dominio/amigos';
 import { claDoUsuario } from '@/dominio/clas';
-import { fichaDoJogador, kdDe, ultimasPartidasDoPerfil } from '@/dominio/ficha';
-import { moldurasDe } from '@/dominio/loja';
-import { NIVEIS, nivelAtivo } from '@/dominio/membros';
-import { NOME_DO_ESTADO, NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
-import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
-import { PATENTES, patenteDe } from '@/dominio/xp';
-import { Avatar } from '../../avatar';
-import { chamar } from '../../clas/acoes';
-import { BotaoDeAmizade } from '../../comunidade/botao-de-amizade';
+import { fotoDoMapa } from '@/dominio/diversao';
+import { elogiosDoJogador } from '@/dominio/elogios';
+import { fichaDoJogador, ultimasPartidasDoPerfil } from '@/dominio/ficha';
+import { insigniasDe, insigniasNaoVistas } from '@/dominio/insignias';
+import { bauDe, moldurasDe } from '@/dominio/loja';
+import { nivelAtivo } from '@/dominio/membros';
+import { NOME_DO_ESTADO } from '@/dominio/textos-da-conta';
+import { patenteDe } from '@/dominio/xp';
+import { AbaBau } from './aba-bau';
+import { AbaInsignias } from './aba-insignias';
+import { AbaPartidas } from './aba-partidas';
 import { ERROS_DO_CLA } from '../../clas/bloco-do-cla';
-import { SiglaDoCla } from '../../clas/sigla-do-cla';
-import { InsigniaDaPatente } from '../../insignia-da-patente';
 import { MarcarPatenteVista } from './marcar-patente-vista';
 import { Punicoes } from './punicoes';
+import { TopoDoPerfil, type AbaDoPerfil } from './topo-do-perfil';
+import { VisaoGeral } from './visao-geral';
+import Link from 'next/link';
 
 const NOME_DA_DENUNCIA = {
   aberta: 'Aberta',
@@ -30,17 +29,6 @@ const NOME_DA_DENUNCIA = {
   encerrada: 'Encerrada',
 };
 
-const diaEMes = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
-const dataCurta = new Intl.DateTimeFormat('pt-BR', {
-  dateStyle: 'short',
-  timeZone: 'America/Sao_Paulo',
-});
-const numero = new Intl.NumberFormat('pt-BR');
-const NOME_DO_RESULTADO = {
-  vitoria: 'Vitória',
-  empate: 'Empate',
-  derrota: 'Derrota',
-};
 
 const ERROS: Record<string, string> = {
   motivo: 'Escreva o motivo, com até 500 caracteres.',
@@ -51,69 +39,71 @@ const ERROS: Record<string, string> = {
   permissao: 'Você não tem permissão para isso.',
 };
 
-export default async function FichaDoJogador({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ erro?: string; aviso?: string }> }) {
+const ABAS_DO_PERFIL: AbaDoPerfil[] = ['visao', 'insignias', 'partidas', 'bau'];
+const PARTIDAS_NA_ABA = 100;
+const PARTIDAS_NA_VISAO = 5;
+
+/** O perfil novo (dono, 11/11/2026): topo com cara de jogo e quatro abas. As partes da equipe continuam no fim. */
+export default async function FichaDoJogador({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string; aviso?: string; aba?: string; modo?: string }>;
+}) {
   const { id } = await params;
-  const { erro, aviso } = await searchParams;
+  const { erro, aviso, aba: abaPedida, modo } = await searchParams;
+  const aba: AbaDoPerfil = ABAS_DO_PERFIL.find((valor) => valor === abaPedida) ?? 'visao';
   const usuario = await exigirAcesso(`/jogadores/${id}`);
   if (!z.uuid().safeParse(id).success) notFound();
-  const ficha = await fichaDoJogador(obterBd(), usuario, id);
+  const bd = obterBd();
+  const ficha = await fichaDoJogador(bd, usuario, id);
   if (!ficha) notFound();
-  const [elogios, ultimas, claDele, meuCla, molduras, membro] = await Promise.all([
-    elogiosDoJogador(obterBd(), id),
-    ultimasPartidasDoPerfil(obterBd(), id),
-    claDoUsuario(obterBd(), id),
-    claDoUsuario(obterBd(), usuario.id),
-    moldurasDe(obterBd(), [id]),
-    nivelAtivo(obterBd(), id),
+  const [elogios, partidas, claDele, meuCla, molduras, membro, insignias, bau] = await Promise.all([
+    elogiosDoJogador(bd, id),
+    ultimasPartidasDoPerfil(bd, id, PARTIDAS_NA_ABA),
+    claDoUsuario(bd, id),
+    claDoUsuario(bd, usuario.id),
+    moldurasDe(bd, [id]),
+    nivelAtivo(bd, id),
+    insigniasDe(bd, id),
+    bauDe(bd, id),
   ]);
+  const proprio = usuario.id === id;
   // Dono ou Capitão chama daqui quem ainda não tem clã.
-  const possoChamar = !!meuCla && meuCla.cargo !== 'membro' && !claDele && usuario.id !== id;
-  const amizade = usuario.id !== id ? await situacaoDaAmizade(obterBd(), usuario.id, id) : null;
-  const { jogador, estatisticas, historico, porMapa, melhorPartida, steamid64, equipe, xpTotal, progresso } = ficha;
-  const patenteNova = usuario.id === jogador.id && patenteDe(usuario.xpTotal).nivel > usuario.patenteVista;
-  const fotoMelhor = melhorPartida ? fotoDoMapa(melhorPartida.mapa) : null;
+  const possoChamar = !!meuCla && meuCla.cargo !== 'membro' && !claDele && !proprio;
+  const amizade = !proprio ? await situacaoDaAmizade(bd, usuario.id, id) : null;
+  const temNovas = proprio && aba === 'insignias' && (await insigniasNaoVistas(bd, id)).length > 0;
+  const { jogador, steamid64, equipe, xpTotal, progresso, porMapa } = ficha;
+  const patenteNova = proprio && patenteDe(usuario.xpTotal).nivel > usuario.patenteVista;
+
+  const emUso = (tipo: string) => bau.find((posse) => posse.usando && posse.item.tipo === tipo)?.item;
+  const cor = emUso('cor');
+  const mutanteEmUso = emUso('mutante');
+  const mutante = mutanteEmUso ? { nome: mutanteEmUso.nome, imagem: mutanteEmUso.evolucoes?.[0]?.imagem ?? mutanteEmUso.imagem ?? '' } : null;
+  // O fundo do topo é o mapa em que a pessoa mais joga; sem foto conhecida, o fundo padrão.
+  const contagemDeMapas = new Map<string, number>();
+  for (const partida of partidas) if (partida.foto) contagemDeMapas.set(partida.foto, (contagemDeMapas.get(partida.foto) ?? 0) + 1);
+  const fundo = fotoDoMapa(porMapa[0]?.mapa ?? null) ?? [...contagemDeMapas].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const contagem = (familia: string) => insignias.familias.find((item) => item.familia === familia)?.contagem ?? 0;
 
   return (
     <>
-      <section className="capa-perfil">
-        <div className="capa-perfil-linha">
-          <Avatar usuario={jogador} moldura={molduras.get(id)} />
-          <div className="capa-perfil-nome">
-            <h1>
-              <span className="ficha-nome">{jogador.apelido}</span>
-            </h1>
-            <div className="capa-perfil-selos">
-              <span className="selo">{NOME_DO_PAPEL[jogador.papel]}</span>
-              {membro && <span className={`selo selo-de-membro ${membro}`}>{NIVEIS[membro].nome}</span>}
-              <span className="patente-na-tabela">
-                <InsigniaDaPatente patente={progresso.patente} classe="insignia-mini" />
-                {progresso.patente.nome}
-              </span>
-              {claDele && (
-                <span className="selo-do-cla">
-                  <SiglaDoCla cla={claDele} link /> {claDele.nome}
-                </span>
-              )}
-              <span className="apoio">Na Magnatas desde {dataCurta.format(jogador.criadoEm)}</span>
-            </div>
-          </div>
-          {amizade && <BotaoDeAmizade usuarioId={id} situacao={amizade} voltar={`/jogadores/${id}`} />}
-          {possoChamar && (
-            <form action={chamar}>
-              <input type="hidden" name="claId" value={meuCla.id} />
-              <input type="hidden" name="usuarioId" value={jogador.id} />
-              <button type="submit" className="botao ouro pequeno">
-                Chamar para o clã [{meuCla.sigla}]
-              </button>
-            </form>
-          )}
-          {steamid64 && (
-            <a className="botao contorno pequeno" href={`https://steamcommunity.com/profiles/${steamid64}`} target="_blank" rel="noreferrer">
-              Ver na Steam
-            </a>
-          )}
-        </div>
-      </section>
+      <TopoDoPerfil
+        jogador={jogador}
+        membro={membro}
+        progresso={progresso}
+        xpTotal={xpTotal}
+        claDele={claDele}
+        principal={insignias.principal}
+        corDoNome={cor?.corCss ?? null}
+        moldura={molduras.get(id) ?? null}
+        fundo={fundo}
+        amizade={amizade}
+        chamarPara={possoChamar && meuCla ? { id: meuCla.id, sigla: meuCla.sigla } : null}
+        steamid64={steamid64 ?? null}
+        aba={aba}
+      />
       {erro && (ERROS[erro] ?? ERROS_DO_CLA[erro]) && (
         <p role="alert" className="aviso">
           {ERROS[erro] ?? ERROS_DO_CLA[erro]}
@@ -121,213 +111,25 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
       )}
       {aviso === 'chamado' && <p className="aviso">Chamado enviado. A pessoa vê no sino e aceita na tela de Clãs.</p>}
       {patenteNova && <MarcarPatenteVista />}
-      <section className="painel patente-e-xp">
-        <InsigniaDaPatente patente={progresso.patente} classe="insignia-perfil" />
-        <div className="patente-resumo-largo">
-          <strong>{progresso.patente.nome}</strong>
-          <span className="apoio">
-            {progresso.patente.grupo} · degrau {progresso.patente.nivel} de {PATENTES.length}
-          </span>
-          <div className="barra-xp" role="progressbar" aria-label="Progresso até a próxima patente" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progresso.porcentagem}>
-            <i style={{ width: `${progresso.porcentagem}%` }} />
-          </div>
-          <span className="apoio">
-            {progresso.proxima
-              ? `${numero.format(xpTotal)} de ${numero.format(progresso.proxima.xp)} XP para ${progresso.proxima.nome}`
-              : `${numero.format(xpTotal)} XP. Patente máxima`}
-          </span>
-        </div>
-        <Link href="/patentes" className="botao contorno pequeno">
-          Ver todas as patentes
-        </Link>
-      </section>
-      <div className="numeros principais">
-        <div className="destaque">
-          <small>K/D</small>
-          <b className="mono">{estatisticas.kd.toFixed(2)}</b>
-        </div>
-        <div>
-          <small>Vitórias</small>
-          <b className="mono">{estatisticas.vitoriasPct}%</b>
-          <small>
-            {estatisticas.vitorias} de {estatisticas.partidas} {estatisticas.partidas === 1 ? 'partida' : 'partidas'}
-          </small>
-        </div>
-        <div>
-          <small>Dano por rodada</small>
-          <b className="mono">{estatisticas.adr}</b>
-        </div>
-        <div>
-          <small>Abates na cabeça</small>
-          <b className="mono">{estatisticas.hsPct}%</b>
-        </div>
-      </div>
-      <div className="numeros-menores">
-        <div>
-          Abates<b className="mono">{estatisticas.abates}</b>
-        </div>
-        <div>
-          Mortes<b className="mono">{estatisticas.mortes}</b>
-        </div>
-        <div>
-          Assistências<b className="mono">{estatisticas.assistencias}</b>
-        </div>
-        <div>
-          Abates por partida
-          <b className="mono">{estatisticas.abatesPorPartida}</b>
-        </div>
-      </div>
-      <div className="perfil-colunas">
-        <div className="pilha">
-          <section className="painel">
-            <div className="cabeca-painel">
-              <h2>Últimas partidas</h2>
-              <a href="#historico" className="link-ouro">
-                Ver histórico
-              </a>
-            </div>
-            {ultimas.length === 0 && <p className="vazio">Ainda não jogou nenhuma partida.</p>}
-            {ultimas.length > 0 && (
-              <table className="tabela tabela-ultimas">
-                <thead>
-                  <tr>
-                    <th scope="col">Data</th>
-                    <th scope="col">Modo</th>
-                    <th scope="col" className="so-computador">
-                      Mapa
-                    </th>
-                    <th scope="col">Resultado</th>
-                    <th scope="col" className="so-computador">
-                      Placar
-                    </th>
-                    <th scope="col" title="Abates divididos pelas mortes">
-                      KDR
-                    </th>
-                    <th scope="col">XP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ultimas.map((linha, indice) => (
-                    <tr key={indice}>
-                      <th scope="row">{diaEMes.format(linha.data)}</th>
-                      <td>{linha.modo}</td>
-                      <td className="so-computador">{linha.mapa ?? '—'}</td>
-                      <td>
-                        <span className={linha.resultado === 'vitoria' ? 'res vitoria' : linha.resultado === 'derrota' ? 'res derrota' : 'res'}>
-                          {NOME_DO_RESULTADO[linha.resultado]}
-                        </span>
-                      </td>
-                      <td className="so-computador">{linha.placar ?? '—'}</td>
-                      <td>
-                        {linha.mortes === null ? '—' : kdDe(linha.abates, linha.mortes).toFixed(2)}
-                      </td>
-                      <td>
-                        <b className="xp-ganho">+{numero.format(linha.xp)}</b>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-          <section className="painel" id="historico">
-            <div className="cabeca-painel">
-              <h2>Histórico</h2>
-              <span>Mix e salas encerrados</span>
-            </div>
-            {historico.length === 0 && <p className="vazio">Ainda não jogou nenhuma partida de mix ou sala.</p>}
-            {historico.map((partida) => (
-              <div className="linha linha-historico" key={partida.id}>
-                <div>
-                  <Link href={`/partidas/${partida.id}`}>{nomeDaPartida(partida)}</Link>
-                  <small>
-                    {nomeDoMapa(partida.mapa)}
-                    {partida.encerradaEm && `, ${dataCurta.format(partida.encerradaEm)}`}
-                  </small>
-                </div>
-                <span className={partida.venceu ? 'res vitoria' : 'res derrota'}>{partida.venceu ? 'Vitória' : 'Derrota'}</span>
-                <span className="mono">
-                  {partida.placar1} x {partida.placar2}
-                </span>
-                <span className="mono" title="Abates, mortes e assistências">
-                  {partida.kills}/{partida.deaths}/{partida.assists}
-                </span>
-                <span className="mono" title="Dano por rodada">
-                  {partida.adr}
-                </span>
-                {partida.gravacao &&
-                  (partida.gravacao === 'disponivel' ? (
-                    <a className="botao cinza pequeno" href={`/api/gravacoes/${partida.gravacaoId}`}>
-                      Baixar gravação
-                    </a>
-                  ) : (
-                    <span className="etiqueta">{NOME_DA_GRAVACAO[partida.gravacao]}</span>
-                  ))}
-              </div>
-            ))}
-          </section>
-        </div>
-        <div className="pilha">
-          <section className="painel">
-            <div className="cabeca-painel">
-              <h2>Por mapa</h2>
-            </div>
-            {porMapa.length === 0 && <p className="vazio">Ainda não há partidas.</p>}
-            {porMapa.length > 0 && (
-              <div className="mapas-do-perfil">
-                {porMapa.map((linha) => {
-                  const foto = fotoDoMapa(linha.mapa);
-                  return (
-                    <div className="mapa-do-perfil" key={linha.mapa}>
-                      {foto && <Image src={foto} alt="" width={480} height={270} />}
-                      <b>{nomeDoMapa(linha.mapa)}</b>
-                      <span>
-                        {linha.vitoriasPct}% de vitórias · {linha.partidas} {linha.partidas === 1 ? 'partida' : 'partidas'} · K/D {linha.kd.toFixed(2)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-          <section className="painel">
-            <div className="cabeca-painel">
-              <h2>Elogios</h2>
-              <span>{elogios.reduce((total, elogio) => total + elogio.total, 0)}</span>
-            </div>
-            {elogios.length === 0 ? (
-              <p className="vazio">Ainda sem elogios.</p>
-            ) : (
-              <div className="elogios-do-jogador">
-                {elogios.map((elogio) => (
-                  <span className="elogio" key={elogio.tipo}>
-                    {elogio.nome} <b>×{elogio.total}</b>
-                  </span>
-                ))}
-              </div>
-            )}
-          </section>
-          <section className="painel">
-            <div className="cabeca-painel">
-              <h2>Melhor partida</h2>
-            </div>
-            {melhorPartida ? (
-              <Link href={`/partidas/${melhorPartida.id}`} className="mapa-do-perfil melhor">
-                {fotoMelhor && <Image src={fotoMelhor} alt="" width={480} height={270} />}
-                <b>
-                  {melhorPartida.kills} {melhorPartida.kills === 1 ? 'abate' : 'abates'}
-                </b>
-                <span>
-                  K/D {melhorPartida.kd.toFixed(2)} · {nomeDaPartida(melhorPartida)} · {nomeDoMapa(melhorPartida.mapa)}
-                </span>
-              </Link>
-            ) : (
-              <p className="vazio">Ainda não há partidas.</p>
-            )}
-          </section>
-        </div>
-      </div>
-      {equipe && (
+
+      {aba === 'visao' && (
+        <VisaoGeral
+          jogadorId={id}
+          ficha={ficha}
+          ultimas={partidas.slice(0, PARTIDAS_NA_VISAO)}
+          insignias={insignias.familias}
+          totalDeInsignias={insignias.total}
+          mvps={contagem('estrela')}
+          aces={contagem('ace')}
+          mutante={mutante}
+          elogios={elogios}
+        />
+      )}
+      {aba === 'insignias' && <AbaInsignias familias={insignias.familias} principal={insignias.principal} total={insignias.total} proprio={proprio} temNovas={temNovas} />}
+      {aba === 'partidas' && <AbaPartidas jogadorId={id} partidas={partidas} modo={modo ?? null} historico={ficha.historico} />}
+      {aba === 'bau' && <AbaBau itens={bau} jogador={jogador} />}
+
+      {equipe && aba === 'visao' && (
         <>
           <section className="painel">
             <div className="cabeca-painel">
