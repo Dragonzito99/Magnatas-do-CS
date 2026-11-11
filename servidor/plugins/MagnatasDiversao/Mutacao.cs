@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
+using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 
@@ -1220,25 +1221,26 @@ public partial class ModoDeDiversao
 
         var segundos = SegundosDaFumacaNoNivel(NivelDe(jogador).Nivel);
         fumacas[jogador.Slot] = (agora + segundos, agora + SegundosDeRecargaDaFumaca);
-        var nuvem = Utilities.CreateEntityByName<CSmokeGrenadeProjectile>("smokegrenade_projectile");
-        if (nuvem == null)
+        // A granada criada pelo nome caía no chão e nunca abria (dono, 11/11/2026): só a função do próprio jogo liga o
+        // relógio que faz a fumaça estourar quando a granada para.
+        var criar = CriarFumacaDoJogo();
+        if (criar == null)
+        {
+            Console.WriteLine($"[Magnatas] Fumaça de {jogador.PlayerName}: a função do jogo que cria a fumaça não foi achada.");
+            return HookResult.Handled;
+        }
+        var pe = corpo.AbsOrigin;
+        var nuvem = criar.Invoke(new Vector(pe.X, pe.Y, pe.Z + 8f).Handle, new QAngle(0, 0, 0).Handle, new Vector(0, 0, 0).Handle,
+            new Vector(0, 0, 0).Handle, corpo.Handle, ItemDaGranadaDeFumaca, corpo.TeamNum);
+        if (nuvem == null || !nuvem.IsValid)
         {
             Console.WriteLine($"[Magnatas] Fumaça de {jogador.PlayerName}: o jogo não criou a granada.");
             return HookResult.Handled;
         }
-        var pe = corpo.AbsOrigin;
-        nuvem.TeamNum = corpo.TeamNum;
-        nuvem.Thrower.Raw = corpo.EntityHandle.Raw;
-        nuvem.OriginalThrower.Raw = corpo.EntityHandle.Raw;
-        nuvem.OwnerEntity.Raw = corpo.EntityHandle.Raw;
-        // Roxo do Vazio (0 a 255).
+        // Roxo do Vazio (0 a 255), lido pelo jogo na hora em que a fumaça estoura.
         nuvem.SmokeColor.X = 120f;
         nuvem.SmokeColor.Y = 40f;
         nuvem.SmokeColor.Z = 200f;
-        nuvem.DispatchSpawn();
-        nuvem.Teleport(new Vector(pe.X, pe.Y, pe.Z + 8f), new QAngle(0, 0, 0), new Vector(0, 0, 0));
-        // Parada no chão e com a hora de estourar vencida, ela abre na hora em vez de rolar como granada.
-        nuvem.DetonateTime = agora;
         Console.WriteLine($"[Magnatas] Fumaça de {jogador.PlayerName}: {segundos:0} s, custou {custo} de vida.");
         // Pela alça, que muda quando o número é reaproveitado: depois de um reinício de rodada, o número da fumaça podia
         // já ser de outra coisa, e apagar "a fumaça" apagava essa outra coisa (queda de 11/11/2026).
@@ -1246,6 +1248,30 @@ public partial class ModoDeDiversao
         fumacasNoChao.Add(alca);
         AddTimer(segundos, () => ApagarFumaca(alca));
         return HookResult.Handled;
+    }
+
+    // CSmokeGrenadeProjectile::Create(origem, ângulo, velocidade, giro, quem jogou, item, time) do libserver.so (Linux).
+    // A do MatchZy no servidor parou de casar com o jogo; esta casa uma vez só no jogo de 06/11/2026. Se o CS2 mudar e ela
+    // deixar de casar, a fumaça só não sai (fica no registro), o resto da Mutação continua.
+    private const string AssinaturaDaFumaca =
+        "55 4C 89 C1 48 89 E5 41 57 41 56 49 89 FE 41 55 45 89 CD 41 54 4D 89 C4 53 48 81 EC ? ? ? ? 48 89 95 ? ? ? ? 48 89 F2";
+    private const int ItemDaGranadaDeFumaca = 45;
+    private MemoryFunctionWithReturn<nint, nint, nint, nint, nint, int, int, CSmokeGrenadeProjectile>? criarFumaca;
+    private bool fumacaDoJogoProcurada;
+
+    private MemoryFunctionWithReturn<nint, nint, nint, nint, nint, int, int, CSmokeGrenadeProjectile>? CriarFumacaDoJogo()
+    {
+        if (fumacaDoJogoProcurada) return criarFumaca;
+        fumacaDoJogoProcurada = true;
+        try
+        {
+            criarFumaca = new(AssinaturaDaFumaca);
+        }
+        catch (Exception erro)
+        {
+            Console.WriteLine($"[Magnatas] A função do jogo que cria a fumaça não casou: {erro.Message}");
+        }
+        return criarFumaca;
     }
 
     // A alça inteira (número do objeto e o serial dele): o número sozinho volta a ser usado por outra coisa.

@@ -1902,7 +1902,7 @@ def test_o_g_do_senhor_do_vazio_solta_fumaca_desde_o_nivel_1_e_custa_vida():
     fumaca = metodo_da_mutacao("private HookResult SoltarFumaca(")
     assert fumaca.index("agora < fumaca.Recarga") < fumaca.index("corpo.Health -= custo")
     assert "corpo.Health <= custo" in fumaca
-    assert '"smokegrenade_projectile"' in fumaca
+    assert "CriarFumacaDoJogo()" in fumaca and "ItemDaGranadaDeFumaca" in fumaca
     assert "SmokeColor" in fumaca
     assert "AddTimer(segundos, () => ApagarFumaca(alca))" in fumaca
 
@@ -1952,3 +1952,15 @@ def test_o_poder_do_mutante_vale_no_e_porque_o_g_nem_chegava_ao_servidor():
     assert e.index("EhMutanteDeVerdade(jogador)") < e.index("UsarPoder(jogador)")
     assert "IsBot: false" in e
     assert 'Console.WriteLine($"[Magnatas] E de ' in e
+
+
+def test_a_fumaca_sai_pela_funcao_do_proprio_jogo():
+    # A granada criada pelo nome caía no chão e nunca abria (dono, 11/11/2026). A função do jogo liga o relógio que faz
+    # a fumaça estourar; a assinatura do MatchZy no servidor tinha parado de casar, por isso a do plugin é própria.
+    fumaca = metodo_da_mutacao("private HookResult SoltarFumaca(")
+    assert "CreateEntityByName" not in fumaca and "DetonateTime" not in fumaca
+    assert '"55 4C 89 C1 48 89 E5 41 57 41 56 49 89 FE 41 55 45 89 CD' in CODIGO_DA_MUTACAO
+    assert "private const int ItemDaGranadaDeFumaca = 45;" in CODIGO_DA_MUTACAO
+    procurar = metodo_da_mutacao("private MemoryFunctionWithReturn<nint, nint, nint, nint, nint, int, int, CSmokeGrenadeProjectile>? CriarFumacaDoJogo(")
+    # Assinatura que não casa não derruba o plugin: fica no registro e a fumaça só não sai.
+    assert "catch (Exception erro)" in procurar and "Console.WriteLine(" in procurar
