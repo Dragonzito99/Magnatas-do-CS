@@ -25,7 +25,7 @@ test('sem custo definido não há meta', async () => {
   expect(await metaDoMes(bd, AGORA)).toBeNull();
 });
 
-test('a meta soma pacotes pagos e mensalidades do mês de Brasília, sem o teste do Adm e sem estornos', async () => {
+test('a meta soma pacotes pagos (o teste do Adm também) e mensalidades do mês de Brasília, sem estornos', async () => {
   await definirCustoDoMes(bd, adm, 20000, AGORA);
   await pedidoPago(5000, new Date('2026-11-01T03:00:00Z')); // 00:00 de 01/11 em Brasília: conta
   await pedidoPago(1000, new Date('2026-11-01T02:59:00Z')); // ainda outubro em Brasília: não conta
@@ -35,7 +35,7 @@ test('a meta soma pacotes pagos e mensalidades do mês de Brasília, sem o teste
   const [assinatura] = await bd.insert(assinaturas).values({ usuarioId: jogador.id, nivel: 'ouro', email: 'a@b.c', estado: 'ativa' }).returning();
   await bd.insert(mensalidades).values({ assinaturaId: assinatura.id, mpPagamentoId: 'm-1', valorCentavos: 1500, pagoEm: AGORA });
 
-  expect(await metaDoMes(bd, AGORA)).toEqual({ custoCentavos: 20000, arrecadadoCentavos: 6500, porcento: 32 });
+  expect(await metaDoMes(bd, AGORA)).toEqual({ custoCentavos: 20000, arrecadadoCentavos: 6600, porcento: 33 });
 });
 
 test('o custo vale nos meses seguintes até o Adm mudar, e a meta para em 100%', async () => {

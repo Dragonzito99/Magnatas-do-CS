@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lt, lte, ne, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { custosDoMes, mensalidades, pedidos, type Usuario } from '@/bd/esquema';
 import { exigirPermissao, registrarAuditoria } from './equipe';
@@ -35,7 +35,7 @@ export async function definirCustoDoMes(bd: Bd, ator: Pick<Usuario, 'id'>, custo
 
 /**
  * A meta do mês para a capa do Apoie o clube: quanto do custo já entrou em pacotes de MagCoin e mensalidades. Sem custo
- * definido não há meta. O pacote de teste do Adm e os estornos não contam.
+ * definido não há meta. Estornos não contam; o pacote de teste do Adm conta (dono, 11/11/2026).
  */
 export async function metaDoMes(bd: Bd, agora: Date = new Date()): Promise<MetaDoMes | null> {
   const { chave, inicio, fim } = mesDeBrasilia(agora);
@@ -44,7 +44,7 @@ export async function metaDoMes(bd: Bd, agora: Date = new Date()): Promise<MetaD
   const [pacotes] = await bd
     .select({ soma: sql<number>`coalesce(sum(${pedidos.valorCentavos}), 0)::int` })
     .from(pedidos)
-    .where(and(eq(pedidos.estado, 'pago'), ne(pedidos.pacote, 'teste'), gte(pedidos.pagoEm, inicio), lt(pedidos.pagoEm, fim)));
+    .where(and(eq(pedidos.estado, 'pago'), gte(pedidos.pagoEm, inicio), lt(pedidos.pagoEm, fim)));
   const [mensais] = await bd
     .select({ soma: sql<number>`coalesce(sum(${mensalidades.valorCentavos}), 0)::int` })
     .from(mensalidades)
