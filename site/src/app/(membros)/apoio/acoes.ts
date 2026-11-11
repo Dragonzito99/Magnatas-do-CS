@@ -45,7 +45,7 @@ export async function assinarNivel(dados: FormData): Promise<void> {
   try {
     destino = await assinar(obterBd(), mp, usuario, nivel, String(dados.get('email') ?? ''), enderecos);
   } catch (erro) {
-    if (erro instanceof EmailInvalido) redirect('/apoio?erro=email#membros');
+    if (erro instanceof EmailInvalido) redirect(`/apoio?assinar=${nivel}&erro=email#membros`);
     if (erro instanceof JaEhMembro) redirect('/apoio?erro=membro#membros');
     if (erro instanceof ContaSemAcesso) redirect('/apoio?erro=conta');
     console.error('[apoio] Falha ao criar a assinatura:', erro instanceof Error ? erro.message : 'erro');

@@ -23,6 +23,12 @@ export function pacotesPara(usuario: Pick<Usuario, 'papel' | 'estado'>): Pacote[
 }
 export type Pacote = keyof typeof PACOTES;
 
+/** Quanto % de MagCoin o pacote dá a mais que o pequeno pelo mesmo dinheiro (o "bônus" da vitrine). */
+export function bonusDoPacote(pacote: Pacote): number {
+  const base = PACOTES.pequeno.magcoins / PACOTES.pequeno.precoCentavos;
+  return Math.max(0, Math.round((PACOTES[pacote].magcoins / (PACOTES[pacote].precoCentavos * base) - 1) * 100));
+}
+
 export class JaEhMembro extends Error {
   constructor() {
     super('Você já tem uma assinatura ativa. Cancele a atual para trocar de nível.');

@@ -3,22 +3,42 @@ import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { enviosPendentes, vendasDoMes } from '@/dominio/envios';
+import { metaDoMes } from '@/dominio/meta-do-mes';
 import { TelaDoPainel } from '../lateral-do-painel';
-import { marcar } from './acoes';
+import { marcar, salvarCusto } from './acoes';
 
 const data = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'America/Sao_Paulo' });
 const reais = (centavos: number) => (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const NOME: Record<string, string> = { pequeno: 'Pacote pequeno', medio: 'Pacote médio', grande: 'Pacote grande', teste: 'Teste do Adm', bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', premium: 'Premium' };
 
 /** Envios do Premium (com endereço) e as vendas do mês, para a nota fiscal. Só o Adm. */
-export default async function EnviosNoPainel() {
+export default async function EnviosNoPainel({ searchParams }: { searchParams: Promise<{ erro?: string; aviso?: string }> }) {
   const usuario = await exigirAcesso('/painel/envios');
   if (!pode(usuario, 'ver_envios')) redirect('/painel');
   const bd = obterBd();
-  const [pendentes, vendas] = await Promise.all([enviosPendentes(bd, usuario), vendasDoMes(bd, usuario, new Date())]);
+  const { erro, aviso } = await searchParams;
+  const [pendentes, vendas, meta] = await Promise.all([enviosPendentes(bd, usuario), vendasDoMes(bd, usuario, new Date()), metaDoMes(bd)]);
 
   return (
     <TelaDoPainel usuario={usuario} atual="envios" titulo="Envios e vendas">
+      <section className="secao-loja">
+        <div className="cabeca-secao-loja">
+          <h2>Meta do Apoie o clube{meta ? `: ${meta.porcento}% pago` : ''}</h2>
+          <p className="apoio">
+            Quanto o clube gasta por mês (máquina, servidores). A capa do Apoie o clube mostra quanto disso já entrou, só em %, nunca em reais.
+            {meta && ` Entrou ${reais(meta.arrecadadoCentavos)} de ${reais(meta.custoCentavos)} neste mês.`}
+          </p>
+        </div>
+        {erro === 'custo' && <p className="aviso">Escreva o custo em reais, como 250 ou 250,00.</p>}
+        {aviso === 'custo' && <p className="aviso">Custo salvo. Vale deste mês em diante, até você mudar.</p>}
+        <form action={salvarCusto} className="ajuste-grana">
+          <input name="custo" required inputMode="decimal" placeholder="Custo do mês em reais" defaultValue={meta ? (meta.custoCentavos / 100).toLocaleString('pt-BR') : ''} aria-label="Custo do mês em reais" />
+          <button type="submit" className="botao ouro pequeno">
+            Salvar custo
+          </button>
+        </form>
+      </section>
+
       <section className="secao-loja">
         <div className="cabeca-secao-loja">
           <h2>Envios pendentes ({pendentes.length})</h2>

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Usuario } from '@/bd/esquema';
 
 /** O título da tela com a carteira ao lado, igual em todas as telas da Magnata Shop. */
-export function CarteiraDaShop({ titulo, usuario }: { titulo: string; usuario: Pick<Usuario, 'grana' | 'magcoin'> }) {
+export function CarteiraDaShop({ titulo, usuario, comprar = true }: { titulo: string; usuario: Pick<Usuario, 'grana' | 'magcoin'>; comprar?: boolean }) {
   return (
     <div className="carteira-da-shop">
       <h1>{titulo}</h1>
@@ -16,9 +16,11 @@ export function CarteiraDaShop({ titulo, usuario }: { titulo: string; usuario: P
         <b>{usuario.magcoin.toLocaleString('pt-BR')}</b>
         <small>MagCoin</small>
       </span>
-      <Link className="moeda-da-shop comprar" href="/apoio">
-        + MagCoin
-      </Link>
+      {comprar && (
+        <Link className="moeda-da-shop comprar" href="/apoio">
+          + MagCoin
+        </Link>
+      )}
       <Link className="moeda-da-shop" href="/bau">
         Meu baú
       </Link>

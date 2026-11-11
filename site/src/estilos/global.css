@@ -6249,6 +6249,413 @@ a.para-sempre-da-janela.sem-saldo {
   cursor: pointer;
 }
 
+/* Apoie o clube: capa com a meta, pacotes com pilha de moedas e os níveis numa comparação */
+.legenda-da-secao {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.capa-do-apoio {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: end;
+  min-height: 300px;
+  overflow: hidden;
+  border-bottom: 4px solid var(--ouro);
+  background:
+    radial-gradient(circle at 78% 30%, rgba(168, 85, 247, 0.45), transparent 55%),
+    radial-gradient(circle at 20% 110%, rgba(245, 179, 1, 0.18), transparent 50%),
+    #0e0718;
+}
+
+.texto-da-capa-do-apoio {
+  align-self: center;
+  padding: 32px;
+}
+
+.capa-do-apoio h2 {
+  font: italic 800 56px/0.92 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.capa-do-apoio h2 em {
+  color: var(--ouro);
+  font-style: inherit;
+}
+
+.capa-do-apoio p {
+  max-width: 460px;
+  margin-top: 12px;
+  color: #cfc6de;
+  font-size: 15px;
+}
+
+.membro-na-capa b {
+  color: var(--ouro);
+}
+
+.capa-do-apoio img {
+  justify-self: end;
+  height: 330px;
+  margin: 0 24px -4px 0;
+  filter: drop-shadow(0 0 30px rgba(168, 85, 247, 0.5));
+}
+
+.meta-do-apoio {
+  max-width: 460px;
+  margin-top: 22px;
+}
+
+.meta-do-apoio > div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: var(--tinta-2);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.meta-do-apoio b {
+  color: var(--tinta);
+}
+
+.barra-da-meta {
+  display: block;
+  height: 10px;
+  background: #1d1330;
+}
+
+.barra-da-meta i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--roxo), var(--ouro));
+}
+
+.pacotes-do-apoio {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.pacote-do-apoio {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.pacote-do-apoio:hover {
+  transform: translateY(-3px);
+  border-color: #7c3aed;
+}
+
+.pacote-do-apoio.melhor {
+  border-color: var(--ouro);
+}
+
+.pilha-de-moedas {
+  position: relative;
+  display: block;
+  height: 170px;
+  border-bottom: 3px solid #7c3aed;
+  background: radial-gradient(circle at 50% 70%, rgba(124, 58, 237, 0.35), transparent 65%), #0b0713;
+}
+
+.pacote-do-apoio.melhor .pilha-de-moedas {
+  border-color: var(--ouro);
+  background: radial-gradient(circle at 50% 70%, rgba(245, 179, 1, 0.28), transparent 65%), #0b0713;
+}
+
+.pilha-de-moedas i {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #c4a5ff, #7c3aed 55%, #3b1a7a);
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.35), 0 6px 14px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font: normal 800 26px/1 var(--fonte-inter), sans-serif;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.selo-do-pacote {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  padding: 3px 8px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.selo-do-pacote.bonus {
+  right: 10px;
+  left: auto;
+  background: var(--verde);
+  color: #062b12;
+}
+
+.dados-do-pacote {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px 16px;
+}
+
+.dados-do-pacote small {
+  color: var(--tinta-2);
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dados-do-pacote b {
+  font: italic 800 34px/1 var(--fonte-titulo), sans-serif;
+}
+
+.dados-do-pacote b span {
+  color: #c4a5ff;
+  font-size: 20px;
+}
+
+.dados-do-pacote .botao-da-shop {
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.dados-do-pacote .botao-da-shop em {
+  margin-left: auto;
+  font-style: normal;
+}
+
+.botao-da-shop:disabled,
+.botao-da-shop.apagado {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nivel-bronze {
+  --nivel: #d08a4a;
+}
+
+.nivel-prata {
+  --nivel: #c9d1dc;
+}
+
+.nivel-ouro {
+  --nivel: var(--ouro);
+}
+
+.nivel-premium {
+  --nivel: #e7b6ff;
+}
+
+.medalha-do-nivel {
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 45%), var(--nivel);
+  box-shadow: 0 0 0 3px #0b0713, 0 0 0 5px var(--nivel);
+}
+
+.minha-assinatura-do-apoio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--nivel);
+  background: var(--painel);
+}
+
+.minha-assinatura-do-apoio > span:nth-child(2) {
+  display: grid;
+  margin-right: auto;
+}
+
+.minha-assinatura-do-apoio b {
+  color: var(--nivel);
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.minha-assinatura-do-apoio small {
+  color: var(--tinta-2);
+}
+
+.rolagem-da-comparacao {
+  overflow-x: auto;
+}
+
+.comparacao-de-niveis {
+  min-width: 760px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.linha-da-comparacao {
+  display: grid;
+  grid-template-columns: 260px repeat(4, minmax(0, 1fr));
+}
+
+.linha-da-comparacao > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  text-align: center;
+}
+
+.linha-da-comparacao > span:first-child {
+  justify-content: flex-start;
+  color: #cfc6de;
+  text-align: left;
+}
+
+.linha-da-comparacao > .premium {
+  background: rgba(245, 179, 1, 0.06);
+}
+
+.linha-da-comparacao .tem {
+  color: var(--verde);
+  font-size: 18px;
+}
+
+.nao-tem {
+  color: #4a3f5c;
+}
+
+.cabeca-do-nivel {
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 12px !important;
+  border-top: 4px solid var(--nivel);
+}
+
+.cabeca-do-nivel.nivel-premium {
+  background: rgba(245, 179, 1, 0.06);
+}
+
+.cabeca-do-nivel b {
+  color: var(--nivel);
+  font: italic 800 24px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.cabeca-do-nivel > span:last-child {
+  font-weight: 700;
+}
+
+.cabeca-do-nivel small {
+  color: var(--tinta-2);
+  font-weight: 400;
+}
+
+.tag-do-nivel {
+  padding: 2px 8px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 12px/1.3 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.linha-da-comparacao.acoes > span {
+  border-bottom: 0;
+  padding: 14px 10px;
+}
+
+.linha-da-comparacao.acoes .botao-da-shop {
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  font: italic 700 16px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.perguntas-do-apoio {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+.perguntas-do-apoio details {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.perguntas-do-apoio summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font: italic 700 18px/1.1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  list-style: none;
+  cursor: pointer;
+}
+
+.perguntas-do-apoio summary::-webkit-details-marker {
+  display: none;
+}
+
+.perguntas-do-apoio summary::after {
+  content: '+';
+  color: var(--ouro);
+}
+
+.perguntas-do-apoio details[open] summary::after {
+  content: '−';
+}
+
+.perguntas-do-apoio p {
+  margin-top: 8px;
+  color: #cfc6de;
+}
+
+.assinar-no-apoio {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  width: min(480px, 100%);
+  padding: 28px;
+  border-top: 4px solid var(--nivel);
+  background: var(--painel);
+}
+
+.assinar-no-apoio h2 {
+  color: var(--nivel);
+  font: italic 800 34px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.assinar-no-apoio p {
+  color: #cfc6de;
+}
+
+.assinar-no-apoio input[type='email'] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #0b0713;
+  color: var(--tinta);
+}
+
+.assinar-no-apoio .botao-da-shop {
+  justify-content: center;
+  cursor: pointer;
+}
+
 /* Minhas compras: o extrato por dia, uma linha por movimento */
 .dia-do-extrato {
   margin-bottom: 24px;
@@ -6430,6 +6837,26 @@ a.titulo-da-linha:hover {
   }
 
   .caixa-da-janela {
+    grid-template-columns: 1fr;
+  }
+
+  .capa-do-apoio {
+    grid-template-columns: 1fr;
+  }
+
+  .texto-da-capa-do-apoio {
+    padding: 20px;
+  }
+
+  .capa-do-apoio h2 {
+    font-size: 40px;
+  }
+
+  .capa-do-apoio img {
+    display: none;
+  }
+
+  .perguntas-do-apoio {
     grid-template-columns: 1fr;
   }
 

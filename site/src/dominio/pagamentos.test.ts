@@ -7,7 +7,7 @@ import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { assinaturaConfere, type MercadoPago, type PagamentoMp } from '@/pagamento/mercadopago';
 import { SemPermissao } from './equipe';
 import { lancarMoeda } from './grana';
-import { abrirPedido, assinar, cancelarAssinatura, JaEhMembro, PACOTES, pedidoDoUsuario, processarAssinatura, processarMensalidade, processarPagamento, receberAviso } from './pagamentos';
+import { abrirPedido, assinar, bonusDoPacote, cancelarAssinatura, JaEhMembro, PACOTES, pedidoDoUsuario, processarAssinatura, processarMensalidade, processarPagamento, receberAviso } from './pagamentos';
 
 let bd: Bd;
 let mp: MercadoPagoFalso;
@@ -231,4 +231,11 @@ test('o aviso leva ao processamento certo; assinatura errada é recusada sem con
   expect(await receberAviso(bd, mp, { tipo: 'payment', dataId: id, cabecalhos: {} }, segredo)).toBe(200);
   expect(await receberAviso(bd, mp, { tipo: 'outra_coisa', dataId: 'x', cabecalhos: {} }, segredo)).toBe(200);
   expect(await receberAviso(bd, mp, { tipo: 'payment', dataId: '', cabecalhos: {} }, segredo)).toBe(400);
+});
+
+test('o bônus de cada pacote é quanto ele dá a mais que o pequeno pelo mesmo dinheiro', () => {
+  expect(bonusDoPacote('pequeno')).toBe(0);
+  expect(bonusDoPacote('medio')).toBe(4);
+  expect(bonusDoPacote('grande')).toBe(10);
+  expect(bonusDoPacote('teste')).toBe(0);
 });

@@ -192,6 +192,15 @@ export const envios = pgTable('envios', {
   criadoEm: criadoEm(),
 });
 
+/** Quanto o clube gasta no mês (máquina, servidores), para a meta do Apoie o clube. Vale até o Adm mudar de novo. */
+export const custosDoMes = pgTable('custos_do_mes', {
+  // Mês de Brasília, "2026-11".
+  mes: text('mes').primaryKey(),
+  custoCentavos: integer('custo_centavos').notNull(),
+  atorId: uuid('ator_id').references(() => usuarios.id),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const convites = pgTable('convites', {
   id: uuid('id').primaryKey().defaultRandom(),
   codigo: text('codigo').notNull().unique(),
