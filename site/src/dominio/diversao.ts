@@ -15,7 +15,6 @@ const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string; regra?: str
   de_luxville: { nome: 'Luxville', foto: '/mapas/luxville.webp' },
   zm_biochemical_hotel: { nome: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp' },
   zm_silent_village: { nome: 'Silent Village', foto: '/mapas/silent-village.webp' },
-  zm_dust2_halloween_zmbio: { nome: 'Dust 2 Halloween', foto: '/mapas/dust2-halloween.webp' },
   egypt: { nome: 'Egypt', foto: '/mapas/egypt.webp' },
   gm_laboratory: { nome: 'Laboratory', foto: '/mapas/laboratory.webp' },
 };
