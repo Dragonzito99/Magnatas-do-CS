@@ -48,8 +48,10 @@ export type ItemDaLoja = {
   venda?: boolean;
   /** Item de lançamento: o Premium ganha para sempre. */
   lancamento?: boolean;
-  /** Os bonecos de cada nível, andando, que a vitrine mostra um depois do outro. */
-  evolucoes?: { nivel: number; nome: string; imagem: string; escudo: number }[];
+  /** O que o mutante faz, para o destaque da loja. */
+  descricao?: string;
+  /** Os bonecos de cada nível, andando, que a vitrine mostra um depois do outro, com o poder do G naquele nível. */
+  evolucoes?: { nivel: number; nome: string; imagem: string; poder: string }[];
 };
 
 export const CATALOGO: readonly ItemDaLoja[] = [
@@ -83,10 +85,26 @@ export const CATALOGO: readonly ItemDaLoja[] = [
     valor: 'blindado',
     imagem: '/loja/mutante-blindado.webp',
     lancamento: true,
+    descricao: 'Na Mutação você vira esse mutante. Aperte G e fica sem levar dano por até 6 s. Evolui em 3 níveis.',
     evolucoes: [
-      { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', escudo: 2 },
-      { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', escudo: 4 },
-      { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', escudo: 6 },
+      { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', poder: 'escudo de 2 s' },
+      { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', poder: 'escudo de 4 s' },
+      { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', poder: 'escudo de 6 s' },
+    ],
+  },
+  // Senhor do Vazio (dono, 11/11/2026): o G solta uma cortina de fumaça roxa e custa 10% da vida, como o Smoke do
+  // CrossFire. O nível 2 ainda não tem boneco próprio e usa o do nível 1.
+  {
+    id: 'mutante-fumaca',
+    tipo: 'mutante',
+    nome: 'Senhor do Vazio',
+    valor: 'fumaca',
+    imagem: '/loja/mutante-fumaca.webp',
+    descricao: 'Na Mutação você vira esse mutante. Aperte G e solta uma cortina de fumaça de até 12 s, que custa um pouco da sua vida. Evolui em 3 níveis.',
+    evolucoes: [
+      { nivel: 1, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 8 s' },
+      { nivel: 2, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 10 s' },
+      { nivel: 3, nome: 'Abyssal Void Titan', imagem: '/loja/fumaca-3-andando.webp', poder: 'fumaça de 12 s' },
     ],
   },
 ];

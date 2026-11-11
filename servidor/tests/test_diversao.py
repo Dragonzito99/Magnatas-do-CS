@@ -1887,6 +1887,8 @@ def test_o_senhor_do_vazio_tem_pacote_proprio_e_fumaca_de_8_10_12_segundos():
     assert "private static readonly float[] SegundosDaFumaca = { 8f, 10f, 12f };" in CODIGO_DA_MUTACAO
     assert "private const float SegundosDeRecargaDaFumaca = 15f;" in CODIGO_DA_MUTACAO
     assert "private const float VidaPorFumaca = 0.10f;" in CODIGO_DA_MUTACAO
+    # Nível 2 ainda sem boneco próprio (dono, 11/11/2026): usa o do nível 1; o 3 é o Abyssal Void Titan.
+    assert "private static readonly int[] NiveisComBonecoDaFumaca = { 1, 3 };" in CODIGO_DA_MUTACAO
     confere = metodo_da_mutacao("private bool FumacaNoServidor(")
     assert "NoPacote(PacoteDaFumaca, PastaDaFumaca)" in confere
     assert 'PacoteDaFumaca == ""' in confere

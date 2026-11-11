@@ -191,15 +191,32 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
   const blindado = CATALOGO.find((item) => item.id === 'mutante-blindado');
   expect(blindado).toMatchObject({ tipo: 'mutante', valor: 'blindado', imagem: '/loja/mutante-blindado.webp' });
   expect(blindado?.evolucoes).toEqual([
-    { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', escudo: 2 },
-    { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', escudo: 4 },
-    { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', escudo: 6 },
+    { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', poder: 'escudo de 2 s' },
+    { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', poder: 'escudo de 4 s' },
+    { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', poder: 'escudo de 6 s' },
   ]);
+  expect(blindado?.descricao).toBe('Na Mutação você vira esse mutante. Aperte G e fica sem levar dano por até 6 s. Evolui em 3 níveis.');
   const conta = await contaCom(2000);
   await comprar(conta, 'mutante-blindado', 1);
   expect((await recarregar(bd, conta)).grana).toBe(1800);
   await usarItem(bd, conta, 'mutante-blindado', AGORA);
   expect(await visuaisDe(bd, [conta.steamid64], AGORA)).toEqual({ [conta.steamid64]: { mutante: 'blindado' } });
+});
+
+test('o Senhor do Vazio está à venda: fumaça no G, o nível 2 usa o boneco do 1 e o 3 é o Titan', async () => {
+  const fumaca = CATALOGO.find((item) => item.id === 'mutante-fumaca');
+  expect(fumaca).toMatchObject({ tipo: 'mutante', valor: 'fumaca', nome: 'Senhor do Vazio', imagem: '/loja/mutante-fumaca.webp' });
+  expect(fumaca?.lancamento).toBeFalsy();
+  expect(fumaca?.evolucoes).toEqual([
+    { nivel: 1, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 8 s' },
+    { nivel: 2, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 10 s' },
+    { nivel: 3, nome: 'Abyssal Void Titan', imagem: '/loja/fumaca-3-andando.webp', poder: 'fumaça de 12 s' },
+  ]);
+  expect(fumaca?.descricao).toContain('Aperte G');
+  const conta = await contaCom(2000);
+  await comprar(conta, 'mutante-fumaca', 1);
+  await usarItem(bd, conta, 'mutante-fumaca', AGORA);
+  expect(await visuaisDe(bd, [conta.steamid64], AGORA)).toEqual({ [conta.steamid64]: { mutante: 'fumaca' } });
 });
 
 test('o boneco próprio vai junto com os itens, só da conta dele e só enquanto ativa', async () => {

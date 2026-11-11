@@ -87,7 +87,6 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
   const cartao = (item: ItemDaLoja) => (
     <CartaoDoItem key={item.id} item={item} usuario={usuario} href={enderecoDe(item)} tenho={tenho.has(item.id)} agora={agora} />
   );
-  const evolucoes = destaque.evolucoes ?? [];
 
   return (
     <div className="tela-jogar">
@@ -102,9 +101,7 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
           <span className="selo-da-raridade">{NOME_DA_RARIDADE[RARIDADE[destaque.tipo]]} · Lançamento</span>
           <h2>{destaque.nome}</h2>
           <p>
-            {evolucoes.length > 0
-              ? `Na Mutação você vira esse mutante. Aperte G e fica sem levar dano por até ${Math.max(...evolucoes.map((evolucao) => evolucao.escudo))} s. Evolui em ${evolucoes.length} níveis.`
-              : NOME_DO_TIPO[destaque.tipo]}
+            {destaque.descricao ?? NOME_DO_TIPO[destaque.tipo]}
           </p>
           <div className="acoes-do-destaque">
             <Link className="botao-da-shop" href={enderecoDe(destaque)} scroll={false}>

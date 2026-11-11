@@ -123,7 +123,7 @@ public partial class ModoDeDiversao
     // aí quem comprou vira o mutante comum.
     private const string PacoteDaFumaca = "";
     private const string PastaDaFumaca = "models/magnatas/fumaca_v1";
-    private static readonly int[] NiveisComBonecoDaFumaca = { 1 };
+    private static readonly int[] NiveisComBonecoDaFumaca = { 1, 3 };
     private static readonly float[] SegundosDaFumaca = { 8f, 10f, 12f };
     private const float SegundosDeRecargaDaFumaca = 15f;
     // Cada fumaça custa 10% da vida máxima do nível; com menos que isso, o G não solta.

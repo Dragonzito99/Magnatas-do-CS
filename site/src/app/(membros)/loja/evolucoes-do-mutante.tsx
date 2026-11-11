@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type Evolucao = { nivel: number; nome: string; imagem: string; escudo: number };
+type Evolucao = { nivel: number; nome: string; imagem: string; poder: string };
 
 const SEGUNDOS_EM_CADA = 3.5;
 
@@ -30,7 +30,7 @@ export function EvolucoesDoMutante({ evolucoes }: { evolucoes: Evolucao[] }) {
         ))}
       </div>
       <p className="legenda-da-evolucao">
-        <b>Nível {evolucao.nivel}</b> · {evolucao.nome} · escudo de {evolucao.escudo} s
+        <b>Nível {evolucao.nivel}</b> · {evolucao.nome} · {evolucao.poder}
       </p>
       <div className="niveis-da-evolucao" role="group" aria-label="Escolher o nível">
         {evolucoes.map((item, indice) => (
