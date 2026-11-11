@@ -13,6 +13,9 @@ export function lerFiltroDeNoticias(texto: string | undefined): FiltroDeNoticias
   return FILTROS_DE_NOTICIAS.find((filtro) => filtro.valor !== null && filtro.valor === texto)?.valor ?? null;
 }
 
+export type TimeNoConfronto = { nome: string; logo: string | null };
+export type Confronto = { time1: TimeNoConfronto; time2: TimeNoConfronto; placar: string | null };
+
 export type CartaoDeNoticia = {
   tipo: FiltroDeNoticias;
   etiqueta: string;
@@ -22,7 +25,41 @@ export type CartaoDeNoticia = {
   href: string;
   externo: boolean;
   data: Date | null;
+  /** Só nos jogos de times BR: os dois times, com a logo de quem é brasileiro, e o placar. */
+  confronto?: Confronto;
 };
+
+/** As logos dos times brasileiros acompanhados, baixadas da Liquipedia (dono, 11/11/2026). */
+const LOGO_DO_TIME: Record<string, string> = {
+  FURIA: '/times/furia.png',
+  MIBR: '/times/mibr.png',
+  paiN: '/times/pain.png',
+  Imperial: '/times/imperial.png',
+  Legacy: '/times/legacy.png',
+  Fluxo: '/times/fluxo.png',
+  'RED Canids': '/times/red-canids.png',
+  ODDIK: '/times/oddik.png',
+};
+
+const time = (nome: string): TimeNoConfronto => ({ nome, logo: LOGO_DO_TIME[nome] ?? null });
+const confrontoDe = (jogo: JogoBr): Confronto => ({ time1: time(jogo.time1), time2: time(jogo.time2), placar: jogo.placar });
+
+export type LinhaDaAgenda = Confronto & { torneio: string; quando: Date; terminou: boolean; href: string };
+
+/** A agenda dos times BR ao lado do destaque: os próximos jogos (do mais perto ao mais longe) e depois os resultados. */
+export function agendaDosTimes(jogos: JogoBr[], agora: Date = new Date(), limite = 5): LinhaDaAgenda[] {
+  const comData = jogos.filter((jogo): jogo is JogoBr & { quando: Date } => jogo.quando !== null);
+  const proximos = comData.filter((jogo) => !jogo.placar && jogo.quando.getTime() >= agora.getTime()).sort((a, b) => a.quando.getTime() - b.quando.getTime());
+  // Jogo que já passou entra nos resultados mesmo sem placar (a Liquipedia às vezes demora para pôr).
+  const resultados = comData.filter((jogo) => jogo.placar || jogo.quando.getTime() < agora.getTime()).sort((a, b) => b.quando.getTime() - a.quando.getTime());
+  return [...proximos, ...resultados].slice(0, limite).map((jogo) => ({
+    ...confrontoDe(jogo),
+    torneio: jogo.torneio,
+    quando: jogo.quando,
+    terminou: jogo.placar !== null || jogo.quando.getTime() < agora.getTime(),
+    href: `${ENDERECO_DA_LIQUIPEDIA}${jogo.pagina}`,
+  }));
+}
 
 type DoClube = { id: string; titulo: string; texto: string; imagem: string | null; fixada: boolean; criadoEm: Date };
 type DaSteam = { gid: string; titulo: string; resumo: string | null; url: string; publicadaEm: Date };
@@ -86,6 +123,7 @@ export function cartoesDeNoticias(
         href: `${ENDERECO_DA_LIQUIPEDIA}${jogo.pagina}`,
         externo: true,
         data: jogo.quando,
+        confronto: confrontoDe(jogo),
       })),
     );
   }

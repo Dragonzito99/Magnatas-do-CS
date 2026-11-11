@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { blocosDaNoticia, cartoesDeNoticias, maisNoticiasDoClube, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias } from './cartoes-de-noticias';
+import { agendaDosTimes, blocosDaNoticia, cartoesDeNoticias, maisNoticiasDoClube, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias } from './cartoes-de-noticias';
 
 const clube = [
   { id: 'a', titulo: 'Fixada', texto: 'Texto fixado', imagem: '/mapas/egypt.webp', fixada: true, criadoEm: new Date('2026-11-01T12:00:00Z') },
@@ -61,4 +61,34 @@ test('mais notícias do clube deixa de fora a que está aberta e para em três',
   const cartoes = maisNoticiasDoClube([noticia('1'), noticia('2'), noticia('3'), noticia('4'), noticia('5')], '2');
   expect(cartoes.map((cartao) => cartao.href)).toEqual(['/noticias/1', '/noticias/3', '/noticias/4']);
   expect(cartoes.every((cartao) => cartao.imagem.startsWith('/mapas/'))).toBe(true);
+});
+
+test('jogo de time BR traz a logo do time BR; BR x BR traz as duas, e time de fora fica sem logo', () => {
+  const contra = cartoesDeNoticias({ clube: [], steam: [], jogos }, 'times').cartoes[0];
+  expect(contra.confronto).toEqual({ time1: { nome: 'FURIA', logo: '/times/furia.png' }, time2: { nome: 'NAVI', logo: null }, placar: '2:1' });
+  const classico = cartoesDeNoticias({ clube: [], steam: [], jogos: [{ ...jogos[0], time1: 'Legacy', time2: 'FURIA', placar: null }] }, 'times').cartoes[0];
+  expect(classico.confronto).toEqual({ time1: { nome: 'Legacy', logo: '/times/legacy.png' }, time2: { nome: 'FURIA', logo: '/times/furia.png' }, placar: null });
+  expect(cartoesDeNoticias({ clube, steam, jogos }, 'clube').cartoes.every((cartao) => cartao.confronto === undefined)).toBe(true);
+});
+
+test('a agenda dos times BR põe primeiro os próximos jogos, do mais perto ao mais longe, e depois os resultados, até 5', () => {
+  const agora = new Date('2026-11-10T12:00:00Z');
+  const jogo = (time2: string, quando: string | null, placar: string | null) => ({ pagina: 'X', torneio: 'T', time1: 'FURIA', time2, placar, quando: quando ? new Date(quando) : null });
+  const agenda = agendaDosTimes(
+    [
+      jogo('A', '2026-11-08T12:00:00Z', '2:0'),
+      jogo('B', '2026-11-12T12:00:00Z', null),
+      jogo('C', '2026-11-11T12:00:00Z', null),
+      jogo('D', '2026-11-09T12:00:00Z', '0:2'),
+      jogo('E', '2026-11-05T12:00:00Z', '1:2'),
+      jogo('F', '2026-11-04T12:00:00Z', '1:2'),
+      jogo('G', null, null),
+    ],
+    agora,
+  );
+  expect(agenda.map((linha) => linha.time2.nome)).toEqual(['C', 'B', 'D', 'A', 'E']);
+  expect(agenda[0]).toMatchObject({ terminou: false, time1: { logo: '/times/furia.png' } });
+  expect(agenda[2]).toMatchObject({ terminou: true, placar: '0:2' });
+  const semPlacar = agendaDosTimes([jogo('H', '2026-11-09T12:00:00Z', null)], agora);
+  expect(semPlacar).toMatchObject([{ terminou: true, placar: null }]);
 });
