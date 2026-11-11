@@ -3016,9 +3016,15 @@ a.cartao-destaque:hover {
   transform: translateX(-50%);
 }
 
+/* Pelo teclado só com foco visível: depois de um clique o link continua focado e o submenu ficava aberto com o mouse longe */
 .item-com-submenu:hover .submenu,
-.item-com-submenu:focus-within .submenu {
+.item-com-submenu:has(:focus-visible) .submenu {
   display: grid;
+}
+
+/* Com o mouse sobre outro item, só o submenu dele aparece */
+.menu-itens:hover .item-com-submenu:not(:hover) .submenu {
+  display: none;
 }
 
 .submenu a {
