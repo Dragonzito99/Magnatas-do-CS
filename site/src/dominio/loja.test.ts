@@ -203,13 +203,13 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
   expect(await visuaisDe(bd, [conta.steamid64], AGORA)).toEqual({ [conta.steamid64]: { mutante: 'blindado' } });
 });
 
-test('o Senhor do Vazio está à venda: fumaça no G, o nível 2 usa o boneco do 1 e o 3 é o Titan', async () => {
+test('o Senhor do Vazio está à venda: fumaça no G e um boneco por nível', async () => {
   const fumaca = CATALOGO.find((item) => item.id === 'mutante-fumaca');
   expect(fumaca).toMatchObject({ tipo: 'mutante', valor: 'fumaca', nome: 'Senhor do Vazio', imagem: '/loja/mutante-fumaca.webp' });
   expect(fumaca?.lancamento).toBeFalsy();
   expect(fumaca?.evolucoes).toEqual([
     { nivel: 1, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 8 s' },
-    { nivel: 2, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 10 s' },
+    { nivel: 2, nome: 'Voidreaver Titan', imagem: '/loja/fumaca-2-andando.webp', poder: 'fumaça de 10 s' },
     { nivel: 3, nome: 'Abyssal Void Titan', imagem: '/loja/fumaca-3-andando.webp', poder: 'fumaça de 12 s' },
   ]);
   expect(fumaca?.descricao).toBe(

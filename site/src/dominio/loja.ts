@@ -93,7 +93,7 @@ export const CATALOGO: readonly ItemDaLoja[] = [
     ],
   },
   // Senhor do Vazio (dono, 11/11/2026): o G solta uma cortina de fumaça roxa e custa 10% da vida, como o Smoke do
-  // CrossFire. O nível 2 ainda não tem boneco próprio e usa o do nível 1.
+  // CrossFire. Um boneco por nível: Voidforged Warlord, Voidreaver Titan e Abyssal Void Titan.
   {
     id: 'mutante-fumaca',
     tipo: 'mutante',
@@ -104,7 +104,7 @@ export const CATALOGO: readonly ItemDaLoja[] = [
       'Na Mutação, você vira esse mutante. Aperte G e solta uma cortina de fumaça roxa de 8 s no nível 1, 10 s no nível 2 e 12 s no nível 3. Cada fumaça custa 10% da sua vida. Recarga de 15 s.',
     evolucoes: [
       { nivel: 1, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 8 s' },
-      { nivel: 2, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 10 s' },
+      { nivel: 2, nome: 'Voidreaver Titan', imagem: '/loja/fumaca-2-andando.webp', poder: 'fumaça de 10 s' },
       { nivel: 3, nome: 'Abyssal Void Titan', imagem: '/loja/fumaca-3-andando.webp', poder: 'fumaça de 12 s' },
     ],
   },
