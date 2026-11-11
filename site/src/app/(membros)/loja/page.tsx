@@ -23,6 +23,7 @@ import {
   type TipoDeItem,
 } from '@/dominio/loja';
 import { AbasDaLoja } from './abas-da-loja';
+import { CarteiraDaShop } from './carteira-da-shop';
 import { JanelaDoItem } from './janela-do-item';
 import { Preco } from './preco-da-shop';
 import { PreviaDoItem } from './previa-do-item';
@@ -92,25 +93,7 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
     <div className="tela-jogar">
       <AbasDaLoja atual="loja" />
 
-      <div className="carteira-da-shop">
-        <h1>Magnata Shop</h1>
-        <span className="moeda-da-shop grana">
-          <i aria-hidden="true">$</i>
-          <b>{usuario.grana.toLocaleString('pt-BR')}</b>
-          <small>Grana</small>
-        </span>
-        <span className="moeda-da-shop magcoin">
-          <i aria-hidden="true">M</i>
-          <b>{usuario.magcoin.toLocaleString('pt-BR')}</b>
-          <small>MagCoin</small>
-        </span>
-        <Link className="moeda-da-shop comprar" href="/apoio">
-          + MagCoin
-        </Link>
-        <Link className="moeda-da-shop" href="/bau">
-          Meu baú
-        </Link>
-      </div>
+      <CarteiraDaShop titulo="Magnata Shop" usuario={usuario} />
 
       <div className="topo-da-shop">
         <article className={`destaque-da-shop raridade-${RARIDADE[destaque.tipo]}`}>

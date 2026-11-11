@@ -6249,6 +6249,155 @@ a.para-sempre-da-janela.sem-saldo {
   cursor: pointer;
 }
 
+/* Minhas compras: o extrato por dia, uma linha por movimento */
+.dia-do-extrato {
+  margin-bottom: 24px;
+}
+
+.dia-do-extrato h2 {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--tinta-2);
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.dia-do-extrato ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.linha-do-extrato {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 150px 110px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px 10px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.selo-da-linha {
+  --raridade: rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border-bottom: 3px solid var(--raridade);
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--raridade) 30%, transparent), transparent 75%), #0b0713;
+  color: var(--tinta-2);
+  font: italic 700 15px/1 var(--fonte-titulo), sans-serif;
+}
+
+.selo-da-linha.partida,
+.selo-da-linha.abertura {
+  --raridade: var(--verde);
+  color: var(--verde);
+}
+
+.selo-da-linha.pagamento,
+.selo-da-linha.mensalidade {
+  --raridade: #7c3aed;
+  color: #c4a5ff;
+}
+
+.selo-da-linha img {
+  align-self: end;
+  height: 92%;
+  object-fit: contain;
+}
+
+.selo-da-linha .avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 11px;
+}
+
+.selo-da-linha b {
+  font: 800 16px/1 var(--fonte-mono), ui-monospace, monospace;
+}
+
+.texto-da-linha {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.titulo-da-linha {
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a.titulo-da-linha:hover {
+  color: var(--ouro);
+}
+
+.texto-da-linha small {
+  color: var(--tinta-2);
+}
+
+.valor-da-linha {
+  font-size: 17px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.valor-da-linha small {
+  color: var(--tinta-2);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.valor-da-linha.ganho {
+  color: var(--verde);
+}
+
+.valor-da-linha.gasto {
+  color: #ff6b6b;
+}
+
+.saldo-da-linha {
+  display: grid;
+  justify-items: end;
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.saldo-da-linha small {
+  color: var(--tinta-2);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.extrato-vazio {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--ouro);
+  background: var(--painel);
+}
+
+.extrato-vazio b {
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.extrato-vazio p {
+  margin-bottom: 8px;
+  color: var(--tinta-2);
+}
+
 @media (max-width: 1100px) {
   .grade-da-shop {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -6282,6 +6431,36 @@ a.para-sempre-da-janela.sem-saldo {
 
   .caixa-da-janela {
     grid-template-columns: 1fr;
+  }
+
+  .linha-do-extrato {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding-right: 12px;
+  }
+
+  .selo-da-linha {
+    grid-row: span 2;
+    width: 44px;
+    height: 44px;
+  }
+
+  .texto-da-linha {
+    grid-row: span 2;
+  }
+
+  .titulo-da-linha {
+    font-size: 17px;
+  }
+
+  .saldo-da-linha {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+  }
+
+  .saldo-da-linha small {
+    margin-right: 4px;
   }
 
   .palco-da-janela {
