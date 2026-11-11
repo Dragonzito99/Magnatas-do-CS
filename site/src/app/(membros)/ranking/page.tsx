@@ -18,58 +18,196 @@ import {
   textoDoMes,
   type Mes,
 } from '@/dominio/ranking';
+import { patenteDe } from '@/dominio/xp';
 import { Avatar } from '../avatar';
 import { InsigniaDaPatente } from '../insignia-da-patente';
 
-const nomeDoMes = new Intl.DateTimeFormat('pt-BR', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
+const nomeDoMes = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const tituloDoMes = ({ ano, mes }: Mes) => {
   const texto = nomeDoMes.format(new Date(Date.UTC(ano, mes - 1, 15)));
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 };
 const antes = (a: Mes, b: Mes) => a.ano < b.ano || (a.ano === b.ano && a.mes < b.mes);
 const numero = new Intl.NumberFormat('pt-BR');
+const porcento = (parte: number, todo: number) => (todo > 0 ? Math.max(0, Math.min(100, Math.round((parte / todo) * 100))) : 0);
 
-const METAL = { 1: 'ouro', 2: 'prata', 3: 'bronze' } as const;
+type Jogador = { id: string; apelido: string; avatarUrl: string | null };
+type Molduras = Map<string, string>;
 
-type LugarDoPodio = { posicao: number; jogador: { id: string; apelido: string; avatarUrl: string | null }; detalhe: ReactNode; numero: string };
+/** "Seu lugar": a posição de quem olha, em destaque, com quanto falta para passar quem está logo acima. */
+function SeuLugar({
+  posicao,
+  usuario,
+  moldura,
+  detalhe,
+  valor,
+  unidade,
+  meta,
+  vazio,
+}: {
+  posicao: number | null;
+  usuario: Pick<Usuario, 'apelido' | 'avatarUrl'>;
+  moldura: string | undefined;
+  detalhe: ReactNode;
+  valor: string;
+  unidade: string;
+  meta: { texto: ReactNode; porcento: number } | null;
+  vazio: string;
+}) {
+  return (
+    <section className="seu-lugar" aria-label="Seu lugar no ranking">
+      <span className="posicao-do-seu-lugar">
+        {posicao ?? '—'}
+        {posicao && <small>º</small>}
+      </span>
+      <Avatar usuario={usuario} moldura={moldura} />
+      <div>
+        <b className="nome-do-seu-lugar">Você · {usuario.apelido}</b>
+        <small className="detalhe-do-seu-lugar">{posicao ? detalhe : vazio}</small>
+        {meta && (
+          <div className="meta-do-seu-lugar">
+            <div>
+              <span>{meta.texto}</span>
+              <span>{meta.porcento}%</span>
+            </div>
+            <span className="barra-da-meta">
+              <i style={{ width: `${meta.porcento}%` }} />
+            </span>
+          </div>
+        )}
+      </div>
+      {posicao && (
+        <span className="valor-do-seu-lugar">
+          <b>{valor}</b>
+          <small>{unidade}</small>
+        </span>
+      )}
+    </section>
+  );
+}
 
-/** O pódio do rascunho: segundo, primeiro no meio e terceiro, cada um com a cor da sua medalha. */
-async function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
+type LugarDoPodio = { posicao: number; jogador: Jogador; detalhe: ReactNode; numero: string };
+
+/** O pódio com degraus: segundo, primeiro (mais alto, com coroa) e terceiro, nas cores das medalhas. */
+function Podio({ lugares, molduras }: { lugares: LugarDoPodio[]; molduras: Molduras }) {
   const ordem = [lugares[1], lugares[0], lugares[2]].filter(Boolean);
   if (ordem.length === 0) return null;
-  const molduras = await moldurasDe(obterBd(), ordem.map((lugar) => lugar.jogador.id));
   return (
-    <div className={`podio-ranking com-${ordem.length}`}>
+    <div className={`podio-com-degraus com-${ordem.length}`}>
       {ordem.map((lugar) => (
-        <div key={lugar.jogador.id} className={`podio-lugar ${METAL[lugar.posicao as 1 | 2 | 3]}`}>
-          <span className="podio-pos">{lugar.posicao}º</span>
-          <Avatar usuario={lugar.jogador} moldura={molduras.get(lugar.jogador.id)} />
-          <Link className="podio-nome" href={`/jogadores/${lugar.jogador.id}`}>
-            {lugar.jogador.apelido}
-          </Link>
-          {lugar.detalhe}
-          <span className="podio-numero">{lugar.numero}</span>
+        <div key={lugar.jogador.id} className={`degrau-do-podio p${lugar.posicao}`}>
+          <div className="pessoa-no-podio">
+            {lugar.posicao === 1 && (
+              <span className="coroa-do-podio" aria-hidden="true">
+                ♛
+              </span>
+            )}
+            <Avatar usuario={lugar.jogador} moldura={molduras.get(lugar.jogador.id)} />
+            <Link className="nome-no-podio" href={`/jogadores/${lugar.jogador.id}`}>
+              {lugar.jogador.apelido}
+            </Link>
+            {lugar.detalhe}
+          </div>
+          <div className="bloco-do-degrau">
+            <span>{lugar.posicao}</span>
+            <em>{lugar.numero}</em>
+          </div>
         </div>
       ))}
     </div>
   );
 }
 
-async function RankingDaComunidade({ usuario }: { usuario: Pick<Usuario, 'id'> }) {
-  const linhas = await rankingDaComunidade(obterBd());
+/** A célula do número principal, com a barra comparada ao 1º lugar. */
+function Barra({ texto, parte, todo }: { texto: string; parte: number; todo: number }) {
+  return (
+    <span className="barra-do-ranking">
+      <b>{texto}</b>
+      <span>
+        <i style={{ width: `${porcento(parte, todo)}%` }} />
+      </span>
+    </span>
+  );
+}
+
+/** Uma linha da lista: posição grande, foto, nome e as colunas de cada ranking. */
+function Linha({ posicao, jogador, eu, molduras, children }: { posicao: number; jogador: Jogador; eu: boolean; molduras: Molduras; children: ReactNode }) {
+  return (
+    <div role="row" className={eu ? 'linha-do-ranking minha' : 'linha-do-ranking'}>
+      <span role="cell" className="posicao-na-linha">
+        {posicao}
+      </span>
+      <span role="cell">
+        <Avatar usuario={jogador} moldura={molduras.get(jogador.id)} />
+      </span>
+      <span role="cell" className="nome-na-linha">
+        <Link href={`/jogadores/${jogador.id}`}>{jogador.apelido}</Link>
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function Cabeca({ colunas }: { colunas: { nome: string; classe?: string }[] }) {
+  return (
+    <div role="row" className="linha-do-ranking cabeca">
+      <span role="columnheader">#</span>
+      <span role="columnheader" />
+      <span role="columnheader">Jogador</span>
+      {colunas.map((coluna) => (
+        <span key={coluna.nome} role="columnheader" className={coluna.classe}>
+          {coluna.nome}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+async function RankingDaComunidade({ usuario }: { usuario: Usuario }) {
+  const bd = obterBd();
+  const linhas = await rankingDaComunidade(bd);
+  const molduras = await moldurasDe(bd, [...linhas.map((linha) => linha.jogador.id), usuario.id]);
   const eu = minhaPosicao(linhas, usuario.id);
+  const minha = linhas.find((linha) => linha.jogador.id === usuario.id);
+  const acima = eu?.acima ? linhas[eu.posicao - 2] : undefined;
+  const topo = linhas[0]?.xp ?? 0;
+  const patente = patenteDe(usuario.xpTotal);
   return (
     <>
+      <SeuLugar
+        posicao={eu?.posicao ?? null}
+        usuario={usuario}
+        moldura={molduras.get(usuario.id)}
+        detalhe={
+          <>
+            {patente.nome} · {minha?.partidas ?? 0} {minha?.partidas === 1 ? 'partida' : 'partidas'} · {minha?.vitoriasPct ?? 0}% de vitórias
+          </>
+        }
+        valor={numero.format(usuario.xpTotal)}
+        unidade="XP"
+        meta={
+          eu && acima
+            ? {
+                texto: (
+                  <>
+                    Faltam <em>{numero.format(eu.faltam)} XP</em> para passar <em>{acima.jogador.apelido}</em> e ficar em {eu.posicao - 1}º
+                  </>
+                ),
+                porcento: porcento(usuario.xpTotal, acima.xp + 1),
+              }
+            : eu
+              ? { texto: <>Você está em 1º. O mais magnata do clube!</>, porcento: 100 }
+              : null
+        }
+        vazio="Você ainda não está no ranking. Jogue uma partida para entrar."
+      />
       <Podio
+        molduras={molduras}
         lugares={linhas.slice(0, 3).map((linha) => ({
           posicao: linha.posicao,
           jogador: linha.jogador,
           detalhe: (
-            <span className="patente-na-tabela">
+            <span className="detalhe-no-podio">
               <InsigniaDaPatente patente={linha.patente} classe="insignia-mini" />
               {linha.patente.nome}
             </span>
@@ -77,235 +215,220 @@ async function RankingDaComunidade({ usuario }: { usuario: Pick<Usuario, 'id'> }
           numero: `${numero.format(linha.xp)} XP`,
         }))}
       />
-      <section className="painel">
-        {linhas.length === 0 && <p className="vazio">Ainda ninguém ganhou XP. A primeira partida encerrada abre o ranking.</p>}
-        {linhas.length > 0 && (
-          <table className="tabela tabela-ranking">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Jogador</th>
-                <th scope="col">Patente</th>
-                <th scope="col">XP</th>
-                <th scope="col" className="so-computador">
-                  Partidas
-                </th>
-                <th scope="col" className="so-computador">
-                  Vitórias
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((linha) => (
-                <tr key={linha.jogador.id} className={linha.jogador.id === usuario.id ? 'minha-linha' : undefined}>
-                  <td>{linha.posicao}</td>
-                  <th scope="row">
-                    <span className="perfil">
-                      <Avatar usuario={linha.jogador} />
-                      <Link className="nome" href={`/jogadores/${linha.jogador.id}`}>
-                        {linha.jogador.apelido}
-                      </Link>
-                    </span>
-                  </th>
-                  <td>
-                    <span className="patente-na-tabela">
-                      <InsigniaDaPatente patente={linha.patente} classe="insignia-mini" />
-                      {linha.patente.nome}
-                    </span>
-                  </td>
-                  <td>
-                    <b>{numero.format(linha.xp)}</b>
-                  </td>
-                  <td className="so-computador">{linha.partidas}</td>
-                  <td className="so-computador">{linha.vitoriasPct}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <div className="rodape-do-ranking">
-          <span>Todas as partidas dão XP, e ele não zera.</span>
+      {linhas.length === 0 ? (
+        <div className="extrato-vazio">
+          <b>Ninguém no ranking ainda</b>
+          <p>A primeira partida encerrada abre o ranking.</p>
         </div>
-      </section>
-      <p className="apoio frase-do-ranking">
-        {!eu
-          ? 'Você ainda não está no ranking. Jogue uma partida para entrar.'
-          : eu.acima
-            ? `Você está em ${eu.posicao}º · faltam ${numero.format(eu.faltam)} XP para passar o ${eu.acima}`
-            : 'Você está em 1º. O mais magnata do clube!'}
-      </p>
+      ) : (
+        <div className="lista-do-ranking da-comunidade" role="table" aria-label="Ranking da comunidade">
+          <Cabeca colunas={[{ nome: 'Patente', classe: 'so-computador' }, { nome: 'XP' }, { nome: 'Partidas', classe: 'numero-na-linha so-computador' }, { nome: 'Vitórias', classe: 'numero-na-linha so-computador' }]} />
+          {linhas.map((linha) => (
+            <Linha key={linha.jogador.id} posicao={linha.posicao} jogador={linha.jogador} eu={linha.jogador.id === usuario.id} molduras={molduras}>
+              <span role="cell" className="patente-na-linha so-computador">
+                <InsigniaDaPatente patente={linha.patente} classe="insignia-mini" />
+                {linha.patente.nome}
+              </span>
+              <span role="cell">
+                <Barra texto={numero.format(linha.xp)} parte={linha.xp} todo={topo} />
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.partidas}
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.vitoriasPct}%
+              </span>
+            </Linha>
+          ))}
+        </div>
+      )}
+      <p className="legenda-da-secao frase-de-clas">Todas as partidas dão XP, e ele não zera.</p>
     </>
   );
 }
 
-async function RankingDeMvps({ usuario }: { usuario: Pick<Usuario, 'id'> }) {
+async function RankingDeMvps({ usuario }: { usuario: Usuario }) {
+  const bd = obterBd();
   const agora = new Date();
-  const linhas = await mvpsDoPeriodo(obterBd(), periodoDeBrasilia(agora, 'mes'), 50);
+  const linhas = await mvpsDoPeriodo(bd, periodoDeBrasilia(agora, 'mes'), 50);
+  const molduras = await moldurasDe(bd, [...linhas.map((linha) => linha.id), usuario.id]);
+  const indice = linhas.findIndex((linha) => linha.id === usuario.id);
+  const minha = indice >= 0 ? linhas[indice] : undefined;
+  const acima = indice > 0 ? linhas[indice - 1] : undefined;
+  const topo = linhas[0]?.mvps ?? 0;
+  const estrelas = (quantas: number) => `${quantas} ${quantas === 1 ? 'estrela' : 'estrelas'}`;
   return (
     <>
-      <p className="apoio">Quem mais ganhou estrelas de MVP nas partidas de {tituloDoMes(mesDe(agora)).toLowerCase()}.</p>
+      <SeuLugar
+        posicao={minha ? indice + 1 : null}
+        usuario={usuario}
+        moldura={molduras.get(usuario.id)}
+        detalhe={
+          <>
+            {minha?.kills ?? 0} abates · {minha?.partidas ?? 0} {minha?.partidas === 1 ? 'partida' : 'partidas'} em {tituloDoMes(mesDe(agora)).toLowerCase()}
+          </>
+        }
+        valor={`★ ${minha?.mvps ?? 0}`}
+        unidade="estrelas"
+        meta={
+          minha && acima
+            ? {
+                texto: (
+                  <>
+                    Faltam <em>{estrelas(acima.mvps - minha.mvps + 1)}</em> para passar <em>{acima.apelido}</em>
+                  </>
+                ),
+                porcento: porcento(minha.mvps, acima.mvps + 1),
+              }
+            : null
+        }
+        vazio="Você ainda não ganhou estrela de MVP neste mês."
+      />
       <Podio
-        lugares={linhas.slice(0, 3).map((linha, indice) => ({
-          posicao: indice + 1,
+        molduras={molduras}
+        lugares={linhas.slice(0, 3).map((linha, posicao) => ({
+          posicao: posicao + 1,
           jogador: linha,
-          detalhe: <span className="apoio">{linha.kills} abates</span>,
-          numero: `${linha.mvps} ${linha.mvps === 1 ? 'estrela' : 'estrelas'}`,
+          detalhe: <span className="detalhe-no-podio">{linha.kills} abates</span>,
+          numero: `★ ${linha.mvps}`,
         }))}
       />
-      <section className="painel">
-        {linhas.length === 0 && <p className="vazio">Ninguém ganhou estrela de MVP neste mês ainda.</p>}
-        {linhas.length > 0 && (
-          <table className="tabela tabela-ranking">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Jogador</th>
-                <th scope="col">Estrelas</th>
-                <th scope="col" className="so-computador">
-                  Abates
-                </th>
-                <th scope="col" className="so-computador">
-                  Partidas
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((linha, indice) => (
-                <tr key={linha.id} className={linha.id === usuario.id ? 'minha-linha' : undefined}>
-                  <td>{indice + 1}</td>
-                  <th scope="row">
-                    <span className="perfil">
-                      <Avatar usuario={linha} />
-                      <Link className="nome" href={`/jogadores/${linha.id}`}>
-                        {linha.apelido}
-                      </Link>
-                    </span>
-                  </th>
-                  <td>
-                    <b className="estrelas-do-ranking">★ {linha.mvps}</b>
-                  </td>
-                  <td className="so-computador">{linha.kills}</td>
-                  <td className="so-computador">{linha.partidas}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <div className="rodape-do-ranking">
-          <span>Cada rodada dá uma estrela de MVP para o melhor dela. Zera todo mês.</span>
+      {linhas.length === 0 ? (
+        <div className="extrato-vazio">
+          <b>Nenhuma estrela ainda</b>
+          <p>Ninguém ganhou estrela de MVP neste mês.</p>
         </div>
-      </section>
+      ) : (
+        <div className="lista-do-ranking de-mvps" role="table" aria-label="Ranking de MVPs">
+          <Cabeca colunas={[{ nome: 'Estrelas' }, { nome: 'Abates', classe: 'numero-na-linha so-computador' }, { nome: 'Partidas', classe: 'numero-na-linha so-computador' }]} />
+          {linhas.map((linha, posicao) => (
+            <Linha key={linha.id} posicao={posicao + 1} jogador={linha} eu={linha.id === usuario.id} molduras={molduras}>
+              <span role="cell" className="estrelas-na-linha">
+                <Barra texto={`★ ${linha.mvps}`} parte={linha.mvps} todo={topo} />
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.kills}
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.partidas}
+              </span>
+            </Linha>
+          ))}
+        </div>
+      )}
+      <p className="legenda-da-secao frase-de-clas">Cada rodada dá uma estrela de MVP para o melhor dela. Zera todo mês.</p>
     </>
   );
 }
 
-async function RankingDoMix({ usuario, texto }: { usuario: Pick<Usuario, 'id'>; texto: string | undefined }) {
+async function RankingDoMix({ usuario, texto }: { usuario: Usuario; texto: string | undefined }) {
   const bd = obterBd();
   const atual = mesDe(new Date());
   const pedido = lerMes(texto);
   const mes = pedido && !antes(atual, pedido) ? pedido : atual;
   const [{ linhas, foraDoRanking }, primeiro] = await Promise.all([rankingDoMes(bd, mes), primeiroMesComPartida(bd)]);
-
+  const molduras = await moldurasDe(bd, [...linhas.map((linha) => linha.jogador.id), usuario.id]);
   const podeVoltar = !!primeiro && antes(primeiro, mes);
   const podeAvancar = antes(mes, atual);
+  const minha = linhas.find((linha) => linha.jogador.id === usuario.id);
+  const topo = linhas[0]?.kd ?? 0;
 
   return (
     <>
-      <nav className="escolha-do-mes" aria-label="Mês do ranking">
+      <nav className="mes-do-ranking" aria-label="Mês do ranking">
         {podeVoltar ? (
-          <Link className="seta-do-mes" href={`/ranking?aba=mix&mes=${textoDoMes(mesAnterior(mes))}`} aria-label="Mês anterior">
+          <Link href={`/ranking?aba=mix&mes=${textoDoMes(mesAnterior(mes))}`} aria-label="Mês anterior">
             ‹
           </Link>
         ) : (
-          <span className="seta-do-mes apagada" aria-hidden="true">
+          <span className="apagada" aria-hidden="true">
             ‹
           </span>
         )}
-        <span>{tituloDoMes(mes)}</span>
+        <b>{tituloDoMes(mes)}</b>
         {podeAvancar ? (
-          <Link className="seta-do-mes" href={`/ranking?aba=mix&mes=${textoDoMes(proximoMes(mes))}`} aria-label="Próximo mês">
+          <Link href={`/ranking?aba=mix&mes=${textoDoMes(proximoMes(mes))}`} aria-label="Próximo mês">
             ›
           </Link>
         ) : (
-          <span className="seta-do-mes apagada" aria-hidden="true">
+          <span className="apagada" aria-hidden="true">
             ›
           </span>
         )}
       </nav>
 
+      <SeuLugar
+        posicao={minha?.posicao ?? null}
+        usuario={usuario}
+        moldura={molduras.get(usuario.id)}
+        detalhe={
+          <>
+            {minha?.partidas ?? 0} partidas · {minha?.vitoriasPct ?? 0}% de vitórias · ADR {minha?.adr ?? 0}
+          </>
+        }
+        valor={minha ? minha.kd.toFixed(2) : '—'}
+        unidade="K/D"
+        meta={null}
+        vazio={`Fora do ranking deste mês: entra quem joga pelo menos ${MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix.`}
+      />
       <Podio
+        molduras={molduras}
         lugares={linhas.slice(0, 3).map((linha) => ({
           posicao: linha.posicao,
           jogador: linha.jogador,
           detalhe: (
-            <span className="apoio">
+            <span className="detalhe-no-podio">
               {linha.partidas} {linha.partidas === 1 ? 'partida' : 'partidas'}
             </span>
           ),
           numero: `K/D ${linha.kd.toFixed(2)}`,
         }))}
       />
-
-      <section className="painel">
-        {linhas.length === 0 && <p className="vazio">Ainda ninguém chegou a {MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix neste mês.</p>}
-        {linhas.length > 0 && (
-          <table className="tabela tabela-ranking">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Jogador</th>
-                <th scope="col">Partidas</th>
-                <th scope="col" className="so-computador">
-                  Vitórias
-                </th>
-                <th scope="col" className="so-computador">
-                  Abates
-                </th>
-                <th scope="col" className="so-computador">
-                  Mortes
-                </th>
-                <th scope="col" className="so-computador">
-                  ADR
-                </th>
-                <th scope="col">K/D</th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((linha) => (
-                <tr key={linha.jogador.id} className={linha.jogador.id === usuario.id ? 'minha-linha' : undefined}>
-                  <td>{linha.posicao}</td>
-                  <th scope="row">
-                    <span className="perfil">
-                      <Avatar usuario={linha.jogador} />
-                      <Link className="nome" href={`/jogadores/${linha.jogador.id}`}>
-                        {linha.jogador.apelido}
-                      </Link>
-                    </span>
-                  </th>
-                  <td>{linha.partidas}</td>
-                  <td className="so-computador">{linha.vitoriasPct}%</td>
-                  <td className="so-computador">{linha.abates}</td>
-                  <td className="so-computador">{linha.mortes}</td>
-                  <td className="so-computador">{linha.adr}</td>
-                  <td>
-                    <b>{linha.kd.toFixed(2)}</b>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <div className="rodape-do-ranking">
-          <span>
-            Entra no ranking quem jogou pelo menos <b>{MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix</b> no mês.
-          </span>
-          {foraDoRanking > 0 && (
-            <span>
-              Fora do ranking: <b>{foraDoRanking === 1 ? '1 magnata' : `${foraDoRanking} magnatas`}</b>
-            </span>
-          )}
+      {linhas.length === 0 ? (
+        <div className="extrato-vazio">
+          <b>Ninguém no ranking deste mês</b>
+          <p>Ainda ninguém chegou a {MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix.</p>
         </div>
-      </section>
+      ) : (
+        <div className="lista-do-ranking do-mix" role="table" aria-label="Ranking do Mix do mês">
+          <Cabeca
+            colunas={[
+              { nome: 'Partidas', classe: 'numero-na-linha so-computador' },
+              { nome: 'Vitórias', classe: 'numero-na-linha so-computador' },
+              { nome: 'Abates', classe: 'numero-na-linha so-computador' },
+              { nome: 'Mortes', classe: 'numero-na-linha so-computador' },
+              { nome: 'ADR', classe: 'numero-na-linha so-computador' },
+              { nome: 'K/D' },
+            ]}
+          />
+          {linhas.map((linha) => (
+            <Linha key={linha.jogador.id} posicao={linha.posicao} jogador={linha.jogador} eu={linha.jogador.id === usuario.id} molduras={molduras}>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.partidas}
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.vitoriasPct}%
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.abates}
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.mortes}
+              </span>
+              <span role="cell" className="numero-na-linha so-computador">
+                {linha.adr}
+              </span>
+              <span role="cell">
+                <Barra texto={linha.kd.toFixed(2)} parte={linha.kd} todo={topo} />
+              </span>
+            </Linha>
+          ))}
+        </div>
+      )}
+      <p className="legenda-da-secao frase-de-clas">
+        Entra no ranking quem jogou pelo menos {MINIMO_DE_PARTIDAS_NO_MES} partidas de Mix no mês.
+        {foraDoRanking > 0 && ` Fora do ranking: ${foraDoRanking === 1 ? '1 magnata' : `${foraDoRanking} magnatas`}.`}
+      </p>
     </>
   );
 }
@@ -323,19 +446,16 @@ export default async function Ranking({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="tela-jogar">
-      <div className="topo-jogar">
+      <div className="carteira-da-shop">
         <h1>Ranking</h1>
-        <p className="apoio">Quem manda no Magnatas.</p>
       </div>
-      <nav className="filtros-jogar" aria-label="Tipo de ranking">
+      <nav className="filtros-da-shop" aria-label="Tipo de ranking">
         {ABAS.map((item) => (
-          <Link key={item.nome} className="filtro-jogar" href={item.href} aria-current={atual === item.valor ? 'page' : undefined}>
+          <Link key={item.nome} href={item.href} aria-current={atual === item.valor ? 'page' : undefined}>
             {item.nome}
           </Link>
         ))}
-        <Link className="filtro-jogar" href="/clas?aba=ranking">
-          Clãs
-        </Link>
+        <Link href="/clas?aba=ranking">Clãs</Link>
       </nav>
       {atual === 'mix' ? <RankingDoMix usuario={usuario} texto={mes} /> : atual === 'mvps' ? <RankingDeMvps usuario={usuario} /> : <RankingDaComunidade usuario={usuario} />}
     </div>
