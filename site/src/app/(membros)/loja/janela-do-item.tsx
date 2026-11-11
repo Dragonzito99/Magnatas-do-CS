@@ -22,7 +22,7 @@ const EXPLICACAO: Record<TipoDeItem, string> = {
   aviso: 'Quando você entra no servidor, todo mundo vê.',
   moldura: 'Uma borda especial na sua foto, no perfil e no ranking.',
   // Cada mutante tem o próprio texto no catálogo (descricao); este só vale se faltar.
-  mutante: 'Na Mutação, você vira esse mutante e ganha um poder no G.',
+  mutante: 'Na Mutação, você vira esse mutante e ganha um poder no E.',
 };
 
 const dias = (quantidade: number) => (quantidade === 1 ? '1 dia' : `${quantidade} dias`);

@@ -1492,7 +1492,8 @@ def test_o_mutante_corre_mais_rapido_ao_apertar_g_a_partir_do_nivel_dois():
     assert 'AddCommandListener("drop", AoApertarG' in CODIGO_DA_MUTACAO
     g = metodo_da_mutacao("HookResult AoApertarG")
     assert "EhMutanteDeVerdade(jogador)" in g
-    assert "NivelDe(jogador).Nivel < NivelDaCorrida" in g
+    assert "return UsarPoder(jogador);" in g
+    assert "NivelDe(jogador).Nivel < NivelDaCorrida" in metodo_da_mutacao("private HookResult UsarPoder(")
     # O humano continua largando a arma no G; o G do mutante não larga a faca.
     assert "return HookResult.Continue;" in g
     assert "return HookResult.Handled;" in g
@@ -1501,7 +1502,7 @@ def test_o_mutante_corre_mais_rapido_ao_apertar_g_a_partir_do_nivel_dois():
 def test_a_corrida_dura_pouco_e_tem_recarga():
     assert "SegundosDaCorrida = 3f;" in CODIGO_DA_MUTACAO
     assert "SegundosDeRecargaDaCorrida = 12f;" in CODIGO_DA_MUTACAO
-    g = metodo_da_mutacao("HookResult AoApertarG")
+    g = metodo_da_mutacao("private HookResult UsarPoder(")
     assert "Server.CurrentTime" in g
     assert "Corrida em" in g
     velocidade = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("float VelocidadeDe("):][:400]
@@ -1512,7 +1513,7 @@ def test_a_corrida_vale_tambem_na_subida_de_nivel_e_quem_chega_ao_dois_fica_sabe
     sobe = metodo_da_mutacao("void SubirDeNivel")
     assert "VelocidadeDe(mutante)" in sobe
     assert "novo.Nivel == NivelDaCorrida" in sobe
-    assert "Aperte G" in sobe
+    assert "Aperte E" in sobe
 
 
 def test_a_corrida_zera_junto_com_o_nivel():
@@ -1723,7 +1724,7 @@ def test_o_mutante_da_loja_usa_o_proprio_boneco_e_a_propria_queda():
 
 
 def test_o_g_do_blindado_liga_o_escudo_desde_o_nivel_1_com_recarga():
-    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    g = metodo_da_mutacao("private HookResult UsarPoder(")
     assert g.index('SkinDe(jogador) == "blindado"') < g.index("NivelDaCorrida")
     escudo = metodo_da_mutacao("private HookResult LigarEscudo(")
     assert "SegundosDoEscudo[" in escudo
@@ -1803,10 +1804,10 @@ def test_quem_vira_mutante_ve_na_tela_o_que_o_mutante_faz():
     assert "AvisarOQueOMutanteFaz(jogador)" in virar
     aviso = metodo_da_mutacao("private void AvisarOQueOMutanteFaz(")
     assert "MostrarCartao(" in aviso and "PrintToChat(" in aviso
-    assert "Faca" in aviso and "G:" in aviso
+    assert "Faca" in aviso and "E:" in aviso
     assert 'skin == "blindado"' in aviso and 'skin == "fumaca"' in aviso
     assert "NivelDaCorrida" in aviso
-    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    g = metodo_da_mutacao("private HookResult UsarPoder(")
     corrida = g[g.index("NivelDe(jogador).Nivel < NivelDaCorrida"):]
     assert corrida.index("PrintToCenterHtml(") < corrida.index("return HookResult.Handled")
 
@@ -1846,7 +1847,7 @@ def test_hud_do_poder_do_g_fica_na_tela_do_mutante():
     assert tela.index("cartoes.TryGetValue(") < tela.index("HudDoPoder(")
     hud = metodo_da_mutacao("private string HudDoPoder(")
     assert "agora < fim" in hud and "agora < recarga" in hud
-    assert "G PRONTO" in hud
+    assert "E PRONTO" in hud
     assert "NivelDaCorrida" in hud
     assert "BlocosDaBarra" in metodo_da_mutacao("private static string BarraDePoder(")
 
@@ -1896,7 +1897,7 @@ def test_o_senhor_do_vazio_tem_pacote_proprio_e_fumaca_de_8_10_12_segundos():
 
 
 def test_o_g_do_senhor_do_vazio_solta_fumaca_desde_o_nivel_1_e_custa_vida():
-    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    g = metodo_da_mutacao("private HookResult UsarPoder(")
     assert g.index('SkinDe(jogador) == "fumaca"') < g.index("NivelDaCorrida")
     fumaca = metodo_da_mutacao("private HookResult SoltarFumaca(")
     assert fumaca.index("agora < fumaca.Recarga") < fumaca.index("corpo.Health -= custo")
@@ -1939,3 +1940,15 @@ def test_o_g_fica_no_registro_do_servidor_para_conferir():
     assert 'Console.WriteLine($"[Magnatas] G de ' in g
     fumaca = metodo_da_mutacao("private HookResult SoltarFumaca(")
     assert 'Console.WriteLine($"[Magnatas] Fumaça de ' in fumaca
+
+
+def test_o_poder_do_mutante_vale_no_e_porque_o_g_nem_chegava_ao_servidor():
+    # O dono, mutante e de faca na mão, apertava G e o servidor não recebia nada (11/11/2026). O E chega junto com o
+    # movimento: o plugin olha a tecla a cada tick e usa o poder só na hora em que ela é apertada.
+    assert "RegisterListener<Listeners.OnTick>(PoderNoE)" in CODIGO_DA_MUTACAO
+    e = metodo_da_mutacao("private void PoderNoE(")
+    assert "PlayerButtons.Use" in e
+    assert "segurandoE.Add(jogador.Slot)" in e and "segurandoE.Remove(jogador.Slot)" in e
+    assert e.index("EhMutanteDeVerdade(jogador)") < e.index("UsarPoder(jogador)")
+    assert "IsBot: false" in e
+    assert 'Console.WriteLine($"[Magnatas] E de ' in e

@@ -195,7 +195,7 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
     { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', poder: 'escudo de 4 s' },
     { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', poder: 'escudo de 6 s' },
   ]);
-  expect(blindado?.descricao).toBe('Na Mutação, você vira esse mutante. Aperte G e fica sem levar dano por 2 s no nível 1, 4 s no nível 2 e 6 s no nível 3. Recarga de 15 s.');
+  expect(blindado?.descricao).toBe('Na Mutação, você vira esse mutante. Aperte E e fica sem levar dano por 2 s no nível 1, 4 s no nível 2 e 6 s no nível 3. Recarga de 15 s.');
   const conta = await contaCom(2000);
   await comprar(conta, 'mutante-blindado', 1);
   expect((await recarregar(bd, conta)).grana).toBe(1800);
@@ -203,7 +203,7 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
   expect(await visuaisDe(bd, [conta.steamid64], AGORA)).toEqual({ [conta.steamid64]: { mutante: 'blindado' } });
 });
 
-test('o Senhor do Vazio está à venda: fumaça no G e um boneco por nível', async () => {
+test('o Senhor do Vazio está à venda: fumaça no E e um boneco por nível', async () => {
   const fumaca = CATALOGO.find((item) => item.id === 'mutante-fumaca');
   expect(fumaca).toMatchObject({ tipo: 'mutante', valor: 'fumaca', nome: 'Senhor do Vazio', imagem: '/loja/mutante-fumaca.webp' });
   expect(fumaca?.lancamento).toBeFalsy();
@@ -213,7 +213,7 @@ test('o Senhor do Vazio está à venda: fumaça no G e um boneco por nível', as
     { nivel: 3, nome: 'Abyssal Void Titan', imagem: '/loja/fumaca-3-andando.webp', poder: 'fumaça de 12 s' },
   ]);
   expect(fumaca?.descricao).toBe(
-    'Na Mutação, você vira esse mutante. Aperte G e solta uma cortina de fumaça roxa de 8 s no nível 1, 10 s no nível 2 e 12 s no nível 3. Cada fumaça custa 10% da sua vida. Recarga de 15 s.',
+    'Na Mutação, você vira esse mutante. Aperte E e solta uma cortina de fumaça roxa de 8 s no nível 1, 10 s no nível 2 e 12 s no nível 3. Cada fumaça custa 10% da sua vida. Recarga de 15 s.',
   );
   // Nenhum mutante da loja fica sem o próprio texto: a janela do item mostra a descrição dele.
   expect(CATALOGO.filter((item) => item.tipo === 'mutante' && !item.descricao)).toEqual([]);

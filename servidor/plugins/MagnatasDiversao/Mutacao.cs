@@ -507,6 +507,7 @@ public partial class ModoDeDiversao
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
         AddTimer(IntervaloDaBarra, AtualizarTelaDaMutacao, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnTick>(RepetirTelas);
+        RegisterListener<Listeners.OnTick>(PoderNoE);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
@@ -710,7 +711,7 @@ public partial class ModoDeDiversao
             mutante.PrintToChat($" [Magnatas] Seu escudo agora dura {SegundosDoEscudo[Math.Clamp(novo.Nivel, 1, SegundosDoEscudo.Length) - 1]:0} s.");
         else if (SkinDe(mutante) == "fumaca")
             mutante.PrintToChat($" [Magnatas] Sua fumaça agora dura {SegundosDaFumacaNoNivel(novo.Nivel):0} s.");
-        else if (novo.Nivel == NivelDaCorrida) mutante.PrintToChat(" [Magnatas] Aperte G para correr mais rápido por alguns segundos.");
+        else if (novo.Nivel == NivelDaCorrida) mutante.PrintToChat(" [Magnatas] Aperte E para correr mais rápido por alguns segundos.");
     }
 
     /// <summary>A velocidade do nível, mais o bônus enquanto a corrida do G vale.</summary>
@@ -733,10 +734,10 @@ public partial class ModoDeDiversao
         var skin = SkinDe(jogador);
         var titulo = skin == "blindado" ? "Você é o BLINDADO!" : skin == "fumaca" ? "Você é o SENHOR DO VAZIO!" : "Você virou MUTANTE!";
         var g = skin == "blindado"
-            ? $"G: escudo, {SegundosDoEscudo[0]:0} s sem levar dano"
+            ? $"E: escudo, {SegundosDoEscudo[0]:0} s sem levar dano"
             : skin == "fumaca"
-                ? $"G: cortina de fumaça de {SegundosDaFumacaNoNivel(1):0} s (custa {VidaPorFumaca * 100:0}% da vida)"
-                : $"G: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
+                ? $"E: cortina de fumaça de {SegundosDaFumacaNoNivel(1):0} s (custa {VidaPorFumaca * 100:0}% da vida)"
+                : $"E: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
         var nomeDoCartao = skin == "blindado" ? "BLINDADO" : skin == "fumaca" ? "VAZIO" : "MUTANTE";
         MostrarCartao(jogador, Cartao(nomeDoCartao, skin == "fumaca" ? "#b07cff" : "#6eff6e", "Faca: acerte os humanos para infectar", g));
         jogador.PrintToChat($" [Magnatas] {titulo} Faca: acerte os humanos para infectar. {g}.");
@@ -766,6 +767,40 @@ public partial class ModoDeDiversao
         var naMao = jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value?.DesignerName ?? "";
         if ((naMao.Contains("knife") || naMao.Contains("bayonet")) && !EhMutanteDeVerdade(jogador)) return HookResult.Handled;
         if (!EhMutanteDeVerdade(jogador)) return HookResult.Continue;
+        return UsarPoder(jogador);
+    }
+
+    /// <summary>
+    /// O G (largar arma) nem chegava ao servidor no jogo do dono, mutante e de faca na mão (11/11/2026). O E chega junto
+    /// com o movimento, a cada tick: o poder vale no E, na hora em que ele é apertado. O G continua valendo para quem chega.
+    /// </summary>
+    private void PoderNoE()
+    {
+        if (!rodadaEmAndamento)
+        {
+            segurandoE.Clear();
+            return;
+        }
+        foreach (var jogador in Utilities.GetPlayers())
+        {
+            if (jogador is not { IsValid: true, IsBot: false, PawnIsAlive: true }) continue;
+            if ((jogador.Buttons & PlayerButtons.Use) == 0)
+            {
+                segurandoE.Remove(jogador.Slot);
+                continue;
+            }
+            // Segurar o E não repete o poder: só vale quando ele é apertado de novo.
+            if (!segurandoE.Add(jogador.Slot) || !EhMutanteDeVerdade(jogador)) continue;
+            Console.WriteLine($"[Magnatas] E de {jogador.PlayerName}: skin={SkinDe(jogador) ?? "comum"} nível={NivelDe(jogador).Nivel}.");
+            UsarPoder(jogador);
+        }
+    }
+
+    private readonly HashSet<int> segurandoE = new();
+
+    /// <summary>O poder do mutante, no E ou no G: escudo do Blindado, fumaça do Senhor do Vazio ou a corrida.</summary>
+    private HookResult UsarPoder(CCSPlayerController jogador)
+    {
         // O Blindado troca a corrida pelo escudo, que já vale no nível 1.
         if (SkinDe(jogador) == "blindado") return LigarEscudo(jogador);
         // O Senhor do Vazio troca a corrida pela cortina de fumaça, que também já vale no nível 1.
@@ -823,7 +858,7 @@ public partial class ModoDeDiversao
         var blindado = skin == "blindado";
         var fumaca = skin == "fumaca";
         if (!blindado && !fumaca && NivelDe(jogador).Nivel < NivelDaCorrida)
-            return BarraDePoder($"G libera no nível {NivelDaCorrida}", "#888888", 0f);
+            return BarraDePoder($"E libera no nível {NivelDaCorrida}", "#888888", 0f);
         var temPoder = blindado ? escudos.TryGetValue(jogador.Slot, out var poder)
             : fumaca ? fumacas.TryGetValue(jogador.Slot, out poder)
             : corridas.TryGetValue(jogador.Slot, out poder);
@@ -836,7 +871,7 @@ public partial class ModoDeDiversao
             if (agora < recarga)
                 return BarraDePoder("CARREGANDO", "#f5b301", (agora - fim) / Math.Max(recarga - fim, 0.1f));
         }
-        return BarraDePoder("G PRONTO", "#6eff6e", 1f);
+        return BarraDePoder("E PRONTO", "#6eff6e", 1f);
     }
 
     private static string BarraDePoder(string nome, string cor, float cheia)
