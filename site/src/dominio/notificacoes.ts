@@ -5,12 +5,13 @@ import { convitesDeSalaPara, pedidosDeAmizadePara } from './amigos';
 import { chamadosDe, claDoUsuario, pedidosDoCla } from './clas';
 import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala, type DesafioDaSala } from './desafios';
+import { insigniasNaoVistas } from './insignias';
 import { partidaAtualDe } from './partidas';
 import { minhaSala } from './salas';
 import { patenteDe } from './xp';
 
 export type Notificacao = {
-  tipo: 'desafio' | 'partida' | 'patente' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala';
+  tipo: 'desafio' | 'partida' | 'patente' | 'insignia' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala';
   texto: string;
   href: string;
   quantidade: number;
@@ -75,6 +76,16 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
   const patente = patenteDe(usuario.xpTotal);
   if (patente.nivel > usuario.patenteVista) {
     lista.push({ tipo: 'patente', texto: `Você subiu para ${patente.nome}`, href: `/jogadores/${usuario.id}`, quantidade: 1 });
+  }
+
+  // Na estreia vêm várias de uma vez: um aviso só, com a soma dos prêmios.
+  const novas = await insigniasNaoVistas(bd, usuario.id);
+  if (novas.length > 0) {
+    const numero = new Intl.NumberFormat('pt-BR');
+    const grana = novas.reduce((soma, item) => soma + item.grana, 0);
+    const xp = novas.reduce((soma, item) => soma + item.xp, 0);
+    const texto = novas.length === 1 ? `Nova insígnia: ${novas[0].nome}` : `${novas.length} novas insígnias: +${numero.format(grana)} Grana e +${numero.format(xp)} XP`;
+    lista.push({ tipo: 'insignia', texto, href: `/jogadores/${usuario.id}?aba=insignias`, quantidade: 1 });
   }
 
   // Só a equipe recebe isto: nunca avisar alguém de que foi denunciado.

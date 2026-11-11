@@ -3,8 +3,9 @@ import type { Bd } from '@/bd/conexao';
 import { eq } from 'drizzle-orm';
 import { insigniasDoJogador, itensDoJogador, partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { conferirInsignias, conferirInsigniasDeTodos, contarFamilias, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
+import { conferirInsignias, conferirInsigniasDeTodos, contarFamilias, escolherPrincipal, InsigniaQueNaoTem, insigniasDe, marcarInsigniasVistas, principaisDe, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
 import { ITENS_A_VENDA } from './loja';
+import { notificacoesDe } from './notificacoes';
 
 const ZERO = { mira: 0, ace: 0, estrela: 0, vencedor: 0, mutacao: 0, veterano: 0 };
 
@@ -140,4 +141,31 @@ test('a conferência da estreia passa por todas as contas ativas e, rodada de no
   for (const conta of contas) await partidaDe(bd, conta.id, { venceu: false, hs: 50, k5: 0, mvps: 0 });
   expect(await conferirInsigniasDeTodos(bd, 2)).toBe(3);
   expect(await conferirInsigniasDeTodos(bd, 2)).toBe(0);
+});
+
+test('a leitura das insígnias, a escolha da principal e o aviso no sino', async () => {
+  const bd = await criarBancoDeTeste();
+  const conta = await criarUsuario(bd, { estado: 'ativo' });
+  await partidaDe(bd, conta.id, { venceu: false, hs: 0, k5: 0, mvps: 60 });
+  await bd.transaction((tx) => conferirInsignias(tx, [conta.id], AGORA, () => 0));
+
+  const lidas = await insigniasDe(bd, conta.id);
+  const estrela = lidas.familias.find((familia) => familia.familia === 'estrela');
+  expect(estrela).toMatchObject({ contagem: 60, nivel: 1, proximaMeta: 200 });
+  expect(estrela?.conquistadas.map((item) => item.nivel)).toEqual([0, 1]);
+  expect(lidas.total).toBe(2);
+  expect(lidas.principal).toEqual({ familia: 'estrela', nivel: 1 });
+
+  await escolherPrincipal(bd, conta.id, 'estrela', 0);
+  expect((await principaisDe(bd, [conta.id])).get(conta.id)).toEqual({ familia: 'estrela', nivel: 0 });
+  await expect(escolherPrincipal(bd, conta.id, 'mira', 0)).rejects.toBeInstanceOf(InsigniaQueNaoTem);
+  // Uma principal gravada que a conta não tem não aparece.
+  await bd.update(usuarios).set({ insigniaPrincipal: 'mira:4' }).where(eq(usuarios.id, conta.id));
+  expect((await principaisDe(bd, [conta.id])).has(conta.id)).toBe(false);
+
+  const [atual] = await bd.select().from(usuarios).where(eq(usuarios.id, conta.id));
+  const avisos = (await notificacoesDe(bd, atual, AGORA)).filter((item) => item.tipo === 'insignia');
+  expect(avisos).toEqual([{ tipo: 'insignia', texto: '2 novas insígnias: +150 Grana e +700 XP', href: `/jogadores/${conta.id}?aba=insignias`, quantidade: 1 }]);
+  await marcarInsigniasVistas(bd, conta.id);
+  expect((await notificacoesDe(bd, atual, AGORA)).filter((item) => item.tipo === 'insignia')).toEqual([]);
 });

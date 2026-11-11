@@ -204,3 +204,96 @@ export async function conferirInsigniasDeTodos(bd: Bd, lote = 100, agora: Date =
   }
   return total;
 }
+
+export class InsigniaQueNaoTem extends Error {
+  constructor() {
+    super('Você ainda não tem essa insígnia.');
+  }
+}
+
+export type InsigniaConquistada = { nivel: number; conquistadaEm: Date; vistaEm: Date | null; grana: number; xp: number; mutanteId: string | null; mutanteDias: number | null };
+export type InsigniaDaFamilia = {
+  familia: Familia;
+  nome: string;
+  conta: string;
+  metas: Metas;
+  contagem: number;
+  /** O nível mais alto conquistado; -1 = nenhum. */
+  nivel: number;
+  proximaMeta: number | null;
+  conquistadas: InsigniaConquistada[];
+};
+
+async function conquistadasDe(bd: Bd, usuarioIds: string[]) {
+  if (usuarioIds.length === 0) return [];
+  return bd.select().from(insigniasDoJogador).where(inArray(insigniasDoJogador.usuarioId, usuarioIds));
+}
+
+/** Tudo o que a aba Insígnias mostra: cada família com a contagem, o nível e o que já foi conquistado. */
+export async function insigniasDe(bd: Bd, usuarioId: string): Promise<{ familias: InsigniaDaFamilia[]; principal: ChaveDaInsignia | null; total: number }> {
+  const [contagens, linhas, principais] = await Promise.all([contarFamilias(bd, [usuarioId]), conquistadasDe(bd, [usuarioId]), principaisDe(bd, [usuarioId])]);
+  const contagem = contagens.get(usuarioId)!;
+  const familias = FAMILIAS.map((familia) => {
+    const conquistadas = linhas
+      .filter((linha) => linha.familia === familia.chave)
+      .sort((a, b) => a.nivel - b.nivel)
+      .map(({ nivel, conquistadaEm, vistaEm, grana, xp, mutanteId, mutanteDias }) => ({ nivel, conquistadaEm, vistaEm, grana, xp, mutanteId, mutanteDias }));
+    const nivel = conquistadas.length === 0 ? -1 : Math.max(...conquistadas.map((item) => item.nivel));
+    return {
+      familia: familia.chave,
+      nome: familia.nome,
+      conta: familia.conta,
+      metas: familia.metas,
+      contagem: contagem[familia.chave],
+      nivel,
+      proximaMeta: familia.metas[nivel + 1] ?? null,
+      conquistadas,
+    };
+  });
+  return { familias, principal: principais.get(usuarioId) ?? null, total: linhas.length };
+}
+
+/** A insígnia principal de cada conta, só se a conta tem mesmo aquela insígnia. */
+export async function principaisDe(bd: Bd, usuarioIds: string[]): Promise<Map<string, ChaveDaInsignia>> {
+  const principais = new Map<string, ChaveDaInsignia>();
+  if (usuarioIds.length === 0) return principais;
+  const contas = await bd
+    .select({ id: usuarios.id, principal: usuarios.insigniaPrincipal })
+    .from(usuarios)
+    .where(inArray(usuarios.id, usuarioIds));
+  const escolhidas = contas.flatMap((conta) => {
+    const chave = lerChaveDaInsignia(conta.principal);
+    return chave ? [{ id: conta.id, ...chave }] : [];
+  });
+  if (escolhidas.length === 0) return principais;
+  const tem = new Set((await conquistadasDe(bd, escolhidas.map((item) => item.id))).map((linha) => `${linha.usuarioId}:${linha.familia}:${linha.nivel}`));
+  for (const escolhida of escolhidas) {
+    if (tem.has(`${escolhida.id}:${escolhida.familia}:${escolhida.nivel}`)) principais.set(escolhida.id, { familia: escolhida.familia, nivel: escolhida.nivel });
+  }
+  return principais;
+}
+
+export async function escolherPrincipal(bd: Bd, usuarioId: string, familia: Familia, nivel: number): Promise<void> {
+  const [tem] = await bd
+    .select({ nivel: insigniasDoJogador.nivel })
+    .from(insigniasDoJogador)
+    .where(and(eq(insigniasDoJogador.usuarioId, usuarioId), eq(insigniasDoJogador.familia, familia), eq(insigniasDoJogador.nivel, nivel)));
+  if (!tem) throw new InsigniaQueNaoTem();
+  await bd.update(usuarios).set({ insigniaPrincipal: `${familia}:${nivel}` }).where(eq(usuarios.id, usuarioId));
+}
+
+/** As conquistadas que a pessoa ainda não viu na aba Insígnias, com o prêmio, para o sino. */
+export async function insigniasNaoVistas(bd: Bd, usuarioId: string): Promise<{ nome: string; grana: number; xp: number }[]> {
+  const linhas = await bd
+    .select()
+    .from(insigniasDoJogador)
+    .where(and(eq(insigniasDoJogador.usuarioId, usuarioId), isNull(insigniasDoJogador.vistaEm)));
+  return linhas.map((linha) => ({ nome: nomeDaInsignia(linha.familia as Familia, linha.nivel), grana: linha.grana, xp: linha.xp }));
+}
+
+export async function marcarInsigniasVistas(bd: Bd, usuarioId: string, agora: Date = new Date()): Promise<void> {
+  await bd
+    .update(insigniasDoJogador)
+    .set({ vistaEm: agora })
+    .where(and(eq(insigniasDoJogador.usuarioId, usuarioId), isNull(insigniasDoJogador.vistaEm)));
+}

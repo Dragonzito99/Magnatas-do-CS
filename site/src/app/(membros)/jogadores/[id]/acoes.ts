@@ -21,6 +21,7 @@ import {
   suspender,
 } from '@/dominio/banimentos';
 import { SemPermissao } from '@/dominio/equipe';
+import { escolherPrincipal, InsigniaQueNaoTem, marcarInsigniasVistas } from '@/dominio/insignias';
 import { marcarPatenteVista } from '@/dominio/xp';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 
@@ -87,4 +88,29 @@ export async function marcarMinhaPatenteVista(): Promise<void> {
   if (!usuario) return;
   await marcarPatenteVista(obterBd(), usuario.id);
   revalidatePath('/', 'layout');
+}
+
+/** Ao abrir a aba Insígnias do próprio perfil, o aviso de insígnia nova sai do sino. */
+export async function marcarMinhasInsigniasVistas(): Promise<void> {
+  const usuario = await usuarioAtual();
+  if (!usuario) return;
+  await marcarInsigniasVistas(obterBd(), usuario.id);
+  revalidatePath('/', 'layout');
+}
+
+const InsigniaEscolhida = z.object({ familia: z.enum(['mira', 'ace', 'estrela', 'vencedor', 'mutacao', 'veterano']), nivel: z.coerce.number().int().min(0).max(4) });
+
+/** No próprio perfil, a insígnia clicada vira a principal. */
+export async function escolherInsignia(dados: FormData): Promise<void> {
+  const usuario = await exigirAcesso('/inicio');
+  const lido = InsigniaEscolhida.safeParse({ familia: dados.get('familia'), nivel: dados.get('nivel') });
+  if (lido.success) {
+    try {
+      await escolherPrincipal(obterBd(), usuario.id, lido.data.familia, lido.data.nivel);
+    } catch (erro) {
+      if (!(erro instanceof InsigniaQueNaoTem)) throw erro;
+    }
+  }
+  revalidatePath('/', 'layout');
+  redirect(`/jogadores/${usuario.id}?aba=insignias`);
 }
