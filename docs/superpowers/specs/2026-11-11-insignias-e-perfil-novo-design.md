@@ -67,8 +67,9 @@ tabela, igual a qualquer painel. O dono quer um perfil com cara de jogo e quer a
   tem todos os mutantes para sempre, ganha 1.000 de Grana a mais no lugar (escolha minha).
 - **Decisão do dono:** as insígnias que já vierem conquistadas pelas partidas antigas, no dia em que o sistema entrar,
   **também dão o prêmio**.
-- Grana entra no extrato como um lançamento próprio ("Insígnia Mira Ouro"); o XP entra no total de XP da patente e
-  aparece no histórico de XP como uma linha da insígnia.
+- Grana entra no extrato como um lançamento próprio ("Insígnia Mira Ouro"); o XP soma direto no total da patente
+  (não vira linha de partida, para não aparecer como partida no perfil); o prêmio fica guardado na própria insígnia e
+  aparece na aba Insígnias.
 - Cada prêmio é entregue uma vez só por (conta, insígnia): a gravação da insígnia e do prêmio é uma coisa só.
 
 ## Quando é calculado
