@@ -11,6 +11,7 @@ import { rankingDaComunidade } from '@/dominio/ranking';
 import { ENDERECO_DA_LIQUIPEDIA, tierSDaTela } from '@/dominio/tier-s';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { Atualizar } from '../atualizar';
+import { Avatar } from '../avatar';
 import { CarrosselDeNoticias } from './carrossel';
 
 const TOTAL_DO_MIX = 10;
@@ -52,6 +53,7 @@ export default async function Inicio() {
   const cs2 = steam[0];
   const jogo = tierS?.jogos[0];
   const minhaPosicao = ranking.find((linha) => linha.jogador.id === usuario.id)?.posicao;
+  const topo = ranking[0];
   const discord = enderecoDoDiscord(process.env.DISCORD_URL);
   const slides = noticias.map((noticia, indice) => ({
     id: noticia.id,
@@ -146,12 +148,32 @@ export default async function Inicio() {
             <h3>Sem jogos agora</h3>
           </Link>
         )}
-        <Link href="/ranking" className="cartao-destaque pequeno">
-          <Image src="/mapas/luxville.webp" alt="" width={480} height={270} />
-          <span className="selo-modo">Ranking</span>
-          <h3>{minhaPosicao ? `Você é o ${minhaPosicao}º` : 'Fora do ranking'}</h3>
-          <p>{minhaPosicao ? 'Na comunidade' : 'Jogue uma partida para entrar'}</p>
-        </Link>
+        {topo ? (
+          <Link href={`/jogadores/${topo.jogador.id}`} className="cartao-destaque pequeno topo-do-ranking">
+            <Image src="/mapas/luxville.webp" alt="" width={480} height={270} />
+            <span className="selo-modo ouro">Top 1 do ranking</span>
+            <span className="pessoa-do-topo">
+              <span className="foto-do-topo">
+                <span className="coroa-do-topo" aria-hidden="true">
+                  👑
+                </span>
+                <Avatar usuario={topo.jogador} />
+              </span>
+              <span className="nome-do-topo">
+                <h3>{topo.jogador.apelido}</h3>
+                <p>{topo.patente.nome}</p>
+              </span>
+            </span>
+            <p>{minhaPosicao === 1 ? 'O topo é seu!' : minhaPosicao ? `Você está em ${minhaPosicao}º` : 'Jogue uma partida para entrar'}</p>
+          </Link>
+        ) : (
+          <Link href="/ranking" className="cartao-destaque pequeno">
+            <Image src="/mapas/luxville.webp" alt="" width={480} height={270} />
+            <span className="selo-modo ouro">Top 1 do ranking</span>
+            <h3>Vaga aberta</h3>
+            <p>Jogue uma partida para ser o primeiro</p>
+          </Link>
+        )}
         {discord ? (
           <a href={discord} target="_blank" rel="noreferrer" className="cartao-discord">
             <IconeDoDiscord />

@@ -3652,6 +3652,65 @@ a.cartao-destaque:hover {
   fill: #fff;
 }
 
+/* Top 1 do ranking na Início: a foto com a coroa em cima do nome */
+.pessoa-do-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  min-width: 0;
+}
+
+.foto-do-topo {
+  position: relative;
+  flex: none;
+}
+
+.nome-do-topo {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nome-do-topo p {
+  color: var(--ouro);
+  font-size: 12px;
+}
+
+.foto-do-topo .avatar {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 3px var(--ouro), 0 0 18px rgba(245, 179, 1, 0.45);
+  background: var(--painel);
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.coroa-do-topo {
+  position: absolute;
+  top: -16px;
+  left: -8px;
+  z-index: 1;
+  font-size: 24px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+  transform: rotate(-24deg);
+}
+
+.cartao-destaque.pequeno.topo-do-ranking h3 {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .mais-novidades {
   display: flex;
   justify-content: center;
