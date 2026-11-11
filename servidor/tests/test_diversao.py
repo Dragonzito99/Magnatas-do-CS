@@ -1072,6 +1072,7 @@ PACOTE_DE_SONS = "3835000213"
 # Cada versão do boneco é um item novo da Oficina, que nunca é atualizado (ver servidor/ferramentas/mutante/LEIAME.md).
 PACOTE_DO_MUTANTE = "3836643990"
 PACOTE_DO_BLINDADO = "3837109609"
+PACOTE_DA_FUMACA = "3837744803"
 # Personagens próprios (MagnatasVisual) e o herói da super Negev: baixados em todo servidor.
 PACOTE_DOS_PERSONAGENS = "3837571705"
 
@@ -1116,9 +1117,9 @@ def test_o_servidor_carrega_os_sons_do_pacote():
 
 @pytest.mark.parametrize("servidor", SERVIDORES)
 def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
-    # A Mutação também manda baixar os pacotes do mutante comum e do Blindado da loja, que só ela usa.
+    # A Mutação também manda baixar os pacotes do mutante comum e dos mutantes da loja, que só ela usa.
     esperado = (
-        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS}"'
+        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS},{PACOTE_DA_FUMACA}"'
         if servidor == "mutacao"
         else f'"{PACOTE_DE_SONS},{PACOTE_DOS_PERSONAGENS}"'
     )
@@ -1910,3 +1911,9 @@ def test_o_senhor_do_vazio_usa_o_proprio_boneco_e_aparece_no_hud():
     assert 'if (SkinDe(jogador) == "fumaca") return QuedaDaFumaca(nivel);' in CODIGO_DA_MUTACAO
     assert '"FUMAÇA"' in metodo_da_mutacao("private string HudDoPoder(")
     assert '"fumaca" when FumacaNoServidor()' in metodo_da_mutacao("private string? SkinDe(")
+
+
+def test_a_mutacao_baixa_o_pacote_do_senhor_do_vazio_que_o_plugin_usa():
+    pacote = re.search(r'PacoteDaFumaca = "(\d+)"', CODIGO_DA_MUTACAO).group(1)
+    assert pacote == "3837744803"
+    assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")

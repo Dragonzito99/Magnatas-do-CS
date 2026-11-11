@@ -119,9 +119,9 @@ public partial class ModoDeDiversao
     private static readonly Color CorDoEscudo = Color.FromArgb(255, 80, 160, 255);
     private bool? blindadoNoServidor;
     // Segundo mutante da Shop, o Senhor do Vazio (Voidforged Warlord): o G solta uma cortina de fumaça roxa em volta
-    // dele e custa vida, como o Smoke do CrossFire (dono, 11/11/2026). Pacote vazio enquanto o item da Oficina não existe:
-    // aí quem comprou vira o mutante comum.
-    private const string PacoteDaFumaca = "";
+    // dele e custa vida, como o Smoke do CrossFire (dono, 11/11/2026). Vem num pacote da Oficina só dele; sem o pacote no
+    // servidor, quem comprou vira o mutante comum.
+    private const string PacoteDaFumaca = "3837744803";
     private const string PastaDaFumaca = "models/magnatas/fumaca_v1";
     private static readonly int[] NiveisComBonecoDaFumaca = { 1, 3 };
     private static readonly float[] SegundosDaFumaca = { 8f, 10f, 12f };
