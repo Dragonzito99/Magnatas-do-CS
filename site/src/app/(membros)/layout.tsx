@@ -3,12 +3,14 @@ import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
 import { enderecoDoDiscord } from '@/dominio/discord';
+import { amigosDe, convitesDeSalaPara, pedidosDeAmizadePara } from '@/dominio/amigos';
 import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
 import { partidaAtualDe } from '@/dominio/partidas';
 import { lojaAberta } from '@/dominio/loja';
 import { minhaSala } from '@/dominio/salas';
 import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
+import { AvisoDeConvite, BarraDeAmigos } from './barra-de-amigos';
 import { AvisoDePartida } from './aviso-de-partida';
 import { AvisoDeSala } from './aviso-de-sala';
 import { Cabecalho } from './cabecalho';
@@ -20,14 +22,17 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
   const usuario = await usuarioAtual();
   if (!usuario) redirect('/');
 
-  const [notificacoes, partida, sala] = await Promise.all([
+  const [notificacoes, partida, sala, amigos, pedidos, convites] = await Promise.all([
     notificacoesDe(obterBd(), usuario),
     partidaAtualDe(obterBd(), usuario.id),
     minhaSala(obterBd(), usuario.id),
+    amigosDe(obterBd(), usuario.id),
+    pedidosDeAmizadePara(obterBd(), usuario.id),
+    convitesDeSalaPara(obterBd(), usuario.id),
   ]);
 
   return (
-    <div className="app">
+    <div className="app com-amigos">
       <Atualizar segundos={15} />
       <ManterPresenca />
       <Cabecalho
@@ -46,6 +51,8 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         {children}
       </main>
       <AvisoDeSala sala={sala ? { nome: sala.nome, membros: sala.membros.length, emPartida: sala.partidaId !== null } : null} />
+      <BarraDeAmigos amigos={amigos} pendentes={pedidos.length + convites.length} />
+      {!sala && !partida && <AvisoDeConvite convite={convites[0] ?? null} />}
     </div>
   );
 }

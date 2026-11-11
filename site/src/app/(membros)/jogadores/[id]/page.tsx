@@ -7,6 +7,7 @@ import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { fotoDoMapa } from '@/dominio/diversao';
 import { elogiosDoJogador } from '@/dominio/elogios';
+import { situacaoDaAmizade } from '@/dominio/amigos';
 import { claDoUsuario } from '@/dominio/clas';
 import { fichaDoJogador, kdDe, ultimasPartidasDoPerfil } from '@/dominio/ficha';
 import { moldurasDe } from '@/dominio/loja';
@@ -16,6 +17,7 @@ import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da
 import { PATENTES, patenteDe } from '@/dominio/xp';
 import { Avatar } from '../../avatar';
 import { chamar } from '../../clas/acoes';
+import { BotaoDeAmizade } from '../../comunidade/botao-de-amizade';
 import { ERROS_DO_CLA } from '../../clas/bloco-do-cla';
 import { SiglaDoCla } from '../../clas/sigla-do-cla';
 import { InsigniaDaPatente } from '../../insignia-da-patente';
@@ -66,6 +68,7 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
   ]);
   // Dono ou Capitão chama daqui quem ainda não tem clã.
   const possoChamar = !!meuCla && meuCla.cargo !== 'membro' && !claDele && usuario.id !== id;
+  const amizade = usuario.id !== id ? await situacaoDaAmizade(obterBd(), usuario.id, id) : null;
   const { jogador, estatisticas, historico, porMapa, melhorPartida, steamid64, equipe, xpTotal, progresso } = ficha;
   const patenteNova = usuario.id === jogador.id && patenteDe(usuario.xpTotal).nivel > usuario.patenteVista;
   const fotoMelhor = melhorPartida ? fotoDoMapa(melhorPartida.mapa) : null;
@@ -94,6 +97,7 @@ export default async function FichaDoJogador({ params, searchParams }: { params:
               <span className="apoio">Na Magnatas desde {dataCurta.format(jogador.criadoEm)}</span>
             </div>
           </div>
+          {amizade && <BotaoDeAmizade usuarioId={id} situacao={amizade} voltar={`/jogadores/${id}`} />}
           {possoChamar && (
             <form action={chamar}>
               <input type="hidden" name="claId" value={meuCla.id} />

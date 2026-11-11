@@ -218,6 +218,13 @@
       "when": 1794371161053,
       "tag": "0030_custo_do_mes",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794378121252,
+      "tag": "0031_amizades",
+      "breakpoints": true
     }
   ]
 }

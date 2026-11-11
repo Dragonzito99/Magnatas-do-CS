@@ -1,9 +1,12 @@
+import Link from 'next/link';
+import type { Amigo } from '@/dominio/amigos';
 import type { ClaResumido } from '@/dominio/clas';
 import type { DesafioDaSala, FormatoDoDesafio } from '@/dominio/desafios';
 import type { JuncaoDaSala } from '@/dominio/juncoes';
 import { TAMANHO_DA_SALA, type SalaComMembros } from '@/dominio/salas';
 import { Avatar } from '../avatar';
 import { SiglaDoCla } from '../clas/sigla-do-cla';
+import { convidar } from '../comunidade/acoes';
 import { aceitar, aceitarJuntar, cancelar, cancelarJuntar, chamarParaDesafio, criar, entrar, expulsar, juntar, recusar, recusarJuntar, sair } from '../salas/acoes';
 
 const kdEmTexto = (kd: number | undefined) => (kd ?? 0).toFixed(2);
@@ -13,6 +16,8 @@ function segundosAte(data: Date): number {
 }
 
 export type ClasDasPessoas = Map<string, ClaResumido>;
+
+const NOME_DA_SITUACAO: Record<Amigo['situacao'], string> = { jogando: 'jogando', online: 'online', offline: 'offline' };
 
 /** O clã da sala, quando os 5 (ou todos que estão nela) são do mesmo clã. */
 export function claDaSala(sala: SalaComMembros, clas: ClasDasPessoas): ClaResumido | null {
@@ -122,6 +127,7 @@ export function BarraDaSala({
   desafio,
   juncoes,
   clas,
+  amigos,
 }: {
   sala: SalaComMembros;
   usuarioId: string;
@@ -129,10 +135,13 @@ export function BarraDaSala({
   desafio?: DesafioDaSala;
   juncoes: JuncaoDaSala[];
   clas: ClasDasPessoas;
+  amigos: Amigo[];
 }) {
   const souLider = sala.liderId === usuarioId;
   const cla = claDaSala(sala, clas);
   const vagas = TAMANHO_DA_SALA - sala.membros.length;
+  const naSala = new Set(sala.membros.map((membro) => membro.id));
+  const chamaveis = amigos.filter((amigo) => !naSala.has(amigo.id));
   return (
     <aside className="barra-sala" aria-label="Sua sala">
       <div className="barra-sala-topo">
@@ -185,11 +194,37 @@ export function BarraDaSala({
               +
             </span>
             <span className="barra-sala-nome">
-              Vaga livre<small>chame alguém</small>
+              Vaga livre<small>{chamaveis.length > 0 ? 'chame um amigo' : 'adicione amigos na Comunidade'}</small>
             </span>
           </li>
         ))}
       </ul>
+      {vagas > 0 && !sala.partidaId && (
+        <details className="convidar-para-a-sala">
+          <summary>Convidar amigo</summary>
+          {chamaveis.length === 0 ? (
+            <p className="legenda-da-secao">
+              Você ainda não tem amigos para chamar. <Link href="/comunidade">Adicione na Comunidade</Link>.
+            </p>
+          ) : (
+            <ul>
+              {chamaveis.map((amigo) => (
+                <li key={amigo.id}>
+                  <Avatar usuario={amigo} />
+                  <span className="nome-de-quem-chamar">
+                    {amigo.apelido}
+                    <small className={`situacao-do-amigo ${amigo.situacao}`}>{NOME_DA_SITUACAO[amigo.situacao]}</small>
+                  </span>
+                  <form action={convidar}>
+                    <input type="hidden" name="usuarioId" value={amigo.id} />
+                    <button type="submit">Chamar</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+        </details>
+      )}
       {desafio && <Desafio desafio={desafio} />}
       {souLider && juncoes.map((juncao) => <Juncao key={juncao.id} juncao={juncao} />)}
       {!sala.partidaId && (

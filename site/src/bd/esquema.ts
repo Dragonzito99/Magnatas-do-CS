@@ -399,6 +399,50 @@ export const salaMembros = pgTable('sala_membros', {
   entrouEm: timestamp('entrou_em', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const estadoDaAmizade = pgEnum('estado_da_amizade', ['pendente', 'aceita']);
+
+/** Amizade entre dois membros: quem pediu (de) e quem recebeu (para). Um par só tem uma linha, nos dois sentidos. */
+export const amizades = pgTable(
+  'amizades',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    deId: uuid('de_id')
+      .notNull()
+      .references(() => usuarios.id),
+    paraId: uuid('para_id')
+      .notNull()
+      .references(() => usuarios.id),
+    estado: estadoDaAmizade('estado').notNull().default('pendente'),
+    criadoEm: criadoEm(),
+    aceitaEm: timestamp('aceita_em', { withTimezone: true }),
+  },
+  (tabela) => [
+    uniqueIndex('amizades_um_par').on(sql`least(${tabela.deId}, ${tabela.paraId})`, sql`greatest(${tabela.deId}, ${tabela.paraId})`),
+    index('amizades_para').on(tabela.paraId),
+    check('amizades_nao_consigo', sql`${tabela.deId} <> ${tabela.paraId}`),
+  ],
+);
+
+/** Convite de um amigo para a sala: vence sozinho e some quando a pessoa entra. Um por sala e convidado. */
+export const convitesDeSala = pgTable(
+  'convites_de_sala',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    salaId: uuid('sala_id')
+      .notNull()
+      .references(() => salas.id, { onDelete: 'cascade' }),
+    deId: uuid('de_id')
+      .notNull()
+      .references(() => usuarios.id),
+    paraId: uuid('para_id')
+      .notNull()
+      .references(() => usuarios.id),
+    expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [unique('convites_de_sala_um_por_pessoa').on(tabela.salaId, tabela.paraId), index('convites_de_sala_para').on(tabela.paraId)],
+);
+
 export const filaMix = pgTable('fila_mix', {
   usuarioId: uuid('usuario_id')
     .primaryKey()

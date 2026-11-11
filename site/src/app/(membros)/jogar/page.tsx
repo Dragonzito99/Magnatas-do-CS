@@ -5,6 +5,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { ehCelular } from '@/dominio/aparelho';
 import { clasDosUsuarios } from '@/dominio/clas';
+import { amigosDe } from '@/dominio/amigos';
 import { membrosOnline } from '@/dominio/denuncias';
 import { desafiosDaSala, opcoesDeDesafio } from '@/dominio/desafios';
 import { estadoDoCartao, listarServidoresDaDiversao, mapaDoCartao, MODOS_DE_DIVERSAO, type ModoDeDiversao } from '@/dominio/diversao';
@@ -48,13 +49,15 @@ const ERROS: Record<string, string> = {
   incompleta: 'As duas salas precisam estar completas e com todos liberados para jogar.',
   desafio: 'Este desafio não está mais disponível.',
   juncao: 'Este pedido de junção não está mais disponível.',
+  'nao-amigo': 'Só dá para chamar quem é seu amigo.',
+  convite: 'Esse convite não vale mais.',
   ...ERROS_DA_DIVERSAO,
 };
 
 /** Salas, mix e Diversão num lugar só, com filtros, como o dono pediu. */
-export default async function Jogar({ searchParams }: { searchParams: Promise<{ modo?: string; erro?: string }> }) {
+export default async function Jogar({ searchParams }: { searchParams: Promise<{ modo?: string; erro?: string; aviso?: string }> }) {
   const usuario = await exigirAcesso('/jogar');
-  const { modo: texto, erro } = await searchParams;
+  const { modo: texto, erro, aviso } = await searchParams;
   const filtro = lerFiltroDoJogar(texto);
   const bd = obterBd();
 
@@ -70,6 +73,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   ]);
   const [desafio] = minha ? await desafiosDaSala(bd, minha.id) : [];
   const juncoes = minha ? await juncoesDaSala(bd, minha.id) : [];
+  const amigos = minha ? await amigosDe(bd, usuario.id) : [];
   const idsNasSalas = [...new Set(salas.flatMap((sala) => sala.membros.map((membro) => membro.id)))];
   const [kd, clasNasSalas] = await Promise.all([kdDosJogadores(bd, idsNasSalas), clasDosUsuarios(bd, idsNasSalas)]);
 
@@ -125,7 +129,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       {(minha || estouNoMix || algumEsperando || filtro === 'competitivo' || filtro === 'mix') && <Atualizar segundos={3} />}
-      {minha && <BarraDaSala sala={minha} usuarioId={usuario.id} kd={kd} desafio={desafio} juncoes={juncoes} clas={clasNasSalas} />}
+      {minha && <BarraDaSala sala={minha} usuarioId={usuario.id} kd={kd} desafio={desafio} juncoes={juncoes} clas={clasNasSalas} amigos={amigos} />}
       <div className={minha ? 'tela-jogar com-sala' : 'tela-jogar'}>
         <AvisoDeBloqueio situacao={faltas} />
         <div className="carteira-da-shop">
@@ -149,6 +153,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
             {ERROS[erro]}
           </p>
         )}
+        {aviso === 'chamado' && <p className="aviso">Convite enviado. Ele vale por 2 minutos.</p>}
         <nav className="filtros-da-shop" aria-label="Modos de jogo">
           {FILTROS_DO_JOGAR.map((item) => (
             <Link key={item.nome} href={item.valor ? `/jogar?modo=${item.valor}` : '/jogar'} aria-current={filtro === item.valor ? 'page' : undefined}>

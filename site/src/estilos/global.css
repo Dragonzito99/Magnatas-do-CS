@@ -8087,6 +8087,358 @@ a.para-sempre-da-janela.sem-saldo {
   }
 }
 
+/* Comunidade, etapa 1: a barra de amigos na direita (embaixo do cabeçalho), o convite para a sala e os amigos */
+.barra-de-amigos {
+  position: fixed;
+  top: var(--altura-do-cabecalho, 112px);
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 64px;
+  padding: 12px 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0e0818;
+}
+
+.barra-de-amigos hr {
+  width: 32px;
+  margin: 2px 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.barra-de-amigos ul {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 2px 0;
+  list-style: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.atalho-da-comunidade,
+.adicionar-amigo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.atalho-da-comunidade {
+  background: #24173a;
+  font-size: 18px;
+}
+
+.atalho-da-comunidade b {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #ff3b3b;
+  font: 700 11px/18px var(--fonte-inter), sans-serif;
+  text-align: center;
+}
+
+.adicionar-amigo {
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  color: var(--tinta-2);
+  font-size: 20px;
+}
+
+.adicionar-amigo:hover,
+.atalho-da-comunidade:hover {
+  border-color: var(--ouro);
+  color: var(--ouro);
+}
+
+.amigo-na-barra {
+  position: relative;
+}
+
+.amigo-na-barra > a {
+  position: relative;
+  display: block;
+}
+
+.amigo-na-barra .avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  font-size: 12px;
+}
+
+.amigo-na-barra i {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #0e0818;
+  border-radius: 50%;
+  background: #6b6280;
+}
+
+.amigo-na-barra.online i {
+  background: var(--verde);
+}
+
+.amigo-na-barra.jogando i {
+  background: var(--ouro);
+}
+
+.amigo-na-barra.offline .avatar {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.dica-do-amigo {
+  position: fixed;
+  right: 70px;
+  display: none;
+  margin-top: -32px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1d1330;
+  color: var(--tinta);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.amigo-na-barra:hover .dica-do-amigo {
+  display: block;
+}
+
+@media (min-width: 861px) {
+  .app.com-amigos > .conteudo.largura {
+    width: min(1200px, 100% - 32px - 128px);
+  }
+
+  .app.com-amigos .aviso-sala {
+    right: 82px;
+  }
+}
+
+@media (max-width: 860px) {
+  .barra-de-amigos {
+    display: none;
+  }
+}
+
+.aviso-de-convite {
+  position: fixed;
+  right: 82px;
+  bottom: 18px;
+  z-index: 31;
+  display: grid;
+  gap: 8px;
+  width: 320px;
+  padding: 14px;
+  border: 1px solid var(--verde);
+  background: var(--painel);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+
+.aviso-de-convite > b {
+  color: var(--verde);
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.aviso-de-convite > div {
+  display: flex;
+  gap: 8px;
+}
+
+.aviso-de-convite .botao-da-shop {
+  min-height: 36px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .aviso-de-convite {
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+.convidar-para-a-sala {
+  margin: 0 12px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0b0713;
+}
+
+.convidar-para-a-sala summary {
+  padding: 10px 12px;
+  color: var(--ouro);
+  font: italic 700 15px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.convidar-para-a-sala ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.convidar-para-a-sala li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+}
+
+.convidar-para-a-sala .avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+
+.convidar-para-a-sala p {
+  padding: 0 12px 12px;
+}
+
+.nome-de-quem-chamar {
+  display: grid;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.convidar-para-a-sala button {
+  padding: 4px 10px;
+  border: 1px solid var(--ouro);
+  background: transparent;
+  color: var(--ouro);
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.situacao-do-amigo {
+  color: #8d82a3;
+  font-size: 11px;
+}
+
+.situacao-do-amigo.online {
+  color: var(--verde);
+}
+
+.situacao-do-amigo.jogando {
+  color: var(--ouro);
+}
+
+.grade-de-amigos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.cartao-de-amigo {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.foto-do-amigo {
+  position: relative;
+}
+
+.foto-do-amigo .avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+.foto-do-amigo i {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--painel);
+  border-radius: 50%;
+  background: #6b6280;
+}
+
+.cartao-de-amigo.online .foto-do-amigo i {
+  background: var(--verde);
+}
+
+.cartao-de-amigo.jogando .foto-do-amigo i {
+  background: var(--ouro);
+}
+
+.nome-do-amigo {
+  display: block;
+  overflow: hidden;
+  color: var(--tinta);
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nome-do-amigo:hover {
+  color: var(--ouro);
+}
+
+.desfazer-amizade {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.desfazer-amizade:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+.cartao-de-amigo.achado .botao-da-shop {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pessoa-do-pedido {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pessoa-do-pedido .avatar {
+  width: 32px;
+  height: 32px;
+}
+
 /* Minhas compras: o extrato por dia, uma linha por movimento */
 .dia-do-extrato {
   margin-bottom: 24px;

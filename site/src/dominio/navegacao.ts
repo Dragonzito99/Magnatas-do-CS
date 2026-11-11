@@ -25,7 +25,7 @@ export const ITENS_DO_MENU: ItemDoMenu[] = [
       { nome: 'MVPs', href: '/ranking?aba=mvps' },
     ],
   },
-  { nome: 'Comunidade', href: '/convites', filhos: [{ nome: 'Convites', href: '/convites' }] },
+  { nome: 'Comunidade', href: '/comunidade', filhos: [{ nome: 'Amigos', href: '/comunidade' }] },
   {
     nome: 'Clãs',
     href: '/clas',

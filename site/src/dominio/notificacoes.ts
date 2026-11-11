@@ -1,6 +1,7 @@
 import { pode } from '@/auth/permissoes';
 import type { Bd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
+import { convitesDeSalaPara, pedidosDeAmizadePara } from './amigos';
 import { chamadosDe, claDoUsuario, pedidosDoCla } from './clas';
 import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala, type DesafioDaSala } from './desafios';
@@ -9,7 +10,7 @@ import { minhaSala } from './salas';
 import { patenteDe } from './xp';
 
 export type Notificacao = {
-  tipo: 'desafio' | 'partida' | 'patente' | 'cla' | 'chamados' | 'denuncias' | 'propostas';
+  tipo: 'desafio' | 'partida' | 'patente' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala';
   texto: string;
   href: string;
   quantidade: number;
@@ -58,6 +59,17 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
     if (pedidos > 0) {
       lista.push({ tipo: 'cla', texto: pedidos === 1 ? '1 pedido para entrar no clã' : `${pedidos} pedidos para entrar no clã`, href: '/clas', quantidade: pedidos });
     }
+  }
+
+  const convites = await convitesDeSalaPara(bd, usuario.id, agora);
+  for (const convite of convites) {
+    lista.push({ tipo: 'sala', texto: `${convite.deApelido} chamou você para a sala (${convite.membros}/5)`, href: '/comunidade#convites', quantidade: 1 });
+  }
+
+  const pedidosDeAmizade = await pedidosDeAmizadePara(bd, usuario.id);
+  if (pedidosDeAmizade.length > 0) {
+    const texto = pedidosDeAmizade.length === 1 ? `${pedidosDeAmizade[0].apelido} quer ser seu amigo` : `${pedidosDeAmizade.length} pedidos de amizade`;
+    lista.push({ tipo: 'amizade', texto, href: '/comunidade#pedidos', quantidade: pedidosDeAmizade.length });
   }
 
   const patente = patenteDe(usuario.xpTotal);
