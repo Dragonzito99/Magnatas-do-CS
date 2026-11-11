@@ -349,3 +349,16 @@ test('dar um item soma os dias ao que ainda vale e não mexe no que é para semp
   await bd.transaction((tx) => darItem(tx, conta.id, 'mutante-fumaca', 3, AGORA));
   expect((await posse(conta, 'mutante-fumaca'))?.expiraEm).toBeNull();
 });
+
+test('a HEALIX está à venda: cura no E, pulo alto e pulo duplo, um boneco por nível', () => {
+  const healix = CATALOGO.find((item) => item.id === 'mutante-healix');
+  expect(healix).toMatchObject({ tipo: 'mutante', valor: 'healix', nome: 'HEALIX', imagem: '/loja/mutante-healix.webp', lancamento: true });
+  expect(healix?.descricao).toBe(
+    'Na Mutação, você vira essa mutante. Aperte E e recupera 30% da vida em 3 s (recarga de 15 s). No nível 2 pula mais alto; no nível 3 ganha pulo duplo.',
+  );
+  expect(healix?.evolucoes).toEqual([
+    { nivel: 1, nome: 'Neon Night Nurse', imagem: '/loja/healix-1-andando.webp', poder: 'cura 30%' },
+    { nivel: 2, nome: 'Cybernetic Plague Nurse', imagem: '/loja/healix-2-andando.webp', poder: 'cura e pulo alto' },
+    { nivel: 3, nome: 'Neon Nightingale', imagem: '/loja/healix-3-andando.webp', poder: 'cura, pulo alto e duplo' },
+  ]);
+});

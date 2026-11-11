@@ -109,6 +109,23 @@ export const CATALOGO: readonly ItemDaLoja[] = [
       { nivel: 3, nome: 'Abyssal Void Titan', imagem: '/loja/fumaca-3-andando.webp', poder: 'fumaça de 12 s' },
     ],
   },
+  // HEALIX (dono, 11/11/2026): o E recupera vida; do nível 2 pula mais alto; no nível 3 ganha pulo duplo, com o
+  // segundo pulo mais baixo. Um boneco por nível: Neon Night Nurse, Cybernetic Plague Nurse e Neon Nightingale.
+  {
+    id: 'mutante-healix',
+    tipo: 'mutante',
+    nome: 'HEALIX',
+    valor: 'healix',
+    imagem: '/loja/mutante-healix.webp',
+    lancamento: true,
+    descricao:
+      'Na Mutação, você vira essa mutante. Aperte E e recupera 30% da vida em 3 s (recarga de 15 s). No nível 2 pula mais alto; no nível 3 ganha pulo duplo.',
+    evolucoes: [
+      { nivel: 1, nome: 'Neon Night Nurse', imagem: '/loja/healix-1-andando.webp', poder: 'cura 30%' },
+      { nivel: 2, nome: 'Cybernetic Plague Nurse', imagem: '/loja/healix-2-andando.webp', poder: 'cura e pulo alto' },
+      { nivel: 3, nome: 'Neon Nightingale', imagem: '/loja/healix-3-andando.webp', poder: 'cura, pulo alto e duplo' },
+    ],
+  },
 ];
 
 const DIA_MS = 24 * 60 * 60 * 1000;
