@@ -39,9 +39,8 @@ public partial class ModoDeDiversao
     private const int BlocosDaBarra = 12;
     // Cartão de cada vaga (mutante, herói) e até quando ele fica na tela.
     private readonly Dictionary<int, (string Html, float Ate)> cartoes = new();
-    // O que cada vaga viu por último no meio da tela, e quando: só manda de novo se mudar ou antes de sumir.
-    private readonly Dictionary<int, (string Html, float Em)> ultimasTelas = new();
-    private const float ReenviarATelaACada = 1.5f;
+    // O que cada vaga vê no meio da tela agora, repetido a cada tick pelo RepetirTelas.
+    private readonly Dictionary<int, string> telas = new();
     // A partir do nível 2, o mutante corre mais rápido por alguns segundos ao apertar G (o "largar arma" do jogo).
     private const int NivelDaCorrida = 2;
     private const float BonusDaCorrida = 0.5f;
@@ -494,6 +493,7 @@ public partial class ModoDeDiversao
     {
         AddTimer(IntervaloDaVelocidade, ManterVelocidadeDosMutantes, TimerFlags.REPEAT);
         AddTimer(IntervaloDaBarra, AtualizarTelaDaMutacao, TimerFlags.REPEAT);
+        RegisterListener<Listeners.OnTick>(RepetirTelas);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
@@ -724,7 +724,7 @@ public partial class ModoDeDiversao
     private void MostrarCartao(CCSPlayerController jogador, string html)
     {
         cartoes[jogador.Slot] = (html, Server.CurrentTime + SegundosDoAvisoDoMutante);
-        jogador.PrintToCenterHtml(html, 1);
+        telas[jogador.Slot] = html;
     }
 
     private HookResult AoApertarG(CCSPlayerController? jogador, CommandInfo comando)
@@ -754,34 +754,32 @@ public partial class ModoDeDiversao
     }
 
     /// <summary>
-    /// O que fica no meio da tela, reenviado a cada quarto de segundo (o CS2 apaga logo a mensagem): o cartão de quem
-    /// acabou de virar mutante ou herói e, para o mutante, o HUD do poder do G (dono, 10/11/2026).
+    /// Calcula, 4 vezes por segundo, o que fica no meio da tela de cada um: o cartão de quem acabou de virar mutante ou
+    /// herói e, para o mutante, o HUD do poder do G (dono, 10/11/2026). Quem manda é o RepetirTelas, a cada tick.
     /// </summary>
     private void AtualizarTelaDaMutacao()
     {
         var agora = Server.CurrentTime;
         foreach (var vaga in cartoes.Where(item => agora >= item.Value.Ate).Select(item => item.Key).ToList()) cartoes.Remove(vaga);
+        telas.Clear();
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: false, PawnIsAlive: true }))
         {
-            if (cartoes.TryGetValue(jogador.Slot, out var cartao))
-            {
-                MostrarNaTela(jogador, cartao.Html);
-                continue;
-            }
-            if (jogador is { Team: CsTeam.Terrorist } && rodadaEmAndamento) MostrarNaTela(jogador, HudDoPoder(jogador, agora));
+            if (cartoes.TryGetValue(jogador.Slot, out var cartao)) telas[jogador.Slot] = cartao.Html;
+            else if (jogador is { Team: CsTeam.Terrorist } && rodadaEmAndamento) telas[jogador.Slot] = HudDoPoder(jogador, agora);
         }
     }
 
     /// <summary>
-    /// Manda para a tela só quando muda, e de tempos em tempos para não sumir: mandar a cada quarto de segundo fazia o
-    /// aviso piscar (dono, 10/11/2026).
+    /// O CS2 só mantém a mensagem do meio da tela enquanto ela chega: a cada quarto de segundo piscava, a cada 1,5 s
+    /// sumia. Repetida a cada tick, fica parada (dono, 10/11/2026).
     /// </summary>
-    private void MostrarNaTela(CCSPlayerController jogador, string html)
+    private void RepetirTelas()
     {
-        var agora = Server.CurrentTime;
-        if (ultimasTelas.TryGetValue(jogador.Slot, out var ultima) && ultima.Html == html && agora - ultima.Em < ReenviarATelaACada) return;
-        ultimasTelas[jogador.Slot] = (html, agora);
-        jogador.PrintToCenterHtml(html, (int)ReenviarATelaACada + 2);
+        foreach (var (vaga, html) in telas)
+        {
+            var jogador = Utilities.GetPlayerFromSlot(vaga);
+            if (jogador is { IsValid: true, PawnIsAlive: true }) jogador.PrintToCenterHtml(html);
+        }
     }
 
     /// <summary>O poder do G do mutante: pronto (cheia), em uso (esvaziando), carregando (enchendo) ou ainda travado.</summary>

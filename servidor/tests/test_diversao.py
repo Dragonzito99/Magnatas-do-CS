@@ -1870,9 +1870,13 @@ def test_o_g_do_mutante_chega_ao_servidor_mesmo_so_com_a_faca():
     assert 'Contains("knife")' in humano and "return HookResult.Handled" in humano
 
 
-def test_o_hud_so_e_reenviado_quando_muda_para_nao_piscar():
-    tela = metodo_da_mutacao("private void MostrarNaTela(")
-    assert "ultimasTelas" in tela
-    assert "ReenviarATelaACada" in tela
-    assert "MostrarNaTela(" in metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
+def test_o_hud_e_repetido_a_cada_tick_para_nao_piscar_nem_sumir():
+    # A cada quarto de segundo piscava; a cada 1,5 s sumia (dono, 10/11/2026): o CS2 só mantém a mensagem do meio da
+    # tela enquanto ela chega. O plugin calcula 4 vezes por segundo e repete o mesmo texto a cada tick do servidor.
+    assert "RegisterListener<Listeners.OnTick>(RepetirTelas)" in CODIGO_DA_MUTACAO
+    repetir = metodo_da_mutacao("private void RepetirTelas(")
+    assert "telas" in repetir and "PrintToCenterHtml(" in repetir
+    atualizar = metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
+    assert "telas[" in atualizar
+    assert "PrintToCenterHtml(" not in atualizar
     assert "<br>" not in metodo_da_mutacao("private static string BarraDePoder(")
