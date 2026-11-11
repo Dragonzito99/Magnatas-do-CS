@@ -255,6 +255,12 @@ test('o cartão da Mutação mostra a Dust Elegant quando ela está rodando', ()
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'zm_dust_elegant_2' })).toEqual({ nome: 'Dust Elegant', foto: '/mapas/dust-elegant.webp' });
 });
 
+test('o cartão da Mutação mostra a Dust 2 Zumbi com a foto da Dust 2', () => {
+  // A foto da Oficina era um print sem a iluminação pronta: o cartão usa a da Dust 2 do site.
+  const servidor = { mapa: 'Silent Village', foto: '/mapas/silent-village.webp' };
+  expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'zm_dust2_bf_l' })).toEqual({ nome: 'Dust 2 Zumbi', foto: '/mapas/dust2.webp' });
+});
+
 test('o cartão do Equipe mostra o Egypt quando ele está rodando', () => {
   const servidor = { mapa: 'Transport Ship', foto: '/mapas/transport-ship.webp' };
   expect(mapaDoCartao(servidor, { ligado: true, jogando: 0, mapa: 'egypt' })).toEqual({ nome: 'Egypt', foto: '/mapas/egypt.webp' });

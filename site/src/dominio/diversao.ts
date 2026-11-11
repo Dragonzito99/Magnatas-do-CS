@@ -16,6 +16,8 @@ const MAPAS_CONHECIDOS: Record<string, { nome: string; foto: string; regra?: str
   zm_biochemical_hotel: { nome: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp' },
   zm_silent_village: { nome: 'Silent Village', foto: '/mapas/silent-village.webp' },
   zm_dust_elegant_2: { nome: 'Dust Elegant', foto: '/mapas/dust-elegant.webp' },
+  // A foto da Oficina era um print sem a iluminação pronta: vale a da Dust 2 do site.
+  zm_dust2_bf_l: { nome: 'Dust 2 Zumbi', foto: '/mapas/dust2.webp' },
   egypt: { nome: 'Egypt', foto: '/mapas/egypt.webp' },
   gm_laboratory: { nome: 'Laboratory', foto: '/mapas/laboratory.webp' },
 };

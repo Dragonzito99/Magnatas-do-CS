@@ -38,6 +38,7 @@ const MAPAS = [
   { nome: 'Biochemical Hotel', foto: '/mapas/biochemical-hotel.webp', modo: 'Mutação' },
   { nome: 'Silent Village', foto: '/mapas/silent-village.webp', modo: 'Mutação' },
   { nome: 'Dust Elegant', foto: '/mapas/dust-elegant.webp', modo: 'Mutação' },
+  { nome: 'Dust 2 Zumbi', foto: '/mapas/dust2.webp', modo: 'Mutação' },
 ];
 
 // A história do mapa, aprovada pelo dono: o universo dos Magnatas, sem o texto do CrossFire.
