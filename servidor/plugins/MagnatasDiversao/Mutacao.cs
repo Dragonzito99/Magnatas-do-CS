@@ -131,6 +131,26 @@ public partial class ModoDeDiversao
     private const float VidaPorFumaca = 0.10f;
     private bool? fumacaNoServidor;
     private readonly Dictionary<int, (float Fim, float Recarga)> fumacas = new();
+    // Terceira mutante da Shop, a HEALIX (dono, 11/11/2026): o E recupera vida; do nível 2 pula mais alto; no nível 3 tem
+    // pulo duplo, com o segundo mais baixo. Um boneco por nível (Neon Night Nurse, Cybernetic Plague Nurse e Neon
+    // Nightingale), num pacote da Oficina só dela; sem o pacote no servidor, quem comprou vira o mutante comum.
+    private const string PacoteDaHealix = "";
+    private const string PastaDaHealix = "models/magnatas/healix_v1";
+    private static readonly int[] NiveisComBonecoDaHealix = { 1, 2, 3 };
+    // Cura 30% da vida máxima do nível, aos poucos, em 3 s.
+    private const float CuraDaHealix = 0.30f;
+    private const float SegundosDaCura = 3f;
+    private const int PassosDaCura = 6;
+    private const float SegundosDeRecargaDaCura = 15f;
+    private const int NivelDoPuloAlto = 2;
+    private const int NivelDoPuloDuplo = 3;
+    // O pulo normal sobe a uns 300 por segundo; 345 dá uns 30% mais de altura. O segundo pulo é bem mais baixo.
+    private const float ImpulsoDoPuloAlto = 345f;
+    private const float ImpulsoDoPuloDuplo = 220f;
+    private bool? healixNoServidor;
+    private readonly Dictionary<int, (float Fim, float Recarga)> curas = new();
+    private readonly HashSet<int> segurandoPulo = new();
+    private readonly HashSet<int> puloDuploUsado = new();
     // Pacote dos personagens (dono, 10/11/2026): quem pega a super Negev vira o herói. Os bonecos próprios (ADM,
     // Marfioso) ficam fora da Mutação, a pedido do dono: trocar um boneco nosso por outro com o jogador vivo fechou o
     // jogo três vezes no dia (19:54, 20:37, 20:56), e o boneco do jogo virando zumbi nunca. Sem o pacote, o portador
@@ -197,6 +217,7 @@ public partial class ModoDeDiversao
         corridas.Clear();
         escudos.Clear();
         fumacas.Clear();
+        curas.Clear();
         _ = BuscarMutantesDaLoja(Pessoas().Select(pessoa => pessoa.SteamID).ToList());
         if (testeComBots) ChamarBotsDoTeste();
         if (JogadoresNaRodada() < MinimoDeJogadores)
@@ -501,6 +522,7 @@ public partial class ModoDeDiversao
         AddTimer(IntervaloDaBarra, AtualizarTelaDaMutacao, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnTick>(RepetirTelas);
         RegisterListener<Listeners.OnTick>(PoderNoE);
+        RegisterListener<Listeners.OnTick>(PuloDuplo);
         RegisterListener<Listeners.OnEntitySpawned>(TirarComandosDoMapa);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
@@ -527,6 +549,14 @@ public partial class ModoDeDiversao
                     manifesto.AddResource(QuedaDaFumaca(nivel));
                 }
             }
+            if (HealixNoServidor())
+            {
+                foreach (var nivel in NiveisComBonecoDaHealix)
+                {
+                    manifesto.AddResource(ModeloDaHealix(nivel));
+                    manifesto.AddResource(QuedaDaHealix(nivel));
+                }
+            }
         });
         RegisterListener<Listeners.OnMapStart>(mapa =>
         {
@@ -535,6 +565,7 @@ public partial class ModoDeDiversao
             morteNoServidor = null;
             blindadoNoServidor = null;
             fumacaNoServidor = null;
+            healixNoServidor = null;
             personagensNoServidor = null;
             // Ao ligar, o servidor abre o mapa da Oficina por último: se o teste já tinha pedido a Dust 2, ela era trocada.
             if (testeComBots && mapa != MapaDoTeste) AddTimer(1f, () => Server.ExecuteCommand($"changelevel {MapaDoTeste}"));
@@ -598,6 +629,7 @@ public partial class ModoDeDiversao
         corridas.Remove(jogador.Slot);
         escudos.Remove(jogador.Slot);
         fumacas.Remove(jogador.Slot);
+        curas.Remove(jogador.Slot);
         AplicarAtributosDoMutante(jogador);
         AvisarOQueOMutanteFaz(jogador);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
@@ -705,6 +737,11 @@ public partial class ModoDeDiversao
             mutante.PrintToChat($" [Magnatas] Seu escudo agora dura {SegundosDoEscudo[Math.Clamp(novo.Nivel, 1, SegundosDoEscudo.Length) - 1]:0} s.");
         else if (SkinDe(mutante) == "fumaca")
             mutante.PrintToChat($" [Magnatas] Sua fumaça agora dura {SegundosDaFumacaNoNivel(novo.Nivel):0} s.");
+        else if (SkinDe(mutante) == "healix")
+        {
+            if (novo.Nivel == NivelDoPuloAlto) mutante.PrintToChat(" [Magnatas] Agora você pula mais alto.");
+            if (novo.Nivel == NivelDoPuloDuplo) mutante.PrintToChat(" [Magnatas] Agora você tem pulo duplo: aperte pular de novo no ar.");
+        }
         else if (novo.Nivel == NivelDaCorrida) mutante.PrintToChat(" [Magnatas] Aperte E para correr mais rápido por alguns segundos.");
     }
 
@@ -726,14 +763,17 @@ public partial class ModoDeDiversao
     private void AvisarOQueOMutanteFaz(CCSPlayerController jogador)
     {
         var skin = SkinDe(jogador);
-        var titulo = skin == "blindado" ? "Você é o BLINDADO!" : skin == "fumaca" ? "Você é o SENHOR DO VAZIO!" : "Você virou MUTANTE!";
+        var titulo = skin == "blindado" ? "Você é o BLINDADO!" : skin == "fumaca" ? "Você é o SENHOR DO VAZIO!" : skin == "healix" ? "Você é a HEALIX!" : "Você virou MUTANTE!";
         var g = skin == "blindado"
             ? $"E: escudo, {SegundosDoEscudo[0]:0} s sem levar dano"
             : skin == "fumaca"
                 ? $"E: cortina de fumaça de {SegundosDaFumacaNoNivel(1):0} s (custa {VidaPorFumaca * 100:0}% da vida)"
-                : $"E: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
-        var nomeDoCartao = skin == "blindado" ? "BLINDADO" : skin == "fumaca" ? "VAZIO" : "MUTANTE";
-        MostrarCartao(jogador, Cartao(nomeDoCartao, skin == "fumaca" ? "#b07cff" : "#6eff6e", "Faca: acerte os humanos para infectar", g));
+                : skin == "healix"
+                    ? $"E: recupera {CuraDaHealix * 100:0}% da vida em {SegundosDaCura:0} s"
+                    : $"E: corrida de {SegundosDaCorrida:0} s (a partir do nível {NivelDaCorrida})";
+        var nomeDoCartao = skin == "blindado" ? "BLINDADO" : skin == "fumaca" ? "VAZIO" : skin == "healix" ? "HEALIX" : "MUTANTE";
+        var corDoCartao = skin == "fumaca" ? "#b07cff" : skin == "healix" ? "#5eead4" : "#6eff6e";
+        MostrarCartao(jogador, Cartao(nomeDoCartao, corDoCartao, "Faca: acerte os humanos para infectar", g));
         jogador.PrintToChat($" [Magnatas] {titulo} Faca: acerte os humanos para infectar. {g}.");
     }
 
@@ -836,6 +876,8 @@ public partial class ModoDeDiversao
         if (SkinDe(jogador) == "blindado") return LigarEscudo(jogador);
         // O Senhor do Vazio troca a corrida pela cortina de fumaça, que também já vale no nível 1.
         if (SkinDe(jogador) == "fumaca") return SoltarFumaca(jogador);
+        // A HEALIX troca a corrida pela cura, que vale desde o nível 1.
+        if (SkinDe(jogador) == "healix") return Curar(jogador);
         if (NivelDe(jogador).Nivel < NivelDaCorrida)
         {
             jogador.PrintToCenterHtml($"<font color='#f5b301'>A corrida libera no nível {NivelDaCorrida}: infecte um humano</font>", 2);
@@ -899,17 +941,22 @@ public partial class ModoDeDiversao
         var skin = SkinDe(jogador);
         var blindado = skin == "blindado";
         var fumaca = skin == "fumaca";
-        if (!blindado && !fumaca && NivelDe(jogador).Nivel < NivelDaCorrida)
+        var healix = skin == "healix";
+        if (!blindado && !fumaca && !healix && NivelDe(jogador).Nivel < NivelDaCorrida)
             return BarraDePoder($"E libera no nível {NivelDaCorrida}", "#888888", 0f);
         var temPoder = blindado ? escudos.TryGetValue(jogador.Slot, out var poder)
             : fumaca ? fumacas.TryGetValue(jogador.Slot, out poder)
+            : healix ? curas.TryGetValue(jogador.Slot, out poder)
             : corridas.TryGetValue(jogador.Slot, out poder);
         if (temPoder)
         {
             var (fim, recarga) = poder;
-            var inicio = recarga - (blindado ? SegundosDeRecargaDoEscudo : fumaca ? SegundosDeRecargaDaFumaca : SegundosDeRecargaDaCorrida);
+            var inicio = recarga - (blindado ? SegundosDeRecargaDoEscudo : fumaca ? SegundosDeRecargaDaFumaca : healix ? SegundosDeRecargaDaCura : SegundosDeRecargaDaCorrida);
             if (agora < fim)
-                return BarraDePoder(blindado ? "ESCUDO" : fumaca ? "FUMAÇA" : "CORRENDO", blindado ? "#50a0ff" : fumaca ? "#b07cff" : "#6eff6e", (fim - agora) / Math.Max(fim - inicio, 0.1f));
+                return BarraDePoder(
+                    blindado ? "ESCUDO" : fumaca ? "FUMAÇA" : healix ? "CURANDO" : "CORRENDO",
+                    blindado ? "#50a0ff" : fumaca ? "#b07cff" : healix ? "#5eead4" : "#6eff6e",
+                    (fim - agora) / Math.Max(fim - inicio, 0.1f));
             if (agora < recarga)
                 return BarraDePoder("CARREGANDO", "#f5b301", (agora - fim) / Math.Max(recarga - fim, 0.1f));
         }
@@ -1090,6 +1137,8 @@ public partial class ModoDeDiversao
         infeccoes.Clear();
         corridas.Clear();
         fumacas.Clear();
+        curas.Clear();
+        puloDuploUsado.Clear();
         ApagarFumacasDoG();
         // Os mutantes e o portador dourado voltam à cor e ao tamanho normais. Os outros ficam como estão: mexer em todo
         // mundo junto do reinício da rodada só aumenta a chance de derrubar o jogo de quem está no servidor.
@@ -1153,6 +1202,7 @@ public partial class ModoDeDiversao
         {
             "blindado" when BlindadoNoServidor() => skin,
             "fumaca" when FumacaNoServidor() => skin,
+            "healix" when HealixNoServidor() => skin,
             _ => null,
         };
     }
@@ -1171,6 +1221,105 @@ public partial class ModoDeDiversao
     private static string ModeloDaFumaca(int nivel) => $"{PastaDaFumaca}/nivel{NivelComBonecoDaFumaca(nivel)}/mutante.vmdl";
 
     private static string QuedaDaFumaca(int nivel) => $"{PastaDaFumaca}/nivel{NivelComBonecoDaFumaca(nivel)}/morte/guerreiro_morte.vmdl";
+
+    private bool HealixNoServidor()
+    {
+        if (!UsarBonecosDoPacote || PacoteDaHealix == "") return false;
+        if (healixNoServidor is bool sabido) return sabido;
+        healixNoServidor = NoPacote(PacoteDaHealix, PastaDaHealix);
+        Console.WriteLine($"[Magnatas] HEALIX da loja no servidor: {(healixNoServidor.Value ? "sim" : "não, quem comprou vira o mutante comum")}.");
+        return healixNoServidor.Value;
+    }
+
+    private static int NivelComBonecoDaHealix(int nivel) => NiveisComBonecoDaHealix.Where(existente => existente <= nivel).DefaultIfEmpty(1).Max();
+
+    private static string ModeloDaHealix(int nivel) => $"{PastaDaHealix}/nivel{NivelComBonecoDaHealix(nivel)}/mutante.vmdl";
+
+    private static string QuedaDaHealix(int nivel) => $"{PastaDaHealix}/nivel{NivelComBonecoDaHealix(nivel)}/morte/guerreiro_morte.vmdl";
+
+    /// <summary>
+    /// O E da HEALIX: recupera 30% da vida máxima do nível aos poucos, em 3 s, e volta em 15 s. Com a vida cheia, não
+    /// gasta a recarga.
+    /// </summary>
+    private HookResult Curar(CCSPlayerController jogador)
+    {
+        var agora = Server.CurrentTime;
+        if (curas.TryGetValue(jogador.Slot, out var cura) && agora < cura.Recarga)
+        {
+            jogador.PrintToCenterHtml($"<font color='#f5b301'>Cura em {Math.Ceiling(cura.Recarga - agora)} s</font>", 1);
+            return HookResult.Handled;
+        }
+        var corpo = jogador.PlayerPawn.Value;
+        if (corpo == null) return HookResult.Handled;
+        if (corpo.Health >= corpo.MaxHealth)
+        {
+            jogador.PrintToCenterHtml("<font color='#5eead4'>Vida cheia</font>", 1);
+            return HookResult.Handled;
+        }
+        curas[jogador.Slot] = (agora + SegundosDaCura, agora + SegundosDeRecargaDaCura);
+        var porPasso = Math.Max(1, (int)Math.Round(corpo.MaxHealth * CuraDaHealix / PassosDaCura));
+        // Um temporizador avulso por passo: parar um temporizador de dentro dele mesmo já derrubou o servidor.
+        for (var passo = 1; passo <= PassosDaCura; passo++)
+        {
+            AddTimer(SegundosDaCura * passo / PassosDaCura, () =>
+            {
+                var atual = jogador.IsValid ? jogador.PlayerPawn.Value : null;
+                if (atual == null || !jogador.PawnIsAlive || !EhMutanteDeVerdade(jogador)) return;
+                atual.Health = Math.Min(atual.MaxHealth, atual.Health + porPasso);
+                Utilities.SetStateChanged(atual, "CBaseEntity", "m_iHealth");
+            }, TimerFlags.STOP_ON_MAPCHANGE);
+        }
+        Console.WriteLine($"[Magnatas] Cura de {jogador.PlayerName}: {porPasso * PassosDaCura} de vida em {SegundosDaCura:0} s.");
+        return HookResult.Handled;
+    }
+
+    private bool HealixComPulo(CCSPlayerController jogador, int nivelMinimo) =>
+        jogador is { IsValid: true, PawnIsAlive: true } && SkinDe(jogador) == "healix" && EhMutanteDeVerdade(jogador) && NivelDe(jogador).Nivel >= nivelMinimo;
+
+    /// <summary>Do nível 2, a HEALIX pula mais alto: logo depois do pulo, a subida vai para o impulso dela.</summary>
+    [GameEventHandler]
+    public HookResult AoPularNaMutacao(EventPlayerJump evento, GameEventInfo informacao)
+    {
+        if (Config.Regra != "mutacao") return HookResult.Continue;
+        var jogador = evento.Userid;
+        if (jogador == null || !HealixComPulo(jogador, NivelDoPuloAlto)) return HookResult.Continue;
+        Server.NextFrame(() =>
+        {
+            var corpo = jogador.IsValid ? jogador.PlayerPawn.Value : null;
+            if (corpo == null) return;
+            var velocidade = corpo.AbsVelocity;
+            if (velocidade.Z < ImpulsoDoPuloAlto) corpo.Teleport(null, null, new Vector(velocidade.X, velocidade.Y, ImpulsoDoPuloAlto));
+        });
+        return HookResult.Continue;
+    }
+
+    /// <summary>
+    /// No nível 3, a HEALIX pula de novo no ar, uma vez por pulo, mais baixo que o primeiro. Conta só quando o botão é
+    /// apertado de novo no ar: segurar o pulo não gasta o segundo.
+    /// </summary>
+    private void PuloDuplo()
+    {
+        if (!rodadaEmAndamento) return;
+        foreach (var jogador in Utilities.GetPlayers())
+        {
+            if (!HealixComPulo(jogador, NivelDoPuloDuplo) || jogador.PlayerPawn.Value is not { } corpo)
+            {
+                segurandoPulo.Remove(jogador.Slot);
+                continue;
+            }
+            var pulando = (jogador.Buttons & PlayerButtons.Jump) != 0;
+            var noChao = (corpo.Flags & (uint)PlayerFlags.FL_ONGROUND) != 0;
+            if (noChao) puloDuploUsado.Remove(jogador.Slot);
+            else if (pulando && !segurandoPulo.Contains(jogador.Slot) && puloDuploUsado.Add(jogador.Slot))
+            {
+                var velocidade = corpo.AbsVelocity;
+                corpo.Teleport(null, null, new Vector(velocidade.X, velocidade.Y, ImpulsoDoPuloDuplo));
+            }
+            if (pulando) segurandoPulo.Add(jogador.Slot);
+            else segurandoPulo.Remove(jogador.Slot);
+        }
+    }
+
 
     private static float SegundosDaFumacaNoNivel(int nivel) => SegundosDaFumaca[Math.Clamp(nivel, 1, SegundosDaFumaca.Length) - 1];
 
@@ -1193,6 +1342,7 @@ public partial class ModoDeDiversao
     {
         "blindado" => ModeloDoBlindado(nivel),
         "fumaca" => ModeloDaFumaca(nivel),
+        "healix" => ModeloDaHealix(nivel),
         _ => ModeloDoNivel(nivel),
     };
 
@@ -1202,6 +1352,7 @@ public partial class ModoDeDiversao
         var nivel = NivelDe(jogador).Nivel;
         if (SkinDe(jogador) == "blindado") return QuedaDoBlindado(nivel);
         if (SkinDe(jogador) == "fumaca") return QuedaDaFumaca(nivel);
+        if (SkinDe(jogador) == "healix") return QuedaDaHealix(nivel);
         if (!MorteNoServidor()) return null;
         return QuedaDoNivel[Math.Clamp(nivel, 1, QuedaDoNivel.Length) - 1];
     }
@@ -1336,7 +1487,7 @@ public partial class ModoDeDiversao
     /// <summary>Pergunta ao site qual mutante cada conta comprou e está usando. Site fora do ar: todos ficam com o comum.</summary>
     private async Task BuscarMutantesDaLoja(List<ulong> contas)
     {
-        if (Config.SiteUrl == "" || Config.Token == "" || contas.Count == 0 || (!BlindadoNoServidor() && !FumacaNoServidor())) return;
+        if (Config.SiteUrl == "" || Config.Token == "" || contas.Count == 0 || (!BlindadoNoServidor() && !FumacaNoServidor() && !HealixNoServidor())) return;
         try
         {
             using var pedido = new HttpRequestMessage(HttpMethod.Get, $"{Config.SiteUrl.TrimEnd('/')}/api/servidor/visuais?steamids={string.Join(",", contas)}");
@@ -1370,8 +1521,8 @@ public partial class ModoDeDiversao
     }
 
     /// <summary>Só para teste: põe (ou tira, com "nenhum") o mutante da loja nos bots, todos ou só o da vaga dada.</summary>
-    [ConsoleCommand("magnatas_mutacao_skin", "Teste: mutante da loja nos bots (blindado|fumaca|nenhum [vaga])")]
-    [CommandHelper(minArgs: 1, usage: "<blindado|fumaca|nenhum> [vaga]", whoCanExecute: CommandUsage.SERVER_ONLY)]
+    [ConsoleCommand("magnatas_mutacao_skin", "Teste: mutante da loja nos bots (blindado|fumaca|healix|nenhum [vaga])")]
+    [CommandHelper(minArgs: 1, usage: "<blindado|fumaca|healix|nenhum> [vaga]", whoCanExecute: CommandUsage.SERVER_ONLY)]
     public void SkinDeTeste(CCSPlayerController? chamador, CommandInfo comando)
     {
         if (Config.Regra != "mutacao") return;
@@ -1379,7 +1530,7 @@ public partial class ModoDeDiversao
         int? vaga = comando.ArgCount > 2 && int.TryParse(comando.GetArg(2), out var numero) ? numero : null;
         foreach (var bot in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: true } && (vaga == null || jogador.Slot == vaga)))
         {
-            if (skin is "blindado" or "fumaca") skinsDeTeste[bot.Slot] = skin;
+            if (skin is "blindado" or "fumaca" or "healix") skinsDeTeste[bot.Slot] = skin;
             else skinsDeTeste.Remove(bot.Slot);
             comando.ReplyToCommand($"vaga={bot.Slot} skin={SkinDe(bot) ?? "comum"}");
         }

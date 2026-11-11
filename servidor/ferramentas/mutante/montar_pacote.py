@@ -17,6 +17,12 @@ shutil.copy(os.path.join(SAIDA, 'mutante_corpo.dmx'), DESTINO)
 import subprocess
 TIPOS = ('baseColor', 'normal', 'roughness', 'metallic')
 achadas = {tipo: next((f for f in os.listdir(SAIDA) if f.endswith(f'_{tipo}.png')), None) for tipo in TIPOS}
+# Alguns modelos (a HEALIX nível 3, 11/11/2026) gravam a cor sem sufixo: texture_0.png ao lado de texture_0_metallic.png.
+if not achadas['baseColor']:
+    achadas['baseColor'] = next(
+        (f for f in os.listdir(SAIDA) if f.endswith('.png') and any(os.path.exists(os.path.join(SAIDA, f[:-4] + sufixo)) for sufixo in ('_metallic.png', '_roughness.png'))),
+        None,
+    )
 assert achadas['baseColor'], 'sem a textura de cor'
 for tipo in TIPOS:
     destino = os.path.join(DESTINO, 'materials', f'mutante_{tipo}.png')

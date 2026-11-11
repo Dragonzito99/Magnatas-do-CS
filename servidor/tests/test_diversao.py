@@ -1529,7 +1529,7 @@ def test_a_corrida_zera_junto_com_o_nivel():
 def test_o_teste_volta_para_a_dust_2_se_o_mapa_da_oficina_abrir_por_cima():
     # Ao ligar, o servidor abre o mapa da Oficina por último, e isso passava por cima da troca do teste.
     inicio = CODIGO_DA_MUTACAO.index("RegisterListener<Listeners.OnMapStart>")
-    ouvinte = CODIGO_DA_MUTACAO[inicio:inicio + 600]
+    ouvinte = CODIGO_DA_MUTACAO[inicio:inicio + 800]
     assert "testeComBots && mapa != MapaDoTeste" in ouvinte
     assert 'changelevel {MapaDoTeste}' in ouvinte
     assert 'MapaDoTeste = "de_dust2";' in CODIGO_DA_MUTACAO
@@ -2011,3 +2011,46 @@ def test_o_mapa_nao_muda_as_regras_do_servidor_da_mutacao():
     tirar = metodo_da_mutacao("private void TirarComandosDoMapa(")
     assert '"point_servercommand"' in tirar and ".Remove()" in tirar
     assert 'Config.Regra != "mutacao"' in tirar
+
+
+def test_healix_tem_pacote_proprio_um_boneco_por_nivel_e_aparece_no_hud():
+    # HEALIX (dono, 11/11/2026): Neon Night Nurse, Cybernetic Plague Nurse e Neon Nightingale.
+    assert 'private const string PastaDaHealix = "models/magnatas/healix_v1";' in CODIGO_DA_MUTACAO
+    assert "private static readonly int[] NiveisComBonecoDaHealix = { 1, 2, 3 };" in CODIGO_DA_MUTACAO
+    assert '"healix" when HealixNoServidor() => skin' in CODIGO_DA_MUTACAO
+    assert '"healix" => ModeloDaHealix(nivel)' in CODIGO_DA_MUTACAO
+    assert 'SkinDe(jogador) == "healix") return QuedaDaHealix(nivel)' in CODIGO_DA_MUTACAO
+    confere = metodo_da_mutacao("private bool HealixNoServidor(")
+    assert "NoPacote(PacoteDaHealix, PastaDaHealix)" in confere and 'PacoteDaHealix == ""' in confere
+    hud = metodo_da_mutacao("private string HudDoPoder(")
+    assert "CURANDO" in hud
+
+
+def test_o_e_da_healix_cura_30_por_cento_em_3_segundos_com_recarga():
+    assert "private const float CuraDaHealix = 0.30f;" in CODIGO_DA_MUTACAO
+    assert "private const float SegundosDaCura = 3f;" in CODIGO_DA_MUTACAO
+    assert "private const float SegundosDeRecargaDaCura = 15f;" in CODIGO_DA_MUTACAO
+    poder = metodo_da_mutacao("private HookResult UsarPoder(")
+    assert poder.index('SkinDe(jogador) == "healix"') < poder.index("NivelDaCorrida")
+    curar = metodo_da_mutacao("private HookResult Curar(")
+    assert "agora < cura.Recarga" in curar
+    assert "Math.Min(atual.MaxHealth" in curar
+    # Um temporizador avulso por passo, sem parar nenhum de dentro dele mesmo.
+    assert "for (var passo = 1; passo <= PassosDaCura; passo++)" in curar
+    assert "Kill" not in curar
+
+
+def test_healix_pula_mais_alto_do_nivel_2_e_tem_pulo_duplo_no_3():
+    assert "private const int NivelDoPuloAlto = 2;" in CODIGO_DA_MUTACAO
+    assert "private const int NivelDoPuloDuplo = 3;" in CODIGO_DA_MUTACAO
+    pular = metodo_da_mutacao("public HookResult AoPularNaMutacao(")
+    assert "NivelDoPuloAlto" in pular and "ImpulsoDoPuloAlto" in pular
+    duplo = metodo_da_mutacao("private void PuloDuplo(")
+    assert "PlayerButtons.Jump" in duplo and "FL_ONGROUND" in duplo
+    assert "puloDuploUsado" in duplo and "ImpulsoDoPuloDuplo" in duplo
+    # O segundo pulo é mais baixo que o primeiro (dono).
+    import re
+    alto = float(re.search(r"ImpulsoDoPuloAlto = ([\d.]+)f;", CODIGO_DA_MUTACAO).group(1))
+    segundo = float(re.search(r"ImpulsoDoPuloDuplo = ([\d.]+)f;", CODIGO_DA_MUTACAO).group(1))
+    assert segundo < alto
+    assert "RegisterListener<Listeners.OnTick>(PuloDuplo)" in CODIGO_DA_MUTACAO
