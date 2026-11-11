@@ -22,6 +22,13 @@ function quandoCurto(data: Date, agora: Date): string {
   return dataCurta.format(data);
 }
 
+/** Jogo dos times BR: a data e a hora em Brasília, com "Hoje" ou "Amanhã" quando for o caso (dono, 11/11/2026). */
+function quandoDoJogo(data: Date, agora: Date): string {
+  const dia = quandoCurto(data, agora);
+  const prefixo = dia === 'hoje' ? 'Hoje, ' : dia === 'amanhã' ? 'Amanhã, ' : '';
+  return `${prefixo}${dataCurta.format(data)} às ${hora.format(data)}`;
+}
+
 /** Notícia do clube abre aqui no site; CS2 e times brasileiros abrem a fonte em outra aba. */
 function Destino({ cartao, className, children }: { cartao: Pick<CartaoDeNoticia, 'externo' | 'href'>; className: string; children: React.ReactNode }) {
   if (cartao.externo) {
@@ -163,7 +170,7 @@ export default async function Noticias({ searchParams }: { searchParams: Promise
                 </div>
               )}
               <div className="corpo-da-noticia">
-                {cartao.data && <small>{dataCurta.format(cartao.data)}</small>}
+                {cartao.data && <small>{cartao.confronto ? quandoDoJogo(cartao.data, agora) : dataCurta.format(cartao.data)}</small>}
                 <h3>{cartao.titulo}</h3>
                 {cartao.resumo && <p>{cartao.resumo}</p>}
               </div>
