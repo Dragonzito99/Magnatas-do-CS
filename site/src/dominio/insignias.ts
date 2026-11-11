@@ -1,3 +1,8 @@
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import type { Bd } from '@/bd/conexao';
+import { partidaJogadores, servidoresDiversao, xpPartidas } from '@/bd/esquema';
+import type { Transacao } from './disponibilidade';
+
 /**
  * Insígnias (dono, 11/11/2026), no jeito das Badges do CrossFire e com desenho nosso: 6 famílias com 5 níveis cada,
  * contadas com o que o site já guarda das partidas. Cada uma conquistada dá prêmio. Desenho e regras em
@@ -53,4 +58,52 @@ export function lerChaveDaInsignia(chave: string | null): ChaveDaInsignia | null
   if (!FAMILIAS.some((item) => item.chave === familia)) return null;
   if (!Number.isInteger(nivel) || nivel < 0 || nivel >= NOMES_DOS_NIVEIS.length) return null;
   return { familia: familia as Familia, nivel };
+}
+
+const zerada = (): Contagem => ({ mira: 0, ace: 0, estrela: 0, vencedor: 0, mutacao: 0, veterano: 0 });
+
+/**
+ * O que cada conta já fez, para as metas. Conta só partida que valeu XP (tem linha em xp_partidas): teste e treino
+ * ficam de fora. Competitivo e mix vêm de partida_jogadores; a Mutação é a Diversão cuja porta é de um servidor da
+ * Mutação (a referência é "diversao:<porta>:<partida>").
+ */
+export async function contarFamilias(bd: Bd | Transacao, usuarioIds: string[]): Promise<Map<string, Contagem>> {
+  const contagens = new Map(usuarioIds.map((id) => [id, zerada()]));
+  if (usuarioIds.length === 0) return contagens;
+
+  const competitivo = await bd
+    .select({
+      usuarioId: xpPartidas.usuarioId,
+      mira: sql<number>`coalesce(sum(${partidaJogadores.headshotKills}), 0)::int`,
+      ace: sql<number>`coalesce(sum(${partidaJogadores.k5}), 0)::int`,
+      estrela: sql<number>`coalesce(sum(${partidaJogadores.mvps}), 0)::int`,
+      vencedor: sql<number>`count(*) filter (where ${xpPartidas.resultado} = 'vitoria')::int`,
+    })
+    .from(xpPartidas)
+    .innerJoin(partidaJogadores, and(eq(partidaJogadores.usuarioId, xpPartidas.usuarioId), sql`${partidaJogadores.partidaId}::text = ${xpPartidas.referencia}`))
+    .where(and(inArray(xpPartidas.usuarioId, usuarioIds), eq(xpPartidas.origem, 'partida')))
+    .groupBy(xpPartidas.usuarioId);
+  for (const linha of competitivo) Object.assign(contagens.get(linha.usuarioId)!, { mira: linha.mira, ace: linha.ace, estrela: linha.estrela, vencedor: linha.vencedor });
+
+  const portasDaMutacao = (await bd.select({ porta: servidoresDiversao.porta }).from(servidoresDiversao).where(eq(servidoresDiversao.modo, 'mutacao'))).map(
+    (servidor) => String(servidor.porta),
+  );
+  const todas = await bd
+    .select({
+      usuarioId: xpPartidas.usuarioId,
+      veterano: sql<number>`count(*)::int`,
+      mutacao:
+        portasDaMutacao.length === 0
+          ? sql<number>`0`
+          : sql<number>`count(*) filter (where ${xpPartidas.origem} = 'diversao' and ${xpPartidas.resultado} = 'vitoria' and split_part(${xpPartidas.referencia}, ':', 2) in (${sql.join(
+              portasDaMutacao.map((porta) => sql`${porta}`),
+              sql`, `,
+            )}))::int`,
+    })
+    .from(xpPartidas)
+    .where(inArray(xpPartidas.usuarioId, usuarioIds))
+    .groupBy(xpPartidas.usuarioId);
+  for (const linha of todas) Object.assign(contagens.get(linha.usuarioId)!, { veterano: linha.veterano, mutacao: Number(linha.mutacao) });
+
+  return contagens;
 }
