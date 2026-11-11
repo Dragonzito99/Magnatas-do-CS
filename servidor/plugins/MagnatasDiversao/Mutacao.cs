@@ -134,7 +134,7 @@ public partial class ModoDeDiversao
     // Terceira mutante da Shop, a HEALIX (dono, 11/11/2026): o E recupera vida; do nível 2 pula mais alto; no nível 3 tem
     // pulo duplo, com o segundo mais baixo. Um boneco por nível (Neon Night Nurse, Cybernetic Plague Nurse e Neon
     // Nightingale), num pacote da Oficina só dela; sem o pacote no servidor, quem comprou vira o mutante comum.
-    private const string PacoteDaHealix = "";
+    private const string PacoteDaHealix = "3838113494";
     private const string PastaDaHealix = "models/magnatas/healix_v1";
     private static readonly int[] NiveisComBonecoDaHealix = { 1, 2, 3 };
     // Cura 30% da vida máxima do nível, aos poucos, em 3 s.

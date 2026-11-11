@@ -1073,6 +1073,7 @@ PACOTE_DE_SONS = "3835000213"
 PACOTE_DO_MUTANTE = "3836643990"
 PACOTE_DO_BLINDADO = "3837109609"
 PACOTE_DA_FUMACA = "3837859077"
+PACOTE_DA_HEALIX = "3838113494"
 # Personagens próprios (MagnatasVisual) e o herói da super Negev: baixados em todo servidor.
 PACOTE_DOS_PERSONAGENS = "3837571705"
 
@@ -1119,7 +1120,7 @@ def test_o_servidor_carrega_os_sons_do_pacote():
 def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
     # A Mutação também manda baixar os pacotes do mutante comum e dos mutantes da loja, que só ela usa.
     esperado = (
-        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS},{PACOTE_DA_FUMACA}"'
+        f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS},{PACOTE_DA_FUMACA},{PACOTE_DA_HEALIX}"'
         if servidor == "mutacao"
         else f'"{PACOTE_DE_SONS},{PACOTE_DOS_PERSONAGENS}"'
     )
@@ -2054,3 +2055,10 @@ def test_healix_pula_mais_alto_do_nivel_2_e_tem_pulo_duplo_no_3():
     segundo = float(re.search(r"ImpulsoDoPuloDuplo = ([\d.]+)f;", CODIGO_DA_MUTACAO).group(1))
     assert segundo < alto
     assert "RegisterListener<Listeners.OnTick>(PuloDuplo)" in CODIGO_DA_MUTACAO
+
+
+def test_a_mutacao_baixa_o_pacote_da_healix_que_o_plugin_usa():
+    # Item novo da Oficina, subido pelo dono em 11/11/2026 (magnatas_healix_v1).
+    pacote = re.search(r'PacoteDaHealix = "(\d*)"', CODIGO_DA_MUTACAO).group(1)
+    assert pacote == "3838113494"
+    assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")
