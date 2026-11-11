@@ -5386,41 +5386,6 @@ a.cartao-destaque:hover {
   font-size: 18px;
 }
 
-.itens-loja {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 14px;
-}
-
-.cartao-loja {
-  position: relative;
-  display: grid;
-  gap: 12px;
-  align-content: start;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--painel);
-  box-shadow: 0 0 0 1px var(--linha);
-}
-
-.cartao-loja.vencido {
-  opacity: 0.6;
-}
-
-.previa-loja {
-  display: grid;
-  place-items: center;
-  min-height: 74px;
-  padding: 12px;
-  border-radius: 9px;
-  background: #05030a;
-}
-
-.previa-loja .avatar {
-  width: 52px;
-  height: 52px;
-}
-
 .previa-chat {
   font-family: var(--fonte-mono), ui-monospace, Consolas, monospace;
   font-size: 13px;
@@ -5431,27 +5396,6 @@ a.cartao-destaque:hover {
 .etiqueta-do-chat,
 .aviso-de-entrada {
   color: #e4ae39;
-}
-
-.nome-loja {
-  display: grid;
-  gap: 2px;
-}
-
-.nome-loja small {
-  color: var(--tinta-2);
-}
-
-.em-uso {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 2px 8px;
-  border-radius: 99px;
-  background: var(--verde);
-  color: #04140a;
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .tabela-extrato {
@@ -6656,6 +6600,178 @@ a.para-sempre-da-janela.sem-saldo {
   cursor: pointer;
 }
 
+/* Baú: como você aparece, os cinco espaços equipados e os itens na grade da Shop */
+.equipado-no-bau {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.vitrine-do-bau {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 12px;
+  min-height: 340px;
+  padding: 40px 20px 24px;
+  border-bottom: 4px solid var(--ouro);
+  background: radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.4), transparent 60%), #0e0718;
+}
+
+.vitrine-do-bau > .rotulo-da-janela {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  margin: 0;
+}
+
+.vitrine-do-bau .avatar {
+  width: 120px;
+  height: 120px;
+  font-size: 36px;
+}
+
+.nome-no-bau {
+  font: italic 800 30px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.vitrine-do-bau .chat-de-mentira {
+  max-width: 420px;
+}
+
+.espacos-do-bau {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.espaco-do-bau {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--raridade);
+  background: var(--painel);
+}
+
+.espaco-do-bau.vazio {
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  background: transparent;
+}
+
+.espaco-do-bau.vazio .selo-da-linha {
+  border-bottom-color: transparent;
+  color: #4a3f5c;
+  font-size: 26px;
+}
+
+.espaco-do-bau small {
+  display: block;
+  color: var(--tinta-2);
+  font: italic 700 12px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.espaco-do-bau b {
+  display: block;
+  margin-top: 4px;
+  font: italic 700 19px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.espaco-do-bau.vazio b {
+  color: #8d82a3;
+}
+
+.espaco-do-bau em {
+  display: block;
+  margin-top: 3px;
+  color: #8d82a3;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.espaco-do-bau em.acaba {
+  color: #ff8a5c;
+}
+
+.espaco-do-bau em.sempre {
+  color: #c4a5ff;
+}
+
+.link-do-espaco {
+  color: var(--ouro);
+  font: italic 700 14px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.link-do-espaco:hover {
+  text-decoration: underline;
+}
+
+.cartao-da-shop.no-bau:hover {
+  transform: none;
+}
+
+.cartao-da-shop.usando {
+  border-color: var(--verde);
+  box-shadow: inset 0 0 0 1px var(--verde);
+}
+
+.cartao-da-shop.vencido {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+}
+
+.tempo-do-cartao {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #cfc6de;
+  font: 600 11px/1.4 var(--fonte-mono), ui-monospace, monospace;
+}
+
+.tempo-do-cartao.acaba {
+  color: #ff8a5c;
+}
+
+.tempo-do-cartao.sempre {
+  color: #c4a5ff;
+}
+
+.acoes-do-cartao {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+  padding: 0 12px 12px;
+}
+
+.acoes-do-cartao > *,
+.acoes-do-cartao form .botao-da-shop {
+  flex: 1;
+  width: 100%;
+}
+
+.acoes-do-cartao .botao-da-shop {
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 10px;
+  font: italic 700 15px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 /* Minhas compras: o extrato por dia, uma linha por movimento */
 .dia-do-extrato {
   margin-bottom: 24px;
@@ -6840,7 +6956,9 @@ a.titulo-da-linha:hover {
     grid-template-columns: 1fr;
   }
 
-  .capa-do-apoio {
+  .capa-do-apoio,
+  .equipado-no-bau,
+  .espacos-do-bau {
     grid-template-columns: 1fr;
   }
 
