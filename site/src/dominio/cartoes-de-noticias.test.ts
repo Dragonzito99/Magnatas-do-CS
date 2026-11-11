@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { agendaDosTimes, blocosDaNoticia, cartoesDeNoticias, maisNoticiasDoClube, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias } from './cartoes-de-noticias';
+import { agendaDosTimes, blocosDaNoticia, cartoesDeNoticias, jogosDaInicio, maisNoticiasDoClube, quandoDoJogo, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias } from './cartoes-de-noticias';
 
 const clube = [
   { id: 'a', titulo: 'Fixada', texto: 'Texto fixado', imagem: '/mapas/egypt.webp', fixada: true, criadoEm: new Date('2026-11-01T12:00:00Z') },
@@ -98,4 +98,42 @@ test('a agenda dos times BR põe primeiro os próximos jogos, do mais perto ao m
   expect(agenda[2]).toMatchObject({ terminou: true, placar: '0:2' });
   const semPlacar = agendaDosTimes([jogo('H', '2026-11-09T12:00:00Z', null)], agora);
   expect(semPlacar).toMatchObject([{ terminou: true, placar: null }]);
+});
+
+test('a hora do jogo vai em Brasília, com Hoje e Amanhã', () => {
+  const agora = new Date('2026-11-11T15:00:00Z'); // 12:00 em Brasília
+  expect(quandoDoJogo(new Date('2026-11-11T20:30:00Z'), agora)).toBe('Hoje, 11/11 às 17:30');
+  expect(quandoDoJogo(new Date('2026-11-12T12:00:00Z'), agora)).toBe('Amanhã, 12/11 às 09:00');
+  expect(quandoDoJogo(new Date('2026-11-15T12:00:00Z'), agora)).toBe('15/11 às 09:00');
+  // 01:30 do dia 12 em UTC ainda é dia 11 em Brasília.
+  expect(quandoDoJogo(new Date('2026-11-12T01:30:00Z'), agora)).toBe('Hoje, 11/11 às 22:30');
+});
+
+test('a Início passa pelos jogos dos times BR com as duas logos: os próximos primeiro, depois os resultados', () => {
+  // Pedido do dono (11/11/2026): a logo dos times no cartão, alternando quando há mais de um jogo.
+  const agora = new Date('2026-11-11T15:00:00Z');
+  const slides = jogosDaInicio(
+    [
+      { pagina: '/counterstrike/A', torneio: 'BLAST', time1: 'Legacy', time2: 'FURIA', placar: '0:2', quando: new Date('2026-11-10T23:00:00Z') },
+      { pagina: '/counterstrike/B', torneio: 'BLAST', time1: 'FURIA', time2: 'Vitality', placar: null, quando: new Date('2026-11-12T12:00:00Z') },
+    ],
+    agora,
+  );
+  expect(slides).toEqual([
+    {
+      href: 'https://liquipedia.net/counterstrike/B',
+      titulo: 'FURIA x Vitality',
+      legenda: 'Amanhã, 12/11 às 09:00',
+      time1: { nome: 'FURIA', logo: '/times/furia.png' },
+      time2: { nome: 'Vitality', logo: '/times/vitality.png' },
+    },
+    {
+      href: 'https://liquipedia.net/counterstrike/A',
+      titulo: 'Legacy x FURIA',
+      legenda: 'Terminou 0 : 2',
+      time1: { nome: 'Legacy', logo: '/times/legacy.png' },
+      time2: { nome: 'FURIA', logo: '/times/furia.png' },
+    },
+  ]);
+  expect(jogosDaInicio([], agora)).toEqual([]);
 });

@@ -2,32 +2,22 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
-import { agendaDosTimes, cartoesDeNoticias, FILTROS_DE_NOTICIAS, lerFiltroDeNoticias, type CartaoDeNoticia, type TimeNoConfronto } from '@/dominio/cartoes-de-noticias';
+import {
+  agendaDosTimes,
+  cartoesDeNoticias,
+  FILTROS_DE_NOTICIAS,
+  lerFiltroDeNoticias,
+  quandoCurto,
+  quandoDoJogo,
+  type CartaoDeNoticia,
+  type TimeNoConfronto,
+} from '@/dominio/cartoes-de-noticias';
 import { ultimasNoticias } from '@/dominio/noticias';
 import { noticiasSteamDaTela } from '@/dominio/noticias-steam';
 import { ENDERECO_DA_LIQUIPEDIA, tierSDaTela } from '@/dominio/tier-s';
 
-const FUSO = 'America/Sao_Paulo';
-const dataCurta = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: FUSO });
-const hora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: FUSO });
-const diaDe = new Intl.DateTimeFormat('en-CA', { timeZone: FUSO });
-const diaDaSemana = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: FUSO });
-
-/** "hoje", "amanhã", o dia da semana (até 6 dias) ou a data. */
-function quandoCurto(data: Date, agora: Date): string {
-  const dias = Math.round((Date.parse(diaDe.format(data)) - Date.parse(diaDe.format(agora))) / 86_400_000);
-  if (dias === 0) return 'hoje';
-  if (dias === 1) return 'amanhã';
-  if (dias > 1 && dias < 7) return diaDaSemana.format(data);
-  return dataCurta.format(data);
-}
-
-/** Jogo dos times BR: a data e a hora em Brasília, com "Hoje" ou "Amanhã" quando for o caso (dono, 11/11/2026). */
-function quandoDoJogo(data: Date, agora: Date): string {
-  const dia = quandoCurto(data, agora);
-  const prefixo = dia === 'hoje' ? 'Hoje, ' : dia === 'amanhã' ? 'Amanhã, ' : '';
-  return `${prefixo}${dataCurta.format(data)} às ${hora.format(data)}`;
-}
+const dataCurta = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+const hora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
 
 /** Notícia do clube abre aqui no site; CS2 e times brasileiros abrem a fonte em outra aba. */
 function Destino({ cartao, className, children }: { cartao: Pick<CartaoDeNoticia, 'externo' | 'href'>; className: string; children: React.ReactNode }) {

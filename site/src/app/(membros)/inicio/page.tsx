@@ -3,21 +3,22 @@ import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { bombandoAgora } from '@/dominio/bombando';
+import { jogosDaInicio } from '@/dominio/cartoes-de-noticias';
 import { enderecoDoDiscord } from '@/dominio/discord';
 import { mvpsDoPeriodo, periodoDeBrasilia } from '@/dominio/mvps';
 import { ultimasNoticias } from '@/dominio/noticias';
 import { noticiasSteamDaTela } from '@/dominio/noticias-steam';
 import { rankingDaComunidade } from '@/dominio/ranking';
-import { ENDERECO_DA_LIQUIPEDIA, tierSDaTela } from '@/dominio/tier-s';
+import { tierSDaTela } from '@/dominio/tier-s';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
 import { CarrosselDeNoticias } from './carrossel';
+import { JogosDosTimes } from './jogos-dos-times';
 
 const TOTAL_DO_MIX = 10;
 const NOTICIAS_NO_CARROSSEL = 4;
 const dataCurta = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
-const dataEHora = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
 // Notícia sem foto ganha a de um mapa, para o cartão nunca ficar vazio.
 const FOTOS_DE_RESERVA = ['/mapas/egypt.webp', '/mapas/laboratory.webp', '/mapas/biochemical-hotel.webp', '/mapas/silent-village.webp'];
 
@@ -51,7 +52,7 @@ export default async function Inicio() {
   const aoVivo = bombando.cartoes.find((cartao) => cartao.tipo === 'diversao') ?? bombando.cartoes[0];
   const mvp = mvpsDoDia[0];
   const cs2 = steam[0];
-  const jogo = tierS?.jogos[0];
+  const jogosDosTimes = jogosDaInicio(tierS?.jogos ?? [], agora);
   const minhaPosicao = ranking.find((linha) => linha.jogador.id === usuario.id)?.posicao;
   const topo = ranking[0];
   const discord = enderecoDoDiscord(process.env.DISCORD_URL);
@@ -132,15 +133,8 @@ export default async function Inicio() {
             <h3>Sem novidades</h3>
           </Link>
         )}
-        {jogo ? (
-          <a href={`${ENDERECO_DA_LIQUIPEDIA}${jogo.pagina}`} target="_blank" rel="noreferrer" className="cartao-destaque pequeno">
-            <Image src="/mapas/transport-ship.webp" alt="" width={480} height={270} />
-            <span className="selo-modo verde">Times BR</span>
-            <h3>
-              {jogo.time1} x {jogo.time2}
-            </h3>
-            <p>{jogo.placar ?? (jogo.quando ? dataEHora.format(jogo.quando) : jogo.torneio)}</p>
-          </a>
+        {jogosDosTimes.length > 0 ? (
+          <JogosDosTimes jogos={jogosDosTimes} />
         ) : (
           <Link href="/noticias?tipo=times" className="cartao-destaque pequeno">
             <Image src="/mapas/transport-ship.webp" alt="" width={480} height={270} />

@@ -74,6 +74,41 @@ const LOGO_DO_TIME: Record<string, string> = {
 const time = (nome: string): TimeNoConfronto => ({ nome, logo: LOGO_DO_TIME[nome] ?? null });
 const confrontoDe = (jogo: JogoBr): Confronto => ({ time1: time(jogo.time1), time2: time(jogo.time2), placar: jogo.placar });
 
+const FUSO = 'America/Sao_Paulo';
+const dataCurta = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: FUSO });
+const hora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: FUSO });
+const diaDe = new Intl.DateTimeFormat('en-CA', { timeZone: FUSO });
+const diaDaSemana = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: FUSO });
+
+/** "hoje", "amanhã", o dia da semana (até 6 dias) ou a data, no dia de Brasília. */
+export function quandoCurto(data: Date, agora: Date): string {
+  const dias = Math.round((Date.parse(diaDe.format(data)) - Date.parse(diaDe.format(agora))) / 86_400_000);
+  if (dias === 0) return 'hoje';
+  if (dias === 1) return 'amanhã';
+  if (dias > 1 && dias < 7) return diaDaSemana.format(data);
+  return dataCurta.format(data);
+}
+
+/** Jogo dos times BR: a data e a hora em Brasília, com "Hoje" ou "Amanhã" quando for o caso (dono, 11/11/2026). */
+export function quandoDoJogo(data: Date, agora: Date): string {
+  const dia = quandoCurto(data, agora);
+  const prefixo = dia === 'hoje' ? 'Hoje, ' : dia === 'amanhã' ? 'Amanhã, ' : '';
+  return `${prefixo}${dataCurta.format(data)} às ${hora.format(data)}`;
+}
+
+export type SlideDeJogo = { href: string; titulo: string; legenda: string; time1: TimeNoConfronto; time2: TimeNoConfronto };
+
+/** O cartão Times BR da Início passa pelos jogos com as duas logos: os próximos primeiro, depois os resultados. */
+export function jogosDaInicio(jogos: JogoBr[], agora: Date = new Date(), limite = 4): SlideDeJogo[] {
+  return agendaDosTimes(jogos, agora, limite).map((linha) => ({
+    href: linha.href,
+    titulo: `${linha.time1.nome} x ${linha.time2.nome}`,
+    legenda: linha.placar ? `Terminou ${linha.placar.replace(':', ' : ')}` : quandoDoJogo(linha.quando, agora),
+    time1: linha.time1,
+    time2: linha.time2,
+  }));
+}
+
 export type LinhaDaAgenda = Confronto & { torneio: string; quando: Date; terminou: boolean; href: string };
 
 /** A agenda dos times BR ao lado do destaque: os próximos jogos (do mais perto ao mais longe) e depois os resultados. */

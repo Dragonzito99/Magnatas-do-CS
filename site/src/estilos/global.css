@@ -3615,6 +3615,59 @@ a.cartao-destaque:hover {
   padding: 14px;
 }
 
+/* Times BR na Início: as logos dos dois times no lugar da foto, um jogo depois do outro (dono, 11/11/2026). */
+.carrossel-dos-times {
+  position: relative;
+  display: grid;
+}
+
+.cartao-destaque.jogo-dos-times {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(74, 222, 128, 0.18), transparent 50%),
+    radial-gradient(circle at 70% 30%, rgba(245, 179, 1, 0.14), transparent 50%),
+    #0b0713;
+}
+
+.cartao-destaque.jogo-dos-times > .logos-do-jogo {
+  position: absolute;
+  top: 16px;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.logos-do-jogo .logo-do-time {
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+}
+
+.logos-do-jogo .x-do-confronto {
+  font-size: 24px;
+}
+
+.sigla-do-time {
+  color: #cfc6de;
+  font: italic 700 15px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.carrossel-dos-times .pontos-do-carrossel {
+  top: 12px;
+  right: 12px;
+  bottom: auto;
+  left: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .carrossel-dos-times .jogo-dos-times {
+    animation: entrar-destaque 0.5s ease-out;
+  }
+}
+
 .cartao-destaque.pequeno h3 {
   font: italic 700 21px/1.05 var(--fonte-titulo), sans-serif;
   text-transform: uppercase;
