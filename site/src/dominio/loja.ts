@@ -1,7 +1,7 @@
 import { and, count, desc, eq, gte, inArray, isNotNull, ne, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd/esquema';
-import { exigirAtivo } from './disponibilidade';
+import { exigirAtivo, type Transacao } from './disponibilidade';
 import { lancarGrana, lancarMoeda } from './grana';
 
 /**
@@ -208,6 +208,27 @@ export function lojaAberta(usuario: Pick<Usuario, 'papel' | 'estado'>, ambiente:
 const valendo = (expiraEm: Date | null, agora: Date) => expiraEm === null || expiraEm.getTime() > agora.getTime();
 
 /**
+ * Põe um item no Baú, por compra ou por prêmio. dias null = para sempre. Por dias, soma ao fim atual se o item ainda
+ * vale; o que já é para sempre continua para sempre.
+ */
+export async function darItem(tx: Transacao, usuarioId: string, itemId: string, dias: number | null, agora: Date): Promise<void> {
+  const [atual] = await tx
+    .select({ expiraEm: itensDoJogador.expiraEm })
+    .from(itensDoJogador)
+    .where(and(eq(itensDoJogador.usuarioId, usuarioId), eq(itensDoJogador.itemId, itemId)));
+  if (atual && atual.expiraEm === null) return;
+  let expiraEm: Date | null = null;
+  if (dias !== null) {
+    const inicio = atual?.expiraEm && atual.expiraEm.getTime() > agora.getTime() ? atual.expiraEm : agora;
+    expiraEm = new Date(inicio.getTime() + dias * DIA_MS);
+  }
+  await tx
+    .insert(itensDoJogador)
+    .values({ usuarioId, itemId, expiraEm, atualizadoEm: agora })
+    .onConflictDoUpdate({ target: [itensDoJogador.usuarioId, itensDoJogador.itemId], set: { expiraEm, atualizadoEm: agora } });
+}
+
+/**
  * Compra um item por alguns dias. O código vem da tela, gerado antes do clique: o mesmo código duas vezes (clique duplo,
  * reenvio) é a mesma compra e não cobra de novo. Dias comprados somam ao fim atual se o item ainda vale.
  */
@@ -235,18 +256,7 @@ export async function comprarItem(
       detalhes: { itemId: item.id, dias, preco, ...(desconto ? { desconto } : {}) },
     });
     if (!lancado) return 'repetido';
-
-    const [atual] = await tx
-      .select({ expiraEm: itensDoJogador.expiraEm })
-      .from(itensDoJogador)
-      .where(and(eq(itensDoJogador.usuarioId, usuario.id), eq(itensDoJogador.itemId, item.id)));
-    if (atual && atual.expiraEm === null) return 'comprado';
-    const inicio = atual?.expiraEm && atual.expiraEm.getTime() > agora.getTime() ? atual.expiraEm : agora;
-    const expiraEm = new Date(inicio.getTime() + dias * DIA_MS);
-    await tx
-      .insert(itensDoJogador)
-      .values({ usuarioId: usuario.id, itemId: item.id, expiraEm, atualizadoEm: agora })
-      .onConflictDoUpdate({ target: [itensDoJogador.usuarioId, itensDoJogador.itemId], set: { expiraEm, atualizadoEm: agora } });
+    await darItem(tx, usuario.id, item.id, dias, agora);
     return 'comprado';
   });
 }
@@ -286,10 +296,7 @@ export async function comprarParaSempre(
       referencia: pedido.codigo,
       detalhes: { itemId: item.id, paraSempre: true, preco },
     });
-    await tx
-      .insert(itensDoJogador)
-      .values({ usuarioId: usuario.id, itemId: item.id, expiraEm: null, atualizadoEm: agora })
-      .onConflictDoUpdate({ target: [itensDoJogador.usuarioId, itensDoJogador.itemId], set: { expiraEm: null, atualizadoEm: agora } });
+    await darItem(tx, usuario.id, item.id, null, agora);
     return 'comprado';
   });
 }

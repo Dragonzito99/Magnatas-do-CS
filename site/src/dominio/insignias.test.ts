@@ -1,8 +1,10 @@
 import { expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, servidoresDiversao, xpPartidas } from '@/bd/esquema';
+import { eq } from 'drizzle-orm';
+import { insigniasDoJogador, itensDoJogador, partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { contarFamilias, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
+import { conferirInsignias, contarFamilias, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
+import { ITENS_A_VENDA } from './loja';
 
 const ZERO = { mira: 0, ace: 0, estrela: 0, vencedor: 0, mutacao: 0, veterano: 0 };
 
@@ -79,4 +81,55 @@ test('a contagem usa só partidas que valeram XP e separa a Mutação pela porta
   const contagem = await contarFamilias(bd, [conta.id, vazia.id]);
   expect(contagem.get(conta.id)).toEqual({ mira: 55, ace: 1, estrela: 11, vencedor: 1, mutacao: 1, veterano: 5 });
   expect(contagem.get(vazia.id)).toEqual({ mira: 0, ace: 0, estrela: 0, vencedor: 0, mutacao: 0, veterano: 0 });
+});
+
+const AGORA = new Date('2026-11-11T12:00:00Z');
+const DIA = 24 * 60 * 60 * 1000;
+
+async function contaDe(bd: Bd, id: string) {
+  const [conta] = await bd.select({ grana: usuarios.grana, xpTotal: usuarios.xpTotal, principal: usuarios.insigniaPrincipal }).from(usuarios).where(eq(usuarios.id, id));
+  return conta;
+}
+
+test('conquistar Estrela até o Ouro paga os três prêmios uma vez só e vira a principal', async () => {
+  const bd = await criarBancoDeTeste();
+  const conta = await criarUsuario(bd, { estado: 'ativo' });
+  await partidaDe(bd, conta.id, { venceu: false, hs: 0, k5: 0, mvps: 231 });
+  const xpAntes = (await contaDe(bd, conta.id)).xpTotal;
+
+  const novas = await bd.transaction((tx) => conferirInsignias(tx, [conta.id], AGORA, () => 0));
+  expect(novas.map((nova) => `${nova.familia}:${nova.nivel}`)).toEqual(['estrela:0', 'estrela:1', 'estrela:2']);
+  const depois = await contaDe(bd, conta.id);
+  expect(depois.grana).toBe(50 + 100 + 200);
+  expect(depois.xpTotal - xpAntes).toBe(200 + 500 + 1000);
+  expect(depois.principal).toBe('estrela:2');
+  // O sorteio caiu duas vezes no primeiro mutante: 1 + 3 dias.
+  const primeiro = ITENS_A_VENDA().filter((item) => item.tipo === 'mutante')[0];
+  const [posse] = await bd.select().from(itensDoJogador).where(eq(itensDoJogador.usuarioId, conta.id));
+  expect(posse.itemId).toBe(primeiro.id);
+  expect(posse.expiraEm).toEqual(new Date(AGORA.getTime() + 4 * DIA));
+
+  // De novo: nada novo, nada pago.
+  expect(await bd.transaction((tx) => conferirInsignias(tx, [conta.id], AGORA, () => 0))).toEqual([]);
+  expect((await contaDe(bd, conta.id)).grana).toBe(350);
+});
+
+test('duas conferências juntas da mesma conta pagam uma vez só', async () => {
+  const bd = await criarBancoDeTeste();
+  const conta = await criarUsuario(bd, { estado: 'ativo' });
+  await partidaDe(bd, conta.id, { venceu: false, hs: 0, k5: 0, mvps: 231 });
+  await Promise.all([1, 2].map(() => bd.transaction((tx) => conferirInsignias(tx, [conta.id], AGORA, () => 0))));
+  expect(await bd.select().from(insigniasDoJogador).where(eq(insigniasDoJogador.usuarioId, conta.id))).toHaveLength(3);
+  expect((await contaDe(bd, conta.id)).grana).toBe(350);
+});
+
+test('Lendária com todos os mutantes já para sempre dá Grana a mais no lugar do mutante', async () => {
+  const bd = await criarBancoDeTeste();
+  const conta = await criarUsuario(bd, { estado: 'ativo' });
+  const mutantes = ITENS_A_VENDA().filter((item) => item.tipo === 'mutante');
+  await bd.insert(itensDoJogador).values(mutantes.map((item) => ({ usuarioId: conta.id, itemId: item.id, expiraEm: null })));
+  await partidaDe(bd, conta.id, { venceu: false, hs: 0, k5: 100, mvps: 0 });
+  await bd.transaction((tx) => conferirInsignias(tx, [conta.id], AGORA, () => 0));
+  const [lendaria] = await bd.select().from(insigniasDoJogador).where(eq(insigniasDoJogador.nivel, 4));
+  expect(lendaria).toMatchObject({ familia: 'ace', grana: 800 + 1000, mutanteId: null });
 });

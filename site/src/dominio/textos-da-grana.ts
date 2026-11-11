@@ -25,13 +25,14 @@ export type LinhaDescrita = { titulo: string; detalhe: string; itemId?: string }
 
 /** A mesma linha em duas partes, para a lista de Minhas compras: o nome em destaque e o detalhe embaixo. */
 export function descreverLinha(linha: Linha): LinhaDescrita {
-  const detalhes = (linha.detalhes ?? {}) as { itemId?: string; dias?: number; motivo?: string; paraSempre?: boolean; pacote?: string; nivel?: string; desconto?: number };
+  const detalhes = (linha.detalhes ?? {}) as { itemId?: string; dias?: number; motivo?: string; paraSempre?: boolean; pacote?: string; nivel?: string; desconto?: number; nome?: string };
   if (linha.tipo === 'partida') return { titulo: 'Partida', detalhe: 'Grana pelo XP da partida' };
   if (linha.tipo === 'abertura') return { titulo: 'Abertura da loja', detalhe: 'XP que você já tinha' };
   if (linha.tipo === 'ajuste') return { titulo: 'Ajuste da equipe', detalhe: detalhes.motivo ?? '' };
   if (linha.tipo === 'pagamento') return { titulo: 'Compra de MagCoin', detalhe: NOME_DO_PACOTE[detalhes.pacote ?? ''] ?? 'Pacote' };
   if (linha.tipo === 'mensalidade') return { titulo: 'MagCoins do mês', detalhe: NOME_DO_NIVEL[detalhes.nivel ?? ''] ?? 'Membro' };
   if (linha.tipo === 'estorno') return { titulo: 'Pagamento estornado', detalhe: '' };
+  if (linha.tipo === 'insignia') return { titulo: 'Insígnia', detalhe: detalhes.nome ?? '' };
   const prazo = detalhes.paraSempre ? 'para sempre' : detalhes.dias === 1 ? '1 dia' : `${detalhes.dias} dias`;
   const item = detalhes.itemId ? itemDoCatalogo(detalhes.itemId) : undefined;
   if (!item) return { titulo: 'Compra', detalhe: prazo };

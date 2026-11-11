@@ -32,3 +32,7 @@ test('cada linha vira título e detalhe para a lista de compras, com o item quan
   expect(descreverLinha({ tipo: 'ajuste', referencia: 'x', detalhes: { motivo: 'teste' } })).toEqual({ titulo: 'Ajuste da equipe', detalhe: 'teste' });
   expect(descreverLinha({ tipo: 'pagamento', referencia: 'x', detalhes: { pacote: 'pequeno' } })).toEqual({ titulo: 'Compra de MagCoin', detalhe: 'Pacote pequeno' });
 });
+
+test('o prêmio de insígnia aparece com o nome dela', () => {
+  expect(descreverLinha({ tipo: 'insignia', referencia: 'insignia:estrela:2', detalhes: { nome: 'Estrela Ouro' } })).toEqual({ titulo: 'Insígnia', detalhe: 'Estrela Ouro' });
+});

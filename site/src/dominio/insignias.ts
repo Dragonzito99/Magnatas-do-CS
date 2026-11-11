@@ -1,7 +1,9 @@
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, servidoresDiversao, xpPartidas } from '@/bd/esquema';
+import { insigniasDoJogador, itensDoJogador, partidaJogadores, servidoresDiversao, usuarios, xpPartidas } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
+import { lancarGrana } from './grana';
+import { darItem, ITENS_A_VENDA } from './loja';
 
 /**
  * Insígnias (dono, 11/11/2026), no jeito das Badges do CrossFire e com desenho nosso: 6 famílias com 5 níveis cada,
@@ -106,4 +108,88 @@ export async function contarFamilias(bd: Bd | Transacao, usuarioIds: string[]): 
   for (const linha of todas) Object.assign(contagens.get(linha.usuarioId)!, { veterano: linha.veterano, mutacao: Number(linha.mutacao) });
 
   return contagens;
+}
+
+/** Mutantes à venda que a conta ainda não tem para sempre: os que o sorteio do prêmio pode dar. */
+async function mutantesParaSortear(tx: Transacao, usuarioId: string): Promise<string[]> {
+  const paraSempre = new Set(
+    (
+      await tx
+        .select({ itemId: itensDoJogador.itemId })
+        .from(itensDoJogador)
+        .where(and(eq(itensDoJogador.usuarioId, usuarioId), isNull(itensDoJogador.expiraEm)))
+    ).map((linha) => linha.itemId),
+  );
+  return ITENS_A_VENDA()
+    .filter((item) => item.tipo === 'mutante' && !paraSempre.has(item.id))
+    .map((item) => item.id);
+}
+
+const sortearAoAcaso = (quantos: number) => Math.floor(Math.random() * quantos);
+const ordemDaFamilia = (familia: Familia) => FAMILIAS.findIndex((item) => item.chave === familia);
+
+/**
+ * Confere as metas das contas e entrega as insígnias novas com o prêmio (Grana, XP e mutante sorteado), na transação de
+ * quem chama. A chave da tabela faz a mesma insígnia, e o prêmio dela, sair uma vez só, mesmo com duas conferências
+ * juntas. A primeira insígnia vira a principal. Devolve só as novas.
+ */
+export async function conferirInsignias(
+  tx: Transacao,
+  usuarioIds: string[],
+  agora: Date = new Date(),
+  sortear: (quantos: number) => number = sortearAoAcaso,
+): Promise<(ChaveDaInsignia & { usuarioId: string })[]> {
+  const contagens = await contarFamilias(tx, usuarioIds);
+  const novas: (ChaveDaInsignia & { usuarioId: string })[] = [];
+  for (const usuarioId of usuarioIds) {
+    const alcancados = niveisAlcancados(contagens.get(usuarioId)!);
+    if (alcancados.length === 0) continue;
+    const jaTem = new Set(
+      (await tx.select({ familia: insigniasDoJogador.familia, nivel: insigniasDoJogador.nivel }).from(insigniasDoJogador).where(eq(insigniasDoJogador.usuarioId, usuarioId))).map(
+        (linha) => `${linha.familia}:${linha.nivel}`,
+      ),
+    );
+    const faltam = alcancados.filter((chave) => !jaTem.has(`${chave.familia}:${chave.nivel}`));
+    if (faltam.length === 0) continue;
+    // Trava a conta: outra conferência da mesma conta espera esta terminar.
+    await tx.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.id, usuarioId)).for('update');
+
+    const daConta: ChaveDaInsignia[] = [];
+    for (const { familia, nivel } of faltam) {
+      const premio = PREMIOS[nivel];
+      let grana = premio.grana;
+      let mutanteId: string | null = null;
+      let mutanteDias: number | null = null;
+      if (premio.mutanteDias !== undefined) {
+        const candidatos = await mutantesParaSortear(tx, usuarioId);
+        if (candidatos.length > 0) {
+          mutanteId = candidatos[Math.min(sortear(candidatos.length), candidatos.length - 1)];
+          mutanteDias = premio.mutanteDias;
+        } else if (premio.mutanteDias === null) {
+          grana += GRANA_NO_LUGAR_DO_MUTANTE;
+        }
+      }
+      const [nova] = await tx
+        .insert(insigniasDoJogador)
+        .values({ usuarioId, familia, nivel, conquistadaEm: agora, grana, xp: premio.xp, mutanteId, mutanteDias })
+        .onConflictDoNothing()
+        .returning({ nivel: insigniasDoJogador.nivel });
+      if (!nova) continue;
+      if (mutanteId) await darItem(tx, usuarioId, mutanteId, mutanteDias, agora);
+      await lancarGrana(tx, { usuarioId, tipo: 'insignia', quantidade: grana, referencia: `insignia:${familia}:${nivel}`, detalhes: { nome: nomeDaInsignia(familia, nivel) } });
+      await tx
+        .update(usuarios)
+        .set({ xpTotal: sql`${usuarios.xpTotal} + ${premio.xp}` })
+        .where(eq(usuarios.id, usuarioId));
+      daConta.push({ familia, nivel });
+    }
+    if (daConta.length === 0) continue;
+    const melhor = [...daConta].sort((a, b) => b.nivel - a.nivel || ordemDaFamilia(a.familia) - ordemDaFamilia(b.familia))[0];
+    await tx
+      .update(usuarios)
+      .set({ insigniaPrincipal: `${melhor.familia}:${melhor.nivel}` })
+      .where(and(eq(usuarios.id, usuarioId), isNull(usuarios.insigniaPrincipal)));
+    novas.push(...daConta.map((chave) => ({ ...chave, usuarioId })));
+  }
+  return novas;
 }

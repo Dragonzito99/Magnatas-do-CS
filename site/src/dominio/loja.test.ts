@@ -6,7 +6,7 @@ import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { ContaSemAcesso } from './disponibilidade';
 import { lancarGrana, lancarMoeda, SaldoInsuficiente } from './grana';
-import { bauDe, CATALOGO, comprarItem, comprarParaSempre, DIAS_A_VENDA, fimDasOfertas, ITENS_A_VENDA, itemDoCatalogo, ItemInvalido, JaEhSeu, lojaAberta, maisComprados, moldurasDe, ofertasDoDia, PRECOS, PRECOS_MAGCOIN, precoDeHoje, RARIDADE, tirarItem, usarItem, visuaisDe } from './loja';
+import { bauDe, CATALOGO, comprarItem, comprarParaSempre, darItem, DIAS_A_VENDA, fimDasOfertas, ITENS_A_VENDA, itemDoCatalogo, ItemInvalido, JaEhSeu, lojaAberta, maisComprados, moldurasDe, ofertasDoDia, PRECOS, PRECOS_MAGCOIN, precoDeHoje, RARIDADE, tirarItem, usarItem, visuaisDe } from './loja';
 
 let bd: Bd;
 const DIA = 24 * 60 * 60 * 1000;
@@ -338,4 +338,14 @@ test('mais comprados: os itens com mais compras nos últimos 30 dias, sem contar
     .where(sql`${lancamentosDeGrana.detalhes}->>'itemId' = 'cor-azul'`);
   await bd.transaction((tx) => lancarGrana(tx, { usuarioId: conta.id, tipo: 'ajuste', quantidade: -1, referencia: 'x', detalhes: { itemId: 'cor-roxa' } }));
   expect(await maisComprados(bd, AGORA, 2)).toEqual(['moldura-fogo', 'etiqueta-don']);
+});
+
+test('dar um item soma os dias ao que ainda vale e não mexe no que é para sempre', async () => {
+  const conta = await contaCom(0);
+  await bd.transaction((tx) => darItem(tx, conta.id, 'mutante-blindado', 2, AGORA));
+  await bd.transaction((tx) => darItem(tx, conta.id, 'mutante-blindado', 3, AGORA));
+  expect((await posse(conta, 'mutante-blindado'))?.expiraEm).toEqual(new Date(AGORA.getTime() + 5 * DIA));
+  await bd.transaction((tx) => darItem(tx, conta.id, 'mutante-fumaca', null, AGORA));
+  await bd.transaction((tx) => darItem(tx, conta.id, 'mutante-fumaca', 3, AGORA));
+  expect((await posse(conta, 'mutante-fumaca'))?.expiraEm).toBeNull();
 });
