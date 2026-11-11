@@ -29,7 +29,7 @@ test('os níveis aprovados pelo dono', () => {
   expect(NIVEIS.bronze).toMatchObject({ precoCentavos: 500, bonusGrana: 0.1, magcoinsPorMes: 0, itens: ['etiqueta-apoiador'] });
   expect(NIVEIS.prata).toMatchObject({ precoCentavos: 1000, bonusGrana: 0.2, magcoinsPorMes: 50, itens: ['etiqueta-apoiador', 'cor-dourada'] });
   expect(NIVEIS.ouro).toMatchObject({ precoCentavos: 1500, bonusGrana: 0.3, magcoinsPorMes: 100, itens: ['etiqueta-apoiador', 'moldura-ouro'] });
-  expect(NIVEIS.premium).toMatchObject({ precoCentavos: 3000, bonusGrana: 0.3, magcoinsPorMes: 200, itens: ['etiqueta-apoiador', 'moldura-ouro'], premium: true });
+  expect(NIVEIS.premium).toMatchObject({ precoCentavos: 3000, bonusGrana: 0.3, magcoinsPorMes: 250, itens: ['etiqueta-apoiador', 'moldura-ouro'], premium: true });
 });
 
 test('a mensalidade vale um mês e 3 dias, credita as MagCoins do mês uma vez e liga o nível', async () => {
@@ -76,7 +76,7 @@ test('o Premium ganha os itens de lançamento para sempre e um envio na 1ª, 3ª
   const [blindado] = await bd.select().from(itensDoJogador).where(eq(itensDoJogador.itemId, 'mutante-blindado'));
   expect(blindado.expiraEm).toBeNull();
   expect(await bd.select().from(envios).where(eq(envios.usuarioId, conta.id))).toHaveLength(3);
-  expect((await recarregar(bd, conta)).magcoin).toBe(1000);
+  expect((await recarregar(bd, conta)).magcoin).toBe(5 * 250);
 });
 
 test('membro ganha Grana a mais pela partida, pelo nível do dia', async () => {

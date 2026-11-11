@@ -24,7 +24,7 @@ export const NIVEIS: Record<NivelDeMembro, Nivel> = {
   bronze: { nome: 'Bronze', precoCentavos: 500, bonusGrana: 0.1, magcoinsPorMes: 0, itens: ['etiqueta-apoiador'] },
   prata: { nome: 'Prata', precoCentavos: 1000, bonusGrana: 0.2, magcoinsPorMes: 50, itens: ['etiqueta-apoiador', 'cor-dourada'] },
   ouro: { nome: 'Ouro', precoCentavos: 1500, bonusGrana: 0.3, magcoinsPorMes: 100, itens: ['etiqueta-apoiador', 'moldura-ouro'] },
-  premium: { nome: 'Magnata Premium', precoCentavos: 3000, bonusGrana: 0.3, magcoinsPorMes: 200, itens: ['etiqueta-apoiador', 'moldura-ouro'], premium: true },
+  premium: { nome: 'Magnata Premium', precoCentavos: 3000, bonusGrana: 0.3, magcoinsPorMes: 250, itens: ['etiqueta-apoiador', 'moldura-ouro'], premium: true },
 };
 
 export const ORDEM_DOS_NIVEIS: NivelDeMembro[] = ['bronze', 'prata', 'ouro', 'premium'];
