@@ -36,27 +36,27 @@ async function amigos(a: Usuario, b: Usuario) {
 }
 
 test('conversa direta só entre amigos, uma por par, e a mensagem chega como não lida', async () => {
-  await expect(conversaDiretaCom(bd, eu, ele.id)).rejects.toBeInstanceOf(SemAcessoAConversa);
+  await expect(conversaDiretaCom(bd, eu, ele.id, AGORA)).rejects.toBeInstanceOf(SemAcessoAConversa);
   await amigos(eu, ele);
-  const conversa = await conversaDiretaCom(bd, eu, ele.id);
-  expect(await conversaDiretaCom(bd, ele, eu.id)).toBe(conversa);
+  const conversa = await conversaDiretaCom(bd, eu, ele.id, AGORA);
+  expect(await conversaDiretaCom(bd, ele, eu.id, AGORA)).toBe(conversa);
   await enviarMensagem(bd, eu, conversa, 'bora um mix?', depois(1));
-  expect(await naoLidasDe(bd, ele.id)).toBe(1);
-  expect(await naoLidasDe(bd, eu.id)).toBe(0);
+  expect(await naoLidasDe(bd, ele.id, AGORA)).toBe(1);
+  expect(await naoLidasDe(bd, eu.id, AGORA)).toBe(0);
   const lidas = await mensagensDe(bd, ele, conversa, depois(2));
   expect(lidas.map((mensagem) => [mensagem.autorApelido, mensagem.texto])).toEqual([['Dragonzit0', 'bora um mix?']]);
-  expect(await naoLidasDe(bd, ele.id)).toBe(0);
+  expect(await naoLidasDe(bd, ele.id, AGORA)).toBe(0);
 });
 
 test('a lista de conversas mostra o nome do outro, a última mensagem e as não lidas, a mais recente primeiro', async () => {
   await amigos(eu, ele);
   await amigos(eu, outro);
-  const comEle = await conversaDiretaCom(bd, eu, ele.id);
-  const comOutro = await conversaDiretaCom(bd, eu, outro.id);
+  const comEle = await conversaDiretaCom(bd, eu, ele.id, AGORA);
+  const comOutro = await conversaDiretaCom(bd, eu, outro.id, AGORA);
   await enviarMensagem(bd, ele, comEle, 'primeira', depois(1));
   await enviarMensagem(bd, outro, comOutro, 'segunda', depois(2));
   await enviarMensagem(bd, outro, comOutro, 'terceira', depois(3));
-  const lista = await conversasDe(bd, eu.id);
+  const lista = await conversasDe(bd, eu.id, AGORA);
   expect(lista.map((conversa) => [conversa.nome, conversa.ultima, conversa.naoLidas])).toEqual([
     ['Alfa', 'terceira', 2],
     ['Marfioso', 'primeira', 1],
@@ -65,7 +65,7 @@ test('a lista de conversas mostra o nome do outro, a última mensagem e as não 
 
 test('desfeita a amizade, a conversa direta fecha para os dois', async () => {
   await amigos(eu, ele);
-  const conversa = await conversaDiretaCom(bd, eu, ele.id);
+  const conversa = await conversaDiretaCom(bd, eu, ele.id, AGORA);
   await desfazerAmizade(bd, eu, ele.id);
   await expect(enviarMensagem(bd, ele, conversa, 'oi', depois(1))).rejects.toBeInstanceOf(SemAcessoAConversa);
 });
@@ -75,9 +75,9 @@ test('grupo: o criador chama amigos, todos falam, e quem está fora não lê', a
   await expect(criarGrupo(bd, eu, 'Mix de sexta', [ele.id, outro.id], AGORA)).rejects.toBeInstanceOf(SemAcessoAConversa);
   const grupo = await criarGrupo(bd, eu, 'Mix de sexta', [ele.id], AGORA);
   await enviarMensagem(bd, ele, grupo, 'tô dentro', depois(1));
-  expect(await naoLidasDe(bd, eu.id)).toBe(1);
+  expect(await naoLidasDe(bd, eu.id, AGORA)).toBe(1);
   await expect(mensagensDe(bd, outro, grupo, depois(2))).rejects.toBeInstanceOf(SemAcessoAConversa);
-  expect((await conversasDe(bd, ele.id)).map((conversa) => [conversa.tipo, conversa.nome])).toEqual([['grupo', 'Mix de sexta']]);
+  expect((await conversasDe(bd, ele.id, AGORA)).map((conversa) => [conversa.tipo, conversa.nome])).toEqual([['grupo', 'Mix de sexta']]);
 });
 
 test('o clã tem um grupo só dele: quem está no clã fala, quem sai perde o acesso', async () => {
@@ -86,19 +86,19 @@ test('o clã tem um grupo só dele: quem está no clã fala, quem sai perde o ac
     { claId: cla.id, usuarioId: eu.id, cargo: 'dono' },
     { claId: cla.id, usuarioId: ele.id, cargo: 'membro' },
   ]);
-  const doCla = await conversaDoCla(bd, eu);
+  const doCla = await conversaDoCla(bd, eu, AGORA);
   expect(doCla).not.toBeNull();
-  expect(await conversaDoCla(bd, ele)).toBe(doCla);
+  expect(await conversaDoCla(bd, ele, AGORA)).toBe(doCla);
   await enviarMensagem(bd, eu, doCla!, 'treino às 21h', depois(1));
-  expect(await naoLidasDe(bd, ele.id)).toBe(1);
-  expect((await conversasDe(bd, ele.id))[0]).toMatchObject({ tipo: 'cla', nome: '[MGN] Magnatas Originais' });
+  expect(await naoLidasDe(bd, ele.id, AGORA)).toBe(1);
+  expect((await conversasDe(bd, ele.id, AGORA))[0]).toMatchObject({ tipo: 'cla', nome: '[MGN] Magnatas Originais' });
   await expect(mensagensDe(bd, outro, doCla!, depois(2))).rejects.toBeInstanceOf(SemAcessoAConversa);
-  expect(await conversaDoCla(bd, outro)).toBeNull();
+  expect(await conversaDoCla(bd, outro, AGORA)).toBeNull();
 });
 
 test('mensagem vazia ou longa demais é recusada, e a mensagem apagada pela equipe some', async () => {
   await amigos(eu, ele);
-  const conversa = await conversaDiretaCom(bd, eu, ele.id);
+  const conversa = await conversaDiretaCom(bd, eu, ele.id, AGORA);
   await expect(enviarMensagem(bd, eu, conversa, '   ', AGORA)).rejects.toBeInstanceOf(MensagemInvalida);
   await expect(enviarMensagem(bd, eu, conversa, 'x'.repeat(1001), AGORA)).rejects.toBeInstanceOf(MensagemInvalida);
   const id = await enviarMensagem(bd, eu, conversa, 'palavrão', AGORA);
