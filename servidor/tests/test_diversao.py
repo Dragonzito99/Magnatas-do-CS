@@ -1871,3 +1871,20 @@ def test_o_aviso_do_mutante_e_do_heroi_e_um_cartao_que_fica_na_tela():
     assert "━" in cartao and "fontSize-xl" in cartao
     tela = metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
     assert "cartoes" in tela
+
+
+def test_o_g_do_mutante_chega_ao_servidor_mesmo_so_com_a_faca():
+    # Com mp_drop_knife_enable desligado, o jogo nem mandava o G de quem só tem a faca: o poder não funcionava
+    # (dono, 10/11/2026). Ligado, o plugin pega o G do mutante, e o humano não larga a faca.
+    assert valor("mp_drop_knife_enable", "mutacao") == "1"
+    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    humano = g[:g.index("if (!EhMutanteDeVerdade(jogador)) return HookResult.Continue;")]
+    assert 'Contains("knife")' in humano and "return HookResult.Handled" in humano
+
+
+def test_o_hud_so_e_reenviado_quando_muda_para_nao_piscar():
+    tela = metodo_da_mutacao("private void MostrarNaTela(")
+    assert "ultimasTelas" in tela
+    assert "ReenviarATelaACada" in tela
+    assert "MostrarNaTela(" in metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
+    assert "<br>" not in metodo_da_mutacao("private static string BarraDePoder(")

@@ -39,6 +39,9 @@ public partial class ModoDeDiversao
     private const int BlocosDaBarra = 12;
     // Cartão de cada vaga (mutante, herói) e até quando ele fica na tela.
     private readonly Dictionary<int, (string Html, float Ate)> cartoes = new();
+    // O que cada vaga viu por último no meio da tela, e quando: só manda de novo se mudar ou antes de sumir.
+    private readonly Dictionary<int, (string Html, float Em)> ultimasTelas = new();
+    private const float ReenviarATelaACada = 1.5f;
     // A partir do nível 2, o mutante corre mais rápido por alguns segundos ao apertar G (o "largar arma" do jogo).
     private const int NivelDaCorrida = 2;
     private const float BonusDaCorrida = 0.5f;
@@ -176,6 +179,8 @@ public partial class ModoDeDiversao
         if (municao != null) municao.Value = MunicaoDeReservaInfinita;
         // A troca de mapa volta as configurações ao padrão, e a super Negev de quem morria caía no chão.
         Server.ExecuteCommand("mp_death_drop_gun 0");
+        // O G do mutante só chega ao servidor com a faca liberada para largar; o AoApertarG não deixa ninguém largar.
+        Server.ExecuteCommand("mp_drop_knife_enable 1");
         Parar(ref relogioDoSorteio);
         Parar(ref fimDaRodada);
         Parar(ref relogioDaContagem);
@@ -751,7 +756,11 @@ public partial class ModoDeDiversao
 
     private HookResult AoApertarG(CCSPlayerController? jogador, CommandInfo comando)
     {
-        if (jogador == null || !EhMutanteDeVerdade(jogador)) return HookResult.Continue;
+        if (jogador == null) return HookResult.Continue;
+        // A faca pode ser largada (mp_drop_knife_enable, para o G do mutante chegar): o humano continua sem largar a dele.
+        var naMao = jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value?.DesignerName ?? "";
+        if ((naMao.Contains("knife") || naMao.Contains("bayonet")) && !EhMutanteDeVerdade(jogador)) return HookResult.Handled;
+        if (!EhMutanteDeVerdade(jogador)) return HookResult.Continue;
         // O Blindado troca a corrida pelo escudo, que já vale no nível 1.
         if (SkinDe(jogador) == "blindado") return LigarEscudo(jogador);
         if (NivelDe(jogador).Nivel < NivelDaCorrida)
@@ -783,11 +792,23 @@ public partial class ModoDeDiversao
         {
             if (cartoes.TryGetValue(jogador.Slot, out var cartao))
             {
-                jogador.PrintToCenterHtml(cartao.Html, 1);
+                MostrarNaTela(jogador, cartao.Html);
                 continue;
             }
-            if (jogador is { Team: CsTeam.Terrorist } && rodadaEmAndamento) jogador.PrintToCenterHtml(HudDoPoder(jogador, agora), 1);
+            if (jogador is { Team: CsTeam.Terrorist } && rodadaEmAndamento) MostrarNaTela(jogador, HudDoPoder(jogador, agora));
         }
+    }
+
+    /// <summary>
+    /// Manda para a tela só quando muda, e de tempos em tempos para não sumir: mandar a cada quarto de segundo fazia o
+    /// aviso piscar (dono, 10/11/2026).
+    /// </summary>
+    private void MostrarNaTela(CCSPlayerController jogador, string html)
+    {
+        var agora = Server.CurrentTime;
+        if (ultimasTelas.TryGetValue(jogador.Slot, out var ultima) && ultima.Html == html && agora - ultima.Em < ReenviarATelaACada) return;
+        ultimasTelas[jogador.Slot] = (html, agora);
+        jogador.PrintToCenterHtml(html, (int)ReenviarATelaACada + 2);
     }
 
     /// <summary>O poder do G do mutante: pronto (cheia), em uso (esvaziando), carregando (enchendo) ou ainda travado.</summary>
@@ -812,7 +833,7 @@ public partial class ModoDeDiversao
     private static string BarraDePoder(string nome, string cor, float cheia)
     {
         var blocos = (int)Math.Round(Math.Clamp(cheia, 0f, 1f) * BlocosDaBarra);
-        return $"<font color='{cor}'>» {nome} «</font><br><font color='{cor}' class='fontSize-l'>{new string('█', blocos)}</font><font color='#555555' class='fontSize-l'>{new string('█', BlocosDaBarra - blocos)}</font>";
+        return $"<font color='{cor}'>» {nome} «  {new string('█', blocos)}</font><font color='#555555'>{new string('█', BlocosDaBarra - blocos)}</font>";
     }
 
     private static void MudarTamanho(CBaseEntity corpo, float tamanho)
