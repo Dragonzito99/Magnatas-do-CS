@@ -1,0 +1,2 @@
+# Cópia diária do banco do site, às 4h30 (dono, 11/11/2026).
+30 4 * * * root bash /usr/local/bin/magnatas-backup-banco.sh >> /var/log/magnatas-backup.log 2>&1
