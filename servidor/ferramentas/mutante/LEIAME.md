@@ -37,6 +37,9 @@ MagnatasVisual veste em todo servidor, e o herói da super Negev da Mutação. M
 personagem (`models/magnatas/<nome>_v1`), e cada versão nova vira item novo. O site guarda o caminho do boneco na conta
 (`usuarios.boneco`) e o plugin só aceita caminhos da lista dele.
 
+Na Mutação vale só o herói: trocar um boneco nosso por outro com o jogador vivo (boneco próprio para zumbi, Blindado
+de um nível para outro) fechou o jogo três vezes em 10/11. O boneco do jogo virando zumbi nunca fechou.
+
 Gestos (animações extras do Meshy, como dança, flexão e salto mortal), num modelo de cena próprio:
 
 ```

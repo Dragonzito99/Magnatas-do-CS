@@ -1770,26 +1770,14 @@ def test_a_super_negev_vem_sem_apagar_o_fuzil_que_esta_na_mao():
     assert entregar.index("arma.Remove()") < entregar.index("GiveNamedItem(ArmaEspecial)")
 
 
-def test_na_mutacao_o_boneco_proprio_vem_da_propria_mutacao_uma_troca_por_vez():
-    # Antes o MagnatasVisual vestia o boneco e a Mutação trocava para o zumbi 0,1 s depois: o servidor caiu
-    # (WriteEnterPVS, 10/11 19:54). Agora só a Mutação troca o corpo, no mesmo ponto em que já cuida do nascimento.
+def test_na_mutacao_so_o_heroi_troca_de_boneco_os_humanos_ficam_com_o_do_jogo():
+    # Dono, 10/11/2026: trocar um boneco nosso por outro com o jogador vivo fechou o jogo três vezes no dia. Na Mutação
+    # fica só o herói; o ADM e o do Marfioso valem nos outros modos e no competitivo.
     assert "private static readonly bool UsarHeroi = true;" in CODIGO_DA_MUTACAO
-    for boneco in ["models/magnatas/marfioso_v1/mutante.vmdl", "models/magnatas/adm_v1/mutante.vmdl"]:
-        assert f'"{boneco}"' in CODIGO_DA_MUTACAO
-    nascer = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("public HookResult AoNascer("):]
-    trecho = nascer[nascer.index('Config.Regra == "mutacao"'):nascer.index("return HookResult.Continue;")]
-    assert "AplicarAtributosDoMutante(jogador)" in trecho
-    assert trecho.index("AplicarAtributosDoMutante(jogador)") < trecho.index("else if (jogador != null) VestirBonecoProprio(jogador)")
-    vestir = metodo_da_mutacao("private void VestirBonecoProprio(")
-    assert "BonecoProprioDe(jogador)" in vestir
-    assert ".SetModel(" in vestir
-    boneco = metodo_da_mutacao("private string? BonecoProprioDe(")
-    assert "PersonagensNoServidor()" in boneco
-    assert "BonecosProprios.Contains(" in boneco
-    buscar = metodo_da_mutacao("private async Task BuscarMutantesDaLoja(")
-    assert 'TryGetProperty("boneco"' in buscar
-    assert "manifesto.AddResource(boneco)" in CODIGO_DA_MUTACAO
-    assert 'ConsoleCommand("magnatas_mutacao_boneco"' in CODIGO_DA_MUTACAO
+    for proibido in ["adm_v1", "marfioso_v1", "VestirBonecoProprio", "magnatas_mutacao_boneco", 'TryGetProperty("boneco"']:
+        assert proibido not in CODIGO_DA_MUTACAO
+        assert proibido not in CODIGO_DO_PLUGIN
+    assert "manifesto.AddResource(ModeloDoHeroi)" in CODIGO_DA_MUTACAO
 
 
 def test_quem_chega_depois_do_sorteio_assiste_de_ct_ate_a_proxima_rodada():
