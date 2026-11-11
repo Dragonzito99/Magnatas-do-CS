@@ -1260,11 +1260,12 @@ def test_sem_o_zumbi_no_servidor_o_mutante_nao_troca_de_boneco():
     assert "zumbiNoServidor = null" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void LigarMutacao"):]
 
 
-def test_mutacao_roda_biochemical_hotel_e_silent_village():
+def test_mutacao_roda_silent_village_biochemical_hotel_e_dust_elegant():
     rotacao = conf("mutacao")["ROTACAO"].split(",")
     assert rotacao[0] == conf("mutacao")["OFICINA"]
-    # O dono pediu o Silent Village primeiro, por enquanto: é o mapa que abre ao ligar.
-    assert rotacao == ["3222984182", "3223106683"]
+    # O dono pediu o Silent Village primeiro, por enquanto: é o mapa que abre ao ligar. O zm_dust_elegant_2 (82 MB)
+    # entrou em 11/11/2026, no lugar de uma Dust 2 de Halloween de 782 MB, que o dono achou pesada demais.
+    assert rotacao == ["3222984182", "3223106683", "3782950699"]
 
 
 ALASKA = RAIZ / "plugins" / "MagnatasDiversao" / "Alaska.cs"
