@@ -227,7 +227,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
           <>
             <div className="secao-da-shop">
               <h2>Diversão</h2>
-              <span className="legenda-da-secao">Sem XP · liga na hora, em cerca de 1 minuto</span>
+              <span className="legenda-da-secao">Vale XP · liga na hora, em cerca de 1 minuto</span>
             </div>
             <div className="modos-da-diversao">
               {porModo.map(({ modo, itens }) => {
