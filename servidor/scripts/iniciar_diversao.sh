@@ -37,6 +37,10 @@ if [ "${2:-}" = "--executar" ]; then
   # shellcheck disable=SC1090
   source "$SEGREDOS"
   cd "$CASA/diversao/$NOME"
+  # O -condebug recomeça o registro a cada vez que o servidor liga: o da vez anterior fica guardado, para uma queda
+  # logo antes de um reinício ainda poder ser conferida (11/11/2026).
+  REGISTRO=game/csgo/addons/metamod/console.log
+  [ -f "$REGISTRO" ] && mv -f "$REGISTRO" "$REGISTRO.anterior"
   VARIAVEL_DO_TOKEN=GSLT_$(echo "$NOME" | tr 'a-z-' 'A-Z_')
   CONTA=()
   [ -n "${!VARIAVEL_DO_TOKEN:-}" ] && CONTA=(+sv_setsteamaccount "${!VARIAVEL_DO_TOKEN}")

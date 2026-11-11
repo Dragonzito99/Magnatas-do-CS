@@ -1964,3 +1964,11 @@ def test_a_fumaca_sai_pela_funcao_do_proprio_jogo():
     procurar = metodo_da_mutacao("private MemoryFunctionWithReturn<nint, nint, nint, nint, nint, int, int, CSmokeGrenadeProjectile>? CriarFumacaDoJogo(")
     # Assinatura que não casa não derruba o plugin: fica no registro e a fumaça só não sai.
     assert "catch (Exception erro)" in procurar and "Console.WriteLine(" in procurar
+
+
+def test_o_registro_da_vez_anterior_fica_guardado_quando_o_servidor_religa():
+    # Uma queda 7 s antes de um reinício ficou sem registro: o -condebug recomeça o arquivo (11/11/2026).
+    executar = INICIAR[INICIAR.index('if [ "${2:-}" = "--executar" ]'):]
+    guardar = executar.index('mv -f "$REGISTRO" "$REGISTRO.anterior"')
+    assert guardar < executar.index("exec game/cs2.sh -dedicated -condebug")
+    assert "REGISTRO=game/csgo/addons/metamod/console.log" in executar
