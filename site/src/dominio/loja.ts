@@ -48,7 +48,7 @@ export type ItemDaLoja = {
   venda?: boolean;
   /** Item de lançamento: o Premium ganha para sempre. */
   lancamento?: boolean;
-  /** O que o mutante faz, para o destaque da loja. */
+  /** O que o mutante faz, para o destaque da loja e a janela do item. */
   descricao?: string;
   /** Os bonecos de cada nível, andando, que a vitrine mostra um depois do outro, com o poder do G naquele nível. */
   evolucoes?: { nivel: number; nome: string; imagem: string; poder: string }[];
@@ -85,7 +85,7 @@ export const CATALOGO: readonly ItemDaLoja[] = [
     valor: 'blindado',
     imagem: '/loja/mutante-blindado.webp',
     lancamento: true,
-    descricao: 'Na Mutação você vira esse mutante. Aperte G e fica sem levar dano por até 6 s. Evolui em 3 níveis.',
+    descricao: 'Na Mutação, você vira esse mutante. Aperte G e fica sem levar dano por 2 s no nível 1, 4 s no nível 2 e 6 s no nível 3. Recarga de 15 s.',
     evolucoes: [
       { nivel: 1, nome: 'Cyber Hulk', imagem: '/loja/blindado-1-andando.webp', poder: 'escudo de 2 s' },
       { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', poder: 'escudo de 4 s' },
@@ -100,7 +100,8 @@ export const CATALOGO: readonly ItemDaLoja[] = [
     nome: 'Senhor do Vazio',
     valor: 'fumaca',
     imagem: '/loja/mutante-fumaca.webp',
-    descricao: 'Na Mutação você vira esse mutante. Aperte G e solta uma cortina de fumaça de até 12 s, que custa um pouco da sua vida. Evolui em 3 níveis.',
+    descricao:
+      'Na Mutação, você vira esse mutante. Aperte G e solta uma cortina de fumaça roxa de 8 s no nível 1, 10 s no nível 2 e 12 s no nível 3. Cada fumaça custa 10% da sua vida. Recarga de 15 s.',
     evolucoes: [
       { nivel: 1, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 8 s' },
       { nivel: 2, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 10 s' },

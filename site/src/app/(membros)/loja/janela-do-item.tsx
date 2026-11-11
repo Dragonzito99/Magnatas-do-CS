@@ -21,7 +21,8 @@ const EXPLICACAO: Record<TipoDeItem, string> = {
   etiqueta: 'Aparece antes do seu nome no chat de todos os servidores.',
   aviso: 'Quando você entra no servidor, todo mundo vê.',
   moldura: 'Uma borda especial na sua foto, no perfil e no ranking.',
-  mutante: 'Na Mutação, você vira esse mutante. Aperte G e fica sem levar dano por 2 s no nível 1, 4 s no nível 2 e 6 s no nível 3. Recarga de 15 s.',
+  // Cada mutante tem o próprio texto no catálogo (descricao); este só vale se faltar.
+  mutante: 'Na Mutação, você vira esse mutante e ganha um poder no G.',
 };
 
 const dias = (quantidade: number) => (quantidade === 1 ? '1 dia' : `${quantidade} dias`);
@@ -66,7 +67,7 @@ export function JanelaDoItem({
             {NOME_DO_TIPO[item.tipo]} · {NOME_DA_RARIDADE[raridade]}
           </span>
           <h2 id="nome-na-janela">{item.nome}</h2>
-          <p>{EXPLICACAO[item.tipo]}</p>
+          <p>{item.descricao ?? EXPLICACAO[item.tipo]}</p>
           {posse && <p className="posse-na-janela">{posse.diasRestantes === null ? 'Seu para sempre.' : `Você tem: ${dias(posse.diasRestantes)}. Comprar soma.`}</p>}
           {erro && ERROS[erro] && (
             <p role="alert" className="aviso">

@@ -195,7 +195,7 @@ test('o mutante Blindado está à venda com imagem, e o servidor recebe qual mut
     { nivel: 2, nome: 'Toxic Warlord', imagem: '/loja/blindado-2-andando.webp', poder: 'escudo de 4 s' },
     { nivel: 3, nome: 'Venomclaw Titan', imagem: '/loja/blindado-3-andando.webp', poder: 'escudo de 6 s' },
   ]);
-  expect(blindado?.descricao).toBe('Na Mutação você vira esse mutante. Aperte G e fica sem levar dano por até 6 s. Evolui em 3 níveis.');
+  expect(blindado?.descricao).toBe('Na Mutação, você vira esse mutante. Aperte G e fica sem levar dano por 2 s no nível 1, 4 s no nível 2 e 6 s no nível 3. Recarga de 15 s.');
   const conta = await contaCom(2000);
   await comprar(conta, 'mutante-blindado', 1);
   expect((await recarregar(bd, conta)).grana).toBe(1800);
@@ -212,7 +212,11 @@ test('o Senhor do Vazio está à venda: fumaça no G, o nível 2 usa o boneco do
     { nivel: 2, nome: 'Voidforged Warlord', imagem: '/loja/fumaca-1-andando.webp', poder: 'fumaça de 10 s' },
     { nivel: 3, nome: 'Abyssal Void Titan', imagem: '/loja/fumaca-3-andando.webp', poder: 'fumaça de 12 s' },
   ]);
-  expect(fumaca?.descricao).toContain('Aperte G');
+  expect(fumaca?.descricao).toBe(
+    'Na Mutação, você vira esse mutante. Aperte G e solta uma cortina de fumaça roxa de 8 s no nível 1, 10 s no nível 2 e 12 s no nível 3. Cada fumaça custa 10% da sua vida. Recarga de 15 s.',
+  );
+  // Nenhum mutante da loja fica sem o próprio texto: a janela do item mostra a descrição dele.
+  expect(CATALOGO.filter((item) => item.tipo === 'mutante' && !item.descricao)).toEqual([]);
   const conta = await contaCom(2000);
   await comprar(conta, 'mutante-fumaca', 1);
   await usarItem(bd, conta, 'mutante-fumaca', AGORA);
