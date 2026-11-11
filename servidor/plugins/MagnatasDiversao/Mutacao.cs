@@ -760,6 +760,8 @@ public partial class ModoDeDiversao
     private HookResult AoApertarG(CCSPlayerController? jogador, CommandInfo comando)
     {
         if (jogador == null) return HookResult.Continue;
+        if (!jogador.IsBot)
+            Console.WriteLine($"[Magnatas] G de {jogador.PlayerName}: time={jogador.Team} vivo={jogador.PawnIsAlive} mutante={EhMutanteDeVerdade(jogador)} skin={SkinDe(jogador) ?? "comum"} na_mao={jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value?.DesignerName ?? "-"}.");
         // A faca pode ser largada (mp_drop_knife_enable, para o G do mutante chegar): o humano continua sem largar a dele.
         var naMao = jogador.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value?.DesignerName ?? "";
         if ((naMao.Contains("knife") || naMao.Contains("bayonet")) && !EhMutanteDeVerdade(jogador)) return HookResult.Handled;
@@ -1010,6 +1012,8 @@ public partial class ModoDeDiversao
         Parar(ref somDaContagem);
         infeccoes.Clear();
         corridas.Clear();
+        fumacas.Clear();
+        ApagarFumacasDoG();
         // Os mutantes e o portador dourado voltam à cor e ao tamanho normais. Os outros ficam como estão: mexer em todo
         // mundo junto do reinício da rodada só aumenta a chance de derrubar o jogo de quem está no servidor.
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist }))
@@ -1182,7 +1186,11 @@ public partial class ModoDeDiversao
         var segundos = SegundosDaFumacaNoNivel(NivelDe(jogador).Nivel);
         fumacas[jogador.Slot] = (agora + segundos, agora + SegundosDeRecargaDaFumaca);
         var nuvem = Utilities.CreateEntityByName<CSmokeGrenadeProjectile>("smokegrenade_projectile");
-        if (nuvem == null) return HookResult.Handled;
+        if (nuvem == null)
+        {
+            Console.WriteLine($"[Magnatas] Fumaça de {jogador.PlayerName}: o jogo não criou a granada.");
+            return HookResult.Handled;
+        }
         var pe = corpo.AbsOrigin;
         nuvem.TeamNum = corpo.TeamNum;
         nuvem.Thrower.Raw = corpo.EntityHandle.Raw;
@@ -1196,11 +1204,31 @@ public partial class ModoDeDiversao
         nuvem.Teleport(new Vector(pe.X, pe.Y, pe.Z + 8f), new QAngle(0, 0, 0), new Vector(0, 0, 0));
         // Parada no chão e com a hora de estourar vencida, ela abre na hora em vez de rolar como granada.
         nuvem.DetonateTime = agora;
-        AddTimer(segundos, () =>
-        {
-            if (nuvem.IsValid) nuvem.Remove();
-        });
+        Console.WriteLine($"[Magnatas] Fumaça de {jogador.PlayerName}: {segundos:0} s, custou {custo} de vida.");
+        // Pela alça, que muda quando o número é reaproveitado: depois de um reinício de rodada, o número da fumaça podia
+        // já ser de outra coisa, e apagar "a fumaça" apagava essa outra coisa (queda de 11/11/2026).
+        var alca = nuvem.EntityHandle.Raw;
+        fumacasNoChao.Add(alca);
+        AddTimer(segundos, () => ApagarFumaca(alca));
         return HookResult.Handled;
+    }
+
+    // A alça inteira (número do objeto e o serial dele): o número sozinho volta a ser usado por outra coisa.
+    private readonly List<uint> fumacasNoChao = new();
+    private const uint MascaraDoNumeroDoObjeto = 0x7FFF;
+
+    private void ApagarFumaca(uint alca)
+    {
+        fumacasNoChao.Remove(alca);
+        var entidade = Utilities.GetEntityFromIndex<CBaseEntity>((int)(alca & MascaraDoNumeroDoObjeto));
+        if (entidade is { IsValid: true } && entidade.EntityHandle.Raw == alca && entidade.DesignerName == "smokegrenade_projectile")
+            entidade.Remove();
+    }
+
+    /// <summary>No reinício da rodada, as fumaças do G que ainda estão no chão saem, e os relógios delas não acham nada.</summary>
+    private void ApagarFumacasDoG()
+    {
+        foreach (var alca in fumacasNoChao.ToList()) ApagarFumaca(alca);
     }
 
     /// <summary>Pergunta ao site qual mutante cada conta comprou e está usando. Site fora do ar: todos ficam com o comum.</summary>

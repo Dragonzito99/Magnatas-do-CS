@@ -1903,7 +1903,7 @@ def test_o_g_do_senhor_do_vazio_solta_fumaca_desde_o_nivel_1_e_custa_vida():
     assert "corpo.Health <= custo" in fumaca
     assert '"smokegrenade_projectile"' in fumaca
     assert "SmokeColor" in fumaca
-    assert "nuvem.Remove()" in fumaca
+    assert "AddTimer(segundos, () => ApagarFumaca(alca))" in fumaca
 
 
 def test_o_senhor_do_vazio_usa_o_proprio_boneco_e_aparece_no_hud():
@@ -1917,3 +1917,25 @@ def test_a_mutacao_baixa_o_pacote_do_senhor_do_vazio_que_o_plugin_usa():
     pacote = re.search(r'PacoteDaFumaca = "(\d+)"', CODIGO_DA_MUTACAO).group(1)
     assert pacote == "3837859077"
     assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")
+
+
+def test_a_fumaca_some_pela_alca_e_nunca_apaga_outra_coisa():
+    # Queda de 11/11/2026 (CopyExistingEntity) no reinício da rodada: o relógio de 8 a 12 s apagava a fumaça pelo
+    # objeto guardado, e depois do reinício o número dele podia já ser de outra coisa.
+    fumaca = metodo_da_mutacao("private HookResult SoltarFumaca(")
+    assert "nuvem.EntityHandle" in fumaca
+    apagar = metodo_da_mutacao("private void ApagarFumaca(")
+    assert "entidade.EntityHandle.Raw == alca" in apagar and 'DesignerName == "smokegrenade_projectile"' in apagar
+    assert "if (nuvem.IsValid) nuvem.Remove();" not in fumaca
+    # No reinício da rodada as fumaças do G saem junto com o tempo delas.
+    preparar = metodo_da_mutacao("public HookResult AoPrepararRodadaDaMutacao(")
+    assert "fumacas.Clear();" in preparar
+    assert "ApagarFumacasDoG()" in preparar
+
+
+def test_o_g_fica_no_registro_do_servidor_para_conferir():
+    # O dono apertava G e nada acontecia; sem registro não dava para saber se o G chegava (11/11/2026).
+    g = metodo_da_mutacao("private HookResult AoApertarG(")
+    assert 'Console.WriteLine($"[Magnatas] G de ' in g
+    fumaca = metodo_da_mutacao("private HookResult SoltarFumaca(")
+    assert 'Console.WriteLine($"[Magnatas] Fumaça de ' in fumaca
