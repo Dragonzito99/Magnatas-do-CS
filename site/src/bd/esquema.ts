@@ -29,6 +29,8 @@ export const usuarios = pgTable('usuarios', {
   magcoin: integer('magcoin').notNull().default(0),
   // Personagem feito só para essa conta (caminho do .vmdl no pacote da Oficina): o servidor veste ao nascer.
   boneco: text('boneco'),
+  // A insígnia escolhida para aparecer ao lado do nome, como "estrela:2" (dono, 11/11/2026).
+  insigniaPrincipal: text('insignia_principal'),
   criadoEm: criadoEm(),
 }, (tabela) => [
   check('usuarios_grana_nao_negativa', sql`${tabela.grana} >= 0`),
@@ -60,7 +62,7 @@ export const xpPartidas = pgTable(
   (tabela) => [unique('xp_partidas_conta_referencia').on(tabela.usuarioId, tabela.referencia), index('xp_partidas_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],
 );
 
-export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste', 'pagamento', 'mensalidade', 'estorno']);
+export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste', 'pagamento', 'mensalidade', 'estorno', 'insignia']);
 export const moeda = pgEnum('moeda', ['grana', 'magcoin']);
 
 /**
@@ -104,6 +106,28 @@ export const itensDoJogador = pgTable(
     atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
   },
   (tabela) => [primaryKey({ columns: [tabela.usuarioId, tabela.itemId] })],
+);
+
+/**
+ * Cada insígnia conquistada, com o prêmio entregue junto (dono, 11/11/2026). A chave garante que a mesma insígnia, e o
+ * prêmio dela, saem uma vez só. nivel: 0 = Bronze ... 4 = Lendária. mutanteDias null com mutanteId = para sempre.
+ */
+export const insigniasDoJogador = pgTable(
+  'insignias_do_jogador',
+  {
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    familia: text('familia').notNull(),
+    nivel: integer('nivel').notNull(),
+    conquistadaEm: timestamp('conquistada_em', { withTimezone: true }).notNull().defaultNow(),
+    vistaEm: timestamp('vista_em', { withTimezone: true }),
+    grana: integer('grana').notNull(),
+    xp: integer('xp').notNull(),
+    mutanteId: text('mutante_id'),
+    mutanteDias: integer('mutante_dias'),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.usuarioId, tabela.familia, tabela.nivel] })],
 );
 
 export const pacoteDeMagcoin = pgEnum('pacote_de_magcoin', ['pequeno', 'medio', 'grande', 'teste']);

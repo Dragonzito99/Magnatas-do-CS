@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
-import { banimentos, cacheExterno, elogios, estadosDaDiversao, servidoresDiversao, faltas, juncoes, noticias, noticiasSteam, partidaJogadores, partidas, usuarios, vetos } from './esquema';
-import { criarBancoDeTeste, STEAM_A, STEAM_B } from './teste';
+import { eq } from 'drizzle-orm';
+import { banimentos, cacheExterno, elogios, estadosDaDiversao, servidoresDiversao, faltas, insigniasDoJogador, juncoes, noticias, noticiasSteam, partidaJogadores, partidas, usuarios, vetos } from './esquema';
+import { criarBancoDeTeste, criarUsuario, STEAM_A, STEAM_B } from './teste';
 import { readFileSync, readdirSync } from 'node:fs';
 
 test('banco de teste aplica as migrações', async () => {
@@ -91,4 +92,15 @@ test('depois das migrações, os servidores cadastrados já têm nome e são sob
   const porPorta = Object.fromEntries(linhas.map((linha) => [linha.porta, linha.nomeNoServidor]));
   expect(porPorta).toMatchObject({ 27016: 'ak-desert', 27017: 'pistola', 27018: 'awp', 27019: 'equipe', 27020: 'mutacao', 27021: 'fantasma' });
   expect(linhas.every((linha) => linha.sobDemanda)).toBe(true);
+});
+
+test('a mesma insígnia não entra duas vezes para a mesma conta', async () => {
+  const bd = await criarBancoDeTeste();
+  const conta = await criarUsuario(bd);
+  const linha = { usuarioId: conta.id, familia: 'mira', nivel: 0, grana: 50, xp: 200 };
+  await bd.insert(insigniasDoJogador).values(linha);
+  await expect(bd.insert(insigniasDoJogador).values(linha)).rejects.toThrow();
+  await bd.update(usuarios).set({ insigniaPrincipal: 'mira:0' }).where(eq(usuarios.id, conta.id));
+  const [atual] = await bd.select({ principal: usuarios.insigniaPrincipal }).from(usuarios).where(eq(usuarios.id, conta.id));
+  expect(atual.principal).toBe('mira:0');
 });

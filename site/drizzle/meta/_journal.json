@@ -232,6 +232,13 @@
       "when": 1794379150414,
       "tag": "0032_mensagens",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794427144155,
+      "tag": "0033_insignias",
+      "breakpoints": true
     }
   ]
 }
