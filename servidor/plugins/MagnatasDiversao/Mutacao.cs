@@ -501,6 +501,7 @@ public partial class ModoDeDiversao
         AddTimer(IntervaloDaBarra, AtualizarTelaDaMutacao, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnTick>(RepetirTelas);
         RegisterListener<Listeners.OnTick>(PoderNoE);
+        RegisterListener<Listeners.OnEntitySpawned>(TirarComandosDoMapa);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
@@ -790,6 +791,43 @@ public partial class ModoDeDiversao
     }
 
     private readonly HashSet<int> segurandoE = new();
+
+    /// <summary>
+    /// Mapas que põem todo mundo numa sala de espera e só soltam depois de alguns segundos: o nome do ponto de saída
+    /// dos humanos e o dos zumbis, os mesmos que o teletransporte do mapa usa. No zm_dust2_bf_l a sala tinha uma parede
+    /// branca e prendia por 13 s (dono, 11/11/2026).
+    /// </summary>
+    private static readonly Dictionary<string, (string Humanos, string Mutantes)> SaidasDaSalaDeEspera = new()
+    {
+        ["zm_dust2_bf_l"] = ("starttt", "zombistartt"),
+    };
+
+    private void LevarParaOMapa(CCSPlayerController? jogador)
+    {
+        if (!SaidasDaSalaDeEspera.TryGetValue(Server.MapName, out var saidas)) return;
+        if (jogador is not { IsValid: true, PawnIsAlive: true } || jogador.PlayerPawn.Value is not { } corpo) return;
+        var nome = jogador.Team == CsTeam.Terrorist ? saidas.Mutantes : saidas.Humanos;
+        // O nome pode vir com o prefixo da peça do mapa ("[PR#]starttt").
+        var destino = Utilities.FindAllEntitiesByDesignerName<CBaseEntity>("info_teleport_destination")
+            .FirstOrDefault(ponto => ponto.Entity?.Name is { } nomeDoPonto && (nomeDoPonto == nome || nomeDoPonto.EndsWith("]" + nome)));
+        if (destino?.AbsOrigin is not { } lugar) return;
+        corpo.Teleport(new Vector(lugar.X, lugar.Y, lugar.Z), destino.AbsRotation, new Vector(0, 0, 0));
+    }
+
+    /// <summary>
+    /// Alguns mapas da Oficina mandam comandos ao servidor (o zm_dust2_bf_l punha rodada de 8 min, tempo de compra e
+    /// avisos em russo). Na Mutação quem manda nas regras é o plugin: o point_servercommand sai assim que aparece.
+    /// </summary>
+    private void TirarComandosDoMapa(CEntityInstance entidade)
+    {
+        if (Config.Regra != "mutacao" || entidade.DesignerName != "point_servercommand") return;
+        var indice = entidade.Index;
+        Server.NextFrame(() =>
+        {
+            var comando = Utilities.GetEntityFromIndex<CBaseEntity>((int)indice);
+            if (comando is { IsValid: true } && comando.DesignerName == "point_servercommand") comando.Remove();
+        });
+    }
 
     /// <summary>O poder do mutante, no E ou no G: escudo do Blindado, fumaça do Senhor do Vazio ou a corrida.</summary>
     private HookResult UsarPoder(CCSPlayerController jogador)

@@ -1988,3 +1988,26 @@ def test_o_aviso_de_espera_e_a_contagem_vao_pela_tela_repetida_a_cada_tick():
     geral = metodo_da_mutacao("private string? AvisoGeral(")
     assert "esperandoJogadores" in geral and "Esperando mais um jogador" in geral
     assert "segundosAteOMutante" in geral and "O mutante vai aparecer" in geral
+
+
+def test_na_dust_2_zumbi_ninguem_fica_na_sala_de_espera_do_mapa():
+    # O zm_dust2_bf_l põe todo mundo numa sala de espera e só solta depois de 13 s (dono, 11/11/2026): o plugin leva
+    # cada um ao ponto de saída que o próprio mapa usa, humano no dos humanos e mutante no dos zumbis.
+    assert '["zm_dust2_bf_l"] = ("starttt", "zombistartt")' in CODIGO_DA_MUTACAO
+    levar = metodo_da_mutacao("private void LevarParaOMapa(")
+    assert "SaidasDaSalaDeEspera.TryGetValue(Server.MapName" in levar
+    assert '"info_teleport_destination"' in levar
+    assert "CsTeam.Terrorist ? saidas.Mutantes : saidas.Humanos" in levar
+    assert ".Teleport(" in levar
+    nascer = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("public HookResult AoNascer("):]
+    mutacao = nascer[nascer.index('Config.Regra == "mutacao"'):]
+    assert "LevarParaOMapa(jogador)" in mutacao[:500]
+
+
+def test_o_mapa_nao_muda_as_regras_do_servidor_da_mutacao():
+    # O mesmo mapa manda comandos ao servidor (tempo de rodada de 8 min, compra, avisos em russo) por um
+    # point_servercommand. Na Mutação, quem manda nas regras é o plugin.
+    assert "RegisterListener<Listeners.OnEntitySpawned>(TirarComandosDoMapa)" in CODIGO_DA_MUTACAO
+    tirar = metodo_da_mutacao("private void TirarComandosDoMapa(")
+    assert '"point_servercommand"' in tirar and ".Remove()" in tirar
+    assert 'Config.Regra != "mutacao"' in tirar
