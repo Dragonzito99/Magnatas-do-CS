@@ -1972,3 +1972,17 @@ def test_o_registro_da_vez_anterior_fica_guardado_quando_o_servidor_religa():
     guardar = executar.index('mv -f "$REGISTRO" "$REGISTRO.anterior"')
     assert guardar < executar.index("exec game/cs2.sh -dedicated -condebug")
     assert "REGISTRO=game/csgo/addons/metamod/console.log" in executar
+
+
+def test_o_aviso_de_espera_e_a_contagem_vao_pela_tela_repetida_a_cada_tick():
+    # O "Esperando mais um jogador", mandado a cada 2 s, aparecia como um quadrado branco sem texto (dono, 11/11/2026).
+    # Igual à barra do poder: calculado 4 vezes por segundo e repetido a cada tick pelo RepetirTelas.
+    falta = metodo_da_mutacao("private void AvisarQueFaltaJogador(")
+    contagem = metodo_da_mutacao("private void MostrarContagem(")
+    assert "PrintToCenterHtml(" not in falta and "PrintToCenterHtml(" not in contagem
+    tela = metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
+    assert "AvisoGeral()" in tela
+    assert tela.index("cartoes.TryGetValue(") < tela.index("AvisoGeral()") < tela.index("HudDoPoder(")
+    geral = metodo_da_mutacao("private string? AvisoGeral(")
+    assert "esperandoJogadores" in geral and "Esperando mais um jogador" in geral
+    assert "segundosAteOMutante" in geral and "O mutante vai aparecer" in geral

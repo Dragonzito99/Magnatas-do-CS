@@ -256,12 +256,8 @@ public partial class ModoDeDiversao
 
     private void MostrarContagem()
     {
+        // O número na tela vem do AvisoGeral, repetido a cada tick como a barra do poder.
         segundosAteOMutante--;
-        if (!rodadaEmAndamento || sorteioFeito || segundosAteOMutante <= 0 || segundosAteOMutante > SegundosDaContagemNaTela) return;
-        foreach (var pessoa in Pessoas())
-        {
-            pessoa.PrintToCenterHtml($"<font color='#ff4d4d' class='fontSize-xl'>{segundosAteOMutante}</font><br><font color='#ffffff'>O mutante vai aparecer</font>", 1);
-        }
     }
 
     /// <summary>Cada um ouve o som no próprio ouvido, na mesma altura, onde quer que esteja no mapa.</summary>
@@ -291,11 +287,7 @@ public partial class ModoDeDiversao
     {
         if (!esperandoJogadores) return;
         ColocarNaRodada(null);
-        if (!esperandoJogadores) return;
-        foreach (var pessoa in Pessoas())
-        {
-            pessoa.PrintToCenterHtml("<font color='#f5b301' class='fontSize-l'>Esperando mais um jogador</font><br><font color='#ffffff'>A partida começa com 2 ou mais</font>", (int)IntervaloDoAvisoDeEspera + 1);
-        }
+        // O aviso na tela vem do AvisoGeral: mandado daqui a cada 2 s, ficava um quadrado branco sem texto (11/11/2026).
     }
 
     private void SortearMutantes()
@@ -835,8 +827,19 @@ public partial class ModoDeDiversao
         foreach (var jogador in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: false, PawnIsAlive: true }))
         {
             if (cartoes.TryGetValue(jogador.Slot, out var cartao)) telas[jogador.Slot] = cartao.Html;
+            else if (AvisoGeral() is { } aviso) telas[jogador.Slot] = aviso;
             else if (jogador is { Team: CsTeam.Terrorist } && rodadaEmAndamento) telas[jogador.Slot] = HudDoPoder(jogador, agora);
         }
+    }
+
+    /// <summary>O aviso que vale para todos agora: esperando mais um jogador ou a contagem até o mutante aparecer.</summary>
+    private string? AvisoGeral()
+    {
+        if (esperandoJogadores)
+            return "<font color='#f5b301' class='fontSize-l'>Esperando mais um jogador</font><br><font color='#ffffff'>A partida começa com 2 ou mais</font>";
+        if (rodadaEmAndamento && !sorteioFeito && segundosAteOMutante > 0 && segundosAteOMutante <= SegundosDaContagemNaTela)
+            return $"<font color='#ff4d4d' class='fontSize-xl'>{segundosAteOMutante}</font><br><font color='#ffffff'>O mutante vai aparecer</font>";
+        return null;
     }
 
     /// <summary>
