@@ -7761,7 +7761,8 @@ a.para-sempre-da-janela.sem-saldo {
 
 .variacao-da-diversao {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* Com o servidor ligando, os avisos da direita espremiam o nome numa palavra por linha (dono, 11/11/2026). */
+  grid-template-columns: minmax(130px, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
@@ -7789,6 +7790,7 @@ a.para-sempre-da-janela.sem-saldo {
 .rodape-da-variacao {
   display: flex;
   flex-wrap: wrap;
+  max-width: 240px;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
