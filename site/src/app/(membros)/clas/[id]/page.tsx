@@ -35,17 +35,17 @@ export default async function PaginaDoCla({ params, searchParams }: { params: Pr
   const souDele = meuCla?.id === cla.id;
 
   const botoes = desfeito ? (
-    <span className="selo-caso">Clã desfeito</span>
+    <span className="botao-da-shop vazado apagado">Clã desfeito</span>
   ) : souDele ? (
-    <Link className="botao ouro pequeno" href="/clas?aba=meu">
+    <Link className="botao-da-shop" href="/clas?aba=meu">
       Ir para Meu clã
     </Link>
   ) : meuCla ? null : pedidos.has(cla.id) ? (
-    <span className="apoio">Pedido enviado</span>
+    <span className="botao-da-shop vazado apagado">Pedido enviado</span>
   ) : (
     <form action={cla.entrada === 'aberto' ? entrar : pedir}>
       <input type="hidden" name="claId" value={cla.id} />
-      <button type="submit" className="botao ouro pequeno">
+      <button type="submit" className="botao-da-shop">
         {cla.entrada === 'aberto' ? 'Entrar no clã' : 'Pedir para entrar'}
       </button>
     </form>
@@ -53,11 +53,11 @@ export default async function PaginaDoCla({ params, searchParams }: { params: Pr
 
   return (
     <div className="tela-jogar">
-      <div className="topo-jogar">
+      <div className="carteira-da-shop">
         <h1>Clãs</h1>
-        <p className="apoio">
-          <Link href="/clas?aba=procurar">← Procurar clãs</Link>
-        </p>
+        <Link className="botao-da-shop vazado" href="/clas?aba=procurar">
+          ← Procurar clãs
+        </Link>
       </div>
       {erro && ERROS_DO_CLA[erro] && (
         <p role="alert" className="aviso">
@@ -66,9 +66,9 @@ export default async function PaginaDoCla({ params, searchParams }: { params: Pr
       )}
       <BlocoDoCla cla={cla} numeros={numeros} membros={membros} kd={kd} ultimas={ultimas} pedidos={[]} meuCargo={null} meuId={usuario.id} botoes={botoes} />
       {!desfeito && pode(usuario, 'mudar_papel') && (
-        <form action={desfazer} className="acoes-partida">
+        <form action={desfazer} className="desfazer-o-cla">
           <input type="hidden" name="claId" value={cla.id} />
-          <BotaoConfirmar mensagem={`Desfazer o clã [${cla.sigla}] ${cla.nome}? Todos saem dele, e isso fica na auditoria.`} className="botao cinza pequeno">
+          <BotaoConfirmar mensagem={`Desfazer o clã [${cla.sigla}] ${cla.nome}? Todos saem dele, e isso fica na auditoria.`} className="botao-da-shop vazado">
             Desfazer clã (Adm)
           </BotaoConfirmar>
         </form>

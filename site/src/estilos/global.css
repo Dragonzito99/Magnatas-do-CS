@@ -4883,147 +4883,576 @@ a.cartao-destaque:hover {
   --cor-do-cla: #c9d1dc;
 }
 
-.capa-cla {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+/* Clãs no jeito de jogo: brasão, capa, elenco, busca em cartões e pódio */
+.brasao-do-cla {
+  --tamanho: 96px;
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--tamanho);
+  aspect-ratio: 0.86;
+  clip-path: polygon(50% 0, 100% 12%, 100% 58%, 50% 100%, 0 58%, 0 12%);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--cor-do-cla) 85%, #fff), var(--cor-do-cla) 40%, color-mix(in srgb, var(--cor-do-cla) 45%, #000));
+}
+
+.brasao-do-cla::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--tamanho) * 0.045);
+  clip-path: inherit;
+  background: radial-gradient(circle at 50% 30%, #2a1a40, #0b0713 75%);
+}
+
+.brasao-do-cla b {
+  position: relative;
+  color: var(--cor-do-cla);
+  font: italic 800 calc(var(--tamanho) * 0.28) / 1 var(--fonte-titulo), sans-serif;
+}
+
+.brasao-do-cla.grande {
+  --tamanho: 140px;
+}
+
+.brasao-do-cla.podio {
+  --tamanho: 84px;
+}
+
+.brasao-do-cla.pequeno {
+  --tamanho: 36px;
+}
+
+.capa-do-cla {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
-  padding: 22px;
-  border-left: 4px solid var(--cor-do-cla, var(--roxo));
-  border-radius: 8px;
-  background: linear-gradient(90deg, var(--roxo-fraco), var(--painel));
-  box-shadow: inset 0 0 0 1px var(--linha);
+  gap: 28px;
+  padding: 30px;
+  border-bottom: 4px solid var(--cor-do-cla);
+  background:
+    radial-gradient(circle at 12% 50%, color-mix(in srgb, var(--cor-do-cla) 30%, transparent), transparent 45%),
+    linear-gradient(90deg, #120a1f, #0e0718);
 }
 
-.capa-cla-nome h2 {
-  margin: 0 0 6px;
-  font: italic 700 40px/1 var(--fonte-titulo), sans-serif;
+.nome-na-capa-do-cla h2 {
+  margin-top: 8px;
+  font: italic 800 54px/0.92 var(--fonte-titulo), sans-serif;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
-.capa-cla-nome p {
-  margin: 0 0 6px;
+.nome-na-capa-do-cla p {
+  max-width: 560px;
+  margin-top: 10px;
+  color: #cfc6de;
 }
 
-.capa-cla-botoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.numeros-cla {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.colunas-cla {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.pilha-cla {
-  display: grid;
-  gap: 14px;
-}
-
-.colunas-cla .cabeca-painel h2,
-.clas-lista + .painel .cabeca-painel h2 {
-  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.tabela-cla td {
-  vertical-align: middle;
-}
-
-.cargo-cla {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  background: var(--roxo-fraco);
-}
-
-.cargo-cla.dono {
-  color: var(--sobre-ouro);
-  background: var(--ouro);
-}
-
-.cargo-cla.capitao {
-  color: #fff;
-  background: var(--roxo);
-}
-
-.acoes-do-membro {
+.selos-do-cla {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.editar-cla {
-  padding: 14px 20px;
-}
-
-.editar-cla summary {
-  cursor: pointer;
-  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+.selo-do-cla {
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #cfc6de;
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
   text-transform: uppercase;
 }
 
-.editar-cla .criar-cla {
-  margin-top: 14px;
+.selo-do-cla.forte {
+  border-color: var(--cor-do-cla);
+  background: var(--cor-do-cla);
+  color: #0a0612;
 }
 
-.sem-cla {
-  padding-bottom: 18px;
-}
-
-.busca-cla {
-  display: flex;
+.botoes-da-capa-do-cla {
+  display: grid;
   gap: 8px;
 }
 
-.busca-cla input {
-  flex: 1;
-  min-width: 0;
+.botoes-da-capa-do-cla .botao-da-shop {
+  justify-content: center;
+  width: 100%;
+  cursor: pointer;
 }
 
-.clas-lista {
+.numeros-do-cla {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 0;
+  background: var(--painel);
 }
 
-.cla-cartao {
+.numeros-do-cla > div {
+  padding: 14px 18px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.numeros-do-cla > div:last-child {
+  border-right: 0;
+}
+
+.numeros-do-cla small {
+  display: block;
+  color: var(--tinta-2);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.numeros-do-cla b {
+  font: italic 800 34px/1.1 var(--fonte-titulo), sans-serif;
+}
+
+.numeros-do-cla b.verde {
+  color: var(--verde);
+}
+
+.vagas-do-cla {
+  display: block;
+  height: 6px;
+  margin-top: 6px;
+  background: #1d1330;
+}
+
+.vagas-do-cla i {
+  display: block;
+  height: 100%;
+  background: var(--cor-do-cla);
+}
+
+.colunas-do-cla {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.elenco-do-cla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.membro-do-cla {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  border-left: 4px solid var(--cor-do-cla, var(--roxo));
-  border-radius: 6px;
+  padding: 22px 12px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   background: var(--painel);
-  box-shadow: inset 0 0 0 1px var(--linha);
 }
 
-.cla-cartao > div {
+.membro-do-cla.dono {
+  border-color: color-mix(in srgb, var(--cor-do-cla) 60%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cor-do-cla) 14%, transparent), var(--painel) 60%);
+}
+
+.membro-do-cla .avatar {
+  width: 52px;
+  height: 52px;
+}
+
+.nome-no-elenco {
+  display: block;
+  overflow: hidden;
+  color: var(--tinta);
+  font: italic 700 19px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.nome-no-elenco:hover {
+  color: var(--cor-do-cla);
+}
+
+.membro-do-cla small {
+  display: block;
+  margin-top: 4px;
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.membro-do-cla small em {
+  color: var(--tinta);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.cargo-no-elenco {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  padding: 2px 6px;
+  font: italic 700 11px/1.3 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.cargo-no-elenco.dono {
+  background: var(--cor-do-cla);
+  color: #0a0612;
+}
+
+.cargo-no-elenco.capitao {
+  border: 1px solid var(--cor-do-cla);
+  color: var(--cor-do-cla);
+}
+
+.cuidar-do-membro {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cuidar-do-membro button {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: var(--tinta-2);
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.cuidar-do-membro button:hover {
+  border-color: var(--tinta);
+  color: var(--tinta);
+}
+
+.cuidar-do-membro button.perigo:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+.jogo-do-cla {
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  padding: 10px 14px 10px 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.jogo-do-cla i {
+  align-self: stretch;
+  background: var(--tinta-2);
+}
+
+.jogo-do-cla.v i {
+  background: var(--verde);
+}
+
+.jogo-do-cla.d i {
+  background: #ff5a5a;
+}
+
+.jogo-do-cla b {
+  display: block;
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.jogo-do-cla small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.placar-do-cla {
+  font: italic 800 26px/1 var(--fonte-titulo), sans-serif;
+}
+
+.jogo-do-cla.v .placar-do-cla {
+  color: var(--verde);
+}
+
+.jogo-do-cla.d .placar-do-cla {
+  color: #ff5a5a;
+}
+
+.vazio-do-cla {
+  color: var(--tinta-2);
+}
+
+.pedido-do-cla {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+}
+
+.pedido-do-cla > span {
+  margin-right: auto;
+}
+
+.pedido-do-cla small {
+  display: block;
+  color: var(--tinta-2);
+}
+
+.pedido-do-cla .botao-da-shop {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chamados-do-cla {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--ouro);
+  background: var(--painel);
+}
+
+.chamados-do-cla h2 {
+  margin-bottom: 10px;
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.editar-o-cla {
+  margin-top: 24px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.editar-o-cla summary {
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.editar-o-cla .criar-cla {
+  margin-top: 16px;
+}
+
+.desfazer-o-cla {
+  margin-top: 20px;
+}
+
+.acoes-do-vazio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.busca-de-cla {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.busca-de-cla input[name='q'] {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0b0713;
+  color: var(--tinta);
+}
+
+.busca-de-cla .botao-da-shop {
+  cursor: pointer;
+}
+
+.grade-de-clas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.cartao-de-cla {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+  transition: transform 0.12s, border-color 0.12s;
 }
 
-.cla-cartao > div span {
-  color: var(--tinta-2);
-  font-size: 13px;
+.cartao-de-cla:hover {
+  transform: translateY(-3px);
+  border-color: var(--cor-do-cla);
 }
 
-.cla-cartao-nome {
-  color: var(--tinta);
-  font-weight: 700;
+.palco-de-cla {
   text-decoration: none;
+  display: grid;
+  place-items: center;
+  padding: 22px 0 16px;
+  border-bottom: 3px solid var(--cor-do-cla);
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--cor-do-cla) 26%, transparent), transparent 70%), #0b0713;
+}
+
+.dados-de-cla {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px 14px;
+}
+
+.nome-de-cla {
+  color: var(--tinta);
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.nome-de-cla:hover {
+  color: var(--cor-do-cla);
+}
+
+.dados-de-cla small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.linha-de-cla {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #cfc6de;
+  font-size: 12px;
+}
+
+.dados-de-cla .botao-da-shop {
+  justify-content: center;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.podio-de-clas {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.lugar-no-podio {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 22px 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+  color: var(--tinta);
+  text-align: center;
+  text-decoration: none;
+}
+
+.lugar-no-podio.p1 {
+  padding-top: 34px;
+  border-color: var(--ouro);
+  background: linear-gradient(180deg, rgba(245, 179, 1, 0.14), var(--painel) 70%);
+}
+
+.numero-do-lugar {
+  font: italic 800 40px/1 var(--fonte-titulo), sans-serif;
+}
+
+.p1 .numero-do-lugar {
+  color: var(--ouro);
+}
+
+.p2 .numero-do-lugar {
+  color: #c9d1dc;
+}
+
+.p3 .numero-do-lugar {
+  color: #d08a4a;
+}
+
+.lugar-no-podio b {
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.lugar-no-podio small {
+  color: var(--tinta-2);
+}
+
+.tabela-de-clas {
+  min-width: 640px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.linha-de-clas {
+  display: grid;
+  grid-template-columns: 50px 44px minmax(0, 1fr) 90px 170px 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.linha-de-clas.cabeca {
+  color: var(--tinta-2);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.linha-de-clas.minha {
+  background: rgba(245, 179, 1, 0.07);
+  box-shadow: inset 3px 0 0 var(--ouro);
+}
+
+.posicao-de-cla {
+  color: var(--tinta-2);
+  font: italic 800 22px/1 var(--fonte-titulo), sans-serif;
+}
+
+.linha-de-clas .nome-de-cla {
+  font-size: 19px;
+}
+
+.aproveitamento-de-cla {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aproveitamento-de-cla::before {
+  content: '';
+  flex: 1;
+  height: 6px;
+  background: #1d1330;
+}
+
+.aproveitamento-de-cla i {
+  position: absolute;
+  left: 0;
+  max-width: calc(100% - 48px);
+  height: 6px;
+  background: var(--verde);
+}
+
+.aproveitamento-de-cla span {
+  width: 40px;
+  text-align: right;
+}
+
+.frase-de-clas {
+  margin-top: 10px;
 }
 
 .criar-cla {
@@ -5034,13 +5463,21 @@ a.cartao-destaque:hover {
 }
 
 .previa-cla {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 28px 22px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #3b1a63, var(--painel));
-  box-shadow: inset 0 0 0 1px var(--linha);
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 44px 22px 28px;
+  border-bottom: 4px solid var(--cor-do-cla);
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--cor-do-cla) 26%, transparent), transparent 65%), #0e0718;
+  text-align: center;
+}
+
+.previa-cla > .rotulo-da-janela {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  margin: 0;
 }
 
 .previa-cla b {
@@ -5053,6 +5490,8 @@ a.cartao-destaque:hover {
   display: grid;
   gap: 14px;
   padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
 }
 
 .formulario-cla label,
@@ -5061,6 +5500,10 @@ a.cartao-destaque:hover {
   gap: 6px;
   color: var(--tinta-2);
   font-size: 13px;
+}
+
+.formulario-cla .botao-da-shop {
+  cursor: pointer;
 }
 
 .cores-cla {
@@ -5125,25 +5568,39 @@ a.cartao-destaque:hover {
 }
 
 @media (max-width: 860px) {
-  .numeros-cla {
+  .capa-do-cla {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    padding: 20px;
+  }
+
+  .capa-do-cla .brasao-do-cla.grande {
+    --tamanho: 96px;
+  }
+
+  .nome-na-capa-do-cla h2 {
+    font-size: 36px;
+  }
+
+  .botoes-da-capa-do-cla {
+    width: 100%;
+  }
+
+  .numeros-do-cla {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .colunas-cla,
+  .numeros-do-cla > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .colunas-do-cla,
   .criar-cla {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .capa-cla-nome h2 {
-    font-size: 30px;
-  }
-
-  .cla-cartao {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .cla-cartao > :last-child {
-    grid-column: 1 / -1;
+  .podio-de-clas {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -5845,6 +6302,14 @@ a.moeda-da-shop:hover {
   border-color: rgba(255, 255, 255, 0.25);
   background: transparent;
   color: var(--tinta);
+}
+
+.botao-da-shop.vazado:hover {
+  border-color: var(--tinta);
+}
+
+/* No destaque da Shop, o botão vazado é o preço: letra normal, sem caixa alta. */
+.acoes-do-destaque .botao-da-shop.vazado {
   font: 600 14px/1.3 var(--fonte-inter), sans-serif;
   text-transform: none;
 }

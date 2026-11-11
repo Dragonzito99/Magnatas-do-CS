@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Cla } from '@/bd/esquema';
+import { BrasaoDoCla } from './brasao-do-cla';
 
 const CORES: { valor: Cla['cor']; nome: string }[] = [
   { valor: 'ouro', nome: 'Ouro' },
@@ -21,13 +22,14 @@ export function FormularioDoCla({ acao, inicial, botao }: { acao: (dados: FormDa
 
   return (
     <div className="criar-cla">
-      <div className="previa-cla">
+      <div className={`previa-cla borda-cla-${cor}`}>
+        <span className="rotulo-da-janela">É assim que o seu clã vai aparecer</span>
+        <BrasaoDoCla cla={{ sigla: sigla.trim().toUpperCase() || 'TAG', cor }} tamanho="grande" />
         <b>
           <span className={`sigla-cla cor-cla-${cor}`}>[{sigla.trim().toUpperCase() || 'TAG'}]</span> {nome.trim() || 'Nome do clã'}
         </b>
-        <span className="apoio">É assim que o seu clã vai aparecer</span>
       </div>
-      <form action={acao} className="painel formulario-cla">
+      <form action={acao} className="formulario-cla">
         <label>
           Nome do clã
           <input name="nome" required minLength={3} maxLength={32} value={nome} onChange={(evento) => setNome(evento.target.value)} placeholder="Magnatas Originais" />
@@ -66,7 +68,7 @@ export function FormularioDoCla({ acao, inicial, botao }: { acao: (dados: FormDa
           <textarea name="descricao" rows={3} maxLength={280} defaultValue={inicial?.descricao ?? ''} placeholder="Jogamos mix toda noite, às 21h." />
         </label>
         <div>
-          <button type="submit" className="botao ouro">
+          <button type="submit" className="botao-da-shop">
             {botao}
           </button>
         </div>
