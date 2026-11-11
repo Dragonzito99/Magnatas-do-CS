@@ -443,6 +443,60 @@ export const convitesDeSala = pgTable(
   (tabela) => [unique('convites_de_sala_um_por_pessoa').on(tabela.salaId, tabela.paraId), index('convites_de_sala_para').on(tabela.paraId)],
 );
 
+export const tipoDeConversa = pgEnum('tipo_de_conversa', ['direta', 'grupo', 'cla']);
+
+/**
+ * Uma conversa: direta (dois amigos, a chave é o par), grupo (criado por um membro) ou a do clã (uma por clã, quem
+ * está no clã fala nela).
+ */
+export const conversas = pgTable('conversas', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tipo: tipoDeConversa('tipo').notNull(),
+  // Direta: "menorId:maiorId", para nunca haver duas conversas do mesmo par.
+  chave: text('chave').unique(),
+  nome: text('nome'),
+  claId: uuid('cla_id')
+    .unique()
+    .references(() => clas.id, { onDelete: 'cascade' }),
+  criadoPor: uuid('criado_por').references(() => usuarios.id),
+  criadoEm: criadoEm(),
+  ultimaEm: timestamp('ultima_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Quem está na conversa e até quando já leu. Na do clã, a linha nasce quando a pessoa abre a conversa. */
+export const conversaMembros = pgTable(
+  'conversa_membros',
+  {
+    conversaId: uuid('conversa_id')
+      .notNull()
+      .references(() => conversas.id, { onDelete: 'cascade' }),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    lidaAte: timestamp('lida_ate', { withTimezone: true }).notNull().defaultNow(),
+    entrouEm: timestamp('entrou_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.conversaId, tabela.usuarioId] }), index('conversa_membros_usuario').on(tabela.usuarioId)],
+);
+
+export const mensagens = pgTable(
+  'mensagens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversaId: uuid('conversa_id')
+      .notNull()
+      .references(() => conversas.id, { onDelete: 'cascade' }),
+    autorId: uuid('autor_id')
+      .notNull()
+      .references(() => usuarios.id),
+    texto: text('texto').notNull(),
+    criadoEm: criadoEm(),
+    // A equipe apaga a mensagem denunciada; ela some para todos.
+    apagadaEm: timestamp('apagada_em', { withTimezone: true }),
+  },
+  (tabela) => [index('mensagens_da_conversa').on(tabela.conversaId, tabela.criadoEm)],
+);
+
 export const filaMix = pgTable('fila_mix', {
   usuarioId: uuid('usuario_id')
     .primaryKey()

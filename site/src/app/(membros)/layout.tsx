@@ -4,6 +4,7 @@ import { usuarioAtual } from '@/auth/sessao-atual';
 import { obterBd } from '@/bd/conexao';
 import { enderecoDoDiscord } from '@/dominio/discord';
 import { amigosDe, convitesDeSalaPara, pedidosDeAmizadePara } from '@/dominio/amigos';
+import { conversasDe } from '@/dominio/mensagens';
 import { casosDe, notificacoesDe } from '@/dominio/notificacoes';
 import { partidaAtualDe } from '@/dominio/partidas';
 import { lojaAberta } from '@/dominio/loja';
@@ -11,6 +12,7 @@ import { minhaSala } from '@/dominio/salas';
 import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
 import { AvisoDeConvite, BarraDeAmigos } from './barra-de-amigos';
+import { JanelaDeConversa } from './janela-de-conversa';
 import { AvisoDePartida } from './aviso-de-partida';
 import { AvisoDeSala } from './aviso-de-sala';
 import { Cabecalho } from './cabecalho';
@@ -22,14 +24,17 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
   const usuario = await usuarioAtual();
   if (!usuario) redirect('/');
 
-  const [notificacoes, partida, sala, amigos, pedidos, convites] = await Promise.all([
+  const [notificacoes, partida, sala, amigos, pedidos, convites, conversas] = await Promise.all([
     notificacoesDe(obterBd(), usuario),
     partidaAtualDe(obterBd(), usuario.id),
     minhaSala(obterBd(), usuario.id),
     amigosDe(obterBd(), usuario.id),
     pedidosDeAmizadePara(obterBd(), usuario.id),
     convitesDeSalaPara(obterBd(), usuario.id),
+    conversasDe(obterBd(), usuario.id),
   ]);
+  const naoLidas = conversas.reduce((soma, conversa) => soma + conversa.naoLidas, 0);
+  const grupos = conversas.flatMap((conversa) => (conversa.tipo === 'direta' ? [] : [{ id: conversa.id, nome: conversa.nome, tipo: conversa.tipo as 'grupo' | 'cla', naoLidas: conversa.naoLidas }]));
 
   return (
     <div className="app com-amigos">
@@ -51,7 +56,8 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         {children}
       </main>
       <AvisoDeSala sala={sala ? { nome: sala.nome, membros: sala.membros.length, emPartida: sala.partidaId !== null } : null} />
-      <BarraDeAmigos amigos={amigos} pendentes={pedidos.length + convites.length} />
+      <BarraDeAmigos amigos={amigos} pendentes={pedidos.length + convites.length} naoLidas={naoLidas} grupos={grupos} />
+      <JanelaDeConversa />
       {!sala && !partida && <AvisoDeConvite convite={convites[0] ?? null} />}
     </div>
   );

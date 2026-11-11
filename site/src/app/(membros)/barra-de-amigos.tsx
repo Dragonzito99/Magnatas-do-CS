@@ -2,7 +2,20 @@ import Link from 'next/link';
 import type { Amigo, ConviteDeSala } from '@/dominio/amigos';
 import { Avatar } from './avatar';
 import { aceitarConvite, recusarConvite } from './comunidade/acoes';
+import { BotaoDeConversa } from './janela-de-conversa';
 import { MedirCabecalho } from './medir-cabecalho';
+
+/** Duas ou três letras para o quadradinho do grupo: a sigla do clã, ou as iniciais do nome. */
+function siglaDoGrupo(nome: string): string {
+  const sigla = /^\[([^\]]+)\]/.exec(nome)?.[1];
+  if (sigla) return sigla.slice(0, 4);
+  return nome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase())
+    .join('');
+}
 
 const NOME_DA_SITUACAO: Record<Amigo['situacao'], string> = { jogando: 'jogando agora', online: 'online', offline: 'offline' };
 
@@ -10,23 +23,50 @@ const NOME_DA_SITUACAO: Record<Amigo['situacao'], string> = { jogando: 'jogando 
  * A barra de amigos na direita, como na GC (dono, 11/11/2026): começa embaixo do cabeçalho, nunca por cima dele. No topo,
  * a Comunidade com o número de pedidos e convites; depois os amigos com a bolinha (verde online, amarela jogando).
  */
-export function BarraDeAmigos({ amigos, pendentes }: { amigos: Amigo[]; pendentes: number }) {
+export function BarraDeAmigos({
+  amigos,
+  pendentes,
+  naoLidas,
+  grupos,
+}: {
+  amigos: Amigo[];
+  pendentes: number;
+  naoLidas: number;
+  grupos: { id: string; nome: string; tipo: 'grupo' | 'cla'; naoLidas: number }[];
+}) {
   return (
     <aside className="barra-de-amigos" aria-label="Amigos">
       <MedirCabecalho />
+      <BotaoDeConversa alvo={{ lista: true }} className="atalho-da-comunidade" title="Mensagens">
+        <span aria-hidden="true">💬</span>
+        {naoLidas > 0 && <b>{naoLidas}</b>}
+        <span className="so-leitor">Mensagens{naoLidas > 0 ? `, ${naoLidas} não lidas` : ''}</span>
+      </BotaoDeConversa>
       <Link href="/comunidade" className="atalho-da-comunidade" title="Comunidade: amigos e pedidos">
         <span aria-hidden="true">👥</span>
         {pendentes > 0 && <b>{pendentes}</b>}
         <span className="so-leitor">Comunidade{pendentes > 0 ? `, ${pendentes} pendentes` : ''}</span>
       </Link>
+      {grupos.length > 0 && <hr />}
+      {grupos.map((grupo) => (
+        <span key={grupo.id} className="amigo-na-barra">
+          <BotaoDeConversa alvo={{ conversaId: grupo.id }} className={grupo.tipo === 'cla' ? 'grupo-na-barra cla' : 'grupo-na-barra'}>
+            {siglaDoGrupo(grupo.nome)}
+            {grupo.naoLidas > 0 && <b>{grupo.naoLidas}</b>}
+          </BotaoDeConversa>
+          <span className="dica-do-amigo" aria-hidden="true">
+            {grupo.tipo === 'cla' ? `${grupo.nome} · grupo do clã` : `Grupo: ${grupo.nome}`}
+          </span>
+        </span>
+      ))}
       <hr />
       <ul>
         {amigos.map((amigo) => (
           <li key={amigo.id} className={`amigo-na-barra ${amigo.situacao}`}>
-            <Link href={`/jogadores/${amigo.id}`} aria-label={`${amigo.apelido}, ${NOME_DA_SITUACAO[amigo.situacao]}`}>
+            <BotaoDeConversa alvo={{ amigoId: amigo.id }} className="foto-na-barra" title={`Conversar com ${amigo.apelido}`}>
               <Avatar usuario={amigo} />
               <i aria-hidden="true" />
-            </Link>
+            </BotaoDeConversa>
             <span className="dica-do-amigo" aria-hidden="true">
               {amigo.apelido} · {NOME_DA_SITUACAO[amigo.situacao]}
             </span>

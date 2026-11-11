@@ -7,6 +7,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { AmizadeInvalida, aceitarConviteDeSala, ConviteInvalido, convidarParaSala, desfazerAmizade, NaoSaoAmigos, pedirAmizade, recusarConviteDeSala, responderAmizade } from '@/dominio/amigos';
 import { Bloqueado, ContaSemAcesso, JaOcupado } from '@/dominio/disponibilidade';
+import { criarGrupo, MensagemInvalida, sairDoGrupo, SemAcessoAConversa } from '@/dominio/mensagens';
 import { SalaCheia, SalaEmPartida, SalaInexistente } from '@/dominio/salas';
 
 const id = (dados: FormData, campo: string) => {
@@ -91,4 +92,27 @@ export async function recusarConvite(dados: FormData): Promise<void> {
   if (convite) await recusarConviteDeSala(obterBd(), eu, convite);
   revalidatePath('/', 'layout');
   redirect(voltar(dados, '/comunidade'));
+}
+
+/** Cria um grupo com os amigos marcados e abre a Comunidade com o grupo novo. */
+export async function novoGrupo(dados: FormData): Promise<void> {
+  const eu = await exigirAcesso('/comunidade');
+  const amigos = dados.getAll('amigos').map(String).filter((valor) => z.uuid().safeParse(valor).success);
+  try {
+    await criarGrupo(obterBd(), eu, String(dados.get('nome') ?? ''), amigos);
+  } catch (erro) {
+    if (erro instanceof MensagemInvalida) redirect('/comunidade?erro=grupo#grupos');
+    if (erro instanceof SemAcessoAConversa) redirect('/comunidade?erro=grupo-amigos#grupos');
+    throw erro;
+  }
+  revalidatePath('/', 'layout');
+  redirect('/comunidade?aviso=grupo#grupos');
+}
+
+export async function sairGrupo(dados: FormData): Promise<void> {
+  const eu = await exigirAcesso('/comunidade');
+  const grupo = id(dados, 'conversaId');
+  if (grupo) await sairDoGrupo(obterBd(), eu, grupo);
+  revalidatePath('/', 'layout');
+  redirect('/comunidade#grupos');
 }

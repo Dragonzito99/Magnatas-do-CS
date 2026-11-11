@@ -8439,6 +8439,297 @@ a.para-sempre-da-janela.sem-saldo {
   height: 32px;
 }
 
+/* Comunidade, etapa 2: a janelinha de conversa no canto e os grupos na barra */
+.barra-de-amigos button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.foto-na-barra {
+  position: relative;
+  display: block;
+  padding: 0;
+  background: none;
+}
+
+.grupo-na-barra {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--roxo);
+  color: #fff;
+  font: italic 800 13px/1 var(--fonte-titulo), sans-serif;
+}
+
+.grupo-na-barra.cla {
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.grupo-na-barra b {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #ff3b3b;
+  color: #fff;
+  font: 700 11px/18px var(--fonte-inter), sans-serif;
+}
+
+.janela-de-conversa {
+  position: fixed;
+  right: 76px;
+  bottom: 0;
+  z-index: 32;
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 0;
+  background: var(--painel);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.janela-de-conversa header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #1d1330;
+}
+
+.janela-de-conversa header button {
+  padding: 2px 6px;
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.janela-de-conversa header button:hover {
+  color: var(--tinta);
+}
+
+.titulo-da-conversa {
+  margin-right: auto;
+  overflow: hidden;
+  font: italic 700 17px/1 var(--fonte-titulo), sans-serif;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.titulo-da-conversa a {
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.voltar-da-conversa {
+  font-size: 18px;
+}
+
+.lista-de-conversas {
+  max-height: 340px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.lista-de-conversas button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: none;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lista-de-conversas button:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lista-de-conversas b {
+  font: italic 700 16px/1.1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.lista-de-conversas small {
+  grid-column: 1;
+  overflow: hidden;
+  color: var(--tinta-2);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lista-de-conversas em {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: #ff3b3b;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 11px;
+  text-align: center;
+}
+
+.sem-conversa {
+  padding: 16px 12px;
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.mensagens-da-conversa {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  height: 300px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.balao-de-mensagem {
+  display: grid;
+  justify-self: start;
+  max-width: 80%;
+  padding: 8px 10px;
+  background: #24173a;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.balao-de-mensagem.meu {
+  justify-self: end;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.balao-de-mensagem b {
+  color: var(--ouro);
+  font-size: 11px;
+}
+
+.balao-de-mensagem small {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+  opacity: 0.7;
+  font-size: 10px;
+}
+
+.balao-de-mensagem small button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.erro-da-conversa {
+  padding: 0 12px 8px;
+  color: var(--ouro);
+  font-size: 12px;
+}
+
+.escrever-mensagem {
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.escrever-mensagem input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0b0713;
+  color: var(--tinta);
+}
+
+.escrever-mensagem .botao-da-shop {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .janela-de-conversa {
+    right: 0;
+    left: 0;
+    width: auto;
+  }
+}
+
+.conversar-com-amigo {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  cursor: pointer;
+}
+
+.conversar-com-amigo:hover {
+  border-color: var(--ouro);
+}
+
+.cartao-de-amigo:has(.conversar-com-amigo) {
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+}
+
+.cartao-de-amigo.grupo {
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+}
+
+.acoes-do-grupo {
+  display: flex;
+  gap: 6px;
+}
+
+.criar-grupo {
+  margin-top: 10px;
+}
+
+.amigos-do-grupo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.amigos-do-grupo legend {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.amigos-do-grupo label {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  color: var(--tinta) !important;
+}
+
 /* Minhas compras: o extrato por dia, uma linha por movimento */
 .dia-do-extrato {
   margin-bottom: 24px;
