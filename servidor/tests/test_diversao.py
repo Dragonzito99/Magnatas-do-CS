@@ -2062,3 +2062,10 @@ def test_a_mutacao_baixa_o_pacote_da_healix_que_o_plugin_usa():
     pacote = re.search(r'PacoteDaHealix = "(\d*)"', CODIGO_DA_MUTACAO).group(1)
     assert pacote == "3838113494"
     assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")
+
+
+def test_no_teste_o_adm_sobe_uma_pessoa_de_nivel_pela_vaga():
+    # Para testar a HEALIX no nível 3 sem infectar bots (dono, 11/11/2026): pessoa só pela vaga e só no teste com bots.
+    trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_mutacao_nivel"'):]
+    trecho = trecho[:trecho.index(FIM_DO_METODO)]
+    assert "IsBot || (vaga != null && testeComBots)" in trecho

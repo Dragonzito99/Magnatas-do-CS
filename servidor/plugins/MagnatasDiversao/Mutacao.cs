@@ -1549,7 +1549,8 @@ public partial class ModoDeDiversao
             return;
         }
         int? vaga = comando.ArgCount > 2 && int.TryParse(comando.GetArg(2), out var numero) ? numero : null;
-        foreach (var bot in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, IsBot: true, PawnIsAlive: true, Team: CsTeam.Terrorist } && (vaga == null || jogador.Slot == vaga)))
+        // Pessoa só pela vaga e só no teste com bots, para o Adm ver um mutante da loja num nível alto (11/11/2026).
+        foreach (var bot in Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true, PawnIsAlive: true, Team: CsTeam.Terrorist } && (jogador.IsBot || (vaga != null && testeComBots)) && (vaga == null || jogador.Slot == vaga)))
         {
             var antes = NivelDe(bot);
             // Só sobe: descer pela conta da vida deixaria um bot ferido com vida negativa.
