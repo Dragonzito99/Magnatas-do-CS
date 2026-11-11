@@ -1072,7 +1072,7 @@ PACOTE_DE_SONS = "3835000213"
 # Cada versão do boneco é um item novo da Oficina, que nunca é atualizado (ver servidor/ferramentas/mutante/LEIAME.md).
 PACOTE_DO_MUTANTE = "3836643990"
 PACOTE_DO_BLINDADO = "3837109609"
-PACOTE_DA_FUMACA = "3837744803"
+PACOTE_DA_FUMACA = "3837859077"
 # Personagens próprios (MagnatasVisual) e o herói da super Negev: baixados em todo servidor.
 PACOTE_DOS_PERSONAGENS = "3837571705"
 
@@ -1884,12 +1884,12 @@ def test_o_hud_e_repetido_a_cada_tick_para_nao_piscar_nem_sumir():
 
 
 def test_o_senhor_do_vazio_tem_pacote_proprio_e_fumaca_de_8_10_12_segundos():
-    assert 'private const string PastaDaFumaca = "models/magnatas/fumaca_v1";' in CODIGO_DA_MUTACAO
+    assert 'private const string PastaDaFumaca = "models/magnatas/fumaca_v2";' in CODIGO_DA_MUTACAO
     assert "private static readonly float[] SegundosDaFumaca = { 8f, 10f, 12f };" in CODIGO_DA_MUTACAO
     assert "private const float SegundosDeRecargaDaFumaca = 15f;" in CODIGO_DA_MUTACAO
     assert "private const float VidaPorFumaca = 0.10f;" in CODIGO_DA_MUTACAO
-    # Nível 2 ainda sem boneco próprio (dono, 11/11/2026): usa o do nível 1; o 3 é o Abyssal Void Titan.
-    assert "private static readonly int[] NiveisComBonecoDaFumaca = { 1, 3 };" in CODIGO_DA_MUTACAO
+    # Um boneco por nível (dono, 11/11/2026): Voidforged Warlord, Voidreaver Titan e Abyssal Void Titan.
+    assert "private static readonly int[] NiveisComBonecoDaFumaca = { 1, 2, 3 };" in CODIGO_DA_MUTACAO
     confere = metodo_da_mutacao("private bool FumacaNoServidor(")
     assert "NoPacote(PacoteDaFumaca, PastaDaFumaca)" in confere
     assert 'PacoteDaFumaca == ""' in confere
@@ -1915,5 +1915,5 @@ def test_o_senhor_do_vazio_usa_o_proprio_boneco_e_aparece_no_hud():
 
 def test_a_mutacao_baixa_o_pacote_do_senhor_do_vazio_que_o_plugin_usa():
     pacote = re.search(r'PacoteDaFumaca = "(\d+)"', CODIGO_DA_MUTACAO).group(1)
-    assert pacote == "3837744803"
+    assert pacote == "3837859077"
     assert pacote in valor("mm_extra_addons", "mutacao").strip('"').split(",")

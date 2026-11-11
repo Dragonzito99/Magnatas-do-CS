@@ -121,9 +121,9 @@ public partial class ModoDeDiversao
     // Segundo mutante da Shop, o Senhor do Vazio (Voidforged Warlord): o G solta uma cortina de fumaça roxa em volta
     // dele e custa vida, como o Smoke do CrossFire (dono, 11/11/2026). Vem num pacote da Oficina só dele; sem o pacote no
     // servidor, quem comprou vira o mutante comum.
-    private const string PacoteDaFumaca = "3837744803";
-    private const string PastaDaFumaca = "models/magnatas/fumaca_v1";
-    private static readonly int[] NiveisComBonecoDaFumaca = { 1, 3 };
+    private const string PacoteDaFumaca = "3837859077";
+    private const string PastaDaFumaca = "models/magnatas/fumaca_v2";
+    private static readonly int[] NiveisComBonecoDaFumaca = { 1, 2, 3 };
     private static readonly float[] SegundosDaFumaca = { 8f, 10f, 12f };
     private const float SegundosDeRecargaDaFumaca = 15f;
     // Cada fumaça custa 10% da vida máxima do nível; com menos que isso, o G não solta.
