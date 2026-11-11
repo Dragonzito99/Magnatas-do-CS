@@ -13,7 +13,8 @@
     "adm:criar": "tsx scripts/criar-adm.ts",
     "servidor:criar": "tsx scripts/criar-servidor.ts",
     "noticia:publicar": "tsx scripts/publicar-noticia.ts",
-    "grana:abrir": "tsx scripts/abrir-grana.ts"
+    "grana:abrir": "tsx scripts/abrir-grana.ts",
+    "insignias:conferir": "tsx scripts/conferir-insignias.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

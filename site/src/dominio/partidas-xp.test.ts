@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
+import { insigniasDoJogador, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { aplicarEvento } from './eventos';
 import { criarPartida, finalizarPartida, jogouAteOFim } from './partidas';
@@ -98,4 +98,18 @@ test.each([
   [1, 1, true],
 ])('com %i de %i rodadas, jogou até o fim: %s', (rodadas, total, esperado) => {
   expect(jogouAteOFim(rodadas, total)).toBe(esperado);
+});
+
+test('no fim da partida, quem chega a 10 MVPs ganha a Estrela Bronze; partida de teste não dá insígnia', async () => {
+  await bd.update(partidaJogadores).set({ mvps: 10 }).where(and(eq(partidaJogadores.partidaId, partida.id), eq(partidaJogadores.usuarioId, vencedor.id)));
+  await encerrar();
+  const insignias = await bd.select().from(insigniasDoJogador).where(eq(insigniasDoJogador.usuarioId, vencedor.id));
+  expect(insignias.map((linha) => `${linha.familia}:${linha.nivel}`)).toEqual(['estrela:0']);
+  expect(await xpDe(vencedor)).toBe(840 + 200);
+
+  const teste = await bd.transaction((tx) => criarPartida(tx, { tipo: 'teste', time1: [perdedor.id], time2: [] }));
+  await bd.update(partidas).set({ estado: 'ao_vivo', placar1: 13, placar2: 0 }).where(eq(partidas.id, teste.id));
+  await bd.update(partidaJogadores).set({ kills: 30, rodadas: 13, mvps: 50 }).where(eq(partidaJogadores.partidaId, teste.id));
+  await aplicarEvento(bd, { event: 'series_end', matchid: teste.numero, winner: { team: 'team1' } });
+  expect(await bd.select().from(insigniasDoJogador).where(eq(insigniasDoJogador.usuarioId, perdedor.id))).toEqual([]);
 });

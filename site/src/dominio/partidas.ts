@@ -8,6 +8,7 @@ import { ESTADOS_ATIVOS_DE_PARTIDA, type Transacao } from './disponibilidade';
 import { situacaoDaGravacao, type SituacaoDaGravacao } from './ficha';
 import { avancarSerie } from './series';
 import { lancarXp } from './xp';
+import { conferirInsignias } from './insignias';
 
 export const MAPAS = ['de_mirage', 'de_inferno', 'de_nuke', 'de_ancient', 'de_anubis', 'de_dust2', 'de_overpass'] as const;
 
@@ -115,6 +116,11 @@ async function lancarXpDaPartida(tx: Transacao, partidaId: string, vencedor: num
       resultado: vencedor === null ? 'empate' : jogador.time === vencedor ? 'vitoria' : 'derrota',
       jogouAteOFim: jogouAteOFim(jogador.rodadas, totalDeRodadas),
     })),
+  );
+  // Na mesma transação do XP: o resultado que conta para a meta já dá a insígnia e o prêmio.
+  await conferirInsignias(
+    tx,
+    jogadores.map((jogador) => jogador.usuarioId),
   );
 }
 

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
+import { insigniasDoJogador, servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { respostaDoResultado } from './xp-diversao';
 
@@ -278,4 +278,20 @@ test('mapa ou placar fora do formato são recusados', async () => {
     const resposta = await respostaDoResultado(bd, pedido(resultado([jogador(conta)], dados)), TOKEN);
     expect(resposta.status).toBe(400);
   }
+});
+
+test('a quinta vitória na Mutação dá a insígnia Mutação Bronze', async () => {
+  const primeira = await membro();
+  const segunda = await membro();
+  const terceira = await membro();
+  for (let partida = 1; partida <= 5; partida += 1) {
+    await enviar(
+      resultado(
+        [jogador(primeira, { abates: 12, minutos: 30 }), jogador(segunda, { abates: 4, minutos: 30 }), jogador(terceira, { abates: 4, minutos: 30, time: 'tr' })],
+        { porta: 27020, partida: `mutacao-${partida}`, duracaoMinutos: 30, vencedor: null },
+      ),
+    );
+  }
+  const insignias = await bd.select().from(insigniasDoJogador).where(eq(insigniasDoJogador.usuarioId, primeira.id));
+  expect(insignias.map((linha) => `${linha.familia}:${linha.nivel}`)).toEqual(['mutacao:0']);
 });

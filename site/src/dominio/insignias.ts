@@ -193,3 +193,14 @@ export async function conferirInsignias(
   }
   return novas;
 }
+
+/** A estreia: confere todas as contas ativas, em lotes. Rodar de novo não paga nada. Devolve quantas insígnias saíram. */
+export async function conferirInsigniasDeTodos(bd: Bd, lote = 100, agora: Date = new Date()): Promise<number> {
+  const ids = (await bd.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.estado, 'ativo')).orderBy(usuarios.id)).map((conta) => conta.id);
+  let total = 0;
+  for (let inicio = 0; inicio < ids.length; inicio += lote) {
+    const novas = await bd.transaction((tx) => conferirInsignias(tx, ids.slice(inicio, inicio + lote), agora));
+    total += novas.length;
+  }
+  return total;
+}

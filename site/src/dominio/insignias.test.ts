@@ -3,7 +3,7 @@ import type { Bd } from '@/bd/conexao';
 import { eq } from 'drizzle-orm';
 import { insigniasDoJogador, itensDoJogador, partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { conferirInsignias, contarFamilias, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
+import { conferirInsignias, conferirInsigniasDeTodos, contarFamilias, FAMILIAS, lerChaveDaInsignia, niveisAlcancados, nomeDaInsignia, PREMIOS } from './insignias';
 import { ITENS_A_VENDA } from './loja';
 
 const ZERO = { mira: 0, ace: 0, estrela: 0, vencedor: 0, mutacao: 0, veterano: 0 };
@@ -132,4 +132,12 @@ test('Lendária com todos os mutantes já para sempre dá Grana a mais no lugar 
   await bd.transaction((tx) => conferirInsignias(tx, [conta.id], AGORA, () => 0));
   const [lendaria] = await bd.select().from(insigniasDoJogador).where(eq(insigniasDoJogador.nivel, 4));
   expect(lendaria).toMatchObject({ familia: 'ace', grana: 800 + 1000, mutanteId: null });
+});
+
+test('a conferência da estreia passa por todas as contas ativas e, rodada de novo, não paga nada', async () => {
+  const bd = await criarBancoDeTeste();
+  const contas = await Promise.all([1, 2, 3].map(() => criarUsuario(bd, { estado: 'ativo' })));
+  for (const conta of contas) await partidaDe(bd, conta.id, { venceu: false, hs: 50, k5: 0, mvps: 0 });
+  expect(await conferirInsigniasDeTodos(bd, 2)).toBe(3);
+  expect(await conferirInsigniasDeTodos(bd, 2)).toBe(0);
 });

@@ -5,6 +5,7 @@ import type { Bd } from '@/bd/conexao';
 import { servidoresDiversao, usuarios, xpPartidas, type ServidorDiversao } from '@/bd/esquema';
 import { lerAte } from './eventos';
 import { lancarXp, patenteDe, type GanhoDePartida } from './xp';
+import { conferirInsignias } from './insignias';
 
 const LIMITE_DO_RESULTADO_BYTES = 1024 * 1024;
 /** Quem saiu no meio continua no resultado, então uma partida de 16 vagas pode trazer muito mais nomes. */
@@ -133,6 +134,15 @@ async function registrar(bd: Bd, recebido: ResultadoRecebido) {
               },
             ]
           : [];
+      }),
+    );
+
+    // Na mesma transação do XP: a vitória que completa a meta já dá a insígnia e o prêmio.
+    await conferirInsignias(
+      tx,
+      recebido.jogadores.flatMap((jogador) => {
+        const usuarioId = porConta.get(jogador.steamid64);
+        return usuarioId && decididas.has(jogador.steamid64) ? [usuarioId] : [];
       }),
     );
 
