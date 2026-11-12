@@ -10068,3 +10068,16 @@ a.titulo-da-linha:hover {
     justify-content: flex-start;
   }
 }
+
+/* Denúncia da Diversão no Olho de Águia (dono, 11/11/2026). */
+.denuncia-da-diversao {
+  display: grid;
+  gap: 8px;
+}
+
+.denuncia-da-diversao blockquote {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid rgba(248, 113, 113, 0.6);
+  background: rgba(255, 255, 255, 0.03);
+}

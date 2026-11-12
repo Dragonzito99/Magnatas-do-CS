@@ -165,7 +165,7 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
 
       {casos.length === 0 && (
         <section className="painel">
-          <p className="vazio">{encerrado ? 'Este caso já foi encerrado, e não há outras denúncias abertas.' : 'Nenhuma denúncia aberta.'}</p>
+          <p className="vazio">{encerrado ? 'Este caso já foi encerrado, e não há outras denúncias do mix abertas.' : 'Nenhuma denúncia do mix aberta.'}</p>
         </section>
       )}
       {casos.length > 0 && (
