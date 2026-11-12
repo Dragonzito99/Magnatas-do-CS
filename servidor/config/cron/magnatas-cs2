@@ -1,0 +1,2 @@
+# Atualiza o CS2 sozinho quando a Valve lança versão nova, conferindo a cada 15 minutos (dono, 11/11/2026).
+*/15 * * * * root bash /usr/local/bin/magnatas-atualizar-cs2.sh >> /var/log/magnatas-cs2.log 2>&1
