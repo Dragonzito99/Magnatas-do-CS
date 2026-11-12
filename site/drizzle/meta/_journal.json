@@ -239,6 +239,13 @@
       "when": 1794427144155,
       "tag": "0033_insignias",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794442809779,
+      "tag": "0034_avaliar_a_partida",
+      "breakpoints": true
     }
   ]
 }

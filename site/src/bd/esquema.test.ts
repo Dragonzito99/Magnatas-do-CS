@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { banimentos, cacheExterno, elogios, estadosDaDiversao, servidoresDiversao, faltas, insigniasDoJogador, juncoes, noticias, noticiasSteam, partidaJogadores, partidas, usuarios, vetos } from './esquema';
+import { banimentos, cacheExterno, denunciasDiversao, elogios, elogiosDiversao, estadosDaDiversao, servidoresDiversao, faltas, insigniasDoJogador, partidasVistas, juncoes, noticias, noticiasSteam, partidaJogadores, partidas, usuarios, vetos } from './esquema';
 import { criarBancoDeTeste, criarUsuario, STEAM_A, STEAM_B } from './teste';
 import { readFileSync, readdirSync } from 'node:fs';
 
@@ -103,4 +103,18 @@ test('a mesma insígnia não entra duas vezes para a mesma conta', async () => {
   await bd.update(usuarios).set({ insigniaPrincipal: 'mira:0' }).where(eq(usuarios.id, conta.id));
   const [atual] = await bd.select({ principal: usuarios.insigniaPrincipal }).from(usuarios).where(eq(usuarios.id, conta.id));
   expect(atual.principal).toBe('mira:0');
+});
+
+test('elogio e denúncia da Diversão não se repetem na mesma partida', async () => {
+  const bd = await criarBancoDeTeste();
+  const autor = await criarUsuario(bd);
+  const outro = await criarUsuario(bd);
+  const elogio = { referencia: 'diversao:27020:a', autorId: autor.id, elogiadoId: outro.id, tipo: 'gente_boa' as const };
+  await bd.insert(elogiosDiversao).values(elogio);
+  await expect(bd.insert(elogiosDiversao).values(elogio)).rejects.toThrow();
+  const denuncia = { referencia: 'diversao:27020:a', denuncianteId: autor.id, acusadoId: outro.id, motivo: 'x' };
+  await bd.insert(denunciasDiversao).values(denuncia);
+  await expect(bd.insert(denunciasDiversao).values(denuncia)).rejects.toThrow();
+  await bd.insert(partidasVistas).values({ usuarioId: autor.id, referencia: 'diversao:27020:a' });
+  await expect(bd.insert(partidasVistas).values({ usuarioId: autor.id, referencia: 'diversao:27020:a' })).rejects.toThrow();
 });

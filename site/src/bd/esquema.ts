@@ -703,6 +703,59 @@ export const denuncias = pgTable(
   (tabela) => [unique().on(tabela.partidaId, tabela.denuncianteId, tabela.acusadoId)],
 );
 
+/**
+ * Elogio e denúncia nas partidas da Diversão (dono, 11/11/2026). A partida da Diversão não tem linha em `partidas`:
+ * é a referência "diversao:<porta>:<partida>" das linhas de XP de quem jogou.
+ */
+export const elogiosDiversao = pgTable(
+  'elogios_diversao',
+  {
+    referencia: text('referencia').notNull(),
+    autorId: uuid('autor_id')
+      .notNull()
+      .references(() => usuarios.id),
+    elogiadoId: uuid('elogiado_id')
+      .notNull()
+      .references(() => usuarios.id),
+    tipo: tipoElogio('tipo').notNull(),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.referencia, tabela.autorId, tabela.elogiadoId] }), index('elogios_diversao_elogiado_idx').on(tabela.elogiadoId)],
+);
+
+export const denunciasDiversao = pgTable(
+  'denuncias_diversao',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    referencia: text('referencia').notNull(),
+    denuncianteId: uuid('denunciante_id')
+      .notNull()
+      .references(() => usuarios.id),
+    acusadoId: uuid('acusado_id')
+      .notNull()
+      .references(() => usuarios.id),
+    motivo: text('motivo').notNull(),
+    estado: estadoDenuncia('estado').notNull().default('aberta'),
+    analistaId: uuid('analista_id').references(() => usuarios.id),
+    conclusao: text('conclusao'),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [unique('denuncias_diversao_unica').on(tabela.referencia, tabela.denuncianteId, tabela.acusadoId)],
+);
+
+/** As partidas (do mix pelo id, da Diversão pela referência) que a pessoa já abriu, para o sino parar de pedir avaliação. */
+export const partidasVistas = pgTable(
+  'partidas_vistas',
+  {
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    referencia: text('referencia').notNull(),
+    vistaEm: timestamp('vista_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (tabela) => [primaryKey({ columns: [tabela.usuarioId, tabela.referencia] })],
+);
+
 export const estadoChamado = pgEnum('estado_chamado', ['aberto', 'atendido', 'virou_denuncia']);
 
 export const chamados = pgTable('chamados', {
