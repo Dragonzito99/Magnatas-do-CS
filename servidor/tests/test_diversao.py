@@ -1076,6 +1076,8 @@ PACOTE_DA_FUMACA = "3837859077"
 PACOTE_DA_HEALIX = "3838113494"
 # Personagens próprios (MagnatasVisual) e o herói da super Negev: baixados em todo servidor.
 PACOTE_DOS_PERSONAGENS = "3837571705"
+# Placas dos banners nos mapas (MagnatasVisual/Banners.cs). Em teste só no Equipe x Equipe (12/11/2026).
+PACOTE_DOS_BANNERS = "3838522884"
 
 
 def codigo_dos_sons():
@@ -1122,6 +1124,8 @@ def test_todo_servidor_da_diversao_manda_baixar_o_pacote_de_sons(servidor):
     esperado = (
         f'"{PACOTE_DE_SONS},{PACOTE_DO_MUTANTE},{PACOTE_DO_BLINDADO},{PACOTE_DOS_PERSONAGENS},{PACOTE_DA_FUMACA},{PACOTE_DA_HEALIX}"'
         if servidor == "mutacao"
+        else f'"{PACOTE_DE_SONS},{PACOTE_DOS_PERSONAGENS},{PACOTE_DOS_BANNERS}"'
+        if servidor == "equipe"
         else f'"{PACOTE_DE_SONS},{PACOTE_DOS_PERSONAGENS}"'
     )
     assert valor("mm_extra_addons", servidor) == esperado
@@ -2069,3 +2073,9 @@ def test_no_teste_o_adm_sobe_uma_pessoa_de_nivel_pela_vaga():
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index('"magnatas_mutacao_nivel"'):]
     trecho = trecho[:trecho.index(FIM_DO_METODO)]
     assert "IsBot || (vaga != null && testeComBots)" in trecho
+
+
+def test_o_plugin_dos_banners_aponta_para_o_pacote_que_o_equipe_baixa():
+    banners = (RAIZ / "plugins" / "MagnatasVisual" / "Banners.cs").read_text(encoding="utf-8")
+    assert f'PacoteDosBanners = "{PACOTE_DOS_BANNERS}"' in banners
+    assert PACOTE_DOS_BANNERS in valor("mm_extra_addons", "equipe")

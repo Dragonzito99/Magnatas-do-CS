@@ -36,6 +36,10 @@ public sealed class Visual
     /// <summary>Personagem feito só para essa conta (caminho do .vmdl).</summary>
     [JsonPropertyName("boneco")]
     public string? Boneco { get; init; }
+
+    /// <summary>Conta de Adm no site: libera os comandos dos banners.</summary>
+    [JsonPropertyName("adm")]
+    public bool Adm { get; init; }
 }
 
 /// <summary>
@@ -43,7 +47,7 @@ public sealed class Visual
 /// a Diversão copia os addons do competitivo a cada início, então vale nos dois. Nunca mexe em arma, skin ou inventário;
 /// o único boneco que troca é o personagem próprio de uma conta, da lista fechada abaixo.
 /// </summary>
-public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
+public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
 {
     public override string ModuleName => "Magnatas: visual da loja";
     public override string ModuleVersion => "1.0.0";
@@ -124,9 +128,11 @@ public class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
                 manifesto.AddResource(modelo);
                 if (boneco.Gestos != null) manifesto.AddResource(boneco.Gestos);
             }
+            PrepararBanners(manifesto);
         });
         // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
         RegisterListener<Listeners.OnMapStart>(_ => bonecosNoServidor.Clear());
+        CarregarBanners();
         // Comandos de console: dá para pôr numa tecla (bind 7 css_danca), ou escrever !danca no chat.
         AddCommand("css_danca", "Dança (boneco próprio)", (jogador, _) => FazerGesto(jogador, "danca"));
         AddCommand("css_flexao", "Flexão (boneco próprio)", (jogador, _) => FazerGesto(jogador, "flexao"));

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNotNull, ne, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, isNotNull, ne, or, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { itensDoJogador, lancamentosDeGrana, usuarios, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, type Transacao } from './disponibilidade';
@@ -364,7 +364,8 @@ export async function bauDe(bd: Bd, usuarioId: string, agora: Date = new Date())
   return bau.sort((a, b) => Number(a.vencido) - Number(b.vencido) || ordem(a) - ordem(b));
 }
 
-export type Visual = { cor?: string; etiqueta?: string; aviso?: boolean; moldura?: string; mutante?: string; boneco?: string };
+/** `adm`: só para o servidor liberar os comandos de Adm no jogo (os banners). */
+export type Visual = { cor?: string; etiqueta?: string; aviso?: boolean; moldura?: string; mutante?: string; boneco?: string; adm?: boolean };
 
 /** O que cada conta ativa está usando e ainda vale, pronto para o servidor e para as telas. */
 export async function visuaisDe(bd: Bd, steamids: string[], agora: Date = new Date()): Promise<Record<string, Visual>> {
@@ -385,11 +386,14 @@ export async function visuaisDe(bd: Bd, steamids: string[], agora: Date = new Da
     if (item.tipo === 'moldura') visual.moldura = item.valor;
     if (item.tipo === 'mutante') visual.mutante = item.valor;
   }
-  const bonecos = await bd
-    .select({ steamid64: usuarios.steamid64, boneco: usuarios.boneco })
+  const contas = await bd
+    .select({ steamid64: usuarios.steamid64, boneco: usuarios.boneco, papel: usuarios.papel })
     .from(usuarios)
-    .where(and(inArray(usuarios.steamid64, steamids), eq(usuarios.estado, 'ativo'), isNotNull(usuarios.boneco)));
-  for (const { steamid64, boneco } of bonecos) if (boneco) (visuais[steamid64] ??= {}).boneco = boneco;
+    .where(and(inArray(usuarios.steamid64, steamids), eq(usuarios.estado, 'ativo'), or(isNotNull(usuarios.boneco), eq(usuarios.papel, 'adm'))));
+  for (const { steamid64, boneco, papel } of contas) {
+    if (boneco) (visuais[steamid64] ??= {}).boneco = boneco;
+    if (papel === 'adm') (visuais[steamid64] ??= {}).adm = true;
+  }
   return visuais;
 }
 

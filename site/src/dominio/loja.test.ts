@@ -233,6 +233,15 @@ test('o boneco próprio vai junto com os itens, só da conta dele e só enquanto
   expect(await visuaisDe(bd, [dono.steamid64], AGORA)).toEqual({});
 });
 
+test('o servidor sabe quem é Adm, para liberar os comandos dos banners; GM e Adm banido não', async () => {
+  const adm = await criarUsuario(bd, { estado: 'ativo', papel: 'adm' });
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  const membro = await contaCom(0);
+  expect(await visuaisDe(bd, [adm.steamid64, gm.steamid64, membro.steamid64], AGORA)).toEqual({ [adm.steamid64]: { adm: true } });
+  await bd.update(usuarios).set({ estado: 'banido' }).where(eq(usuarios.id, adm.id));
+  expect(await visuaisDe(bd, [adm.steamid64], AGORA)).toEqual({});
+});
+
 async function contaComMagcoin(magcoin: number): Promise<Usuario> {
   const conta = await criarUsuario(bd, { estado: 'ativo' });
   await bd.transaction((tx) => lancarMoeda(tx, { moeda: 'magcoin', usuarioId: conta.id, tipo: 'pagamento', quantidade: magcoin, referencia: 'mp' }));
