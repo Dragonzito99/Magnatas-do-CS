@@ -28,6 +28,8 @@ import { aceitar, cancelar, chamar, denunciarJogador, elogiarJogador, vetar } fr
 import { CaraOuCoroa } from './cara-ou-coroa';
 import { Relogio } from './relogio';
 import { RelogioRedondo } from './relogio-redondo';
+import { marcarVistas, resultadoDaConta } from '@/dominio/avaliar';
+import { SeuResultado } from '../seu-resultado';
 
 const ERROS: Record<string, string> = {
   motivo: 'Escreva o motivo, com até 500 caracteres.',
@@ -412,7 +414,7 @@ export default async function PaginaDaPartida({
   const souLider = meuTime !== null && (salasDaPartida[meuTime]?.liderId === usuario.id || partida.tipo === 'teste');
   const ehEquipe = pode(usuario, 'moderar');
 
-  const [aceites, vetos, feitos, noServidor, gravacao, serie] = await Promise.all([
+  const [aceites, vetos, feitos, noServidor, gravacao, serie, meuResultado] = await Promise.all([
     partida.estado === 'aguardando_aceite' ? aceitesDaPartida(bd, id) : [],
     partida.estado === 'vetando' ? vetosDaPartida(bd, id) : null,
     partida.estado === 'encerrada' && jogaNaPartida ? elogiosFeitos(bd, id, usuario.id) : new Set<string>(),
@@ -426,7 +428,10 @@ export default async function PaginaDaPartida({
       : new Set<string>(),
     partida.estado === 'encerrada' && ehEquipe ? gravacaoDaPartida(bd, partida) : null,
     partida.serieId ? serieDaPartida(bd, partida.id) : null,
+    partida.estado === 'encerrada' && jogaNaPartida ? resultadoDaConta(bd, usuario.id, partida.id) : null,
   ]);
+  // Abrir a partida que acabou tira o pedido de avaliação do sino.
+  if (partida.estado === 'encerrada' && jogaNaPartida) await marcarVistas(bd, usuario.id, [partida.id]);
   const mvp = partida.estado === 'encerrada' ? mvpDaPartida(jogadores) : null;
   const time1 = jogadores.filter((jogador) => jogador.time === 1);
   const time2 = jogadores.filter((jogador) => jogador.time === 2);
@@ -641,6 +646,7 @@ export default async function PaginaDaPartida({
               )}
             </div>
           )}
+          {meuResultado && <SeuResultado resultado={meuResultado} />}
           <div className="times-partida">
             <TabelaDoTime titulo={`${nomes[1]} · ${partida.placar1}`} jogadores={time1} lado="a" />
             <TabelaDoTime titulo={`${nomes[2]} · ${partida.placar2}`} jogadores={time2} lado="b" />
@@ -689,8 +695,10 @@ export default async function PaginaDaPartida({
         </form>
       )}
 
-      {partida.estado === 'encerrada' && jogaNaPartida && <Elogios partida={partida} jogadores={jogadores} usuarioId={usuario.id} feitos={feitos} />}
-      {jogaNaPartida && (fase === 'entrar' || fase === 'vivo' || fase === 'fim') && <Denunciar partida={partida} jogadores={jogadores} usuarioId={usuario.id} />}
+      <div id="avaliar">
+        {partida.estado === 'encerrada' && jogaNaPartida && <Elogios partida={partida} jogadores={jogadores} usuarioId={usuario.id} feitos={feitos} />}
+        {jogaNaPartida && (fase === 'entrar' || fase === 'vivo' || fase === 'fim') && <Denunciar partida={partida} jogadores={jogadores} usuarioId={usuario.id} />}
+      </div>
     </>
   );
 }
