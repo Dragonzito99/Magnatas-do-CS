@@ -109,6 +109,8 @@ export type PartidaDoPerfil = {
   xp: number;
   /** A foto do mapa, quando o site conhece o mapa. */
   foto: string | null;
+  /** A página da partida: a do mix, ou a da partida da Diversão. */
+  endereco: string;
 };
 
 const ULTIMAS_DO_PERFIL = 5;
@@ -148,6 +150,7 @@ export async function ultimasPartidasDoPerfil(bd: Bd, jogadorId: string, limite:
         placar: temPlacar ? `${meu} x ${deles}` : null,
         mortes: linha.mortesNaPartida ?? linha.xp.mortes,
         foto: fotoDoMapa(linha.mapaDaPartida),
+        endereco: `/partidas/${linha.xp.referencia}`,
       };
     }
     const porta = Number(linha.xp.referencia.split(':')[1]);
@@ -158,6 +161,7 @@ export async function ultimasPartidasDoPerfil(bd: Bd, jogadorId: string, limite:
       placar: linha.xp.placar,
       mortes: linha.xp.mortes,
       foto: fotoDoMapa(linha.xp.mapa),
+      endereco: `/partidas/diversao/${porta}-${linha.xp.referencia.split(':').slice(2).join(':')}`,
     };
   });
 }

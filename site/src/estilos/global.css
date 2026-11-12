@@ -9460,11 +9460,17 @@ a.titulo-da-linha:hover {
 }
 
 .perfil-faixa {
+  color: var(--tinta);
+  text-decoration: none;
   display: grid;
   grid-template-columns: 6px 86px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   background: rgba(255, 255, 255, 0.03);
+}
+
+.perfil-faixa:hover {
+  box-shadow: inset 0 0 0 1px var(--ouro);
 }
 
 .perfil-faixa-cor {
@@ -9883,5 +9889,182 @@ a.titulo-da-linha:hover {
 @media (max-width: 760px) {
   .seu-resultado-numeros {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Partida da Diversão (dono, 11/11/2026), como no rascunho aprovado. */
+.partida-da-diversao {
+  display: grid;
+  gap: 16px;
+}
+
+.capa-da-diversao {
+  padding: 26px 22px;
+  border-bottom: 3px solid var(--roxo);
+  border-radius: 8px;
+  background: radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.35), transparent 60%), var(--painel);
+  background-size: cover;
+  background-position: center;
+}
+
+.capa-da-diversao small {
+  color: var(--tinta-2);
+}
+
+.capa-da-diversao h1 {
+  font: italic 800 40px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.partidas-de-agora {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 0 20px 18px;
+}
+
+.partida-de-agora {
+  display: grid;
+  gap: 4px;
+  min-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.partida-de-agora.atual {
+  border-color: var(--ouro);
+  box-shadow: inset 0 0 0 1px var(--ouro);
+}
+
+.partida-de-agora b {
+  font: italic 700 16px/1.1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.partida-de-agora small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.partida-de-agora .res {
+  justify-self: start;
+}
+
+.partida-de-agora em {
+  color: var(--ouro);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.jogadores-da-diversao {
+  display: grid;
+  gap: 8px;
+  padding: 0 20px 18px;
+}
+
+.jogador-da-diversao {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 70px 70px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.jogador-da-diversao.voce {
+  box-shadow: inset 0 0 0 1px var(--ouro);
+}
+
+.jogador-da-diversao .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+}
+
+.nome-do-jogador-da-diversao {
+  min-width: 0;
+}
+
+.nome-do-jogador-da-diversao a {
+  display: block;
+  overflow: hidden;
+  color: var(--tinta);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nome-do-jogador-da-diversao small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.numero-do-jogador {
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-align: center;
+}
+
+.acoes-do-jogador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.form-de-avaliar {
+  display: flex;
+  gap: 6px;
+}
+
+.form-de-avaliar select {
+  max-width: 140px;
+}
+
+.botao.pequeno.elogiar {
+  border-color: rgba(74, 222, 128, 0.5);
+  color: #bbf7d0;
+}
+
+.botao.pequeno.denunciar {
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
+  cursor: pointer;
+  list-style: none;
+}
+
+.botao.pequeno.feito {
+  opacity: 0.55;
+}
+
+.denunciar-na-diversao form {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.denunciar-na-diversao textarea {
+  min-width: 220px;
+  min-height: 70px;
+}
+
+@media (max-width: 760px) {
+  .jogador-da-diversao {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .jogador-da-diversao .numero-do-jogador {
+    display: none;
+  }
+
+  .acoes-do-jogador {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 }

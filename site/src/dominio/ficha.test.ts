@@ -238,6 +238,9 @@ test('as últimas partidas do perfil são só 5, com modo, mapa, placar e K/M de
   expect(doMix).toMatchObject({ modo: 'Mix', mapa: 'Mirage', placar: '13 x 9', mortes: 14, resultado: 'vitoria', foto: '/mapas/mirage.webp' });
   // Para as faixas do perfil novo: a foto do mapa; mapa sem foto ou sem mapa fica sem.
   expect(todas.find((linha) => linha.abates === 3)).toMatchObject({ foto: null });
+  // Cada faixa do perfil abre a partida: a do mix pela página dela, a da Diversão pela página nova (11/11/2026).
+  expect(doMix?.endereco).toMatch(/^\/partidas\/[0-9a-f-]{36}$/);
+  expect(todas.find((linha) => linha.abates === 3)?.endereco).toMatch(/^\/partidas\/diversao\/\d+-.+$/);
   expect(todas.find((linha) => linha.abates === 18)).toMatchObject({ modo: 'Equipe x Equipe', mapa: 'Egypt', placar: '80 x 95', mortes: 22 });
   expect(todas.find((linha) => linha.abates === 3)).toMatchObject({ modo: 'Fantasma', mapa: null, placar: null, mortes: null });
 });

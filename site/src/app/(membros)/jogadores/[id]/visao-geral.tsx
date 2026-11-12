@@ -13,7 +13,7 @@ const NOME_DO_RESULTADO = { vitoria: 'Vitória', empate: 'Empate', derrota: 'Der
 /** Uma partida em faixa: cor do resultado, foto do mapa, modo e mapa, placar, abates e XP. Usada também na aba Partidas. */
 export function FaixaDaPartida({ partida }: { partida: PartidaDoPerfil }) {
   return (
-    <div className={`perfil-faixa ${partida.resultado}`}>
+    <Link href={partida.endereco} className={`perfil-faixa ${partida.resultado}`}>
       <i className="perfil-faixa-cor" aria-hidden="true" />
       <span className="perfil-faixa-foto" style={partida.foto ? { backgroundImage: `url('${partida.foto}')` } : undefined} aria-hidden="true" />
       <span className="perfil-faixa-texto">
@@ -30,7 +30,7 @@ export function FaixaDaPartida({ partida }: { partida: PartidaDoPerfil }) {
         {partida.mortes === null ? `${partida.abates} ${partida.abates === 1 ? 'abate' : 'abates'}` : `${partida.abates}/${partida.mortes}`}
       </span>
       <span className="perfil-faixa-xp">+{numero.format(partida.xp)}</span>
-    </div>
+    </Link>
   );
 }
 
