@@ -12,6 +12,7 @@ export function motivoDaLinha(linha: Linha): string {
   const detalhes = (linha.detalhes ?? {}) as { itemId?: string; dias?: number; motivo?: string; paraSempre?: boolean; pacote?: string; nivel?: string; nome?: string };
   if (linha.tipo === 'partida') return 'Partida';
   if (linha.tipo === 'insignia') return `Insígnia ${detalhes.nome ?? ''}`.trim();
+  if (linha.tipo === 'presente') return 'Presente do convite';
   if (linha.tipo === 'abertura') return 'Abertura da loja: XP que você já tinha';
   if (linha.tipo === 'ajuste') return detalhes.motivo ? `Ajuste da equipe: ${detalhes.motivo}` : 'Ajuste da equipe';
   if (linha.tipo === 'pagamento') return `Compra de MagCoin: ${NOME_DO_PACOTE[detalhes.pacote ?? ''] ?? 'pacote'}`;
@@ -34,6 +35,7 @@ export function descreverLinha(linha: Linha): LinhaDescrita {
   if (linha.tipo === 'mensalidade') return { titulo: 'MagCoins do mês', detalhe: NOME_DO_NIVEL[detalhes.nivel ?? ''] ?? 'Membro' };
   if (linha.tipo === 'estorno') return { titulo: 'Pagamento estornado', detalhe: '' };
   if (linha.tipo === 'insignia') return { titulo: 'Insígnia', detalhe: detalhes.nome ?? '' };
+  if (linha.tipo === 'presente') return { titulo: 'Presente', detalhe: 'Veio no seu convite' };
   const prazo = detalhes.paraSempre ? 'para sempre' : detalhes.dias === 1 ? '1 dia' : `${detalhes.dias} dias`;
   const item = detalhes.itemId ? itemDoCatalogo(detalhes.itemId) : undefined;
   if (!item) return { titulo: 'Compra', detalhe: prazo };

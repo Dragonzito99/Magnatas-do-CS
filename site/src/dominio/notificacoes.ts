@@ -8,7 +8,7 @@ import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala, type DesafioDaSala } from './desafios';
 import { insigniasNaoVistas, textoDoPremio } from './insignias';
 import { partidaAtualDe } from './partidas';
-import { presenteFechado } from './presentes';
+import { presentesFechados } from './presentes';
 import { minhaSala } from './salas';
 import { patenteDe } from './xp';
 
@@ -75,7 +75,7 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
     lista.push({ tipo: 'amizade', texto, href: '/comunidade#pedidos', quantidade: pedidosDeAmizade.length });
   }
 
-  if (await presenteFechado(bd, usuario.id)) {
+  if ((await presentesFechados(bd, usuario.id)).length > 0) {
     lista.push({ tipo: 'presente', texto: 'Chegou seu presente de Magnata. Abra no baú!', href: '/bau#presente', quantidade: 1 });
   }
 

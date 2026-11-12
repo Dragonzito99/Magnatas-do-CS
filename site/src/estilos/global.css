@@ -2108,6 +2108,129 @@ textarea {
   display: contents;
 }
 
+/* Convites: criar com presente e a lista com quem usou */
+.criar-convite summary {
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.criar-convite summary small {
+  color: var(--tinta-2);
+}
+
+.formulario-do-convite {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.formulario-do-convite fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.formulario-do-convite legend,
+.numeros-do-convite label,
+.recado-do-convite {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.linha-do-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.linha-do-item select {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.linha-do-item input {
+  width: 70px;
+}
+
+.numeros-do-convite {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.numeros-do-convite label,
+.recado-do-convite {
+  display: grid;
+  gap: 4px;
+}
+
+.formulario-do-convite > button {
+  justify-self: start;
+}
+
+.lista-de-convites {
+  display: grid;
+  gap: 0;
+}
+
+.convite-detalhado {
+  display: grid;
+  gap: 6px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--linha);
+}
+
+.convite-detalhado:last-child {
+  border-bottom: 0;
+}
+
+.topo-do-convite {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.topo-do-convite .acoes {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.etiqueta.presente {
+  border-color: var(--ouro);
+  color: var(--ouro);
+}
+
+.presente-do-convite {
+  margin: 0;
+  color: var(--tinta);
+  font-size: 14px;
+}
+
+.presente-do-convite em {
+  color: var(--tinta-2);
+}
+
+.quem-usou {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.quem-usou > span {
+  display: grid;
+  gap: 2px;
+}
+
+.quem-usou small {
+  color: var(--tinta-2);
+}
+
 /* Presente de boas-vindas do Premium, no topo do baú */
 .presente-do-bau {
   display: flex;
@@ -2207,6 +2330,21 @@ textarea {
   75% {
     transform: rotate(8deg);
   }
+}
+
+.recado-do-presente {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--ouro);
+  background: #0b0713;
+  color: var(--tinta);
+  font-style: italic;
+}
+
+.conteudo-do-presente {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--tinta-2);
 }
 
 .escolha-do-presente {

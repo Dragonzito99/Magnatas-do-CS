@@ -4,7 +4,7 @@ import type { Bd } from '@/bd/conexao';
 import { itensDoJogador, presentes, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { bauDe } from './loja';
-import { abrirPresente, EscolhaInvalida, MUTANTES_DO_PRESENTE, PresenteIndisponivel, presenteFechado } from './presentes';
+import { abrirPresente, descreverPresente, EscolhaInvalida, MUTANTES_DO_PRESENTE, PresenteIndisponivel, presenteFechado } from './presentes';
 
 let bd: Bd;
 let conta: Usuario;
@@ -50,4 +50,14 @@ test('o que a pessoa já tinha para sempre continua para sempre, e escolha fora 
 
 test('sem presente não abre nada', async () => {
   await expect(abrirPresente(bd, conta, 'mutante-blindado', AGORA)).rejects.toBeInstanceOf(PresenteIndisponivel);
+});
+
+test('o que tem no presente, em palavras', () => {
+  expect(descreverPresente({ itens: [{ itemId: 'mutante-fumaca', dias: 7 }, { itemId: 'moldura-neon', dias: 1 }], grana: 1500, magcoin: 50 })).toEqual([
+    'Mutante Senhor do Vazio por 7 dias',
+    'Moldura Neon por 1 dia',
+    '1.500 de Grana',
+    '50 MagCoins',
+  ]);
+  expect(descreverPresente({ magcoin: 1 })).toEqual(['1 MagCoin']);
 });

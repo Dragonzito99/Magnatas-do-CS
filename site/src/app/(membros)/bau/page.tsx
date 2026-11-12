@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { bauDe, itemDoCatalogo, lojaAberta, NOME_DA_RARIDADE, NOME_DO_TIPO, RARIDADE, type ItemDoBau, type TipoDeItem } from '@/dominio/loja';
-import { DIAS_DOS_ITENS, DIAS_DOS_OUTROS_MUTANTES, ITENS_DO_PRESENTE, MUTANTES_DO_PRESENTE, presenteFechado } from '@/dominio/presentes';
+import { descreverPresente, DIAS_DOS_ITENS, DIAS_DOS_OUTROS_MUTANTES, ITENS_DO_PRESENTE, MUTANTES_DO_PRESENTE, presentesFechados } from '@/dominio/presentes';
 import { Avatar } from '../avatar';
 import { CaixaDePresente } from './caixa-de-presente';
+import { PresenteDoConvite } from './presente-do-convite';
 import { CarteiraDaShop } from '../loja/carteira-da-shop';
 import { PreviaDoItem } from '../loja/previa-do-item';
 import { tirar, usar } from './acoes';
@@ -42,7 +43,9 @@ export default async function Bau({ searchParams }: { searchParams: Promise<{ er
   const usuario = await exigirAcesso('/bau');
   if (!lojaAberta(usuario)) redirect('/inicio');
   const { erro, ver, presente: aberto } = await searchParams;
-  const [bau, presente] = await Promise.all([bauDe(obterBd(), usuario.id), presenteFechado(obterBd(), usuario.id)]);
+  const [bau, fechados] = await Promise.all([bauDe(obterBd(), usuario.id), presentesFechados(obterBd(), usuario.id)]);
+  const presente = fechados.find((item) => item.origem === 'premium');
+  const doConvite = fechados.find((item) => item.origem === 'convite');
   const mutanteDoPresente = aberto ? MUTANTES_DO_PRESENTE.find((item) => item.id === aberto) : undefined;
   const itensDoPresente = juntar(
     ITENS_DO_PRESENTE.map((id) => {
@@ -87,6 +90,12 @@ export default async function Bau({ searchParams }: { searchParams: Promise<{ er
           diasDosOutros={DIAS_DOS_OUTROS_MUTANTES}
           itens={`${itensDoPresente} por ${DIAS_DOS_ITENS} dias`}
         />
+      )}
+      {doConvite && <PresenteDoConvite presenteId={doConvite.id} recado={doConvite.recado} conteudo={descreverPresente(doConvite.conteudo ?? {})} />}
+      {aberto === 'convite' && !doConvite && (
+        <p className="aviso presente-aberto" role="status">
+          🎁 Presente aberto! Os itens já estão aqui embaixo para usar, e a Grana e as MagCoins já caíram na sua conta.
+        </p>
       )}
       {mutanteDoPresente && !presente && (
         <p className="aviso presente-aberto" role="status">

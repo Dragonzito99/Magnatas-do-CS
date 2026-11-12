@@ -62,7 +62,7 @@ export const xpPartidas = pgTable(
   (tabela) => [unique('xp_partidas_conta_referencia').on(tabela.usuarioId, tabela.referencia), index('xp_partidas_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],
 );
 
-export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste', 'pagamento', 'mensalidade', 'estorno', 'insignia']);
+export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste', 'pagamento', 'mensalidade', 'estorno', 'insignia', 'presente']);
 export const moeda = pgEnum('moeda', ['grana', 'magcoin']);
 
 /**
@@ -233,6 +233,10 @@ export const convites = pgTable('convites', {
   usadoEm: timestamp('usado_em', { withTimezone: true }),
   revogadoEm: timestamp('revogado_em', { withTimezone: true }),
   criadoEm: criadoEm(),
+  /** Convite com presente (só o Adm cria): o que vai fechado para o baú de quem entrar. */
+  presente: jsonb('presente').$type<ConteudoDoPresente>(),
+  /** Depois disso o convite não vale mais. Vazio: não vence. */
+  venceEm: timestamp('vence_em', { withTimezone: true }),
 });
 
 export const sessoes = pgTable('sessoes', {
@@ -760,16 +764,27 @@ export const denunciasDiversao = pgTable(
  * O presente de boas-vindas do Premium (dono, 12/11/2026): chega fechado no baú na primeira mensalidade, uma vez por
  * conta. Ao abrir, a pessoa escolhe o mutante que fica para sempre.
  */
-export const presentes = pgTable('presentes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  usuarioId: uuid('usuario_id')
-    .notNull()
-    .unique()
-    .references(() => usuarios.id),
-  criadoEm: criadoEm(),
-  abertoEm: timestamp('aberto_em', { withTimezone: true }),
-  mutanteId: text('mutante_id'),
-});
+export const presentes = pgTable(
+  'presentes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    // premium: o de boas-vindas, com a escolha do mutante. convite: o que veio no convite com presente.
+    origem: text('origem').$type<'premium' | 'convite'>().notNull().default('premium'),
+    conteudo: jsonb('conteudo').$type<ConteudoDoPresente>(),
+    recado: text('recado'),
+    criadoEm: criadoEm(),
+    abertoEm: timestamp('aberto_em', { withTimezone: true }),
+    mutanteId: text('mutante_id'),
+  },
+  // Um de cada origem por conta: o do Premium é uma vez só, e cada conta entra por um convite só.
+  (tabela) => [unique('presentes_conta_origem').on(tabela.usuarioId, tabela.origem)],
+);
+
+/** O que vai dentro de um presente de convite: itens da Shop por X dias, Grana, MagCoins e um recado. */
+export type ConteudoDoPresente = { itens?: { itemId: string; dias: number }[]; grana?: number; magcoin?: number; recado?: string };
 
 /**
  * Denúncia de uma mensagem das conversas (dono, 12/11/2026): vai para o Olho de Águia, onde a equipe apaga a mensagem

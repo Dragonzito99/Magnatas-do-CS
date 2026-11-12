@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { ItemInvalido, lojaAberta, tirarItem, usarItem } from '@/dominio/loja';
-import { abrirPresente as abrirPresenteDaConta, EscolhaInvalida, PresenteIndisponivel } from '@/dominio/presentes';
+import { abrirPresente as abrirPresenteDaConta, abrirPresenteDoConvite, EscolhaInvalida, PresenteIndisponivel } from '@/dominio/presentes';
 
 async function noBau(acao: (usuarioId: string, itemId: string) => Promise<void>, dados: FormData): Promise<void> {
   const usuario = await exigirAcesso('/bau');
@@ -26,6 +26,19 @@ export async function usar(dados: FormData): Promise<void> {
 
 export async function tirar(dados: FormData): Promise<void> {
   await noBau((usuarioId, itemId) => tirarItem(obterBd(), { id: usuarioId }, itemId), dados);
+}
+
+/** Abre o presente que veio no convite. */
+export async function abrirPresenteConvite(dados: FormData): Promise<void> {
+  const usuario = await exigirAcesso('/bau');
+  try {
+    await abrirPresenteDoConvite(obterBd(), usuario, String(dados.get('presenteId') ?? ''));
+  } catch (erro) {
+    if (erro instanceof PresenteIndisponivel) redirect('/bau');
+    throw erro;
+  }
+  revalidatePath('/', 'layout');
+  redirect('/bau?presente=convite');
 }
 
 /** Abre o presente do Premium com o mutante escolhido; o mutante já entra em uso. */

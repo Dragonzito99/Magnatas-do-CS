@@ -1,7 +1,8 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { presentes, type Usuario } from '@/bd/esquema';
-import { CATALOGO, type ItemDaLoja } from './loja';
+import { presentes, type ConteudoDoPresente, type Usuario } from '@/bd/esquema';
+import { lancarMoeda } from './grana';
+import { CATALOGO, itemDoCatalogo, type ItemDaLoja, type TipoDeItem } from './loja';
 import { darAte } from './membros';
 
 /**
@@ -23,8 +24,19 @@ export async function presenteFechado(bd: Bd, usuarioId: string): Promise<{ id: 
   const [presente] = await bd
     .select({ id: presentes.id, criadoEm: presentes.criadoEm })
     .from(presentes)
-    .where(and(eq(presentes.usuarioId, usuarioId), isNull(presentes.abertoEm)));
+    .where(and(eq(presentes.usuarioId, usuarioId), eq(presentes.origem, 'premium'), isNull(presentes.abertoEm)));
   return presente ?? null;
+}
+
+export type PresenteFechado = { id: string; origem: 'premium' | 'convite'; conteudo: ConteudoDoPresente | null; recado: string | null; criadoEm: Date };
+
+/** Todos os presentes ainda fechados da conta: o do Premium e o do convite. */
+export async function presentesFechados(bd: Bd, usuarioId: string): Promise<PresenteFechado[]> {
+  return bd
+    .select({ id: presentes.id, origem: presentes.origem, conteudo: presentes.conteudo, recado: presentes.recado, criadoEm: presentes.criadoEm })
+    .from(presentes)
+    .where(and(eq(presentes.usuarioId, usuarioId), isNull(presentes.abertoEm)))
+    .orderBy(presentes.criadoEm);
 }
 
 export type PresenteAberto = { mutante: ItemDaLoja; outros: ItemDaLoja[]; itens: ItemDaLoja[] };
@@ -37,7 +49,7 @@ export async function abrirPresente(bd: Bd, usuario: Pick<Usuario, 'id'>, mutant
     const [presente] = await tx
       .select()
       .from(presentes)
-      .where(and(eq(presentes.usuarioId, usuario.id), isNull(presentes.abertoEm)))
+      .where(and(eq(presentes.usuarioId, usuario.id), eq(presentes.origem, 'premium'), isNull(presentes.abertoEm)))
       .for('update');
     if (!presente) throw new PresenteIndisponivel();
     const outros = MUTANTES_DO_PRESENTE.filter((item) => item.id !== mutante.id);
@@ -48,4 +60,41 @@ export async function abrirPresente(bd: Bd, usuario: Pick<Usuario, 'id'>, mutant
     await tx.update(presentes).set({ abertoEm: agora, mutanteId: mutante.id }).where(eq(presentes.id, presente.id));
     return { mutante, outros, itens };
   });
+}
+
+/** Abre o presente que veio no convite: os itens contam os dias a partir de agora, e a Grana e as MagCoins caem na conta. */
+export async function abrirPresenteDoConvite(bd: Bd, usuario: Pick<Usuario, 'id'>, presenteId: string, agora: Date = new Date()): Promise<ConteudoDoPresente> {
+  return bd.transaction(async (tx) => {
+    const [presente] = await tx
+      .select()
+      .from(presentes)
+      .where(and(eq(presentes.id, presenteId), eq(presentes.usuarioId, usuario.id), eq(presentes.origem, 'convite'), isNull(presentes.abertoEm)))
+      .for('update');
+    if (!presente) throw new PresenteIndisponivel();
+    const conteudo = presente.conteudo ?? {};
+    for (const linha of conteudo.itens ?? []) {
+      if (itemDoCatalogo(linha.itemId)) await darAte(tx, usuario.id, linha.itemId, new Date(agora.getTime() + linha.dias * DIA_MS), agora);
+    }
+    for (const moeda of ['grana', 'magcoin'] as const) {
+      const quantidade = conteudo[moeda] ?? 0;
+      if (quantidade > 0) await lancarMoeda(tx, { moeda, usuarioId: usuario.id, tipo: 'presente', quantidade, referencia: `presente:${presente.id}`, detalhes: { origem: 'convite' } });
+    }
+    await tx.update(presentes).set({ abertoEm: agora }).where(eq(presentes.id, presente.id));
+    return conteudo;
+  });
+}
+
+const numero = new Intl.NumberFormat('pt-BR');
+// Curto, para caber numa linha: "Moldura Neon", "Cor do nome Vermelho". O aviso já se chama "Aviso de entrada".
+const PREFIXO: Record<TipoDeItem, string> = { mutante: 'Mutante ', moldura: 'Moldura ', etiqueta: 'Etiqueta ', cor: 'Cor do nome ', aviso: '' };
+
+/** O que tem no presente, uma linha por coisa, para o baú e a lista de convites. */
+export function descreverPresente(conteudo: ConteudoDoPresente): string[] {
+  const linhas = (conteudo.itens ?? []).flatMap((linha) => {
+    const item = itemDoCatalogo(linha.itemId);
+    return item ? [`${PREFIXO[item.tipo]}${item.nome} por ${linha.dias === 1 ? '1 dia' : `${linha.dias} dias`}`] : [];
+  });
+  if (conteudo.grana) linhas.push(`${numero.format(conteudo.grana)} de Grana`);
+  if (conteudo.magcoin) linhas.push(conteudo.magcoin === 1 ? '1 MagCoin' : `${numero.format(conteudo.magcoin)} MagCoins`);
+  return linhas;
 }

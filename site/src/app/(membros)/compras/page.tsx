@@ -15,7 +15,7 @@ const diaDe = new Intl.DateTimeFormat('en-CA', { timeZone: FUSO, year: 'numeric'
 const diaPorExtenso = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, weekday: 'long', day: 'numeric', month: 'long' });
 const hora = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit' });
 
-const SIMBOLO: Partial<Record<LinhaDoExtrato['tipo'], string>> = { partida: 'XP', abertura: 'XP', ajuste: 'ADM', pagamento: 'M', mensalidade: 'M', estorno: '↩', insignia: '★' };
+const SIMBOLO: Partial<Record<LinhaDoExtrato['tipo'], string>> = { partida: 'XP', abertura: 'XP', ajuste: 'ADM', pagamento: 'M', mensalidade: 'M', estorno: '↩', insignia: '★', presente: '🎁' };
 
 /** O extrato agrupado por dia, do mais novo para o mais antigo, com "Hoje" e "Ontem" no lugar da data. */
 function porDia(linhas: LinhaDoExtrato[], agora: Date) {
