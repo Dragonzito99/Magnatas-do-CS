@@ -5,6 +5,10 @@ import { AguardandoAtualizacao } from '../aviso-de-manutencao';
 import { BotaoCopiar } from '../botao-copiar';
 import { ligar } from '../diversao/acoes';
 import { AvisarAoEntrar, BotaoLigar, EntrarQuandoLigar, EsperarEEntrar, TempoLigando } from '../diversao/esperar-e-entrar';
+import { EntrarComAviso, LembreteDaOficina } from '../diversao/aviso-da-oficina';
+
+/** Coleção dos Magnatas na Oficina, criada pelo dono em 12/11/2026: "Inscrever-se em todos" baixa tudo antes de entrar. */
+const COLECAO_DA_OFICINA = 'https://steamcommunity.com/sharedfiles/filedetails/?id=3838511475';
 
 export const SEM_RESPOSTA: SituacaoDoServidor = { ligado: false, jogando: 0 };
 /** Depois disso o aviso de falha some e o cartão volta só com o botão. */
@@ -51,6 +55,7 @@ export function RodapeDoCartao({
         <span className="etiqueta">Ligando... cerca de 1 minuto</span>
         {guardado && <TempoLigando desde={guardado.desde.toISOString()} />}
         <EntrarQuandoLigar servidorId={servidor.id} />
+        <LembreteDaOficina colecao={COLECAO_DA_OFICINA} />
       </>
     );
   }
@@ -94,9 +99,7 @@ export function RodapeDoCartao({
       {estado === 'em_teste' && etiquetaDoTeste}
       <AvisarAoEntrar servidorId={servidor.id}>
         {comando && <BotaoCopiar texto={comando} />}
-        <a className="botao ouro pequeno" href={link}>
-          Entrar
-        </a>
+        <EntrarComAviso link={link} colecao={COLECAO_DA_OFICINA} />
       </AvisarAoEntrar>
       <EsperarEEntrar servidorId={servidor.id} link={link} />
     </>
