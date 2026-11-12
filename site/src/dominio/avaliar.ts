@@ -5,10 +5,11 @@
  */
 import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { denunciasDiversao, elogiosDiversao, insigniasDoJogador, lancamentosDeGrana, partidaJogadores, servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
+import { denunciasDiversao, elogiosDiversao, estadosDaDiversao, insigniasDoJogador, lancamentosDeGrana, partidaJogadores, partidas, partidasVistas, servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
+import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
 import { AcusadoInvalido, DenunciaRepetida, MAXIMO_DO_TEXTO, MotivoInvalido, NaoJogou } from './denuncias';
 import { exigirAtivo } from './disponibilidade';
-import { fotoDoMapa, MODOS_DE_DIVERSAO, nomeDoMapaConhecido } from './diversao';
+import { alvoDoServidor, fotoDoMapa, MODOS_DE_DIVERSAO, nomeDoMapaConhecido } from './diversao';
 import { ElogioIndisponivel, ElogioRepetido, TIPOS_DE_ELOGIO } from './elogios';
 import { kdDe } from './ficha';
 import type { Familia } from './insignias';
@@ -238,4 +239,97 @@ export async function denunciasFeitasNaDiversao(bd: Bd, referencia: string, denu
     .from(denunciasDiversao)
     .where(and(eq(denunciasDiversao.referencia, referencia), eq(denunciasDiversao.denuncianteId, denuncianteId)));
   return new Set(linhas.map((linha) => linha.id));
+}
+
+export type Pendentes = { mix: { id: string; numero: number } | null; diversao: { referencias: string[]; modo: string } | null };
+
+/**
+ * O que a conta ainda não avaliou: a última partida do mix das últimas 12 h que ela não abriu e, na Diversão, as
+ * partidas da sessão de agora que ela não abriu.
+ */
+export async function avaliacoesPendentes(bd: Bd, usuarioId: string, agora: Date = new Date()): Promise<Pendentes> {
+  const desde = new Date(agora.getTime() - JANELA_DA_SESSAO_MS);
+  const [ultimaDoMix] = await bd
+    .select({ id: partidas.id, numero: partidas.numero, criadoEm: xpPartidas.criadoEm })
+    .from(xpPartidas)
+    .innerJoin(partidas, sql`${partidas.id}::text = ${xpPartidas.referencia}`)
+    .where(and(eq(xpPartidas.usuarioId, usuarioId), eq(xpPartidas.origem, 'partida'), eq(partidas.estado, 'encerrada'), gte(xpPartidas.criadoEm, desde)))
+    .orderBy(desc(xpPartidas.criadoEm))
+    .limit(1);
+  const sessao = await sessaoDaDiversao(bd, usuarioId, agora);
+  const referencias = [...(ultimaDoMix ? [ultimaDoMix.id] : []), ...sessao.map((partida) => partida.referencia)];
+  const vistas =
+    referencias.length === 0
+      ? new Set<string>()
+      : new Set(
+          (
+            await bd
+              .select({ referencia: partidasVistas.referencia })
+              .from(partidasVistas)
+              .where(and(eq(partidasVistas.usuarioId, usuarioId), inArray(partidasVistas.referencia, referencias)))
+          ).map((linha) => linha.referencia),
+        );
+  const naoVistas = sessao.filter((partida) => !vistas.has(partida.referencia));
+  return {
+    mix: ultimaDoMix && !vistas.has(ultimaDoMix.id) ? { id: ultimaDoMix.id, numero: ultimaDoMix.numero } : null,
+    diversao: naoVistas.length > 0 ? { referencias: naoVistas.map((partida) => partida.referencia), modo: naoVistas[naoVistas.length - 1].modo } : null,
+  };
+}
+
+/** Abrir a página da partida (ou de qualquer uma da sessão) tira o pedido de avaliação do sino. */
+export async function marcarVistas(bd: Bd, usuarioId: string, referencias: string[]): Promise<void> {
+  if (referencias.length === 0) return;
+  await bd
+    .insert(partidasVistas)
+    .values(referencias.map((referencia) => ({ usuarioId, referencia })))
+    .onConflictDoNothing();
+}
+
+export function enderecoDaPartidaDaDiversao(referencia: string): string {
+  return `/partidas/diversao/${slugDaDiversao(referencia)}`;
+}
+
+const JANELA_DO_MIX_MS = 10 * MINUTO_MS;
+
+/**
+ * Para onde mandar a aba de quem acabou de jogar: a partida do mix que terminou há menos de 10 min, ou, na Diversão, a
+ * última partida da sessão, mas só quando a conta já saiu de todos os servidores da Diversão ligados. Servidor que não
+ * responde: não dá para saber se a pessoa ainda está lá, então ninguém é mandado.
+ */
+export async function destinoAoSair(
+  bd: Bd,
+  controlador: ControladorServidor,
+  usuario: Pick<Usuario, 'id' | 'steamid64'>,
+  servidoresLigados: ServidorAlvo[],
+  agora: Date = new Date(),
+): Promise<string | null> {
+  const pendentes = await avaliacoesPendentes(bd, usuario.id, agora);
+  if (pendentes.mix) {
+    const [linha] = await bd
+      .select({ criadoEm: xpPartidas.criadoEm })
+      .from(xpPartidas)
+      .where(and(eq(xpPartidas.usuarioId, usuario.id), eq(xpPartidas.referencia, pendentes.mix.id)));
+    if (linha && agora.getTime() - linha.criadoEm.getTime() <= JANELA_DO_MIX_MS) return `/partidas/${pendentes.mix.id}#avaliar`;
+  }
+  if (!pendentes.diversao) return null;
+  for (const alvo of servidoresLigados) {
+    try {
+      const estado = await controlador.estadoDoServidor(alvo);
+      if (estado.contas.includes(usuario.steamid64)) return null;
+    } catch {
+      return null;
+    }
+  }
+  const ultima = pendentes.diversao.referencias[pendentes.diversao.referencias.length - 1];
+  return `${enderecoDaPartidaDaDiversao(ultima)}#avaliar`;
+}
+
+/** Os servidores da Diversão ligados agora, com o endereço de cada um, para ver se a pessoa ainda está jogando. */
+export async function servidoresDaDiversaoLigados(bd: Bd, hostPadrao: string | undefined): Promise<ServidorAlvo[]> {
+  const linhas = await bd
+    .select({ host: servidoresDiversao.host, porta: servidoresDiversao.porta })
+    .from(servidoresDiversao)
+    .innerJoin(estadosDaDiversao, eq(estadosDaDiversao.servidorId, servidoresDiversao.id))
+    .where(and(eq(servidoresDiversao.ativo, true), eq(estadosDaDiversao.estado, 'ligado')));
+  return linhas.flatMap((linha) => alvoDoServidor(linha, hostPadrao) ?? []);
 }

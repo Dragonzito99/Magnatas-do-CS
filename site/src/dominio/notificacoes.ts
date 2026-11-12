@@ -2,6 +2,7 @@ import { pode } from '@/auth/permissoes';
 import type { Bd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import { convitesDeSalaPara, pedidosDeAmizadePara } from './amigos';
+import { avaliacoesPendentes, enderecoDaPartidaDaDiversao } from './avaliar';
 import { chamadosDe, claDoUsuario, pedidosDoCla } from './clas';
 import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala, type DesafioDaSala } from './desafios';
@@ -11,7 +12,7 @@ import { minhaSala } from './salas';
 import { patenteDe } from './xp';
 
 export type Notificacao = {
-  tipo: 'desafio' | 'partida' | 'patente' | 'insignia' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala';
+  tipo: 'desafio' | 'partida' | 'patente' | 'insignia' | 'avaliar' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala';
   texto: string;
   href: string;
   quantidade: number;
@@ -76,6 +77,16 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
   const patente = patenteDe(usuario.xpTotal);
   if (patente.nivel > usuario.patenteVista) {
     lista.push({ tipo: 'patente', texto: `Você subiu para ${patente.nome}`, href: `/jogadores/${usuario.id}`, quantidade: 1 });
+  }
+
+  // Partida que acabou e ainda não foi avaliada (dono, 11/11/2026).
+  const avaliar = await avaliacoesPendentes(bd, usuario.id, agora);
+  if (avaliar.mix) lista.push({ tipo: 'avaliar', texto: `Avalie a partida #${avaliar.mix.numero}`, href: `/partidas/${avaliar.mix.id}#avaliar`, quantidade: 1 });
+  if (avaliar.diversao) {
+    const quantas = avaliar.diversao.referencias.length;
+    const texto = quantas === 1 ? `Avalie sua partida da ${avaliar.diversao.modo}` : `Avalie suas ${quantas} partidas da ${avaliar.diversao.modo}`;
+    const ultima = avaliar.diversao.referencias[quantas - 1];
+    lista.push({ tipo: 'avaliar', texto, href: `${enderecoDaPartidaDaDiversao(ultima)}#avaliar`, quantidade: 1 });
   }
 
   // Na estreia vêm várias de uma vez: um aviso só, com a soma dos prêmios.
