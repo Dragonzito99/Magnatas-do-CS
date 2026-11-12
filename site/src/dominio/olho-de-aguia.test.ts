@@ -1,11 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { auditoria, banimentos, chamados, denuncias, denunciasDiversao, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
+import { auditoria, banimentos, chamados, denuncias, denunciasDeMensagem, denunciasDiversao, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { ConclusaoInvalida, contagemDeCasos, denunciar, DenunciaIndisponivel } from './denuncias';
 import { SemPermissao } from './equipe';
-import { casoEscolhido, chamadosEmAndamento, encerrarCaso, encerrarDenunciaDaDiversao, listarCasosDeDenuncia, listarDenunciasDaDiversao, motivoDaProposta } from './olho-de-aguia';
+import { casoEscolhido, chamadosEmAndamento, encerrarCaso, encerrarDenunciaDaDiversao, listarCasosDeDenuncia, listarDenunciasDaDiversao, listarDenunciasDeMensagem, motivoDaProposta, resolverDenunciaDeMensagem } from './olho-de-aguia';
+import { pedirAmizade, responderAmizade } from './amigos';
+import { conversaDiretaCom, denunciarMensagem, enviarMensagem, mensagensDe } from './mensagens';
 
 let bd: Bd;
 let gm: Usuario;
@@ -322,4 +324,47 @@ test('denúncia da Diversão: a equipe vê, encerra com conclusão e auditoria, 
   const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'encerrar_denuncia_diversao'));
   expect(registro).toMatchObject({ atorId: gm.id, alvoId: acusado.id });
   await expect(encerrarDenunciaDaDiversao(bd, gm, lista[0].id, 'de novo')).rejects.toBeInstanceOf(DenunciaIndisponivel);
+});
+
+async function mensagemDenunciada(texto: string): Promise<{ conversa: string; mensagem: string }> {
+  await pedirAmizade(bd, acusado, denunciante.id, AGORA);
+  await responderAmizade(bd, denunciante, acusado.id, true, AGORA);
+  const conversa = await conversaDiretaCom(bd, acusado, denunciante.id, AGORA);
+  const mensagem = await enviarMensagem(bd, acusado, conversa, texto, AGORA);
+  await denunciarMensagem(bd, denunciante, mensagem, AGORA);
+  return { conversa, mensagem };
+}
+
+test('denúncia de mensagem chega à equipe com o texto, conta no sino e não repete', async () => {
+  const { mensagem } = await mensagemDenunciada('xingamento');
+  await denunciarMensagem(bd, denunciante, mensagem, AGORA);
+  expect((await contagemDeCasos(bd, gm)).denuncias).toBe(1);
+  await expect(listarDenunciasDeMensagem(bd, membro)).rejects.toBeInstanceOf(SemPermissao);
+  const lista = await listarDenunciasDeMensagem(bd, gm);
+  expect(lista).toHaveLength(1);
+  expect(lista[0]).toMatchObject({ texto: 'xingamento', autor: { id: acusado.id, apelido: 'acusado' }, denuncianteApelido: 'quem_denunciou', podeResolver: true });
+});
+
+test('apagar a mensagem denunciada some com ela para todos e fecha a denúncia, com auditoria', async () => {
+  const { conversa } = await mensagemDenunciada('xingamento');
+  const [denuncia] = await listarDenunciasDeMensagem(bd, gm);
+  await resolverDenunciaDeMensagem(bd, gm, denuncia.id, 'apagar');
+  expect(await mensagensDe(bd, denunciante, conversa, AGORA)).toEqual([]);
+  expect(await listarDenunciasDeMensagem(bd, gm)).toEqual([]);
+  expect((await contagemDeCasos(bd, gm)).denuncias).toBe(0);
+  expect((await bd.select().from(denunciasDeMensagem))[0]).toMatchObject({ estado: 'encerrada', analistaId: gm.id, conclusao: 'Mensagem apagada' });
+  const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'resolver_denuncia_de_mensagem'));
+  expect(registro).toMatchObject({ atorId: gm.id, alvoId: acusado.id });
+  await expect(resolverDenunciaDeMensagem(bd, gm, denuncia.id, 'arquivar')).rejects.toBeInstanceOf(DenunciaIndisponivel);
+});
+
+test('arquivar deixa a mensagem, e quem escreveu ou denunciou não resolve a própria denúncia', async () => {
+  const { conversa } = await mensagemDenunciada('normal');
+  await bd.update(usuarios).set({ papel: 'gm' }).where(eq(usuarios.id, acusado.id));
+  const [denuncia] = await listarDenunciasDeMensagem(bd, acusado);
+  expect(denuncia.podeResolver).toBe(false);
+  await expect(resolverDenunciaDeMensagem(bd, acusado, denuncia.id, 'apagar')).rejects.toBeInstanceOf(SemPermissao);
+  await resolverDenunciaDeMensagem(bd, gm, denuncia.id, 'arquivar');
+  expect(await mensagensDe(bd, denunciante, conversa, AGORA)).toHaveLength(1);
+  expect((await bd.select().from(denunciasDeMensagem))[0]).toMatchObject({ estado: 'encerrada', conclusao: 'Arquivada sem apagar' });
 });

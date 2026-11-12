@@ -253,6 +253,13 @@
       "when": 1794446436917,
       "tag": "0035_aviso_de_manutencao",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794507708724,
+      "tag": "0036_denuncias_de_mensagem",
+      "breakpoints": true
     }
   ]
 }

@@ -10,7 +10,7 @@ import { partidas } from '@/bd/esquema';
 import { AlvoIndisponivel, MotivoDaPunicaoInvalido, proporBanimento, PropostaJaAberta, suspender } from '@/dominio/banimentos';
 import { atenderChamado, ChamadoIndisponivel, ConclusaoInvalida, DenunciaIndisponivel } from '@/dominio/denuncias';
 import { SemPermissao } from '@/dominio/equipe';
-import { encerrarCaso, encerrarDenunciaDaDiversao, motivoDaProposta } from '@/dominio/olho-de-aguia';
+import { encerrarCaso, encerrarDenunciaDaDiversao, motivoDaProposta, resolverDenunciaDeMensagem } from '@/dominio/olho-de-aguia';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 
 const CAMINHO = '/olho-de-aguia';
@@ -103,6 +103,30 @@ export async function encerrarDaDiversao(dados: FormData) {
     if (erro instanceof SemPermissao) redirect(`${CAMINHO}?erro=propria#diversao`);
     const codigo = codigoDoErro(erro);
     if (codigo) redirect(`${CAMINHO}?erro=${codigo}#diversao`);
+    throw erro;
+  }
+  revalidatePath(CAMINHO);
+}
+
+/** Denúncia de mensagem: some com a mensagem para todos. Uma ação para cada botão: o botão não leva valor junto. */
+export async function apagarDeMensagem(dados: FormData) {
+  await resolverDeMensagem(dados, 'apagar');
+}
+
+/** Denúncia de mensagem: fecha a denúncia e deixa a mensagem como está. */
+export async function arquivarDeMensagem(dados: FormData) {
+  await resolverDeMensagem(dados, 'arquivar');
+}
+
+async function resolverDeMensagem(dados: FormData, decisao: 'apagar' | 'arquivar') {
+  const id = idDe(dados, 'denunciaId');
+  const ator = await exigirAcesso(CAMINHO);
+  try {
+    await resolverDenunciaDeMensagem(obterBd(), ator, id, decisao);
+  } catch (erro) {
+    if (erro instanceof SemPermissao) redirect(`${CAMINHO}?erro=propria#mensagens`);
+    const codigo = codigoDoErro(erro);
+    if (codigo) redirect(`${CAMINHO}?erro=${codigo}#mensagens`);
     throw erro;
   }
   revalidatePath(CAMINHO);

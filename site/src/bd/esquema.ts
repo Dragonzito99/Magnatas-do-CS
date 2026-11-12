@@ -756,6 +756,31 @@ export const denunciasDiversao = pgTable(
   (tabela) => [unique('denuncias_diversao_unica').on(tabela.referencia, tabela.denuncianteId, tabela.acusadoId)],
 );
 
+/**
+ * Denúncia de uma mensagem das conversas (dono, 12/11/2026): vai para o Olho de Águia, onde a equipe apaga a mensagem
+ * ou arquiva a denúncia. A conclusão diz o que foi feito.
+ */
+export const denunciasDeMensagem = pgTable(
+  'denuncias_de_mensagem',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    mensagemId: uuid('mensagem_id')
+      .notNull()
+      .references(() => mensagens.id, { onDelete: 'cascade' }),
+    denuncianteId: uuid('denunciante_id')
+      .notNull()
+      .references(() => usuarios.id),
+    autorId: uuid('autor_id')
+      .notNull()
+      .references(() => usuarios.id),
+    estado: estadoDenuncia('estado').notNull().default('aberta'),
+    analistaId: uuid('analista_id').references(() => usuarios.id),
+    conclusao: text('conclusao'),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [unique('denuncias_de_mensagem_unica').on(tabela.mensagemId, tabela.denuncianteId)],
+);
+
 /** As partidas (do mix pelo id, da Diversão pela referência) que a pessoa já abriu, para o sino parar de pedir avaliação. */
 export const partidasVistas = pgTable(
   'partidas_vistas',

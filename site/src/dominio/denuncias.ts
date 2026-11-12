@@ -1,6 +1,6 @@
 import { and, asc, count, eq, gte, inArray, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, chamados, denuncias, denunciasDiversao, partidaJogadores, partidas, usuarios, type Chamado, type Denuncia, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, chamados, denuncias, denunciasDeMensagem, denunciasDiversao, partidaJogadores, partidas, usuarios, type Chamado, type Denuncia, type Partida, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, type Transacao } from './disponibilidade';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 import type { UsuarioPublico } from './salas';
@@ -198,8 +198,9 @@ export async function contagemDeCasos(bd: Bd, leitor: Pick<Usuario, 'id'>): Prom
   const [{ abertos }] = await bd.select({ abertos: count() }).from(chamados).where(eq(chamados.estado, 'aberto'));
   const [{ pendentes }] = await bd.select({ pendentes: count() }).from(denuncias).where(ne(denuncias.estado, 'encerrada'));
   const [{ daDiversao }] = await bd.select({ daDiversao: count() }).from(denunciasDiversao).where(ne(denunciasDiversao.estado, 'encerrada'));
+  const [{ deMensagem }] = await bd.select({ deMensagem: count() }).from(denunciasDeMensagem).where(ne(denunciasDeMensagem.estado, 'encerrada'));
   const [{ propostas }] = await bd.select({ propostas: count() }).from(banimentos).where(eq(banimentos.estado, 'proposto'));
-  return { chamados: abertos, denuncias: pendentes + daDiversao, propostas };
+  return { chamados: abertos, denuncias: pendentes + daDiversao + deMensagem, propostas };
 }
 
 export async function contarCasos(bd: Bd, leitor: Pick<Usuario, 'id'>): Promise<number> {

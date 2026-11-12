@@ -1,6 +1,6 @@
 import { and, desc, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { claMembros, clas, conversaMembros, conversas, mensagens, usuarios, type Usuario } from '@/bd/esquema';
+import { claMembros, clas, conversaMembros, conversas, denunciasDeMensagem, mensagens, usuarios, type Usuario } from '@/bd/esquema';
 import { saoAmigos } from './amigos';
 import { avisar } from './ao-vivo';
 import { registrarAuditoria } from './equipe';
@@ -201,11 +201,17 @@ export async function naoLidasDe(bd: Bd, euId: string, agora: Date = new Date())
   return (await conversasDe(bd, euId, agora)).reduce((soma, conversa) => soma + conversa.naoLidas, 0);
 }
 
-/** Denúncia de mensagem: vai para a auditoria, onde a equipe vê e pode apagar. */
+/** Denúncia de mensagem: vai para o Olho de Águia, onde a equipe apaga a mensagem ou arquiva. Repetir não duplica. */
 export async function denunciarMensagem(bd: Bd, eu: Pick<Usuario, 'id'>, mensagemId: string, agora: Date = new Date()): Promise<void> {
   const [mensagem] = await bd.select().from(mensagens).where(eq(mensagens.id, mensagemId));
-  if (!mensagem) return;
+  if (!mensagem || mensagem.autorId === eu.id) return;
   await exigirAcesso(bd, eu.id, mensagem.conversaId, agora);
+  const nova = await bd
+    .insert(denunciasDeMensagem)
+    .values({ mensagemId, denuncianteId: eu.id, autorId: mensagem.autorId, criadoEm: agora })
+    .onConflictDoNothing()
+    .returning({ id: denunciasDeMensagem.id });
+  if (nova.length === 0) return;
   await registrarAuditoria(bd, { atorId: eu.id, acao: 'mensagem_denunciada', alvoId: mensagem.autorId, detalhes: { mensagemId, texto: mensagem.texto } });
 }
 

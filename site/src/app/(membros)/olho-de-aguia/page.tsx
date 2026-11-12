@@ -4,12 +4,12 @@ import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { listarBanimentosAbertos } from '@/dominio/banimentos';
-import { casoEscolhido, chamadosEmAndamento, listarCasosDeDenuncia, listarDenunciasDaDiversao, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
+import { casoEscolhido, chamadosEmAndamento, listarCasosDeDenuncia, listarDenunciasDaDiversao, listarDenunciasDeMensagem, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
 import { BotaoConfirmar } from '../botao-confirmar';
-import { atender, encerrar, encerrarDaDiversao, proporDoCaso, suspenderDoCaso } from './acoes';
+import { apagarDeMensagem, arquivarDeMensagem, atender, encerrar, encerrarDaDiversao, proporDoCaso, suspenderDoCaso } from './acoes';
 import { TelaDoPainel } from '../painel/lateral-do-painel';
 import { AssistirNoCs2 } from './assistir-no-cs2';
 
@@ -25,6 +25,7 @@ const ERROS: Record<string, string> = {
 };
 
 const dataCurta = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'America/Sao_Paulo' });
+const dataEHora = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
 function Numero({ valor, rotulo }: { valor: string | number; rotulo: string }) {
   return (
@@ -128,11 +129,12 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
   if (!pode(usuario, 'moderar')) redirect('/inicio');
   const { caso: chave, erro } = await searchParams;
   const bd = obterBd();
-  const [chamados, casos, propostas, daDiversao] = await Promise.all([
+  const [chamados, casos, propostas, daDiversao, deMensagem] = await Promise.all([
     chamadosEmAndamento(bd, usuario),
     listarCasosDeDenuncia(bd, usuario),
     listarBanimentosAbertos(bd, usuario),
     listarDenunciasDaDiversao(bd, usuario),
+    listarDenunciasDeMensagem(bd, usuario),
   ]);
   const { aberto, encerrado } = casoEscolhido(casos, chave);
   // Sem caso no endereço, fixa o primeiro: se a lista mudar, a tela não troca de caso sozinha.
@@ -245,6 +247,52 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
               </form>
             ) : (
               <small className="apoio">Você está envolvido nesta denúncia, então outra pessoa da equipe precisa encerrar.</small>
+            )}
+          </div>
+        ))}
+      </section>
+
+      <section className="painel" id="mensagens">
+        <div className="cabeca-painel">
+          <h2>Mensagens denunciadas</h2>
+          <span>{deMensagem.length}</span>
+        </div>
+        {deMensagem.length === 0 && <p className="vazio">Nenhuma mensagem denunciada.</p>}
+        {deMensagem.map((denuncia) => (
+          <div className="caso denuncia-da-diversao" key={denuncia.id}>
+            <div className="caso-topo">
+              <Avatar usuario={denuncia.autor} />
+              <div>
+                <b>
+                  <Link href={`/jogadores/${denuncia.autor.id}`}>{denuncia.autor.apelido}</Link>
+                </b>
+                <small>
+                  Mandou em {dataEHora.format(denuncia.enviadaEm)}. Denunciada por {denuncia.denuncianteApelido}.
+                </small>
+              </div>
+            </div>
+            <blockquote>{denuncia.texto}</blockquote>
+            {denuncia.podeResolver ? (
+              <form className="conclusao-do-caso">
+                <input type="hidden" name="denunciaId" value={denuncia.id} />
+                <div className="acoes">
+                  <BotaoConfirmar
+                    formAction={apagarDeMensagem}
+                    mensagem={`Apagar esta mensagem de ${denuncia.autor.apelido}? Ela some da conversa para todos.`}
+                    className="botao cinza pequeno"
+                  >
+                    Apagar mensagem
+                  </BotaoConfirmar>
+                  <BotaoConfirmar formAction={arquivarDeMensagem} mensagem="Arquivar a denúncia e deixar a mensagem?" className="botao cinza pequeno">
+                    Arquivar
+                  </BotaoConfirmar>
+                  <Link className="botao cinza pequeno" href={`/jogadores/${denuncia.autor.id}`}>
+                    Ver ficha
+                  </Link>
+                </div>
+              </form>
+            ) : (
+              <small className="apoio">Você está envolvido nesta denúncia, então outra pessoa da equipe precisa resolver.</small>
             )}
           </div>
         ))}

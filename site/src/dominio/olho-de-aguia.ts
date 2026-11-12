@@ -1,7 +1,7 @@
 import { and, asc, count, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, chamados, denuncias, denunciasDiversao, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type EstadoUsuario, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, chamados, denuncias, denunciasDeMensagem, denunciasDiversao, gravacoes, mensagens, partidaJogadores, partidas, usuarios, xpPartidas, type EstadoUsuario, type Partida, type Usuario } from '@/bd/esquema';
 import { enderecoDaPartidaDaDiversao } from './avaliar';
 import { nomeDoMapaConhecido } from './diversao';
 import { ConclusaoInvalida, DenunciaIndisponivel, ESTADOS_COM_CHAMADO, MAXIMO_DO_TEXTO } from './denuncias';
@@ -256,6 +256,73 @@ export async function encerrarDenunciaDaDiversao(bd: Bd, gm: Pick<Usuario, 'id'>
       acao: 'encerrar_denuncia_diversao',
       alvoId: aberta.acusadoId,
       detalhes: { referencia: aberta.referencia, denuncia: aberta.id, conclusao: texto },
+    });
+  });
+}
+
+export type DenunciaDeMensagem = {
+  id: string;
+  texto: string;
+  enviadaEm: Date;
+  criadoEm: Date;
+  autor: UsuarioPublico & { estado: EstadoUsuario };
+  denuncianteApelido: string;
+  podeResolver: boolean;
+};
+
+/** As denúncias abertas de mensagens das conversas (dono, 12/11/2026), da mais antiga para a mais nova. */
+export async function listarDenunciasDeMensagem(bd: Bd, leitor: Pick<Usuario, 'id'>): Promise<DenunciaDeMensagem[]> {
+  await exigirPermissao(bd, leitor, 'moderar');
+  const autor = alias(usuarios, 'autor');
+  const denunciante = alias(usuarios, 'denunciante');
+  const abertas = await bd
+    .select({
+      id: denunciasDeMensagem.id,
+      texto: mensagens.texto,
+      enviadaEm: mensagens.criadoEm,
+      criadoEm: denunciasDeMensagem.criadoEm,
+      denuncianteId: denunciasDeMensagem.denuncianteId,
+      denuncianteApelido: denunciante.apelido,
+      autor: { id: autor.id, apelido: autor.apelido, avatarUrl: autor.avatarUrl, estado: autor.estado },
+    })
+    .from(denunciasDeMensagem)
+    .innerJoin(mensagens, eq(mensagens.id, denunciasDeMensagem.mensagemId))
+    .innerJoin(autor, eq(autor.id, denunciasDeMensagem.autorId))
+    .innerJoin(denunciante, eq(denunciante.id, denunciasDeMensagem.denuncianteId))
+    .where(ne(denunciasDeMensagem.estado, 'encerrada'))
+    .orderBy(asc(denunciasDeMensagem.criadoEm));
+  return abertas.map(({ denuncianteId, ...linha }) => ({ ...linha, podeResolver: linha.autor.id !== leitor.id && denuncianteId !== leitor.id }));
+}
+
+const CONCLUSAO_DA_MENSAGEM = { apagar: 'Mensagem apagada', arquivar: 'Arquivada sem apagar' } as const;
+
+/**
+ * Apagar some com a mensagem para todos e fecha todas as denúncias dela; arquivar fecha só esta e deixa a mensagem.
+ * Quem escreveu ou denunciou não resolve.
+ */
+export async function resolverDenunciaDeMensagem(bd: Bd, gm: Pick<Usuario, 'id'>, id: string, decisao: keyof typeof CONCLUSAO_DA_MENSAGEM, agora: Date = new Date()): Promise<void> {
+  await bd.transaction(async (tx) => {
+    await exigirPermissao(tx, gm, 'moderar');
+    const [aberta] = await tx
+      .select()
+      .from(denunciasDeMensagem)
+      .where(and(eq(denunciasDeMensagem.id, id), ne(denunciasDeMensagem.estado, 'encerrada')))
+      .for('update');
+    if (!aberta) throw new DenunciaIndisponivel();
+    if (aberta.autorId === gm.id || aberta.denuncianteId === gm.id) throw new SemPermissao();
+    const conclusao = CONCLUSAO_DA_MENSAGEM[decisao];
+    const fechar = { estado: 'encerrada' as const, analistaId: gm.id, conclusao };
+    if (decisao === 'apagar') {
+      await tx.update(mensagens).set({ apagadaEm: agora }).where(eq(mensagens.id, aberta.mensagemId));
+      await tx.update(denunciasDeMensagem).set(fechar).where(and(eq(denunciasDeMensagem.mensagemId, aberta.mensagemId), ne(denunciasDeMensagem.estado, 'encerrada')));
+    } else {
+      await tx.update(denunciasDeMensagem).set(fechar).where(eq(denunciasDeMensagem.id, id));
+    }
+    await registrarAuditoria(tx, {
+      atorId: gm.id,
+      acao: 'resolver_denuncia_de_mensagem',
+      alvoId: aberta.autorId,
+      detalhes: { denuncia: aberta.id, mensagemId: aberta.mensagemId, conclusao },
     });
   });
 }
