@@ -6,13 +6,14 @@
 import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { denunciasDiversao, elogiosDiversao, estadosDaDiversao, insigniasDoJogador, lancamentosDeGrana, partidaJogadores, partidas, partidasVistas, servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
-import type { ControladorServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
+import type { ControladorServidor, EstadoDoServidor, ServidorAlvo } from '@/servidor-jogo/controlador';
 import { AcusadoInvalido, DenunciaRepetida, MAXIMO_DO_TEXTO, MotivoInvalido, NaoJogou } from './denuncias';
 import { exigirAtivo } from './disponibilidade';
 import { alvoDoServidor, fotoDoMapa, MODOS_DE_DIVERSAO, nomeDoMapaConhecido } from './diversao';
 import { ElogioIndisponivel, ElogioRepetido, TIPOS_DE_ELOGIO } from './elogios';
 import { kdDe } from './ficha';
 import type { Familia } from './insignias';
+import { partidaAtualDe } from './partidas';
 
 export type Resultado = 'vitoria' | 'empate' | 'derrota';
 
@@ -290,6 +291,8 @@ export function enderecoDaPartidaDaDiversao(referencia: string): string {
 }
 
 const JANELA_DO_MIX_MS = 10 * MINUTO_MS;
+const ESPERA_DA_TROCA_DE_MAPA_MS = 2 * MINUTO_MS;
+const PRAZO_DO_SERVIDOR_MS = 3000;
 
 /**
  * Para onde mandar a aba de quem acabou de jogar: a partida do mix que terminou há menos de 10 min, ou, na Diversão, a
@@ -302,7 +305,10 @@ export async function destinoAoSair(
   usuario: Pick<Usuario, 'id' | 'steamid64'>,
   servidoresLigados: ServidorAlvo[],
   agora: Date = new Date(),
+  opcoes: { prazoMs?: number } = {},
 ): Promise<string | null> {
+  // Numa partida do mix agora (aceite, veto, jogo): nada tira a pessoa da tela dela.
+  if (await partidaAtualDe(bd, usuario.id)) return null;
   const pendentes = await avaliacoesPendentes(bd, usuario.id, agora);
   if (pendentes.mix) {
     const [linha] = await bd
@@ -312,16 +318,47 @@ export async function destinoAoSair(
     if (linha && agora.getTime() - linha.criadoEm.getTime() <= JANELA_DO_MIX_MS) return `/partidas/${pendentes.mix.id}#avaliar`;
   }
   if (!pendentes.diversao) return null;
-  for (const alvo of servidoresLigados) {
-    try {
-      const estado = await controlador.estadoDoServidor(alvo);
-      if (estado.contas.includes(usuario.steamid64)) return null;
-    } catch {
-      return null;
-    }
-  }
-  const ultima = pendentes.diversao.referencias[pendentes.diversao.referencias.length - 1];
-  return `${enderecoDaPartidaDaDiversao(ultima)}#avaliar`;
+  // Logo depois da partida o servidor troca de mapa, e quem continua jogando aparece como "carregando", fora da lista.
+  const [ultima] = await bd
+    .select({ criadoEm: xpPartidas.criadoEm })
+    .from(xpPartidas)
+    .where(and(eq(xpPartidas.usuarioId, usuario.id), eq(xpPartidas.origem, 'diversao')))
+    .orderBy(desc(xpPartidas.criadoEm))
+    .limit(1);
+  if (!ultima || agora.getTime() - ultima.criadoEm.getTime() < ESPERA_DA_TROCA_DE_MAPA_MS) return null;
+  const prazo = opcoes.prazoMs ?? PRAZO_DO_SERVIDOR_MS;
+  const leituras = await Promise.all(
+    servidoresLigados.map((alvo) =>
+      Promise.race([
+        controlador.estadoDoServidor(alvo).then((estado) => estado.contas.includes(usuario.steamid64)),
+        new Promise<null>((resolver) => setTimeout(() => resolver(null), prazo)),
+      ]).catch(() => null),
+    ),
+  );
+  // Ainda num servidor, ou um servidor sem resposta (não dá para saber): ninguém é mandado.
+  if (leituras.some((estaLa) => estaLa !== false)) return null;
+  const referencia = pendentes.diversao.referencias[pendentes.diversao.referencias.length - 1];
+  return `${enderecoDaPartidaDaDiversao(referencia)}#avaliar`;
+}
+
+/**
+ * Guarda por alguns segundos a lista de quem está em cada servidor: várias abas perguntando ao mesmo tempo viram uma
+ * conexão só. Falha não fica guardada.
+ */
+export function comMemoriaDoEstado(controlador: ControladorServidor, validadeMs: number, relogio: () => number = Date.now): ControladorServidor {
+  const memoria = new Map<string, { em: number; leitura: Promise<EstadoDoServidor> }>();
+  return {
+    ...controlador,
+    estadoDoServidor(alvo) {
+      const chave = `${alvo.host}:${alvo.porta}`;
+      const guardada = memoria.get(chave);
+      if (guardada && relogio() - guardada.em <= validadeMs) return guardada.leitura;
+      const leitura = controlador.estadoDoServidor(alvo);
+      memoria.set(chave, { em: relogio(), leitura });
+      leitura.catch(() => memoria.delete(chave));
+      return leitura;
+    },
+  };
 }
 
 /** Os servidores da Diversão ligados agora, com o endereço de cada um, para ver se a pessoa ainda está jogando. */

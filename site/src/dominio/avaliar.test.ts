@@ -3,14 +3,14 @@ import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
 import { partidaJogadores, partidas, servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { avaliacoesPendentes, denunciarNaDiversao, denunciasFeitasNaDiversao, destinoAoSair, marcarVistas, elogiarNaDiversao, elogiosFeitosNaDiversao, partidaDaDiversao, referenciaDaDiversao, resultadoDaConta, sessaoDaDiversao, slugDaDiversao } from './avaliar';
+import { avaliacoesPendentes, comMemoriaDoEstado, denunciarNaDiversao, denunciasFeitasNaDiversao, destinoAoSair, marcarVistas, elogiarNaDiversao, elogiosFeitosNaDiversao, partidaDaDiversao, referenciaDaDiversao, resultadoDaConta, sessaoDaDiversao, slugDaDiversao } from './avaliar';
 import { AcusadoInvalido, DenunciaRepetida, MotivoInvalido, NaoJogou } from './denuncias';
 import { ElogioIndisponivel, ElogioRepetido, elogiosDoJogador } from './elogios';
 import { aplicarEvento } from './eventos';
 import { lancarGrana } from './grana';
 import { notificacoesDe } from './notificacoes';
 import { criarPartida } from './partidas';
-import { controladorFalso } from '@/servidor-jogo/controlador';
+import { controladorFalso, type ControladorServidor } from '@/servidor-jogo/controlador';
 
 let bd: Bd;
 let eu: Usuario;
@@ -153,4 +153,53 @@ test('a partida do mix que acabou vai para o sino e manda para a página dela no
   expect(await destinoAoSair(bd, controladorFalso(), eu, [], new Date(agora.getTime() + 11 * MIN))).toBeNull();
   await marcarVistas(bd, eu.id, [partida.id]);
   expect((await avaliacoesPendentes(bd, eu.id, agora)).mix).toBeNull();
+});
+
+test('logo depois da partida da Diversão (troca de mapa, carregando) ainda não manda ninguém', async () => {
+  const porta = await portaDaMutacao();
+  const alvo = { host: '10.0.0.1', porta };
+  await partidaDiversao(`diversao:${porta}:a`, new Date(AGORA.getTime() - 1 * MIN), [{ conta: eu, abates: 3, mortes: 2, resultado: 'vitoria', xp: 300 }]);
+  expect(await destinoAoSair(bd, controladorFalso(), eu, [alvo], AGORA)).toBeNull();
+  expect(await destinoAoSair(bd, controladorFalso(), eu, [alvo], new Date(AGORA.getTime() + 2 * MIN))).toBe(`/partidas/diversao/${porta}-a#avaliar`);
+});
+
+test('quem está numa partida do mix agora não é mandado para avaliar nada', async () => {
+  const porta = await portaDaMutacao();
+  await partidaDiversao(`diversao:${porta}:a`, new Date(AGORA.getTime() - 20 * MIN), [{ conta: eu, abates: 3, mortes: 2, resultado: 'vitoria', xp: 300 }]);
+  const partida = await bd.transaction((tx) => criarPartida(tx, { tipo: 'mix', time1: [eu.id], time2: [ele.id] }));
+  await bd.update(partidas).set({ estado: 'vetando' }).where(eq(partidas.id, partida.id));
+  expect(await destinoAoSair(bd, controladorFalso(), eu, [], AGORA)).toBeNull();
+});
+
+test('servidor que demora a responder não segura a resposta e não manda ninguém', async () => {
+  const porta = await portaDaMutacao();
+  await partidaDiversao(`diversao:${porta}:a`, new Date(AGORA.getTime() - 20 * MIN), [{ conta: eu, abates: 3, mortes: 2, resultado: 'vitoria', xp: 300 }]);
+  const lento: ControladorServidor = { ...controladorFalso(), estadoDoServidor: () => new Promise(() => {}) };
+  const inicio = Date.now();
+  expect(await destinoAoSair(bd, lento, eu, [{ host: '10.0.0.1', porta }], AGORA, { prazoMs: 50 })).toBeNull();
+  expect(Date.now() - inicio).toBeLessThan(2000);
+});
+
+test('a leitura de cada servidor fica guardada por alguns segundos, e falha não fica guardada', async () => {
+  let leituras = 0;
+  let falhar = true;
+  const base: ControladorServidor = {
+    ...controladorFalso(),
+    async estadoDoServidor() {
+      leituras += 1;
+      if (falhar) throw new Error('fora do ar');
+      return { contas: ['1'] };
+    },
+  };
+  let agora = 1_000;
+  const comMemoria = comMemoriaDoEstado(base, 10_000, () => agora);
+  const alvo = { host: '10.0.0.1', porta: 27020 };
+  await expect(comMemoria.estadoDoServidor(alvo)).rejects.toThrow();
+  falhar = false;
+  expect(await comMemoria.estadoDoServidor(alvo)).toEqual({ contas: ['1'] });
+  expect(await comMemoria.estadoDoServidor(alvo)).toEqual({ contas: ['1'] });
+  expect(leituras).toBe(2);
+  agora += 10_001;
+  await comMemoria.estadoDoServidor(alvo);
+  expect(leituras).toBe(3);
 });

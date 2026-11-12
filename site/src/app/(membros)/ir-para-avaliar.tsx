@@ -22,6 +22,15 @@ function marcarIda(destino: string): void {
   }
 }
 
+/** Alguém escrevendo ou com um campo preenchido: sair agora jogaria o texto fora. */
+function temAlgoDigitado(): boolean {
+  const ativo = document.activeElement;
+  if (ativo instanceof HTMLInputElement || ativo instanceof HTMLTextAreaElement || ativo instanceof HTMLSelectElement) return true;
+  return [...document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('textarea, input[type="text"], input:not([type])')].some(
+    (campo) => campo.value.trim() !== '',
+  );
+}
+
 /**
  * Quem terminou de jogar e saiu do servidor vai sozinho para a partida, para ver o resultado e avaliar (dono,
  * 11/11/2026). Só pergunta enquanto há algo a avaliar e com a aba à vista.
@@ -31,17 +40,21 @@ export function IrParaAvaliar() {
 
   useEffect(() => {
     let parado = false;
+    let perguntando = false;
     async function perguntar() {
-      if (document.hidden) return;
+      if (document.hidden || perguntando) return;
+      perguntando = true;
       try {
         const resposta = await fetch('/api/avaliar/destino', { cache: 'no-store' });
         if (!resposta.ok || parado) return;
         const { ir } = (await resposta.json()) as { ir: string | null };
-        if (!deveIrParaAvaliar(ir, location.pathname, location.search, ir ? jaFoiPara(ir) : false) || !ir) return;
+        if (!ir || !deveIrParaAvaliar(ir, location.pathname, location.search, jaFoiPara(ir)) || temAlgoDigitado()) return;
         marcarIda(ir);
         router.push(ir);
       } catch {
         // Sem rede agora: tenta de novo na próxima vez.
+      } finally {
+        perguntando = false;
       }
     }
     void perguntar();
