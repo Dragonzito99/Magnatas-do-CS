@@ -46,3 +46,29 @@ def test_o_ssh_bloqueia_quem_erra_a_senha_varias_vezes():
     assert "maxretry = 5" in jail
     assert "findtime = 10m" in jail
     assert "bantime = 1h" in jail
+
+
+EMAIL = RAIZ / "scripts" / "guardar_email_backup.sh"
+
+
+def test_a_copia_vai_por_email_trancada_com_senha_e_avisa_o_disco():
+    # Pedido do dono (11/11/2026): a cópia no e-mail dele, com o disco junto; trancada porque tem os dados de todos.
+    codigo = BACKUP.read_text(encoding="utf-8")
+    assert "7z a -t7z -mhe=on" in codigo and '-p"$SENHA_DA_COPIA"' in codigo
+    assert "msmtp -C /etc/magnatas-msmtprc -t" in codigo
+    assert "df --output=pcent /" in codigo
+    assert "ATENÇÃO" in codigo and "LIMITE_DO_DISCO:-90" in codigo
+    # Sem a configuração do e-mail, a cópia continua sendo feita, só não é enviada.
+    assert '[ -f "$CONFIG_DO_EMAIL" ]' in codigo
+    # Falha no envio não apaga a cópia nem passa em silêncio.
+    assert "e-mail não saiu" in codigo
+
+
+def test_as_senhas_do_email_sao_lidas_sem_aparecer_e_ficam_so_para_o_root():
+    codigo = EMAIL.read_text(encoding="utf-8")
+    assert codigo.count("read -r -s") >= 2
+    assert "chmod 600" in codigo
+    assert 'passwordeval "cat /root/.magnatas-smtp-senha"' in codigo
+    assert "smtp.hostinger.com" in codigo and "port 465" in codigo
+    # A senha da cópia é pedida duas vezes: errar e trancar com uma senha que ninguém sabe seria perder a cópia.
+    assert "As duas senhas da cópia não batem" in codigo
