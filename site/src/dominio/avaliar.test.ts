@@ -3,7 +3,9 @@ import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
 import { partidaJogadores, partidas, servidoresDiversao, xpPartidas, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { partidaDaDiversao, referenciaDaDiversao, resultadoDaConta, sessaoDaDiversao, slugDaDiversao } from './avaliar';
+import { denunciarNaDiversao, denunciasFeitasNaDiversao, elogiarNaDiversao, elogiosFeitosNaDiversao, partidaDaDiversao, referenciaDaDiversao, resultadoDaConta, sessaoDaDiversao, slugDaDiversao } from './avaliar';
+import { AcusadoInvalido, DenunciaRepetida, MotivoInvalido, NaoJogou } from './denuncias';
+import { ElogioIndisponivel, ElogioRepetido, elogiosDoJogador } from './elogios';
 import { aplicarEvento } from './eventos';
 import { lancarGrana } from './grana';
 import { criarPartida } from './partidas';
@@ -89,4 +91,28 @@ test('a sessão da Diversão junta as partidas seguidas, com até 30 min entre e
   expect(sessao).toHaveLength(10);
   expect(sessao.map((partida) => partida.referencia)).toEqual(Array.from({ length: 10 }, (_, i) => `diversao:${porta}:s${i + 2}`));
   expect(sessao[0]).toMatchObject({ modo: 'Mutação', xp: 100, grana: 10, resultado: 'vitoria' });
+});
+
+test('na Diversão, quem jogou elogia e denuncia quem jogou junto, uma vez só', async () => {
+  const porta = await portaDaMutacao();
+  const referencia = `diversao:${porta}:p9`;
+  const fora = await criarUsuario(bd, { estado: 'ativo' });
+  await partidaDiversao(referencia, AGORA, [
+    { conta: eu, abates: 12, mortes: 3, resultado: 'vitoria', xp: 410 },
+    { conta: ele, abates: 4, mortes: 9, resultado: 'derrota', xp: 150 },
+  ]);
+  await elogiarNaDiversao(bd, eu, { referencia, elogiadoId: ele.id, tipo: 'gente_boa' });
+  await expect(elogiarNaDiversao(bd, eu, { referencia, elogiadoId: ele.id, tipo: 'lider' })).rejects.toBeInstanceOf(ElogioRepetido);
+  await expect(elogiarNaDiversao(bd, eu, { referencia, elogiadoId: eu.id, tipo: 'lider' })).rejects.toBeInstanceOf(ElogioIndisponivel);
+  await expect(elogiarNaDiversao(bd, fora, { referencia, elogiadoId: ele.id, tipo: 'lider' })).rejects.toBeInstanceOf(ElogioIndisponivel);
+  await expect(elogiarNaDiversao(bd, eu, { referencia, elogiadoId: ele.id, tipo: 'qualquer' })).rejects.toBeInstanceOf(ElogioIndisponivel);
+  expect(await elogiosFeitosNaDiversao(bd, referencia, eu.id)).toEqual(new Set([ele.id]));
+  expect(await elogiosDoJogador(bd, ele.id)).toEqual([{ tipo: 'gente_boa', nome: 'Gente boa', total: 1 }]);
+
+  await denunciarNaDiversao(bd, ele, { referencia, acusadoId: eu.id, motivo: 'Atravessando parede' });
+  await expect(denunciarNaDiversao(bd, ele, { referencia, acusadoId: eu.id, motivo: 'de novo' })).rejects.toBeInstanceOf(DenunciaRepetida);
+  await expect(denunciarNaDiversao(bd, fora, { referencia, acusadoId: eu.id, motivo: 'x' })).rejects.toBeInstanceOf(NaoJogou);
+  await expect(denunciarNaDiversao(bd, ele, { referencia, acusadoId: fora.id, motivo: 'x' })).rejects.toBeInstanceOf(AcusadoInvalido);
+  await expect(denunciarNaDiversao(bd, eu, { referencia, acusadoId: ele.id, motivo: '   ' })).rejects.toBeInstanceOf(MotivoInvalido);
+  expect(await denunciasFeitasNaDiversao(bd, referencia, ele.id)).toEqual(new Set([eu.id]));
 });

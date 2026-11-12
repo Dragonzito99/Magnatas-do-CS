@@ -1,6 +1,6 @@
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { elogios, partidaJogadores, partidas, type Usuario } from '@/bd/esquema';
+import { elogios, elogiosDiversao, partidaJogadores, partidas, type Usuario } from '@/bd/esquema';
 import { exigirAtivo } from './disponibilidade';
 
 /** Cada elogio aponta uma coisa boa do Magnata. Elogio não dá XP, para ninguém trocar elogio por pontos. */
@@ -57,12 +57,15 @@ export async function elogiosFeitos(bd: Bd, partidaId: string, autorId: string):
   return new Set(linhas.map((linha) => linha.elogiadoId));
 }
 
+/** Os elogios que a pessoa recebeu, somando os do mix e os da Diversão. */
 export async function elogiosDoJogador(bd: Bd, usuarioId: string): Promise<{ tipo: TipoDeElogio; nome: string; total: number }[]> {
-  const linhas = await bd
-    .select({ tipo: elogios.tipo, total: count() })
-    .from(elogios)
-    .where(eq(elogios.elogiadoId, usuarioId))
-    .groupBy(elogios.tipo)
-    .orderBy(desc(count()), elogios.tipo);
-  return linhas.map((linha) => ({ tipo: linha.tipo, nome: TIPOS_DE_ELOGIO.find((item) => item.valor === linha.tipo)!.nome, total: linha.total }));
+  const [doMix, daDiversao] = await Promise.all([
+    bd.select({ tipo: elogios.tipo, total: count() }).from(elogios).where(eq(elogios.elogiadoId, usuarioId)).groupBy(elogios.tipo),
+    bd.select({ tipo: elogiosDiversao.tipo, total: count() }).from(elogiosDiversao).where(eq(elogiosDiversao.elogiadoId, usuarioId)).groupBy(elogiosDiversao.tipo),
+  ]);
+  const totais = new Map<TipoDeElogio, number>();
+  for (const linha of [...doMix, ...daDiversao]) totais.set(linha.tipo, (totais.get(linha.tipo) ?? 0) + linha.total);
+  return [...totais]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([tipo, total]) => ({ tipo, nome: TIPOS_DE_ELOGIO.find((item) => item.valor === tipo)!.nome, total }));
 }

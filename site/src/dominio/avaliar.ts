@@ -5,8 +5,11 @@
  */
 import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { insigniasDoJogador, lancamentosDeGrana, partidaJogadores, servidoresDiversao, usuarios, xpPartidas } from '@/bd/esquema';
+import { denunciasDiversao, elogiosDiversao, insigniasDoJogador, lancamentosDeGrana, partidaJogadores, servidoresDiversao, usuarios, xpPartidas, type Usuario } from '@/bd/esquema';
+import { AcusadoInvalido, DenunciaRepetida, MAXIMO_DO_TEXTO, MotivoInvalido, NaoJogou } from './denuncias';
+import { exigirAtivo } from './disponibilidade';
 import { fotoDoMapa, MODOS_DE_DIVERSAO, nomeDoMapaConhecido } from './diversao';
+import { ElogioIndisponivel, ElogioRepetido, TIPOS_DE_ELOGIO } from './elogios';
 import { kdDe } from './ficha';
 import type { Familia } from './insignias';
 
@@ -176,4 +179,63 @@ export async function sessaoDaDiversao(bd: Bd, usuarioId: string, agora: Date = 
     abates: linha.abates,
     mortes: linha.mortes,
   }));
+}
+
+async function quemJogou(bd: Bd | Parameters<Parameters<Bd['transaction']>[0]>[0], referencia: string): Promise<string[]> {
+  const linhas = await bd
+    .select({ id: xpPartidas.usuarioId })
+    .from(xpPartidas)
+    .where(and(eq(xpPartidas.referencia, referencia), eq(xpPartidas.origem, 'diversao')));
+  return linhas.map((linha) => linha.id);
+}
+
+/** Elogio na Diversão: só entre quem jogou a mesma partida, uma vez por pessoa, nunca a si mesmo. */
+export async function elogiarNaDiversao(bd: Bd, autor: Pick<Usuario, 'id'>, dados: { referencia: string; elogiadoId: string; tipo: string }): Promise<void> {
+  const tipo = TIPOS_DE_ELOGIO.find((item) => item.valor === dados.tipo)?.valor;
+  if (!tipo || dados.elogiadoId === autor.id) throw new ElogioIndisponivel();
+  await bd.transaction(async (tx) => {
+    await exigirAtivo(tx, autor);
+    const jogaram = await quemJogou(tx, dados.referencia);
+    if (!jogaram.includes(autor.id) || !jogaram.includes(dados.elogiadoId)) throw new ElogioIndisponivel();
+    const [gravado] = await tx
+      .insert(elogiosDiversao)
+      .values({ referencia: dados.referencia, autorId: autor.id, elogiadoId: dados.elogiadoId, tipo })
+      .onConflictDoNothing()
+      .returning();
+    if (!gravado) throw new ElogioRepetido();
+  });
+}
+
+/** Denúncia na Diversão: vai para a equipe no Olho de Águia, como a do mix (sem gravação). */
+export async function denunciarNaDiversao(bd: Bd, ator: Pick<Usuario, 'id'>, dados: { referencia: string; acusadoId: string; motivo: string }): Promise<void> {
+  const motivo = dados.motivo.trim();
+  if (!motivo || motivo.length > MAXIMO_DO_TEXTO) throw new MotivoInvalido();
+  await bd.transaction(async (tx) => {
+    await exigirAtivo(tx, ator);
+    const jogaram = await quemJogou(tx, dados.referencia);
+    if (!jogaram.includes(ator.id)) throw new NaoJogou();
+    if (dados.acusadoId === ator.id || !jogaram.includes(dados.acusadoId)) throw new AcusadoInvalido();
+    const [gravada] = await tx
+      .insert(denunciasDiversao)
+      .values({ referencia: dados.referencia, denuncianteId: ator.id, acusadoId: dados.acusadoId, motivo })
+      .onConflictDoNothing()
+      .returning({ id: denunciasDiversao.id });
+    if (!gravada) throw new DenunciaRepetida();
+  });
+}
+
+export async function elogiosFeitosNaDiversao(bd: Bd, referencia: string, autorId: string): Promise<Set<string>> {
+  const linhas = await bd
+    .select({ id: elogiosDiversao.elogiadoId })
+    .from(elogiosDiversao)
+    .where(and(eq(elogiosDiversao.referencia, referencia), eq(elogiosDiversao.autorId, autorId)));
+  return new Set(linhas.map((linha) => linha.id));
+}
+
+export async function denunciasFeitasNaDiversao(bd: Bd, referencia: string, denuncianteId: string): Promise<Set<string>> {
+  const linhas = await bd
+    .select({ id: denunciasDiversao.acusadoId })
+    .from(denunciasDiversao)
+    .where(and(eq(denunciasDiversao.referencia, referencia), eq(denunciasDiversao.denuncianteId, denuncianteId)));
+  return new Set(linhas.map((linha) => linha.id));
 }
