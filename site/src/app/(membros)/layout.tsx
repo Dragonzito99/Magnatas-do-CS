@@ -11,6 +11,7 @@ import { lojaAberta } from '@/dominio/loja';
 import { manutencaoAtual } from '@/dominio/manutencao';
 import { minhaSala } from '@/dominio/salas';
 import { patenteDe } from '@/dominio/xp';
+import { AoVivo } from './ao-vivo';
 import { Atualizar } from './atualizar';
 import { AvisoDeConvite, BarraDeAmigos } from './barra-de-amigos';
 import { IrParaAvaliar } from './ir-para-avaliar';
@@ -43,6 +44,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
   return (
     <div className="app com-amigos">
       <Atualizar segundos={15} />
+      <AoVivo />
       <ManterPresenca />
       {notificacoes.some((notificacao) => notificacao.tipo === 'avaliar') && <IrParaAvaliar />}
       <Cabecalho

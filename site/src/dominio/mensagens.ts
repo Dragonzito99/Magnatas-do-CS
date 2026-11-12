@@ -2,6 +2,7 @@ import { and, desc, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { claMembros, clas, conversaMembros, conversas, mensagens, usuarios, type Usuario } from '@/bd/esquema';
 import { saoAmigos } from './amigos';
+import { avisar } from './ao-vivo';
 import { registrarAuditoria } from './equipe';
 
 export const TAMANHO_MAXIMO_DA_MENSAGEM = 1000;
@@ -86,7 +87,14 @@ export async function criarGrupo(bd: Bd, eu: Pick<Usuario, 'id'>, nome: string, 
   for (const amigoId of unicos) if (!(await saoAmigos(bd, eu.id, amigoId))) throw new SemAcessoAConversa();
   const [grupo] = await bd.insert(conversas).values({ tipo: 'grupo', nome: limpo, criadoPor: eu.id, criadoEm: agora, ultimaEm: agora }).returning({ id: conversas.id });
   await bd.insert(conversaMembros).values([eu.id, ...unicos].map((usuarioId) => ({ conversaId: grupo.id, usuarioId, lidaAte: agora, entrouEm: agora })));
+  avisar([eu.id, ...unicos], { tipo: 'conversas' });
   return grupo.id;
+}
+
+/** Quem está na conversa agora, para os avisos na hora. */
+async function membrosDa(bd: Bd, conversaId: string): Promise<string[]> {
+  const linhas = await bd.select({ usuarioId: conversaMembros.usuarioId }).from(conversaMembros).where(eq(conversaMembros.conversaId, conversaId));
+  return linhas.map((linha) => linha.usuarioId);
 }
 
 /** Chama mais um amigo para o grupo (quem está no grupo pode chamar). */
@@ -94,6 +102,7 @@ export async function adicionarAoGrupo(bd: Bd, eu: Pick<Usuario, 'id'>, conversa
   const conversa = await exigirAcesso(bd, eu.id, conversaId, agora);
   if (conversa.tipo !== 'grupo' || !(await saoAmigos(bd, eu.id, amigoId))) throw new SemAcessoAConversa();
   await garantirMembro(bd, conversaId, amigoId, agora);
+  avisar(await membrosDa(bd, conversaId), { tipo: 'conversas' });
 }
 
 export async function sairDoGrupo(bd: Bd, eu: Pick<Usuario, 'id'>, conversaId: string): Promise<void> {
@@ -120,6 +129,7 @@ export async function enviarMensagem(bd: Bd, eu: Pick<Usuario, 'id'>, conversaId
   await bd.update(conversas).set({ ultimaEm: agora }).where(eq(conversas.id, conversaId));
   // Quem escreve já leu tudo até aqui.
   await bd.update(conversaMembros).set({ lidaAte: agora }).where(and(eq(conversaMembros.conversaId, conversaId), eq(conversaMembros.usuarioId, eu.id)));
+  avisar(await membrosDa(bd, conversaId), { tipo: 'mensagem', conversaId });
   return mensagem.id;
 }
 

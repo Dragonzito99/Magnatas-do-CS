@@ -1,6 +1,7 @@
 import { and, asc, count, eq, gt, ilike, inArray, isNull, ne, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { amizades, convitesDeSala, partidaJogadores, partidas, salaMembros, salas, usuarios, type Usuario } from '@/bd/esquema';
+import { avisar } from './ao-vivo';
 import { ESTADOS_ATIVOS_DE_PARTIDA, exigirAtivo } from './disponibilidade';
 import { entrarNaSala, TAMANHO_DA_SALA } from './salas';
 
@@ -58,10 +59,13 @@ export async function pedirAmizade(bd: Bd, eu: Pick<Usuario, 'id'>, outroId: str
     if (linha && linha.deId === eu.id) return 'ja_pedido';
     if (linha) {
       await tx.update(amizades).set({ estado: 'aceita', aceitaEm: agora }).where(eq(amizades.id, linha.id));
-      return 'aceita';
+      return 'aceita' as const;
     }
     await tx.insert(amizades).values({ deId: eu.id, paraId: outroId, criadoEm: agora }).onConflictDoNothing();
-    return 'pedido';
+    return 'pedido' as const;
+  }).then((resultado) => {
+    if (resultado === 'aceita' || resultado === 'pedido') avisar([eu.id, outroId], { tipo: 'amigos' });
+    return resultado;
   });
 }
 
@@ -70,11 +74,13 @@ export async function responderAmizade(bd: Bd, eu: Pick<Usuario, 'id'>, outroId:
   const pendente = and(eq(amizades.deId, outroId), eq(amizades.paraId, eu.id), eq(amizades.estado, 'pendente'));
   if (aceitar) await bd.update(amizades).set({ estado: 'aceita', aceitaEm: agora }).where(pendente);
   else await bd.delete(amizades).where(pendente);
+  avisar([eu.id, outroId], { tipo: 'amigos' });
 }
 
 /** Desfaz a amizade (ou cancela o pedido enviado), nos dois sentidos. */
 export async function desfazerAmizade(bd: Bd, eu: Pick<Usuario, 'id'>, outroId: string): Promise<void> {
   await bd.delete(amizades).where(doPar(eu.id, outroId));
+  avisar([eu.id, outroId], { tipo: 'amigos' });
 }
 
 export async function pedidosDeAmizadePara(bd: Bd, euId: string): Promise<{ id: string; apelido: string; avatarUrl: string | null }[]> {
@@ -139,6 +145,7 @@ export async function convidarParaSala(bd: Bd, eu: Pick<Usuario, 'id'>, amigoId:
     .insert(convitesDeSala)
     .values({ salaId: sala.id, deId: eu.id, paraId: amigoId, expiraEm, criadoEm: agora })
     .onConflictDoUpdate({ target: [convitesDeSala.salaId, convitesDeSala.paraId], set: { deId: eu.id, expiraEm, criadoEm: agora } });
+  avisar([amigoId], { tipo: 'convite' });
 }
 
 export type ConviteDeSala = { id: string; salaId: string; salaNome: string; membros: number; deApelido: string; expiraEm: Date };

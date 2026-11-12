@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { EVENTO_AO_VIVO } from './ao-vivo';
 
 type Alvo = { amigoId: string } | { conversaId: string } | { cla: true } | { lista: true };
 type Resumo = { id: string; tipo: 'direta' | 'grupo' | 'cla'; nome: string; avatarUrl: string | null; outroId: string | null; ultima: string | null; naoLidas: number };
@@ -9,7 +10,7 @@ type Mensagem = { id: string; autorId: string; autorApelido: string; texto: stri
 
 const EVENTO = 'magnatas:abrir-conversa';
 const GUARDADA = 'magnatas:conversa-aberta';
-const SEGUNDOS_ENTRE_BUSCAS = 3;
+const SEGUNDOS_ENTRE_BUSCAS = 10;
 const hora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
 
 /** Abre a janelinha de conversa de qualquer lugar do site (barra de amigos, Comunidade, perfil). */
@@ -27,8 +28,8 @@ export function BotaoDeConversa({ alvo, className, title, children }: { alvo: Al
 }
 
 /**
- * A janelinha de conversa no canto, como na GC (dono, 11/11/2026). Fica aberta ao trocar de página e busca as
- * mensagens novas a cada 3 segundos enquanto está aberta.
+ * A janelinha de conversa no canto, como na GC (dono, 11/11/2026). Fica aberta ao trocar de página; a mensagem nova
+ * aparece na hora pelo aviso ao vivo, e a cada 10 segundos ela confere de novo, por garantia.
  */
 export function JanelaDeConversa() {
   const [aberta, setAberta] = useState<string | null>(null);
@@ -108,6 +109,17 @@ export function JanelaDeConversa() {
     const relogio = setInterval(() => void buscarMensagens(aberta), SEGUNDOS_ENTRE_BUSCAS * 1000);
     return () => clearInterval(relogio);
   }, [aberta, minimizada, buscarMensagens]);
+
+  // A mensagem nova chega na hora pelo aviso ao vivo; a busca de tempos em tempos fica só de reserva.
+  useEffect(() => {
+    const aoReceber = (evento: Event) => {
+      const novidade = (evento as CustomEvent<{ tipo: string; conversaId?: string }>).detail;
+      if (aberta && !minimizada && novidade.tipo === 'mensagem' && novidade.conversaId === aberta) void buscarMensagens(aberta);
+      if (!aberta && lista && (novidade.tipo === 'mensagem' || novidade.tipo === 'conversas')) void buscarLista();
+    };
+    window.addEventListener(EVENTO_AO_VIVO, aoReceber);
+    return () => window.removeEventListener(EVENTO_AO_VIVO, aoReceber);
+  }, [aberta, minimizada, lista, buscarMensagens, buscarLista]);
 
   useEffect(() => {
     fim.current?.scrollIntoView({ block: 'end' });
