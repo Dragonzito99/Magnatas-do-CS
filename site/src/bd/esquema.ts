@@ -757,6 +757,21 @@ export const denunciasDiversao = pgTable(
 );
 
 /**
+ * O presente de boas-vindas do Premium (dono, 12/11/2026): chega fechado no baú na primeira mensalidade, uma vez por
+ * conta. Ao abrir, a pessoa escolhe o mutante que fica para sempre.
+ */
+export const presentes = pgTable('presentes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id')
+    .notNull()
+    .unique()
+    .references(() => usuarios.id),
+  criadoEm: criadoEm(),
+  abertoEm: timestamp('aberto_em', { withTimezone: true }),
+  mutanteId: text('mutante_id'),
+});
+
+/**
  * Denúncia de uma mensagem das conversas (dono, 12/11/2026): vai para o Olho de Águia, onde a equipe apaga a mensagem
  * ou arquiva a denúncia. A conclusão diz o que foi feito.
  */

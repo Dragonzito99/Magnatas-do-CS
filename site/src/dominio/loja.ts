@@ -46,7 +46,7 @@ export type ItemDaLoja = {
   imagem?: string;
   /** Falso nos itens que só os membros ganham: não aparecem na loja nem se compram. */
   venda?: boolean;
-  /** Item de lançamento: o Premium ganha para sempre. */
+  /** Item de lançamento: aparece no destaque da Shop. (O Premium não ganha mais todos: escolhe um no presente.) */
   lancamento?: boolean;
   /** O que o mutante faz, para o destaque da loja e a janela do item. */
   descricao?: string;

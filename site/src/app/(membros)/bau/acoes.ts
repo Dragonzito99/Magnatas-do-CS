@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { ItemInvalido, lojaAberta, tirarItem, usarItem } from '@/dominio/loja';
+import { abrirPresente as abrirPresenteDaConta, EscolhaInvalida, PresenteIndisponivel } from '@/dominio/presentes';
 
 async function noBau(acao: (usuarioId: string, itemId: string) => Promise<void>, dados: FormData): Promise<void> {
   const usuario = await exigirAcesso('/bau');
@@ -25,4 +26,19 @@ export async function usar(dados: FormData): Promise<void> {
 
 export async function tirar(dados: FormData): Promise<void> {
   await noBau((usuarioId, itemId) => tirarItem(obterBd(), { id: usuarioId }, itemId), dados);
+}
+
+/** Abre o presente do Premium com o mutante escolhido; o mutante já entra em uso. */
+export async function abrirPresente(dados: FormData): Promise<void> {
+  const usuario = await exigirAcesso('/bau');
+  const mutanteId = String(dados.get('mutanteId') ?? '');
+  try {
+    await abrirPresenteDaConta(obterBd(), usuario, mutanteId);
+  } catch (erro) {
+    if (erro instanceof PresenteIndisponivel || erro instanceof EscolhaInvalida) redirect('/bau');
+    throw erro;
+  }
+  await usarItem(obterBd(), usuario, mutanteId).catch(() => undefined);
+  revalidatePath('/', 'layout');
+  redirect(`/bau?presente=${encodeURIComponent(mutanteId)}`);
 }

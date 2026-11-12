@@ -8,11 +8,12 @@ import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala, type DesafioDaSala } from './desafios';
 import { insigniasNaoVistas, textoDoPremio } from './insignias';
 import { partidaAtualDe } from './partidas';
+import { presenteFechado } from './presentes';
 import { minhaSala } from './salas';
 import { patenteDe } from './xp';
 
 export type Notificacao = {
-  tipo: 'desafio' | 'partida' | 'patente' | 'insignia' | 'avaliar' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala';
+  tipo: 'desafio' | 'partida' | 'patente' | 'insignia' | 'avaliar' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala' | 'presente';
   texto: string;
   href: string;
   quantidade: number;
@@ -72,6 +73,10 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
   if (pedidosDeAmizade.length > 0) {
     const texto = pedidosDeAmizade.length === 1 ? `${pedidosDeAmizade[0].apelido} quer ser seu amigo` : `${pedidosDeAmizade.length} pedidos de amizade`;
     lista.push({ tipo: 'amizade', texto, href: '/comunidade#pedidos', quantidade: pedidosDeAmizade.length });
+  }
+
+  if (await presenteFechado(bd, usuario.id)) {
+    lista.push({ tipo: 'presente', texto: 'Chegou seu presente de Magnata. Abra no baú!', href: '/bau#presente', quantidade: 1 });
   }
 
   const patente = patenteDe(usuario.xpTotal);

@@ -61,7 +61,7 @@ const LINHAS: Linha[] = [
   { nome: 'MagCoins todo mês', valor: (nivel) => (NIVEIS[nivel].magcoinsPorMes ? String(NIVEIS[nivel].magcoinsPorMes) : false) },
   { nome: 'Nome dourado no chat', valor: (nivel) => NIVEIS[nivel].itens.includes('cor-dourada') },
   { nome: 'Moldura exclusiva Ouro', valor: (nivel) => NIVEIS[nivel].itens.includes('moldura-ouro') },
-  { nome: 'Itens de lançamento para sempre', valor: (nivel) => Boolean(NIVEIS[nivel].premium) },
+  { nome: 'Presente: 1 mutante seu para sempre', valor: (nivel) => Boolean(NIVEIS[nivel].premium) },
   { nome: 'Produtos do clube em casa', valor: (nivel) => Boolean(NIVEIS[nivel].premium) },
 ];
 
@@ -69,7 +69,10 @@ const PERGUNTAS = [
   ['Como pago a MagCoin?', 'Pelo Mercado Pago, com PIX ou cartão. A MagCoin cai na sua conta assim que o pagamento é aprovado (no PIX, em segundos).'],
   ['E as assinaturas?', 'São mensais, no cartão, cobradas pelo Mercado Pago todo mês. Você cancela aqui mesmo quando quiser, e as vantagens valem até o fim do que já pagou.'],
   ['Por que pede o e-mail para assinar?', 'O Mercado Pago confere se o e-mail é o mesmo da conta que vai pagar. Na MagCoin não precisa.'],
-  ['O que é item de lançamento?', 'Os itens novos da Shop, como o mutante Blindado. Quem assina o Premium ganha para sempre.'],
+  [
+    'Como é o presente do Premium?',
+    'Na primeira mensalidade chega um presente no seu baú. Ao abrir, você escolhe um mutante que fica seu para sempre. Os outros mutantes ficam 10 dias, e o aviso de entrada, a moldura de fogo e a etiqueta [MAGNATA] ficam 25 dias. É um presente por conta.',
+  ],
   ['MagCoin vira dinheiro de volta?', 'Não. Ela é para usar na Shop: deixa os itens seus para sempre.'],
 ];
 

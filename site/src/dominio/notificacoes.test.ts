@@ -1,12 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, chamados, claMembros, clas, desafios, partidaJogadores, partidas, salaMembros, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, chamados, claMembros, clas, desafios, partidaJogadores, partidas, presentes, salaMembros, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { chamarParaCla, criarCla, pedirParaEntrar } from './clas';
 import { contarCasos, denunciar } from './denuncias';
 import { desafiar } from './desafios';
 import { casosDe, notificacoesDe } from './notificacoes';
+import { abrirPresente } from './presentes';
 import { criarSala, entrarNaSala } from './salas';
 
 let bd: Bd;
@@ -160,4 +161,11 @@ test('quem foi chamado para um clã vê o aviso, e o dono vê os pedidos para en
   expect(await notificacoesDe(bd, jogador, AGORA)).toEqual([{ tipo: 'cla', texto: 'O clã [MGN] chamou você', href: '/clas', quantidade: 1 }]);
   for (let i = 0; i < 2; i += 1) await pedirParaEntrar(bd, await criarUsuario(bd, { estado: 'ativo' }), cla.id, AGORA);
   expect(await notificacoesDe(bd, dono, AGORA)).toEqual([{ tipo: 'cla', texto: '2 pedidos para entrar no clã', href: '/clas', quantidade: 2 }]);
+});
+
+test('o presente fechado do Premium avisa no sino até ser aberto', async () => {
+  await bd.insert(presentes).values({ usuarioId: jogador.id });
+  expect(await notificacoesDe(bd, jogador, AGORA)).toContainEqual({ tipo: 'presente', texto: 'Chegou seu presente de Magnata. Abra no baú!', href: '/bau#presente', quantidade: 1 });
+  await abrirPresente(bd, jogador, 'mutante-blindado', AGORA);
+  expect((await notificacoesDe(bd, jogador, AGORA)).some((item) => item.tipo === 'presente')).toBe(false);
 });

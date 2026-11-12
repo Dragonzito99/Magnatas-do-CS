@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { assinaturas, envios, itensDoJogador, lancamentosDeGrana, type Usuario } from '@/bd/esquema';
+import { assinaturas, envios, itensDoJogador, lancamentosDeGrana, presentes, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { bauDe, comprarItem, usarItem, visuaisDe } from './loja';
 import { aplicarMensalidade, NIVEIS, nivelAtivo } from './membros';
@@ -70,13 +70,20 @@ test('item do nível que a pessoa já tinha para sempre continua para sempre', a
   expect(linha.expiraEm).toBeNull();
 });
 
-test('o Premium ganha os itens de lançamento para sempre e um envio na 1ª, 3ª e 5ª mensalidade', async () => {
+test('o Premium ganha um presente fechado só na primeira vez, e um envio na 1ª, 3ª e 5ª mensalidade', async () => {
   const { conta, assinaturaId } = await assinante('premium');
   for (let mes = 0; mes < 5; mes += 1) await pagar(assinaturaId, `p${mes}`, new Date(PAGO.getTime() + mes * 30 * DIA));
-  const [blindado] = await bd.select().from(itensDoJogador).where(eq(itensDoJogador.itemId, 'mutante-blindado'));
-  expect(blindado.expiraEm).toBeNull();
+  // Os mutantes não vêm mais direto: a pessoa escolhe um ao abrir o presente (dono, 12/11/2026).
+  expect(await bd.select().from(itensDoJogador).where(eq(itensDoJogador.itemId, 'mutante-blindado'))).toEqual([]);
+  expect(await bd.select().from(presentes).where(eq(presentes.usuarioId, conta.id))).toHaveLength(1);
   expect(await bd.select().from(envios).where(eq(envios.usuarioId, conta.id))).toHaveLength(3);
   expect((await recarregar(bd, conta)).magcoin).toBe(5 * 250);
+});
+
+test('Ouro não ganha o presente do Premium', async () => {
+  const { conta, assinaturaId } = await assinante('ouro');
+  await pagar(assinaturaId, 'p1');
+  expect(await bd.select().from(presentes).where(eq(presentes.usuarioId, conta.id))).toEqual([]);
 });
 
 test('membro ganha Grana a mais pela partida, pelo nível do dia', async () => {

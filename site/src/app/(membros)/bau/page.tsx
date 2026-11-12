@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
-import { bauDe, lojaAberta, NOME_DA_RARIDADE, NOME_DO_TIPO, RARIDADE, type ItemDoBau, type TipoDeItem } from '@/dominio/loja';
+import { bauDe, itemDoCatalogo, lojaAberta, NOME_DA_RARIDADE, NOME_DO_TIPO, RARIDADE, type ItemDoBau, type TipoDeItem } from '@/dominio/loja';
+import { DIAS_DOS_ITENS, DIAS_DOS_OUTROS_MUTANTES, ITENS_DO_PRESENTE, MUTANTES_DO_PRESENTE, presenteFechado } from '@/dominio/presentes';
 import { Avatar } from '../avatar';
+import { CaixaDePresente } from './caixa-de-presente';
 import { CarteiraDaShop } from '../loja/carteira-da-shop';
 import { PreviaDoItem } from '../loja/previa-do-item';
 import { tirar, usar } from './acoes';
@@ -21,6 +23,7 @@ const VAZIO: Record<TipoDeItem, string> = {
 type Filtro = 'todos' | 'uso' | 'vencidos' | TipoDeItem;
 
 const dias = (quantidade: number) => (quantidade === 1 ? '1 dia' : `${quantidade} dias`);
+const juntar = (nomes: string[]) => (nomes.length < 2 ? nomes.join('') : `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`);
 
 /** Quanto falta, do jeito curto do cartão: "último dia" fica em laranja. */
 function tempo(posse: ItemDoBau): { texto: string; classe: string } {
@@ -35,11 +38,22 @@ function tempo(posse: ItemDoBau): { texto: string; classe: string } {
  * O Baú como inventário de jogo: em cima, como você aparece e os cinco espaços equipados (um por tipo); embaixo, os itens
  * na grade da Shop, com o que está em uso, quanto falta e os botões de usar, tirar e renovar.
  */
-export default async function Bau({ searchParams }: { searchParams: Promise<{ erro?: string; ver?: string }> }) {
+export default async function Bau({ searchParams }: { searchParams: Promise<{ erro?: string; ver?: string; presente?: string }> }) {
   const usuario = await exigirAcesso('/bau');
   if (!lojaAberta(usuario)) redirect('/inicio');
-  const { erro, ver } = await searchParams;
-  const bau = await bauDe(obterBd(), usuario.id);
+  const { erro, ver, presente: aberto } = await searchParams;
+  const [bau, presente] = await Promise.all([bauDe(obterBd(), usuario.id), presenteFechado(obterBd(), usuario.id)]);
+  const mutanteDoPresente = aberto ? MUTANTES_DO_PRESENTE.find((item) => item.id === aberto) : undefined;
+  const itensDoPresente = juntar(
+    ITENS_DO_PRESENTE.map((id) => {
+      const item = itemDoCatalogo(id);
+      if (!item) return id;
+      if (item.tipo === 'aviso') return 'o aviso de entrada';
+      if (item.tipo === 'moldura') return `a moldura ${item.nome}`;
+      if (item.tipo === 'etiqueta') return `a etiqueta ${item.nome}`;
+      return item.nome;
+    }),
+  );
   const equipado = (tipo: TipoDeItem) => bau.find((posse) => posse.usando && posse.item.tipo === tipo);
   const cor = equipado('cor');
   const etiqueta = equipado('etiqueta');
@@ -65,6 +79,19 @@ export default async function Bau({ searchParams }: { searchParams: Promise<{ er
       {erro && (
         <p role="alert" className="aviso">
           Esse item não está valendo. Compre de novo na Shop para usar.
+        </p>
+      )}
+      {presente && (
+        <CaixaDePresente
+          opcoes={MUTANTES_DO_PRESENTE.map((item) => ({ id: item.id, nome: item.nome, imagem: item.imagem, descricao: item.evolucoes?.map((nivel) => nivel.poder).join(' · ') }))}
+          diasDosOutros={DIAS_DOS_OUTROS_MUTANTES}
+          itens={`${itensDoPresente} por ${DIAS_DOS_ITENS} dias`}
+        />
+      )}
+      {mutanteDoPresente && !presente && (
+        <p className="aviso presente-aberto" role="status">
+          🎁 <b>{mutanteDoPresente.nome}</b> é seu para sempre e já está em uso. Os outros mutantes ficam {DIAS_DOS_OUTROS_MUTANTES} dias, e {itensDoPresente} ficam{' '}
+          {DIAS_DOS_ITENS} dias. Tudo está aqui embaixo.
         </p>
       )}
 

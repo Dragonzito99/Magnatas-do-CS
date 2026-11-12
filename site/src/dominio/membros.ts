@@ -1,6 +1,6 @@
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
-import { assinaturas, envios, itensDoJogador, mensalidades } from '@/bd/esquema';
+import { assinaturas, envios, itensDoJogador, mensalidades, presentes } from '@/bd/esquema';
 import type { Transacao } from './disponibilidade';
 import { lancarMoeda } from './grana';
 import { CATALOGO, itemDoCatalogo } from './loja';
@@ -16,7 +16,7 @@ export type Nivel = {
   magcoinsPorMes: number;
   /** Itens do baú enquanto a assinatura vale. */
   itens: string[];
-  /** Itens de lançamento para sempre e produtos em casa. */
+  /** Presente de boas-vindas (um mutante para sempre) e produtos em casa. */
   premium?: boolean;
 };
 
@@ -50,7 +50,7 @@ export async function nivelAtivo(bd: Bd | Transacao, usuarioId: string, agora: D
 }
 
 /** Põe o item no baú até `ate` (sem prazo fica sem prazo; prazo maior fica o maior). */
-async function darAte(tx: Transacao, usuarioId: string, itemId: string, ate: Date | null, agora: Date): Promise<void> {
+export async function darAte(tx: Transacao, usuarioId: string, itemId: string, ate: Date | null, agora: Date): Promise<void> {
   await tx
     .insert(itensDoJogador)
     .values({ usuarioId, itemId, expiraEm: ate, atualizadoEm: agora })
@@ -65,8 +65,8 @@ async function darAte(tx: Transacao, usuarioId: string, itemId: string, ate: Dat
 
 /**
  * Uma mensalidade aprovada (já conferida na API do Mercado Pago). O mesmo pagamento duas vezes não conta de novo.
- * Estende o prazo, credita as MagCoins do mês, põe os itens do nível no baú e, no Premium, dá os itens de lançamento
- * para sempre e cria o envio na 1ª, 3ª, 5ª... mensalidade.
+ * Estende o prazo, credita as MagCoins do mês, põe os itens do nível no baú e, no Premium, deixa o presente de boas-vindas
+ * e cria o envio na 1ª, 3ª, 5ª... mensalidade.
  */
 export async function aplicarMensalidade(
   tx: Transacao,
@@ -115,7 +115,8 @@ export async function aplicarMensalidade(
   }
 
   if (nivel.premium) {
-    for (const item of CATALOGO.filter((candidato) => candidato.lancamento)) await darAte(tx, assinatura.usuarioId, item.id, null, pagamento.pagoEm);
+    // O presente de boas-vindas, uma vez por conta: quem cancela e assina de novo não ganha outro.
+    await tx.insert(presentes).values({ usuarioId: assinatura.usuarioId, criadoEm: pagamento.pagoEm }).onConflictDoNothing();
     if (pagas % 2 === 1) await tx.insert(envios).values({ usuarioId: assinatura.usuarioId, mensalidadeId: nova.id }).onConflictDoNothing();
   }
   return true;
