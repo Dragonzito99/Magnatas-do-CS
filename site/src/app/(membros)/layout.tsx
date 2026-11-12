@@ -12,6 +12,7 @@ import { minhaSala } from '@/dominio/salas';
 import { patenteDe } from '@/dominio/xp';
 import { Atualizar } from './atualizar';
 import { AvisoDeConvite, BarraDeAmigos } from './barra-de-amigos';
+import { IrParaAvaliar } from './ir-para-avaliar';
 import { JanelaDeConversa } from './janela-de-conversa';
 import { AvisoDePartida } from './aviso-de-partida';
 import { AvisoDeSala } from './aviso-de-sala';
@@ -40,6 +41,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
     <div className="app com-amigos">
       <Atualizar segundos={15} />
       <ManterPresenca />
+      {notificacoes.some((notificacao) => notificacao.tipo === 'avaliar') && <IrParaAvaliar />}
       <Cabecalho
         usuario={usuario}
         patente={patenteDe(usuario.xpTotal)}

@@ -1,7 +1,9 @@
 import { and, asc, count, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
-import { banimentos, chamados, denuncias, gravacoes, partidaJogadores, partidas, usuarios, type EstadoUsuario, type Partida, type Usuario } from '@/bd/esquema';
+import { banimentos, chamados, denuncias, denunciasDiversao, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type EstadoUsuario, type Partida, type Usuario } from '@/bd/esquema';
+import { enderecoDaPartidaDaDiversao } from './avaliar';
+import { nomeDoMapaConhecido } from './diversao';
 import { ConclusaoInvalida, DenunciaIndisponivel, ESTADOS_COM_CHAMADO, MAXIMO_DO_TEXTO } from './denuncias';
 import { exigirPermissao, registrarAuditoria, SemPermissao } from './equipe';
 import { kdDe, situacaoDaGravacao, umaCasa, type SituacaoDaGravacao } from './ficha';
@@ -187,4 +189,73 @@ export function motivoDaProposta(partida: Pick<Partida, 'tipo' | 'numero'>, conc
   const texto = conclusao.trim();
   if (!texto) throw new ConclusaoInvalida();
   return `${nomeDaPartida(partida)}: ${texto}`;
+}
+
+export type DenunciaDaDiversao = {
+  id: string;
+  endereco: string;
+  mapa: string | null;
+  motivo: string;
+  criadoEm: Date;
+  acusado: UsuarioPublico & { estado: EstadoUsuario };
+  denuncianteApelido: string;
+  podeEncerrar: boolean;
+};
+
+/** As denúncias abertas das partidas da Diversão (dono, 11/11/2026), da mais antiga para a mais nova. */
+export async function listarDenunciasDaDiversao(bd: Bd, leitor: Pick<Usuario, 'id'>): Promise<DenunciaDaDiversao[]> {
+  await exigirPermissao(bd, leitor, 'moderar');
+  const acusado = alias(usuarios, 'acusado');
+  const denunciante = alias(usuarios, 'denunciante');
+  const abertas = await bd
+    .select({
+      id: denunciasDiversao.id,
+      referencia: denunciasDiversao.referencia,
+      motivo: denunciasDiversao.motivo,
+      criadoEm: denunciasDiversao.criadoEm,
+      denuncianteId: denunciasDiversao.denuncianteId,
+      denuncianteApelido: denunciante.apelido,
+      acusado: { id: acusado.id, apelido: acusado.apelido, avatarUrl: acusado.avatarUrl, estado: acusado.estado },
+    })
+    .from(denunciasDiversao)
+    .innerJoin(acusado, eq(denunciasDiversao.acusadoId, acusado.id))
+    .innerJoin(denunciante, eq(denunciasDiversao.denuncianteId, denunciante.id))
+    .where(ne(denunciasDiversao.estado, 'encerrada'))
+    .orderBy(asc(denunciasDiversao.criadoEm));
+  if (abertas.length === 0) return [];
+  const mapas = await bd
+    .selectDistinctOn([xpPartidas.referencia], { referencia: xpPartidas.referencia, mapa: xpPartidas.mapa })
+    .from(xpPartidas)
+    .where(inArray(xpPartidas.referencia, [...new Set(abertas.map((linha) => linha.referencia))]));
+  return abertas.map(({ referencia, denuncianteId, ...linha }) => {
+    const mapa = mapas.find((item) => item.referencia === referencia)?.mapa ?? null;
+    return {
+      ...linha,
+      endereco: enderecoDaPartidaDaDiversao(referencia),
+      mapa: nomeDoMapaConhecido(mapa) ?? mapa,
+      podeEncerrar: linha.acusado.id !== leitor.id && denuncianteId !== leitor.id,
+    };
+  });
+}
+
+export async function encerrarDenunciaDaDiversao(bd: Bd, gm: Pick<Usuario, 'id'>, id: string, conclusao: string): Promise<void> {
+  const texto = conclusao.trim();
+  await bd.transaction(async (tx) => {
+    await exigirPermissao(tx, gm, 'moderar');
+    if (!texto || texto.length > MAXIMO_DO_TEXTO) throw new ConclusaoInvalida();
+    const [aberta] = await tx
+      .select()
+      .from(denunciasDiversao)
+      .where(and(eq(denunciasDiversao.id, id), ne(denunciasDiversao.estado, 'encerrada')))
+      .for('update');
+    if (!aberta) throw new DenunciaIndisponivel();
+    if (aberta.acusadoId === gm.id || aberta.denuncianteId === gm.id) throw new SemPermissao();
+    await tx.update(denunciasDiversao).set({ estado: 'encerrada', analistaId: gm.id, conclusao: texto }).where(eq(denunciasDiversao.id, id));
+    await registrarAuditoria(tx, {
+      atorId: gm.id,
+      acao: 'encerrar_denuncia_diversao',
+      alvoId: aberta.acusadoId,
+      detalhes: { referencia: aberta.referencia, denuncia: aberta.id, conclusao: texto },
+    });
+  });
 }

@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { auditoria, banimentos, chamados, denuncias, gravacoes, partidaJogadores, partidas, type Partida, type Usuario } from '@/bd/esquema';
+import { auditoria, banimentos, chamados, denuncias, denunciasDiversao, gravacoes, partidaJogadores, partidas, usuarios, xpPartidas, type Partida, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { ConclusaoInvalida, denunciar, DenunciaIndisponivel } from './denuncias';
+import { ConclusaoInvalida, contagemDeCasos, denunciar, DenunciaIndisponivel } from './denuncias';
 import { SemPermissao } from './equipe';
-import { casoEscolhido, chamadosEmAndamento, encerrarCaso, listarCasosDeDenuncia, motivoDaProposta } from './olho-de-aguia';
+import { casoEscolhido, chamadosEmAndamento, encerrarCaso, encerrarDenunciaDaDiversao, listarCasosDeDenuncia, listarDenunciasDaDiversao, motivoDaProposta } from './olho-de-aguia';
 
 let bd: Bd;
 let gm: Usuario;
@@ -287,4 +287,39 @@ test('motivoDaProposta junta o nome da partida e a conclusão', () => {
 
 test('motivoDaProposta sem conclusão é recusado, porque o nome da partida sozinho não explica nada', () => {
   expect(() => motivoDaProposta({ tipo: 'mix', numero: 7 }, '   ')).toThrow(ConclusaoInvalida);
+});
+
+test('denúncia da Diversão: a equipe vê, encerra com conclusão e auditoria, e ela sai do contador', async () => {
+  const referencia = 'diversao:27020:abc';
+  await bd.insert(xpPartidas).values(
+    [acusado, denunciante].map((conta) => ({ usuarioId: conta.id, origem: 'diversao' as const, referencia, abates: 1, mortes: 1, resultado: 'derrota' as const, xp: 100, mapa: 'zm_silent_village' })),
+  );
+  await bd.insert(denunciasDiversao).values({ referencia, denuncianteId: denunciante.id, acusadoId: acusado.id, motivo: 'Atravessando parede' });
+  expect((await contagemDeCasos(bd, gm)).denuncias).toBe(1);
+  await expect(listarDenunciasDaDiversao(bd, membro)).rejects.toBeInstanceOf(SemPermissao);
+
+  const lista = await listarDenunciasDaDiversao(bd, gm);
+  expect(lista).toHaveLength(1);
+  expect(lista[0]).toMatchObject({
+    endereco: '/partidas/diversao/27020-abc',
+    mapa: 'Silent Village',
+    motivo: 'Atravessando parede',
+    acusado: { id: acusado.id, apelido: 'acusado' },
+    denuncianteApelido: 'quem_denunciou',
+    podeEncerrar: true,
+  });
+
+  await expect(encerrarDenunciaDaDiversao(bd, gm, lista[0].id, '   ')).rejects.toBeInstanceOf(ConclusaoInvalida);
+  await bd.update(usuarios).set({ papel: 'gm' }).where(eq(usuarios.id, acusado.id));
+  expect((await listarDenunciasDaDiversao(bd, acusado))[0].podeEncerrar).toBe(false);
+  await expect(encerrarDenunciaDaDiversao(bd, acusado, lista[0].id, 'Sem provas')).rejects.toBeInstanceOf(SemPermissao);
+
+  await encerrarDenunciaDaDiversao(bd, gm, lista[0].id, 'Sem provas');
+  expect(await listarDenunciasDaDiversao(bd, gm)).toEqual([]);
+  expect((await contagemDeCasos(bd, gm)).denuncias).toBe(0);
+  const [gravada] = await bd.select().from(denunciasDiversao);
+  expect(gravada).toMatchObject({ estado: 'encerrada', analistaId: gm.id, conclusao: 'Sem provas' });
+  const [registro] = await bd.select().from(auditoria).where(eq(auditoria.acao, 'encerrar_denuncia_diversao'));
+  expect(registro).toMatchObject({ atorId: gm.id, alvoId: acusado.id });
+  await expect(encerrarDenunciaDaDiversao(bd, gm, lista[0].id, 'de novo')).rejects.toBeInstanceOf(DenunciaIndisponivel);
 });

@@ -10,7 +10,7 @@ import { partidas } from '@/bd/esquema';
 import { AlvoIndisponivel, MotivoDaPunicaoInvalido, proporBanimento, PropostaJaAberta, suspender } from '@/dominio/banimentos';
 import { atenderChamado, ChamadoIndisponivel, ConclusaoInvalida, DenunciaIndisponivel } from '@/dominio/denuncias';
 import { SemPermissao } from '@/dominio/equipe';
-import { encerrarCaso, motivoDaProposta } from '@/dominio/olho-de-aguia';
+import { encerrarCaso, encerrarDenunciaDaDiversao, motivoDaProposta } from '@/dominio/olho-de-aguia';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 
 const CAMINHO = '/olho-de-aguia';
@@ -89,6 +89,21 @@ export async function proporDoCaso(dados: FormData) {
     await proporBanimento(bd, ator, acusadoId, motivoDaProposta(partida, String(dados.get('conclusao') ?? '')));
   } catch (erro) {
     voltarComErro(`${partidaId}:${acusadoId}`, erro);
+  }
+  revalidatePath(CAMINHO);
+}
+
+/** Encerra uma denúncia da Diversão com a conclusão da equipe; o castigo, se houver, sai pela ficha do jogador. */
+export async function encerrarDaDiversao(dados: FormData) {
+  const id = idDe(dados, 'denunciaId');
+  const ator = await exigirAcesso(CAMINHO);
+  try {
+    await encerrarDenunciaDaDiversao(obterBd(), ator, id, String(dados.get('conclusao') ?? ''));
+  } catch (erro) {
+    if (erro instanceof SemPermissao) redirect(`${CAMINHO}?erro=propria#diversao`);
+    const codigo = codigoDoErro(erro);
+    if (codigo) redirect(`${CAMINHO}?erro=${codigo}#diversao`);
+    throw erro;
   }
   revalidatePath(CAMINHO);
 }

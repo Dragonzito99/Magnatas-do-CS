@@ -4,12 +4,12 @@ import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { listarBanimentosAbertos } from '@/dominio/banimentos';
-import { casoEscolhido, chamadosEmAndamento, listarCasosDeDenuncia, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
+import { casoEscolhido, chamadosEmAndamento, listarCasosDeDenuncia, listarDenunciasDaDiversao, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
 import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
 import { BotaoConfirmar } from '../botao-confirmar';
-import { atender, encerrar, proporDoCaso, suspenderDoCaso } from './acoes';
+import { atender, encerrar, encerrarDaDiversao, proporDoCaso, suspenderDoCaso } from './acoes';
 import { TelaDoPainel } from '../painel/lateral-do-painel';
 import { AssistirNoCs2 } from './assistir-no-cs2';
 
@@ -128,10 +128,11 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
   if (!pode(usuario, 'moderar')) redirect('/inicio');
   const { caso: chave, erro } = await searchParams;
   const bd = obterBd();
-  const [chamados, casos, propostas] = await Promise.all([
+  const [chamados, casos, propostas, daDiversao] = await Promise.all([
     chamadosEmAndamento(bd, usuario),
     listarCasosDeDenuncia(bd, usuario),
     listarBanimentosAbertos(bd, usuario),
+    listarDenunciasDaDiversao(bd, usuario),
   ]);
   const { aberto, encerrado } = casoEscolhido(casos, chave);
   // Sem caso no endereço, fixa o primeiro: se a lista mudar, a tela não troca de caso sozinha.
@@ -203,6 +204,51 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
           )}
         </div>
       )}
+
+      <section className="painel" id="diversao">
+        <div className="cabeca-painel">
+          <h2>Denúncias da Diversão</h2>
+          <span>{daDiversao.length}</span>
+        </div>
+        {daDiversao.length === 0 && <p className="vazio">Nenhuma denúncia da Diversão aberta.</p>}
+        {daDiversao.map((denuncia) => (
+          <div className="caso denuncia-da-diversao" key={denuncia.id}>
+            <div className="caso-topo">
+              <Avatar usuario={denuncia.acusado} />
+              <div>
+                <b>
+                  <Link href={`/jogadores/${denuncia.acusado.id}`}>{denuncia.acusado.apelido}</Link>
+                </b>
+                <small>
+                  <Link href={denuncia.endereco}>{denuncia.mapa ?? 'Partida da Diversão'}</Link>, {dataCurta.format(denuncia.criadoEm)}. Denunciado
+                  por {denuncia.denuncianteApelido}.
+                </small>
+              </div>
+            </div>
+            <blockquote>{denuncia.motivo}</blockquote>
+            {denuncia.podeEncerrar ? (
+              <form className="conclusao-do-caso">
+                <input type="hidden" name="denunciaId" value={denuncia.id} />
+                <textarea name="conclusao" aria-label={`Conclusão da denúncia contra ${denuncia.acusado.apelido}`} placeholder="Conclusão da análise..." maxLength={480} required rows={2} />
+                <div className="acoes">
+                  <BotaoConfirmar
+                    formAction={encerrarDaDiversao}
+                    mensagem={`Encerrar a denúncia contra ${denuncia.acusado.apelido}? Para punir, use a ficha do jogador.`}
+                    className="botao cinza pequeno"
+                  >
+                    Encerrar
+                  </BotaoConfirmar>
+                  <Link className="botao cinza pequeno" href={`/jogadores/${denuncia.acusado.id}`}>
+                    Ver ficha
+                  </Link>
+                </div>
+              </form>
+            ) : (
+              <small className="apoio">Você está envolvido nesta denúncia, então outra pessoa da equipe precisa encerrar.</small>
+            )}
+          </div>
+        ))}
+      </section>
 
       <section className="painel">
         <div className="cabeca-painel">
