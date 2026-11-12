@@ -7,12 +7,14 @@ import { listarBanimentosAbertos } from '@/dominio/banimentos';
 import { contagemDeCasos, membrosOnline } from '@/dominio/denuncias';
 import { nomeDoMapaConhecido } from '@/dominio/diversao';
 import { listarMembros } from '@/dominio/equipe';
+import { manutencaoAtual } from '@/dominio/manutencao';
 import { chamadosEmAndamento, listarCasosDeDenuncia } from '@/dominio/olho-de-aguia';
 import { partidasDoDia, quedasDoPainel, servidoresDoPainel } from '@/dominio/painel';
 import { NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
 import { nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { atender } from '../olho-de-aguia/acoes';
+import { mudarManutencao } from './acoes';
 import { TelaDoPainel } from './lateral-do-painel';
 
 const CASOS_NO_RESUMO = 4;
@@ -27,7 +29,8 @@ export default async function PainelAdm() {
   const bd = obterBd();
   const moderar = pode(usuario, 'moderar');
   const verQuedas = pode(usuario, 'ver_quedas');
-  const [contagem, membros, online, hoje, servidores, casos, propostas, chamados, quedas] = await Promise.all([
+  const cuidarDosServidores = pode(usuario, 'cuidar_dos_servidores');
+  const [contagem, membros, online, hoje, servidores, casos, propostas, chamados, quedas, manutencao] = await Promise.all([
     moderar ? contagemDeCasos(bd, usuario) : null,
     listarMembros(bd),
     membrosOnline(bd),
@@ -37,6 +40,7 @@ export default async function PainelAdm() {
     moderar ? listarBanimentosAbertos(bd, usuario) : [],
     moderar ? chamadosEmAndamento(bd, usuario) : [],
     verQuedas ? quedasDoPainel(bd) : [],
+    manutencaoAtual(bd),
   ]);
   const ativos = membros.filter((membro) => membro.estado === 'ativo').length;
   const abertos = contagem ? contagem.chamados + contagem.denuncias + contagem.propostas : 0;
@@ -138,6 +142,23 @@ export default async function PainelAdm() {
               <h2>Servidores</h2>
               <Link href="/jogar">Ver no Jogar</Link>
             </div>
+            {cuidarDosServidores && (
+              <form action={mudarManutencao} className="linha-caso linha-da-manutencao">
+                <div>
+                  Aviso de manutenção
+                  <small>
+                    {manutencao
+                      ? `${manutencao.automatica ? 'Ligado sozinho' : 'Ligado na mão'} em ${horaDaQueda.format(manutencao.desde)}${manutencao.motivo ? `: ${manutencao.motivo}` : ''}. Trava fila, salas e Diversão.`
+                      : 'Desligado. Liga sozinho quando a atualização do CS2 dá problema.'}
+                  </small>
+                </div>
+                <input type="hidden" name="ligar" value={manutencao ? 'nao' : 'sim'} />
+                <button type="submit" className={manutencao ? 'chave-da-manutencao ligada' : 'chave-da-manutencao'} aria-pressed={!!manutencao}>
+                  <i aria-hidden="true" />
+                  {manutencao ? 'Ligado' : 'Desligado'}
+                </button>
+              </form>
+            )}
             {servidores.length === 0 && <p className="vazio">Nenhum servidor da Diversão ativo.</p>}
             {servidores.map((servidor) => (
               <div className="linha-caso" key={servidor.id}>

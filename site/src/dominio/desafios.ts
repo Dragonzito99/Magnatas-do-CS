@@ -4,6 +4,7 @@ import { claMembros, clas, desafios, salaMembros, salas, usuarios, type Desafio,
 import { exigirAtivo, type Transacao } from './disponibilidade';
 import { criarPartida } from './partidas';
 import { SemPermissaoNaSala, TAMANHO_DA_SALA } from './salas';
+import { exigirServidoresNoAr } from './manutencao';
 
 export class DesafioIndisponivel extends Error {
   constructor() {
@@ -92,6 +93,7 @@ export async function desafiar(
 ): Promise<Desafio> {
   return bd.transaction(async (tx) => {
     await exigirAtivo(tx, lider);
+    await exigirServidoresNoAr(tx);
     const [vinculo] = await tx.select().from(salaMembros).where(eq(salaMembros.usuarioId, lider.id));
     if (!vinculo) throw new SemPermissaoNaSala();
 
@@ -138,6 +140,7 @@ export async function aceitarDesafio(
 
   return bd.transaction(async (tx) => {
     await exigirAtivo(tx, lider);
+    await exigirServidoresNoAr(tx);
     const [desafio] = await tx.select().from(desafios).where(eq(desafios.id, desafioId));
     if (!desafio) throw new DesafioIndisponivel();
 

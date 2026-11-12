@@ -14,6 +14,7 @@ import { kdDosJogadores } from '@/dominio/ficha';
 import { principaisDe } from '@/dominio/insignias';
 import { FILTROS_DO_JOGAR, lerFiltroDoJogar, mostraNoFiltro } from '@/dominio/jogar';
 import { juncoesDaSala } from '@/dominio/juncoes';
+import { manutencaoAtual } from '@/dominio/manutencao';
 import { verMix } from '@/dominio/mix';
 import { partidaAtualDe, partidasEmAndamento } from '@/dominio/partidas';
 import { listarSalas, minhaSala, TAMANHO_DA_SALA, type SalaComMembros } from '@/dominio/salas';
@@ -23,6 +24,7 @@ import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
 import { Atualizar } from '../atualizar';
 import { AvisoDeBloqueio } from '../aviso-de-bloqueio';
+import { AguardandoAtualizacao } from '../aviso-de-manutencao';
 import { entrar as entrarNoMix, sair as sairDoMix } from '../mix/acoes';
 import { OnlineAgora } from '../online-agora';
 import { ERROS_DA_DIVERSAO, RodapeDoCartao, SEM_RESPOSTA } from './rodape-da-diversao';
@@ -62,7 +64,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
   const filtro = lerFiltroDoJogar(texto);
   const bd = obterBd();
 
-  const [salas, minha, partida, faltas, mix, andamento, todosServidores, online] = await Promise.all([
+  const [salas, minha, partida, faltas, mix, andamento, todosServidores, online, manutencao] = await Promise.all([
     listarSalas(bd),
     minhaSala(bd, usuario.id),
     partidaAtualDe(bd, usuario.id),
@@ -71,6 +73,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
     partidasEmAndamento(bd),
     listarServidoresDaDiversao(bd),
     membrosOnline(bd),
+    manutencaoAtual(bd),
   ]);
   const [desafio] = minha ? await desafiosDaSala(bd, minha.id) : [];
   const juncoes = minha ? await juncoesDaSala(bd, minha.id) : [];
@@ -171,12 +174,13 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
             </div>
             <div className="blocos-do-competitivo">
               {mostraNoFiltro(filtro, 'mix') && (
-                <article className="bloco-de-jogo ouro" style={{ backgroundImage: `url(${FOTO_DO_MIX})` }}>
+                <article className={manutencao ? 'bloco-de-jogo ouro travado' : 'bloco-de-jogo ouro'} style={{ backgroundImage: `url(${FOTO_DO_MIX})` }}>
                   <span className="selo-do-bloco">Mix</span>
                   <h3>Fila do Mix</h3>
                   <p>Entre sozinho. Com 10 na fila, os times são sorteados e a partida começa.</p>
                   <VagasEmCirculo pessoas={mix.jogadores} total={TOTAL_DO_MIX} />
                   <div className="acao-do-bloco">
+                    {manutencao && !estouNoMix && <AguardandoAtualizacao />}
                     {!partida &&
                       (estouNoMix ? (
                         <form action={sairDoMix}>
@@ -184,7 +188,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
                             Sair da fila
                           </button>
                         </form>
-                      ) : faltas.bloqueadoAte || minha ? null : (
+                      ) : faltas.bloqueadoAte || minha || manutencao ? null : (
                         <form action={entrarNoMix}>
                           <button type="submit" className="botao-da-shop">
                             Entrar na fila
@@ -201,12 +205,12 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
                 </article>
               )}
               {mostraNoFiltro(filtro, 'competitivo') && (
-                <article className="bloco-de-jogo roxo" style={{ backgroundImage: `url(${FOTO_DA_SALA})` }}>
+                <article className={manutencao ? 'bloco-de-jogo roxo travado' : 'bloco-de-jogo roxo'} style={{ backgroundImage: `url(${FOTO_DA_SALA})` }}>
                   <span className="selo-do-bloco">Sala 5x5</span>
                   <h3>Jogue com o seu time</h3>
                   <p>Monte uma sala de 5, chame os amigos e desafie outra sala completa. Com o seu clã, vale o ranking de clãs.</p>
                   <div className="acao-do-bloco">
-                    {minha ? <span className="legenda-da-secao">Você já está numa sala.</span> : posso && <BotaoCriarSala />}
+                    {minha ? <span className="legenda-da-secao">Você já está numa sala.</span> : manutencao ? <AguardandoAtualizacao /> : posso && <BotaoCriarSala />}
                     <span>
                       <b>{outras.length}</b> <small>{outras.length === 1 ? 'sala aberta' : 'salas abertas'}</small>
                     </span>
@@ -234,7 +238,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
               {porModo.map(({ modo, itens }) => {
                 const capa = mapaDoCartao(itens[0].servidor, situacoes[itens[0].indice]);
                 return (
-                  <article key={modo.valor} className={`modo-da-diversao modo-${modo.valor}`}>
+                  <article key={modo.valor} className={`modo-da-diversao modo-${modo.valor}${manutencao ? ' travado' : ''}`}>
                     <div className="foto-do-modo">
                       <Image src={capa.foto} alt="" width={400} height={300} />
                       <span className="selo-do-bloco">{modo.nome}</span>
@@ -254,7 +258,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
                               </small>
                             </span>
                             <span className="rodape-da-variacao">
-                              <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} celular={celular} />
+                              <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} celular={celular} emManutencao={!!manutencao} />
                             </span>
                           </div>
                         );

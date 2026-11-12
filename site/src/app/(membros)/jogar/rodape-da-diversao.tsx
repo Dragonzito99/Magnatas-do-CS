@@ -1,6 +1,7 @@
 import type { ServidorDiversao } from '@/bd/esquema';
 import { alvoDoServidor, comandoDeConectar, entradaLiberada, estadoDoCartao, linkDeEntrar, MODOS_DE_DIVERSAO, type SituacaoDoServidor } from '@/dominio/diversao';
 import type { EstadoNaTela } from '@/dominio/sob-demanda';
+import { AguardandoAtualizacao } from '../aviso-de-manutencao';
 import { BotaoCopiar } from '../botao-copiar';
 import { ligar } from '../diversao/acoes';
 import { AvisarAoEntrar, BotaoLigar, EntrarQuandoLigar, EsperarEEntrar, TempoLigando } from '../diversao/esperar-e-entrar';
@@ -12,6 +13,7 @@ const AVISO_DE_FALHA_MS = 2 * 60_000;
 export const ERROS_DA_DIVERSAO: Record<string, string> = {
   limite: 'Todos os servidores estão cheios de gente agora. Tente de novo em alguns minutos.',
   indisponivel: 'Este modo não pode ser ligado agora.',
+  manutencao: 'Os servidores estão em manutenção. Mix e Diversão voltam assim que o servidor for atualizado.',
   celular: 'Pelo celular dá para ver tudo, mas o servidor só liga pelo PC, onde o CS2 roda.',
 };
 
@@ -26,6 +28,7 @@ export function RodapeDoCartao({
   modo,
   agora,
   celular = false,
+  emManutencao = false,
 }: {
   servidor: ServidorDiversao;
   situacao: SituacaoDoServidor;
@@ -34,6 +37,8 @@ export function RodapeDoCartao({
   agora: number;
   /** Pelo celular o cartão mostra o estado, mas não o botão de ligar. */
   celular?: boolean;
+  /** Servidores em manutenção: no lugar de ligar, o aviso de que falta a atualização. */
+  emManutencao?: boolean;
 }) {
   const estado = estadoDoCartao(servidor, situacao, guardado?.estado, guardado?.teste);
   if (estado === 'em_breve') return <span className="etiqueta">Em breve</span>;
@@ -51,6 +56,7 @@ export function RodapeDoCartao({
   }
   if (estado === 'trocando_mapa') return <span className="etiqueta">Trocando de mapa...</span>;
   if (estado === 'desligado_sob_demanda') {
+    if (emManutencao) return <AguardandoAtualizacao curto />;
     if (celular) return <span className="etiqueta">Ligue pelo PC</span>;
     const falhou = guardado?.erro && agora - guardado.desde.getTime() < AVISO_DE_FALHA_MS;
     return (

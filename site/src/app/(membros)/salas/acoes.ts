@@ -8,6 +8,7 @@ import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import { aceitarDesafio, cancelarDesafio, DesafioIndisponivel, desafiar, recusarDesafio, SalaIncompleta, type FormatoDoDesafio } from '@/dominio/desafios';
 import { Bloqueado, ContaSemAcesso, JaOcupado } from '@/dominio/disponibilidade';
+import { EmManutencao } from '@/dominio/manutencao';
 import { aceitarJuncao, cancelarJuncao, JuncaoIndisponivel, pedirJuncao, recusarJuncao } from '@/dominio/juncoes';
 import {
   criarSala,
@@ -32,6 +33,7 @@ function codigoDoErro(erro: unknown): string | null {
   if (erro instanceof SalaIncompleta) return 'incompleta';
   if (erro instanceof DesafioIndisponivel) return 'desafio';
   if (erro instanceof JuncaoIndisponivel) return 'juncao';
+  if (erro instanceof EmManutencao) return 'manutencao';
   return null;
 }
 

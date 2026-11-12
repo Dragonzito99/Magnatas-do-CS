@@ -10081,3 +10081,152 @@ a.titulo-da-linha:hover {
   border-left: 3px solid rgba(248, 113, 113, 0.6);
   background: rgba(255, 255, 255, 0.03);
 }
+
+/* Servidores em manutenção (dono, 11/11/2026), como no rascunho aprovado. */
+.aviso-de-manutencao {
+  border-bottom: 2px solid #fb923c;
+  background: linear-gradient(90deg, rgba(251, 146, 60, 0.22), rgba(251, 146, 60, 0.08));
+}
+
+.aviso-de-manutencao .largura {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+}
+
+.icone-da-manutencao {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(251, 146, 60, 0.2);
+  color: #fb923c;
+  font-size: 18px;
+}
+
+.aviso-de-manutencao b {
+  display: block;
+  color: #fed7aa;
+  font: italic 700 18px/1.1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.aviso-de-manutencao small {
+  color: #fde2c8;
+}
+
+.ponto-da-manutencao {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #fb923c;
+  animation: pulsar-manutencao 1.4s infinite;
+}
+
+@keyframes pulsar-manutencao {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.aguardando-atualizacao {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid rgba(251, 146, 60, 0.6);
+  border-radius: 4px;
+  background: rgba(251, 146, 60, 0.14);
+  color: #fed7aa;
+  font: italic 800 15px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  cursor: not-allowed;
+}
+
+.aguardando-atualizacao::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: girar-manutencao 1s linear infinite;
+}
+
+@keyframes girar-manutencao {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rodape-da-variacao .aguardando-atualizacao {
+  padding: 7px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.bloco-de-jogo.travado,
+.modo-da-diversao.travado .foto-do-modo {
+  filter: grayscale(0.75);
+}
+
+.linha-da-manutencao {
+  align-items: center;
+}
+
+.chave-da-manutencao {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chave-da-manutencao i {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.chave-da-manutencao i::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--tinta);
+}
+
+.chave-da-manutencao.ligada {
+  color: #fed7aa;
+}
+
+.chave-da-manutencao.ligada i {
+  background: #fb923c;
+}
+
+.chave-da-manutencao.ligada i::after {
+  right: 3px;
+  left: auto;
+}
+
+@media (max-width: 760px) {
+  .ponto-da-manutencao {
+    display: none;
+  }
+}

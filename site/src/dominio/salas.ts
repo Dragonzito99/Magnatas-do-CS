@@ -2,6 +2,7 @@ import { and, asc, count, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { desafios, juncoes, salaMembros, salas, usuarios, type Sala, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, exigirLivre, type Transacao } from './disponibilidade';
+import { exigirServidoresNoAr } from './manutencao';
 
 export class SalaCheia extends Error {
   constructor() {
@@ -43,6 +44,7 @@ async function travarSala(tx: Transacao, salaId: string): Promise<Sala | undefin
 export async function criarSala(bd: Bd, ator: Pick<Usuario, 'id'>, agora: Date = new Date()): Promise<Sala> {
   return bd.transaction(async (tx) => {
     const lider = await exigirAtivo(tx, ator);
+    await exigirServidoresNoAr(tx);
     await exigirLivre(tx, ator.id, agora);
     const [sala] = await tx.insert(salas).values({ nome: lider.apelido, liderId: ator.id }).returning();
     await tx.insert(salaMembros).values({ salaId: sala.id, usuarioId: ator.id });

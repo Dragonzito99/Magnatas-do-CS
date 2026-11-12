@@ -660,6 +660,19 @@ export const noticiasSteam = pgTable('noticias_steam', {
   tentativas: integer('tentativas').notNull().default(0),
 });
 
+/**
+ * O aviso de "servidores em manutenção" (dono, 11/11/2026): uma linha só (id 1). Liga sozinho quando a atualização do
+ * CS2 dá problema e apaga quando os servidores voltam; o Adm também liga e desliga na mão.
+ */
+export const manutencaoDosServidores = pgTable('manutencao_dos_servidores', {
+  id: integer('id').primaryKey().default(1),
+  ligada: boolean('ligada').notNull().default(false),
+  automatica: boolean('automatica').notNull().default(false),
+  motivo: text('motivo'),
+  desde: timestamp('desde', { withTimezone: true }).notNull().defaultNow(),
+  atorId: uuid('ator_id').references(() => usuarios.id),
+});
+
 /** Resultado guardado de fontes de fora (Tier S, última busca da Steam), para a página nunca esperar a rede. */
 export const cacheExterno = pgTable('cache_externo', {
   chave: text('chave').primaryKey(),

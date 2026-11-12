@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, isNotNull } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { estadosDaDiversao, servidoresDiversao, type EstadoDaDiversao, type ServidorDiversao } from '@/bd/esquema';
+import { exigirServidoresNoAr } from './manutencao';
 
 /** Liga e desliga um servidor da Diversão pelo nome dele na VPS. */
 export type ControleDaDiversao = { ligar(nome: string): Promise<void>; desligar(nome: string): Promise<void> };
@@ -67,6 +68,7 @@ export async function pedirParaLigar(
 ): Promise<'ligando' | 'ligado' | 'desligado'> {
   type Decisao = { pronto: 'ligando' | 'ligado' } | { nome: string; vitima: string | null };
   const decisao = await bd.transaction(async (tx): Promise<Decisao> => {
+    await exigirServidoresNoAr(tx);
     const todos = await tx.select({ id: servidoresDiversao.id }).from(servidoresDiversao);
     await garantirEstados(
       tx,

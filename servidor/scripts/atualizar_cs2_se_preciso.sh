@@ -12,6 +12,16 @@ CONFIG_DO_EMAIL=${CONFIG_DO_EMAIL:-/root/.magnatas-backup.env}
 exec 9>"$TRAVA"
 flock -n 9 || exit 0
 
+banco() { sudo -u postgres psql -tA magnatas -c "$1"; }
+
+# O aviso "servidores em manutenção" do site (dono, 11/11/2026): ligado sozinho por aqui, apaga sozinho quando o
+# servidor de partidas volta a ficar de pé. O ligado na mão pelo Adm fica como está.
+aviso=$(banco "select ligada and automatica from manutencao_dos_servidores where id = 1" 2>/dev/null | tr -d '[:space:]' || true)
+if [ "$aviso" = "t" ] && sudo -u cs2 tmux has-session -t cs2 2>/dev/null; then
+  banco "update manutencao_dos_servidores set ligada = false, desde = now() where id = 1 and automatica" >/dev/null
+  echo "$(date '+%F %T') servidores de volta: aviso de manutenção apagado"
+fi
+
 versao=$(sed -n 's/^PatchVersion=//p' "$INF" | tr -d '\r')
 [ -n "$versao" ] || { echo "$(date '+%F %T') sem PatchVersion em $INF" >&2; exit 1; }
 
@@ -19,7 +29,7 @@ versao=$(sed -n 's/^PatchVersion=//p' "$INF" | tr -d '\r')
 resposta=$(curl -fsS --max-time 20 "https://api.steampowered.com/ISteamApps/UpToDateCheck/v1/?appid=730&version=$versao") || exit 0
 printf '%s' "$resposta" | grep -q '"up_to_date":false' || exit 0
 
-em_jogo=$(sudo -u postgres psql -tA magnatas -c "select count(*) from partidas where estado in ('aguardando_servidor', 'carregando', 'aguardando_jogadores', 'ao_vivo')" | tr -d '[:space:]')
+em_jogo=$(banco "select count(*) from partidas where estado in ('aguardando_servidor', 'carregando', 'aguardando_jogadores', 'ao_vivo')" | tr -d '[:space:]')
 if [ "${em_jogo:-0}" != "0" ]; then
   echo "$(date '+%F %T') há atualização do CS2, esperando a partida do mix acabar"
   exit 0
@@ -41,9 +51,13 @@ for nome in $ligados; do
 done
 nova=$(sed -n 's/^PatchVersion=//p' "$INF" | tr -d '\r')
 echo "$(date '+%F %T') CS2 de $versao para $nova: $resultado"
+if [ "$resultado" != "ok" ]; then
+  banco "insert into manutencao_dos_servidores (id, ligada, automatica, motivo, desde) values (1, true, true, 'O CS2 foi para a versão $nova e os plugins ainda não voltaram', now()) on conflict (id) do update set ligada = true, automatica = true, motivo = excluded.motivo, desde = now(), ator_id = null" >/dev/null || true
+fi
 
 # Aviso por e-mail para o dono, no mesmo endereço da cópia do banco.
-[ -f "$CONFIG_DO_EMAIL" ] || exit 0
+# Sem e-mail configurado, a saída ainda diz se deu certo, para o registro do cron.
+[ -f "$CONFIG_DO_EMAIL" ] || { [ "$resultado" = "ok" ]; exit; }
 # shellcheck disable=SC1090
 source "$CONFIG_DO_EMAIL"
 if [ "$resultado" = "ok" ]; then

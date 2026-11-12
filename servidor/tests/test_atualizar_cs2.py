@@ -20,7 +20,7 @@ def test_confere_a_cada_15_minutos_como_root():
     assert "chown cs2:cs2 /home/cs2/server/game/csgo/cfg" in codigo
 
 
-def rodar(tmp_path, steam: str, partidas_em_jogo: str):
+def rodar(tmp_path, steam: str, partidas_em_jogo: str, aviso: str = "f", atualizacao_falha: bool = False, servidor_de_pe: bool = False):
     falso = tmp_path / "bin"
     falso.mkdir()
     chamadas = tmp_path / "chamadas.txt"
@@ -28,7 +28,12 @@ def rodar(tmp_path, steam: str, partidas_em_jogo: str):
     (falso / "flock").write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
     (falso / "sudo").write_text(
         f'#!/usr/bin/env bash\necho "$*" >> "{chamadas.as_posix()}"\n'
-        f'case "$*" in *psql*) echo {partidas_em_jogo};; esac\nexit 0\n',
+        f'case "$*" in\n'
+        f'  *"count(*)"*) echo {partidas_em_jogo};;\n'
+        f'  *"select ligada"*) echo {aviso};;\n'
+        f'  *atualizar_cs2.sh*) exit {1 if atualizacao_falha else 0};;\n'
+        f'  *has-session*) exit {0 if servidor_de_pe else 1};;\n'
+        f'esac\nexit 0\n',
         encoding="utf-8",
     )
     for arquivo in falso.iterdir():
@@ -50,7 +55,7 @@ def rodar(tmp_path, steam: str, partidas_em_jogo: str):
 def test_versao_em_dia_nao_mexe_em_nada(tmp_path):
     resultado, chamadas = rodar(tmp_path, '{"response":{"success":true,"up_to_date":true}}', "0")
     assert resultado.returncode == 0
-    assert chamadas == ""
+    assert "atualizar_cs2.sh" not in chamadas and "manutencao_dos_servidores set ligada = false" not in chamadas
 
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="precisa do bash")
@@ -66,3 +71,24 @@ def test_versao_velha_sem_partida_atualiza(tmp_path):
     resultado, chamadas = rodar(tmp_path, '{"response":{"success":true,"up_to_date":false}}', "0")
     assert resultado.returncode == 0, resultado.stderr
     assert "-u cs2 bash /home/cs2/bin/atualizar_cs2.sh" in chamadas
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="precisa do bash")
+def test_atualizacao_que_falha_liga_o_aviso_do_site(tmp_path):
+    resultado, chamadas = rodar(tmp_path, '{"response":{"success":true,"up_to_date":false}}', "0", atualizacao_falha=True)
+    assert resultado.returncode != 0
+    assert "insert into manutencao_dos_servidores" in chamadas and "values (1, true, true" in chamadas
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="precisa do bash")
+def test_servidor_de_pe_apaga_o_aviso_que_ligou_sozinho(tmp_path):
+    resultado, chamadas = rodar(tmp_path, '{"response":{"success":true,"up_to_date":true}}', "0", aviso="t", servidor_de_pe=True)
+    assert resultado.returncode == 0
+    assert "update manutencao_dos_servidores set ligada = false" in chamadas
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="precisa do bash")
+def test_servidor_ainda_caido_mantem_o_aviso(tmp_path):
+    resultado, chamadas = rodar(tmp_path, '{"response":{"success":true,"up_to_date":true}}', "0", aviso="t", servidor_de_pe=False)
+    assert resultado.returncode == 0
+    assert "set ligada = false" not in chamadas

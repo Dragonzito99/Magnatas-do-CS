@@ -5,6 +5,7 @@ import { filaMix, usuarios, type Usuario } from '@/bd/esquema';
 import { exigirAtivo, exigirLivre, type Transacao } from './disponibilidade';
 import { criarPartida } from './partidas';
 import { TEMPO_FORA_DO_SITE_NA_SALA_MS, type UsuarioPublico } from './salas';
+import { exigirServidoresNoAr } from './manutencao';
 
 const TOTAL_DO_MIX = 10;
 const CHAVE_DA_FILA = 7_204_001;
@@ -41,6 +42,7 @@ export async function entrarNoMix(
     // Só um pedido por vez mexe na fila, para o décimo fechar uma partida só.
     await travarFila(tx);
     await exigirAtivo(tx, ator);
+    await exigirServidoresNoAr(tx);
     const [jaNaFila] = await tx.select().from(filaMix).where(eq(filaMix.usuarioId, ator.id));
     if (jaNaFila) return {};
     const agora = opcoes.agora ?? new Date();

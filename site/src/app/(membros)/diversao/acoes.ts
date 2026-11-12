@@ -8,6 +8,7 @@ import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { ehCelular } from '@/dominio/aparelho';
 import { lerModo } from '@/dominio/diversao';
+import { EmManutencao } from '@/dominio/manutencao';
 import { adiarDesligamento, LimiteDeServidores, maximoDeLigados, pedirParaLigar, ServidorIndisponivel } from '@/dominio/sob-demanda';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
@@ -33,6 +34,7 @@ export async function ligar(dados: FormData): Promise<void> {
   } catch (falha) {
     if (falha instanceof LimiteDeServidores) erro = 'limite';
     else if (falha instanceof ServidorIndisponivel) erro = 'indisponivel';
+    else if (falha instanceof EmManutencao) erro = 'manutencao';
     else throw falha;
   }
   revalidatePath('/jogar');
