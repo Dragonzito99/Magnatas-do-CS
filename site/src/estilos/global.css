@@ -2108,127 +2108,497 @@ textarea {
   display: contents;
 }
 
-/* Convites: criar com presente e a lista com quem usou */
-.criar-convite summary {
-  display: grid;
-  gap: 2px;
+/* Convites no jeito da Magnata Shop: números no topo, montar o presente e os convites como ingressos */
+.tela-convites .carteira-da-shop form {
+  display: contents;
+}
+
+.tela-convites .moeda-da-shop b {
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+}
+
+.tela-convites .moeda-da-shop small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+button.moeda-da-shop {
   cursor: pointer;
 }
 
-.criar-convite summary small {
-  color: var(--tinta-2);
-}
-
-.formulario-do-convite {
-  display: grid;
-  gap: 14px;
-  margin-top: 14px;
-}
-
-.formulario-do-convite fieldset {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.formulario-do-convite legend,
-.numeros-do-convite label,
-.recado-do-convite {
-  color: var(--tinta-2);
-  font-size: 13px;
-}
-
-.linha-do-item {
+.convite-criado {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  border: 1px solid var(--ouro);
+  background: radial-gradient(circle at 0 50%, var(--ouro-fraco), transparent 60%), var(--painel);
 }
 
-.linha-do-item select {
-  flex: 1 1 220px;
-  min-width: 0;
+.convite-criado .rotulo-da-janela {
+  margin: 0;
 }
 
-.linha-do-item input {
-  width: 70px;
+.convite-criado code {
+  color: var(--ouro);
+  font-size: 22px;
+  letter-spacing: 0.12em;
 }
 
-.numeros-do-convite {
+.numeros-dos-convites {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
+  margin-bottom: 18px;
 }
 
-.numeros-do-convite label,
-.recado-do-convite {
+.numeros-dos-convites div {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 3px solid var(--roxo);
+  background: var(--painel);
+}
+
+.numeros-dos-convites div:last-child {
+  border-top-color: var(--ouro);
+}
+
+.numeros-dos-convites b {
+  font: italic 700 34px/1 var(--fonte-titulo), sans-serif;
+}
+
+.numeros-dos-convites small {
+  color: var(--tinta-2);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.montar-presente {
+  margin-bottom: 18px;
+  border: 1px solid var(--ouro);
+  background: radial-gradient(circle at 8% 0, var(--ouro-fraco), transparent 45%), var(--painel);
+}
+
+.montar-presente summary {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.montar-presente summary::-webkit-details-marker {
+  display: none;
+}
+
+.montar-presente summary::after {
+  margin-left: auto;
+  color: var(--ouro);
+  font: italic 700 15px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  content: 'Montar ▾';
+}
+
+.montar-presente[open] summary::after {
+  content: 'Fechar ▴';
+}
+
+.montar-presente summary > span:last-of-type {
   display: grid;
   gap: 4px;
 }
 
-.formulario-do-convite > button {
+.montar-presente summary .selo-da-raridade {
+  --raridade: var(--ouro);
+  justify-self: start;
+  margin: 0;
+}
+
+.montar-presente summary b {
+  font: italic 700 24px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.montar-presente summary small {
+  color: var(--tinta-2);
+}
+
+.caixa-do-presente.pequena {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  animation: none;
+}
+
+.caixa-do-presente.pequena .corpo-do-presente {
+  width: 50px;
+  height: 40px;
+}
+
+.caixa-do-presente.pequena .tampa-do-presente {
+  bottom: 38px;
+  width: 58px;
+  height: 14px;
+}
+
+.formulario-do-convite {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 22px;
+  padding: 4px 18px 20px;
+}
+
+.coluna-do-convite {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.coluna-do-convite .rotulo-da-janela {
+  margin: 0;
+}
+
+.linha-do-item {
+  display: flex;
+  gap: 8px;
+}
+
+.linha-do-item select {
+  flex: 1;
+  min-width: 0;
+}
+
+.dias-do-item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.dias-do-item input {
+  width: 64px;
+  text-align: center;
+}
+
+.numeros-do-convite {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.campo-moeda {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--painel-2);
+}
+
+.campo-moeda i {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--roxo-fraco);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.campo-moeda.grana i {
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.campo-moeda.magcoin i {
+  background: var(--roxo);
+}
+
+.campo-moeda input {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  box-shadow: none;
+  background: transparent;
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+}
+
+.campo-moeda small {
+  grid-column: 1 / -1;
+  color: var(--tinta-2);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recado-do-convite {
+  display: grid;
+  gap: 8px;
+}
+
+.coluna-do-convite > .botao-da-shop {
   justify-self: start;
 }
 
-.lista-de-convites {
+.grade-de-convites {
   display: grid;
-  gap: 0;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  align-items: start;
+  gap: 14px;
 }
 
-.convite-detalhado {
-  display: grid;
-  gap: 6px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--linha);
+.rodape-do-ingresso .botao-da-shop {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
 }
 
-.convite-detalhado:last-child {
-  border-bottom: 0;
+.ingresso {
+  --cor-do-ingresso: var(--roxo);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 4px solid var(--cor-do-ingresso);
+  background: var(--painel);
+  transition: transform 0.12s, border-color 0.12s;
 }
 
-.topo-do-convite {
+.ingresso:hover {
+  transform: translateY(-2px);
+}
+
+.ingresso.livre {
+  --cor-do-ingresso: var(--verde);
+}
+
+.ingresso.revogado,
+.ingresso.vencido {
+  --cor-do-ingresso: #5b5269;
+  opacity: 0.7;
+}
+
+.ingresso.com-presente {
+  background: radial-gradient(circle at 100% 0, var(--ouro-fraco), transparent 45%), var(--painel);
+}
+
+/* O recorte do ingresso, nos dois lados da linha pontilhada (preso à linha, para acompanhar quando o topo quebra). */
+.codigo-do-ingresso::before,
+.codigo-do-ingresso::after {
+  position: absolute;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--pagina);
+  content: '';
+}
+
+.codigo-do-ingresso::before {
+  left: -29px;
+}
+
+.codigo-do-ingresso::after {
+  right: -26px;
+}
+
+.topo-do-ingresso {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
 
-.topo-do-convite .acoes {
-  display: flex;
-  gap: 6px;
+.topo-do-ingresso small {
   margin-left: auto;
+  color: var(--tinta-2);
+  font-size: 12px;
 }
 
-.etiqueta.presente {
-  border-color: var(--ouro);
+.situacao-do-ingresso,
+.selo-presente {
+  padding: 3px 8px;
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.situacao-do-ingresso {
+  background: var(--cor-do-ingresso);
+  color: #0a0612;
+}
+
+.selo-presente {
+  border: 1px solid var(--ouro);
   color: var(--ouro);
 }
 
-.presente-do-convite {
-  margin: 0;
-  color: var(--tinta);
-  font-size: 14px;
-}
-
-.presente-do-convite em {
-  color: var(--tinta-2);
-}
-
-.quem-usou {
+.codigo-do-ingresso {
+  position: relative;
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.1);
 }
 
-.quem-usou > span {
+.codigo-do-ingresso code {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.ingresso.revogado .codigo-do-ingresso code,
+.ingresso.vencido .codigo-do-ingresso code {
+  text-decoration: line-through;
+}
+
+.fichas-do-presente {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px 6px 6px;
+  border: 1px solid var(--raridade, rgba(255, 255, 255, 0.12));
+  background: #0b0713;
+}
+
+.ficha img,
+.ficha i {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--raridade, var(--roxo)) 22%, transparent);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.ficha span {
   display: grid;
   gap: 2px;
 }
 
-.quem-usou small {
+.ficha b {
+  font: italic 700 15px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.ficha small {
   color: var(--tinta-2);
+  font-size: 11px;
+}
+
+.ficha.ficha-moeda {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.ficha.ficha-moeda i {
+  border-radius: 50%;
+}
+
+.ficha.ficha-grana i {
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.ficha.ficha-magcoin i {
+  background: var(--roxo);
+}
+
+.rodape-do-ingresso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.espera-do-ingresso {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.quem-entrou {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.quem-entrou > span {
+  display: grid;
+  gap: 2px;
+}
+
+.nome-de-quem-entrou {
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.nome-de-quem-entrou:hover {
+  color: var(--ouro);
+}
+
+.quem-entrou small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.sinais-de-quem-entrou {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sinais-de-quem-entrou li {
+  padding: 4px 8px;
+  background: var(--painel-2);
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.sinais-de-quem-entrou li.bom {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--verde);
+}
+
+@media (max-width: 520px) {
+  .numeros-do-convite {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .montar-presente summary::after {
+    display: none;
+  }
 }
 
 /* Presente de boas-vindas do Premium, no topo do baú */
@@ -2252,6 +2622,19 @@ textarea {
 
 .texto-do-presente h2 {
   margin: 0;
+  font: italic 700 30px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.texto-do-presente .rotulo-da-janela,
+.escolha-do-presente .rotulo-da-janela {
+  margin: 0;
+  color: var(--ouro);
+}
+
+.opcao-do-presente b {
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
 }
 
 .texto-do-presente p,

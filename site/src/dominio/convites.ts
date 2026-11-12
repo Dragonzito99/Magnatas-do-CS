@@ -160,6 +160,8 @@ export type ConviteDetalhado = {
   venceEm: Date | null;
   situacao: SituacaoDoConvite;
   criadorApelido: string | null;
+  /** Quem criou é quem pode revogar. */
+  meu: boolean;
   presente: ConteudoDoPresente | null;
   usadoEm: Date | null;
   usadoPor: { id: string; apelido: string; avatarUrl: string | null; vistoEm: Date | null } | null;
@@ -209,6 +211,7 @@ export async function listarConvitesComDetalhes(bd: Bd, ator: Usuario, agora: Da
       venceEm: convite.venceEm,
       situacao,
       criadorApelido: linha.criadorApelido,
+      meu: convite.criadoPor === ator.id,
       presente: convite.presente ?? null,
       usadoEm: convite.usadoEm,
       usadoPor: conta,
