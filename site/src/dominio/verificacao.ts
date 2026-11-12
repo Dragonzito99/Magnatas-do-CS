@@ -111,7 +111,7 @@ export async function aplicarResultadoVerificacao(
       return estado;
     };
 
-    if (!resultado.aprovado) return concluir('reprovada', 'recusada pelo provedor');
+    if (!resultado.aprovado) return concluir('reprovada', resultado.motivo ?? 'recusada pelo provedor');
     if (!resultado.cpf || !cpfValido(resultado.cpf)) return concluir('reprovada', 'dados do documento inválidos');
     if (!resultado.nascimento || !maiorDeIdade(resultado.nascimento, hoje)) return concluir('reprovada', 'idade');
 

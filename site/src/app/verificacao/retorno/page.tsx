@@ -28,7 +28,7 @@ export default async function RetornoDaVerificacao() {
   const chave = process.env.DIDIT_API_KEY ?? '';
   const decisao = await buscarDecisaoNaDidit(chave, pendente.referencia).catch(() => null);
   if (decisao && decidida(decisao.status)) {
-    const desfecho = await aplicarResultadoVerificacao(bd, resultadoDaDecisao(pendente.referencia, decisao), process.env.CPF_HMAC_CHAVE ?? '');
+    const desfecho = await aplicarResultadoVerificacao(bd, resultadoDaDecisao(pendente.referencia, decisao, usuario.id), process.env.CPF_HMAC_CHAVE ?? '');
     redirect(desfecho === 'aprovada' ? '/bem-vindo' : `/verificacao?resultado=${desfecho}`);
   }
   // Desistiu no meio ou a sessão venceu: começa de novo.

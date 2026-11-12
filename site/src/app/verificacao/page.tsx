@@ -11,6 +11,7 @@ const MOTIVOS: Record<string, string> = {
   'dados do documento inválidos': 'Não achamos o CPF no documento. Use a CNH ou o RG novo, que trazem o CPF, e tente de novo.',
   idade: 'O clube é só para maiores de 18 anos.',
   'documento já usado': 'Esse documento já está em outra conta. Cada pessoa pode ter só uma.',
+  'rosto já usado': 'Esse rosto já está em outra conta do clube. Cada pessoa pode ter só uma.',
   'recusada pelo provedor': 'A verificação não passou. Confira se a foto do documento está nítida e se a selfie mostra bem o seu rosto, e tente de novo.',
 };
 const PADRAO = 'Não foi possível confirmar seus dados. Confira as dicas abaixo e tente de novo.';

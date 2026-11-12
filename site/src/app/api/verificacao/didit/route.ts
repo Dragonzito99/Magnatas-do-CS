@@ -4,7 +4,7 @@ import { assinaturaValida, decidida, resultadoDaDecisao, type DecisaoDaDidit } f
 
 export const dynamic = 'force-dynamic';
 
-type Aviso = { session_id?: string; status?: string; decision?: DecisaoDaDidit };
+type Aviso = { session_id?: string; status?: string; vendor_data?: string | null; decision?: DecisaoDaDidit };
 
 /**
  * O aviso da Didit quando a verificação termina. Só vale com a assinatura certa; aprovada ou recusada, o resultado
@@ -26,7 +26,7 @@ export async function POST(pedido: Request): Promise<Response> {
   try {
     await aplicarResultadoVerificacao(
       obterBd(),
-      resultadoDaDecisao(aviso.session_id, { ...aviso.decision, status: aviso.status }),
+      resultadoDaDecisao(aviso.session_id, { ...aviso.decision, status: aviso.status }, aviso.vendor_data ?? undefined),
       process.env.CPF_HMAC_CHAVE ?? '',
     );
   } catch (erro) {

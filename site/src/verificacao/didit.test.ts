@@ -36,3 +36,19 @@ test('recusada ou sem CPF no documento não aprova', () => {
   const documentoRecusado = { status: 'Approved', id_verifications: [{ status: 'Declined', personal_number: '52998224725', date_of_birth: '1995-03-10' }] };
   expect(resultadoDaDecisao('s', documentoRecusado)).toMatchObject({ aprovado: false });
 });
+
+test('rosto que já está em outra conta recusa, com o motivo; o mesmo rosto da própria conta (tentar de novo) passa', () => {
+  const documento = { status: 'Approved', personal_number: '52998224725', date_of_birth: '1995-03-10' };
+  const comMatch = (vendorData: string, similaridade = 97) => ({
+    status: 'Approved',
+    id_verifications: [documento],
+    liveness_checks: [{ status: 'Approved', matches: [{ vendor_data: vendorData, similarity_percentage: similaridade }] }],
+  });
+  expect(resultadoDaDecisao('s', comMatch('outra-conta'), 'minha-conta')).toMatchObject({ aprovado: false, motivo: 'rosto já usado' });
+  expect(resultadoDaDecisao('s', comMatch('minha-conta'), 'minha-conta')).toMatchObject({ aprovado: true });
+  // Parecido demais só abaixo do corte não conta.
+  expect(resultadoDaDecisao('s', comMatch('outra-conta', 60), 'minha-conta')).toMatchObject({ aprovado: true });
+  // A selfie tirada junto do documento também é conferida.
+  const pelaFotoDoDocumento = { status: 'Approved', id_verifications: [{ ...documento, document_selfie_face_matches: [{ vendor_data: 'outra-conta', similarity_percentage: 95 }] }] };
+  expect(resultadoDaDecisao('s', pelaFotoDoDocumento, 'minha-conta')).toMatchObject({ aprovado: false, motivo: 'rosto já usado' });
+});

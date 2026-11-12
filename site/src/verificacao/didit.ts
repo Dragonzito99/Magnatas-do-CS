@@ -9,8 +9,18 @@ import { cpfValido } from '@/dominio/verificacao';
 export const ENDERECO_DA_DIDIT = 'https://verification.didit.me';
 const TOLERANCIA_DO_AVISO_S = 300;
 
-type ItemDoDocumento = { status?: string; document_number?: string | null; personal_number?: string | null; date_of_birth?: string | null };
-export type DecisaoDaDidit = { status?: string; id_verifications?: ItemDoDocumento[] };
+type Parecido = { vendor_data?: string | null; similarity_percentage?: number | null };
+type ItemDoDocumento = {
+  status?: string;
+  document_number?: string | null;
+  personal_number?: string | null;
+  date_of_birth?: string | null;
+  document_selfie_face_matches?: Parecido[] | null;
+};
+export type DecisaoDaDidit = { status?: string; id_verifications?: ItemDoDocumento[]; liveness_checks?: { status?: string; matches?: Parecido[] | null }[] };
+
+// A busca de rosto da Didit só avisa (aprova mesmo assim); o clube recusa quando o rosto já é de outra conta.
+const CORTE_DO_ROSTO_REPETIDO = 85;
 
 /** O aviso da Didit vem assinado com HMAC-SHA256 do corpo cru; aviso de mais de 5 minutos é recusado. */
 export function assinaturaValida(corpo: string, assinatura: string | null, horario: string | null, segredo: string, agora: Date = new Date()): boolean {
@@ -24,12 +34,23 @@ export function assinaturaValida(corpo: string, assinatura: string | null, horar
 
 const digitos = (texto: string | null | undefined) => (texto ?? '').replace(/\D/g, '');
 
-/** Aprovada só se a sessão e o documento passaram. O CPF sai do número pessoal ou do número do documento (CNH). */
-export function resultadoDaDecisao(referencia: string, decisao: DecisaoDaDidit): ResultadoVerificacao {
+/**
+ * Aprovada só se a sessão e o documento passaram e o rosto não é de outra conta (dono, 12/11/2026). O CPF sai do número
+ * pessoal ou do número do documento (CNH). `usuarioId` é a conta desta verificação: o próprio rosto, de uma tentativa
+ * anterior, não conta como repetido.
+ */
+export function resultadoDaDecisao(referencia: string, decisao: DecisaoDaDidit, usuarioId?: string): ResultadoVerificacao {
   const documento = decisao.id_verifications?.[0];
-  const aprovado = decisao.status === 'Approved' && (decisao.id_verifications ?? []).every((item) => item.status === 'Approved');
   const cpf = [documento?.personal_number, documento?.document_number].map(digitos).find((numero) => numero.length === 11 && cpfValido(numero));
-  return { referencia, aprovado, cpf, nascimento: documento?.date_of_birth ?? undefined };
+  const nascimento = documento?.date_of_birth ?? undefined;
+  const parecidos = [
+    ...(decisao.liveness_checks ?? []).flatMap((item) => item.matches ?? []),
+    ...(decisao.id_verifications ?? []).flatMap((item) => item.document_selfie_face_matches ?? []),
+  ];
+  const repetido = parecidos.some((item) => (item.similarity_percentage ?? 0) >= CORTE_DO_ROSTO_REPETIDO && item.vendor_data && item.vendor_data !== usuarioId);
+  if (repetido) return { referencia, aprovado: false, cpf, nascimento, motivo: 'rosto já usado' };
+  const aprovado = decisao.status === 'Approved' && (decisao.id_verifications ?? []).every((item) => item.status === 'Approved');
+  return { referencia, aprovado, cpf, nascimento };
 }
 
 /** Status em que a Didit já decidiu; os outros (em análise, em andamento) esperam. */
