@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Usuario } from '@/bd/esquema';
+import { criarSessaoNaDidit } from './didit';
 
 export interface Verificador {
   nome: string;
@@ -23,6 +24,16 @@ export function criarVerificador(ambiente: Record<string, string | undefined>): 
       throw new Error('O simulador de verificação não pode rodar em produção, porque aprovaria qualquer pessoa.');
     }
     return simulador;
+  }
+  if (nome === 'didit') {
+    const { DIDIT_API_KEY: chave, DIDIT_WORKFLOW_ID: fluxo, DIDIT_WEBHOOK_SECRET: segredo } = ambiente;
+    if (!chave || !fluxo || !segredo) throw new Error('Didit sem chave, fluxo ou segredo do aviso: rode scripts/guardar-chaves-didit.sh.');
+    const site = ambiente.SITE_URL ?? 'http://localhost:3000';
+    return {
+      nome: 'didit',
+      // Na volta, a página confere a decisão na hora; o aviso assinado da Didit fecha o que faltar.
+      iniciar: (usuario) => criarSessaoNaDidit(chave, fluxo, usuario.id, `${site}/verificacao/retorno`),
+    };
   }
   throw new Error(`Verificador de identidade não configurado: defina VERIFICADOR (valor atual: ${nome ?? 'vazio'}).`);
 }

@@ -2108,6 +2108,200 @@ textarea {
   display: contents;
 }
 
+/* Verificação de identidade: o personagem do clube ao lado do cartão do passo */
+.tela-da-verificacao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
+  gap: 24px;
+  align-items: center;
+  max-width: 1040px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 32px 16px;
+  background: radial-gradient(circle at 28% 45%, rgba(168, 85, 247, 0.35), transparent 50%);
+}
+
+.arte-da-verificacao {
+  display: grid;
+  place-items: center;
+}
+
+.arte-da-verificacao img {
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.45));
+}
+
+.cartao-da-verificacao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 26px;
+  border: 1px solid var(--linha-forte);
+  border-top: 4px solid var(--ouro);
+  background: var(--painel);
+  box-shadow: 0 0 50px rgba(168, 85, 247, 0.2);
+}
+
+.passo-da-verificacao {
+  justify-self: start;
+  padding: 3px 8px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 13px/1 var(--fonte-titulo), sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cartao-da-verificacao h1 {
+  margin: 0;
+  font: italic 700 36px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.cartao-da-verificacao p {
+  margin: 0;
+  color: var(--tinta-2);
+  line-height: 1.5;
+}
+
+.cartao-da-verificacao p.aviso {
+  color: var(--tinta);
+}
+
+.passos-da-verificacao {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.passos-da-verificacao li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel-2);
+}
+
+.passos-da-verificacao b {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: var(--roxo);
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+}
+
+.passos-da-verificacao span {
+  display: grid;
+  gap: 2px;
+}
+
+.passos-da-verificacao strong {
+  font: italic 700 17px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.passos-da-verificacao small {
+  color: var(--tinta-2);
+}
+
+.regras-da-verificacao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regras-da-verificacao li {
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.cartao-da-verificacao .privacidade-da-verificacao {
+  padding: 10px 12px;
+  border-left: 3px solid var(--verde);
+  background: rgba(74, 222, 128, 0.06);
+  font-size: 13px;
+}
+
+.botao-da-shop.botao-grande {
+  justify-content: center;
+  width: 100%;
+  height: 50px;
+  font-size: 20px;
+}
+
+.cartao-da-verificacao form:last-of-type {
+  justify-self: center;
+}
+
+.cartao-da-verificacao .formulario {
+  justify-self: stretch;
+}
+
+.acoes-do-simulador {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.acoes-do-simulador .botao-grande {
+  grid-column: 1 / -1;
+}
+
+.acoes-do-simulador .botao-da-shop {
+  justify-content: center;
+}
+
+.conferindo {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.girando-da-verificacao {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--roxo-fraco);
+  border-top-color: var(--ouro);
+  border-radius: 50%;
+  animation: girando-da-verificacao 0.9s linear infinite;
+}
+
+@keyframes girando-da-verificacao {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 820px) {
+  .tela-da-verificacao {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 520px;
+    background: radial-gradient(circle at 50% 0, rgba(168, 85, 247, 0.3), transparent 60%);
+  }
+
+  .arte-da-verificacao {
+    display: none;
+  }
+
+  .cartao-da-verificacao h1 {
+    font-size: 30px;
+  }
+}
+
 /* Convites no jeito da Magnata Shop: números no topo, montar o presente e os convites como ingressos */
 .tela-convites .carteira-da-shop form {
   display: contents;

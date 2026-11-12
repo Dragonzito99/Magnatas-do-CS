@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { and, eq, ne, sql } from 'drizzle-orm';
+import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { cpfsBanidos, usuarios, verificacoes, type Usuario } from '@/bd/esquema';
 
@@ -60,6 +60,28 @@ export async function iniciarVerificacao(
   referencia: string,
 ): Promise<void> {
   await bd.insert(verificacoes).values({ usuarioId: usuario.id, provedor, referencia });
+}
+
+/** A última verificação ainda sem resultado da conta, para a volta da Didit conferir na hora. */
+export async function verificacaoPendenteDe(bd: Bd, usuarioId: string): Promise<{ referencia: string; provedor: string } | null> {
+  const [linha] = await bd
+    .select({ referencia: verificacoes.referencia, provedor: verificacoes.provedor })
+    .from(verificacoes)
+    .where(and(eq(verificacoes.usuarioId, usuarioId), eq(verificacoes.estado, 'pendente')))
+    .orderBy(desc(verificacoes.criadoEm))
+    .limit(1);
+  return linha ?? null;
+}
+
+/** Por que a última verificação da conta foi recusada, para a tela explicar o que fazer. */
+export async function motivoDaUltimaRecusa(bd: Bd, usuarioId: string): Promise<string | null> {
+  const [linha] = await bd
+    .select({ estado: verificacoes.estado, motivo: verificacoes.motivo })
+    .from(verificacoes)
+    .where(and(eq(verificacoes.usuarioId, usuarioId), ne(verificacoes.estado, 'pendente')))
+    .orderBy(desc(verificacoes.concluidoEm))
+    .limit(1);
+  return linha?.estado === 'reprovada' ? (linha.motivo ?? null) : null;
 }
 
 export async function verificacaoPertenceA(bd: Bd, referencia: string, usuarioId: string): Promise<boolean> {

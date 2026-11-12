@@ -30,3 +30,11 @@ test('desenvolvimento usa o simulador, com uma referência nova a cada início',
   expect(primeira.referencia).not.toBe(segunda.referencia);
   expect(verificador.nome).toBe('simulador');
 });
+
+test('Didit só inicia com a chave, o fluxo e o segredo do aviso guardados', () => {
+  const completo = { NODE_ENV: 'production', VERIFICADOR: 'didit', DIDIT_API_KEY: 'chave', DIDIT_WORKFLOW_ID: 'fluxo', DIDIT_WEBHOOK_SECRET: 'segredo', SITE_URL: 'https://magnatasdocs.com.br' };
+  expect(criarVerificador(completo).nome).toBe('didit');
+  for (const falta of ['DIDIT_API_KEY', 'DIDIT_WORKFLOW_ID', 'DIDIT_WEBHOOK_SECRET']) {
+    expect(() => criarVerificador({ ...completo, [falta]: '' })).toThrow(/Didit/);
+  }
+});
