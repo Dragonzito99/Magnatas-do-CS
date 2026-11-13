@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { destinoPara } from '@/auth/destino';
@@ -42,6 +43,9 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
         </a>
         <p className="entrada-rodape">
           <b>Sem hack.</b> Quem é banido não volta, nem com outra conta.
+        </p>
+        <p className="entrada-rodape">
+          <Link href="/regras">Regras do clube</Link> · <Link href="/privacidade">Privacidade</Link>
         </p>
       </main>
     </div>

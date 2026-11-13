@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { destinoPara } from '@/auth/destino';
 import { usuarioAtual } from '@/auth/sessao-atual';
@@ -54,7 +55,8 @@ export default async function Verificacao({ searchParams }: { searchParams: Prom
         <li>⛔ Banido não volta, nem com outra Steam</li>
       </ul>
       <p className="privacidade-da-verificacao">
-        🔒 As fotos ficam com a Didit, a empresa que confere os documentos. O clube nunca vê nem guarda as fotos: guarda só um código feito a partir do seu CPF.
+        🔒 As fotos ficam com a Didit, a empresa que confere os documentos. O clube nunca vê nem guarda as fotos: guarda só um código feito a partir do seu CPF.{' '}
+        <Link href="/privacidade">Como cuidamos dos seus dados</Link>.
       </p>
       <form action={comecar}>
         <button type="submit" className="botao-da-shop botao-grande">

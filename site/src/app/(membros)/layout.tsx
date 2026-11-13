@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
@@ -62,6 +63,10 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         {partida && <VoltarParaAPartida partidaId={partida.id} />}
         {children}
       </main>
+      <footer className="rodape-do-site largura">
+        <Link href="/regras">Regras do clube</Link>
+        <Link href="/privacidade">Privacidade</Link>
+      </footer>
       <AvisoDeSala sala={sala ? { nome: sala.nome, membros: sala.membros.length, emPartida: sala.partidaId !== null } : null} />
       <BarraDeAmigos amigos={amigos} pendentes={pedidos.length + convites.length} naoLidas={naoLidas} grupos={grupos} />
       <JanelaDeConversa />
