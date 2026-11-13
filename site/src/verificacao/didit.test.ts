@@ -24,9 +24,29 @@ test('aprovada: tira o CPF do documento (número pessoal ou do documento) e a da
     id_verifications: [{ status: 'Approved', document_number: '12345678', personal_number: '529.982.247-25', date_of_birth: '1995-03-10' }],
   };
   expect(resultadoDaDecisao('sessao-1', decisao)).toEqual({ referencia: 'sessao-1', aprovado: true, cpf: '52998224725', nascimento: '1995-03-10' });
-  // Na CNH o CPF às vezes vem no número do documento.
-  const cnh = { status: 'Approved', id_verifications: [{ status: 'Approved', document_number: '52998224725', personal_number: null, date_of_birth: '1995-03-10' }] };
-  expect(resultadoDaDecisao('sessao-2', cnh).cpf).toBe('52998224725');
+  // No RG novo o CPF é o próprio número do documento.
+  const rgNovo = { status: 'Approved', id_verifications: [{ status: 'Approved', document_type: 'Identity Card', document_number: '52998224725', personal_number: null, date_of_birth: '1995-03-10' }] };
+  expect(resultadoDaDecisao('sessao-2', rgNovo).cpf).toBe('52998224725');
+});
+
+test('CNH: o CPF vem em extra_fields.tax_number; o número do documento é o registro da CNH e nunca vale como CPF', () => {
+  const cnh = {
+    status: 'Approved',
+    id_verifications: [
+      {
+        status: 'Approved',
+        document_type: "Driver's License",
+        // Registro da CNH que por acaso passa na conta do CPF: mesmo assim não pode ser usado.
+        document_number: '11144477735',
+        personal_number: '1234567',
+        date_of_birth: '1995-03-10',
+        extra_fields: { tax_number: '529.982.247-25' },
+      },
+    ],
+  };
+  expect(resultadoDaDecisao('sessao-3', cnh).cpf).toBe('52998224725');
+  const cnhSemCpf = { ...cnh, id_verifications: [{ ...cnh.id_verifications[0], extra_fields: {} }] };
+  expect(resultadoDaDecisao('sessao-4', cnhSemCpf).cpf).toBeUndefined();
 });
 
 test('recusada ou sem CPF no documento não aprova', () => {

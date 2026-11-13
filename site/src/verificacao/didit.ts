@@ -12,7 +12,9 @@ const TOLERANCIA_DO_AVISO_S = 300;
 type Parecido = { vendor_data?: string | null; similarity_percentage?: number | null };
 type ItemDoDocumento = {
   status?: string;
+  document_type?: string | null;
   document_number?: string | null;
+  extra_fields?: { tax_number?: string | null } | null;
   personal_number?: string | null;
   date_of_birth?: string | null;
   document_selfie_face_matches?: Parecido[] | null;
@@ -35,13 +37,16 @@ export function assinaturaValida(corpo: string, assinatura: string | null, horar
 const digitos = (texto: string | null | undefined) => (texto ?? '').replace(/\D/g, '');
 
 /**
- * Aprovada só se a sessão e o documento passaram e o rosto não é de outra conta (dono, 12/11/2026). O CPF sai do número
- * pessoal ou do número do documento (CNH). `usuarioId` é a conta desta verificação: o próprio rosto, de uma tentativa
- * anterior, não conta como repetido.
+ * Aprovada só se a sessão e o documento passaram e o rosto não é de outra conta (dono, 12/11/2026). O CPF sai de
+ * `extra_fields.tax_number` (onde a Didit põe o CPF da CNH), do número pessoal ou, fora da CNH, do número do documento
+ * (no RG novo é o próprio CPF; na CNH é o registro, que pode até passar na conta do CPF por acaso). `usuarioId` é a
+ * conta desta verificação: o próprio rosto, de uma tentativa anterior, não conta como repetido.
  */
 export function resultadoDaDecisao(referencia: string, decisao: DecisaoDaDidit, usuarioId?: string): ResultadoVerificacao {
   const documento = decisao.id_verifications?.[0];
-  const cpf = [documento?.personal_number, documento?.document_number].map(digitos).find((numero) => numero.length === 11 && cpfValido(numero));
+  const ehCnh = /driver/i.test(documento?.document_type ?? '');
+  const candidatos = [documento?.extra_fields?.tax_number, documento?.personal_number, ehCnh ? null : documento?.document_number];
+  const cpf = candidatos.map(digitos).find((numero) => numero.length === 11 && cpfValido(numero));
   const nascimento = documento?.date_of_birth ?? undefined;
   const parecidos = [
     ...(decisao.liveness_checks ?? []).flatMap((item) => item.matches ?? []),
