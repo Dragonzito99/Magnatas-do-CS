@@ -17,7 +17,10 @@ fi
 
 if [ "$NOME" = "todos" ]; then
   for arquivo in "$CONFIGS"/*.conf; do
-    bash "${BASH_SOURCE[0]}" "$(basename "$arquivo" .conf)"
+    nome=$(basename "$arquivo" .conf)
+    # Os laboratórios só ligam pela aba Testes do site, quando o Adm pede.
+    case "$nome" in laboratorio-*) continue ;; esac
+    bash "${BASH_SOURCE[0]}" "$nome"
   done
   exit 0
 fi
@@ -41,7 +44,8 @@ if [ "${2:-}" = "--executar" ]; then
   # logo antes de um reinício ainda poder ser conferida (11/11/2026).
   REGISTRO=game/csgo/addons/metamod/console.log
   [ -f "$REGISTRO" ] && mv -f "$REGISTRO" "$REGISTRO.anterior"
-  VARIAVEL_DO_TOKEN=GSLT_$(echo "$NOME" | tr 'a-z-' 'A-Z_')
+  # O .conf pode apontar outro token: os dois laboratórios usam o mesmo, GSLT_LABORATORIO.
+  VARIAVEL_DO_TOKEN=GSLT_$(echo "${NOME_DO_TOKEN:-$NOME}" | tr 'a-z-' 'A-Z_')
   CONTA=()
   [ -n "${!VARIAVEL_DO_TOKEN:-}" ] && CONTA=(+sv_setsteamaccount "${!VARIAVEL_DO_TOKEN}")
   [ -n "${RCON_PASSWORD:-}" ] && CONTA+=(-usercon -ip "${CS2_IP:-0.0.0.0}" +rcon_password "$RCON_PASSWORD")
@@ -106,8 +110,11 @@ source "$SEGREDOS"
 : "${SITE_URL:=}" "${SERVIDOR_TOKEN:=}"
 touch "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
 chmod 600 "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
-printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "Porta": %s, "SiteUrl": "%s", "Token": "%s", "Rotacao": "%s", "ConfigVersion": 1 }\n' \
-  "$ARMA_PRINCIPAL" "$REGRA" "$PORTA" "$SITE_URL" "$SERVIDOR_TOKEN" "${ROTACAO:-}" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+# Laboratório: o plugin abre os comandos de teste do Adm, nunca manda resultado ao site e desliga sozinho quando vazio.
+EH_LABORATORIO=false
+[ "${LABORATORIO:-}" = "1" ] && EH_LABORATORIO=true
+printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "Porta": %s, "SiteUrl": "%s", "Token": "%s", "Rotacao": "%s", "Laboratorio": %s, "ConfigVersion": 1 }\n' \
+  "$ARMA_PRINCIPAL" "$REGRA" "$PORTA" "$SITE_URL" "$SERVIDOR_TOKEN" "${ROTACAO:-}" "$EH_LABORATORIO" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
 cp "$SERVIDOR/csgo/gameinfo.gi" "$PASTA/csgo/gameinfo.gi"
 cat "$CONFIGS/$BASE" "$CONFIGS/$NOME.cfg" > "$PASTA/csgo/cfg/magnatas_diversao.cfg"
 # O jogo aplica as regras padrão do modo ao carregar o mapa, e só este arquivo vem depois delas.

@@ -6,13 +6,14 @@ import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { estadosDaDiversao } from '@/bd/esquema';
 import { ehCelular } from '@/dominio/aparelho';
-import { alvoDoServidor, comandoDeConectar, linkDeEntrar } from '@/dominio/diversao';
+import { alvoDoServidor, comandoDeConectar, linkDeEntrar, situacaoDoServidor } from '@/dominio/diversao';
+import { alvoDoLaboratorio, etapaDoLaboratorio, LABORATORIOS, pedidoRecente } from '@/dominio/laboratorio';
 import { etapaDoTeste, servidorDaMutacao } from '@/dominio/teste-mutacao';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
 import { BotaoCopiar } from '../botao-copiar';
 import { AvisarAoEntrar, TempoLigando } from '../diversao/esperar-e-entrar';
-import { testarCompetitivo, testarMutacao } from './acoes';
+import { ligarLaboratorioPelaTela, testarCompetitivo, testarMutacao } from './acoes';
 
 const ERROS: Record<string, string> = {
   ocupado: 'Saia da sala, da fila ou da partida em que você está antes de testar o competitivo.',
@@ -20,13 +21,14 @@ const ERROS: Record<string, string> = {
   limite: 'Todos os servidores estão cheios de gente agora. Tente de novo em alguns minutos.',
   indisponivel: 'Não consegui ligar o servidor da Mutação agora. Tente de novo em instantes.',
   celular: 'Os testes ligam servidor, e o servidor só liga pelo PC, onde o CS2 roda.',
+  laboratorio: 'Não consegui ligar o laboratório agora. Tente de novo em instantes.',
 };
 
 /** Só o Adm: os testes dos modos num lugar só, sem XP e fora do perfil. A página se atualiza sozinha a cada 15 segundos. */
-export default async function Testes({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function Testes({ searchParams }: { searchParams: Promise<{ erro?: string; ligando?: string; desde?: string }> }) {
   const usuario = await exigirAcesso('/testes');
-  if (!pode(usuario, 'testar_competitivo') && !pode(usuario, 'testar_mutacao')) redirect('/inicio');
-  const { erro } = await searchParams;
+  if (!pode(usuario, 'testar_competitivo') && !pode(usuario, 'testar_mutacao') && !pode(usuario, 'usar_laboratorio')) redirect('/inicio');
+  const { erro, ligando, desde } = await searchParams;
 
   const bd = obterBd();
   const mutacao = await servidorDaMutacao(bd);
@@ -37,6 +39,13 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
   const alvo = mutacao ? alvoDoServidor(mutacao, process.env.DIVERSAO_HOST) : null;
   const senha = process.env.SERVIDOR_SENHA ?? '';
   const celular = ehCelular(await headers());
+  const laboratorios = await Promise.all(
+    LABORATORIOS.map(async (laboratorio) => {
+      const alvoDoLab = alvoDoLaboratorio(laboratorio, process.env.DIVERSAO_HOST);
+      const situacaoDoLab = await situacaoDoServidor(controladorDoAmbiente(), alvoDoLab);
+      return { laboratorio, alvo: alvoDoLab, etapa: etapaDoLaboratorio(situacaoDoLab, ligando === laboratorio.chave && pedidoRecente(desde)) };
+    }),
+  );
 
   return (
     <>
@@ -101,6 +110,41 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
           </div>
         </div>
       </section>
+
+      {pode(usuario, 'usar_laboratorio') && (
+        <section className="painel">
+          <h2>Laboratório</h2>
+          <p className="apoio">Servidor só seu, na Dust 2, para testar pelo chat. Desliga sozinho depois de 10 minutos vazio.</p>
+          {laboratorios.map(({ laboratorio, alvo: alvoDoLab, etapa: etapaDoLab }) => (
+            <div className="linha" key={laboratorio.chave}>
+              <div>
+                <b>{laboratorio.titulo}</b>
+                <p className="apoio">{laboratorio.descricao}</p>
+              </div>
+              <div className="acoes">
+                {etapaDoLab === 'desligado' && celular && <span className="etiqueta">Ligue pelo PC</span>}
+                {etapaDoLab === 'desligado' && !celular && (
+                  <form action={ligarLaboratorioPelaTela}>
+                    <input type="hidden" name="laboratorio" value={laboratorio.chave} />
+                    <button type="submit" className="botao ouro pequeno">
+                      Ligar
+                    </button>
+                  </form>
+                )}
+                {etapaDoLab === 'ligando' && <span className="etiqueta">Ligando o servidor... cerca de 1 minuto</span>}
+                {etapaDoLab === 'pronto' && alvoDoLab && (
+                  <>
+                    {comandoDeConectar(alvoDoLab, senha) && <BotaoCopiar texto={comandoDeConectar(alvoDoLab, senha)!} />}
+                    <a className="botao ouro pequeno" href={linkDeEntrar(alvoDoLab, senha)}>
+                      Entrar
+                    </a>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
     </>
   );
 }

@@ -38,6 +38,10 @@ public class ConfiguracaoDoModo : BasePluginConfig
     /// <summary>Números da Oficina separados por vírgula. Com dois ou mais, o próximo é sorteado ao fim de cada partida.</summary>
     [JsonPropertyName("Rotacao")]
     public string Rotacao { get; set; } = "";
+
+    /// <summary>Laboratório do Adm (aba Testes): comandos de teste no chat, sem XP, e desliga sozinho quando vazio.</summary>
+    [JsonPropertyName("Laboratorio")]
+    public bool Laboratorio { get; set; }
 }
 
 public class GanhoDoSite
@@ -122,7 +126,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     }
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.11.2";
+    public override string ModuleVersion => "1.12.0";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -156,6 +160,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         {
             LigarMutacao(hotReload);
         }
+        if (Config.Laboratorio) LigarLaboratorio();
     }
 
     private static CCSGameRules? RegrasDoJogo() =>
@@ -328,8 +333,8 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     private void FecharPartida(string? vencedor, float duracaoMinutos)
     {
         partidaEncerrada = true;
-        // O teste do Adm com bots não vale XP nem entra no perfil.
-        if (testeComBots) return;
+        // O teste do Adm com bots e o laboratório não valem XP nem entram no perfil.
+        if (testeComBots || Config.Laboratorio) return;
         if (Config.SiteUrl == "" || Config.Token == "") return;
 
         var conectadas = Pessoas().ToDictionary(pessoa => pessoa.SteamID);
@@ -483,6 +488,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
                 if (jogador != null && EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador);
                 EntregarArmaDoHumano(jogador);
             });
+            if (Config.Laboratorio) AddTimer(EsperaParaVirarNoLaboratorio, () => AoNascerNoLaboratorio(jogador));
         }
         return HookResult.Continue;
     }

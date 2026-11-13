@@ -214,6 +214,11 @@ public partial class ModoDeDiversao
         escudos.Clear();
         fumacas.Clear();
         curas.Clear();
+        if (Config.Laboratorio)
+        {
+            AbrirRodadaDoLaboratorio();
+            return;
+        }
         _ = BuscarMutantesDaLoja(Pessoas().Select(pessoa => pessoa.SteamID).ToList());
         if (testeComBots) ChamarBotsDoTeste();
         if (JogadoresNaRodada() < MinimoDeJogadores)
@@ -435,6 +440,11 @@ public partial class ModoDeDiversao
     /// </summary>
     private void ColocarNaRodada(CCSPlayerController? jogador, bool chegando = false)
     {
+        if (Config.Laboratorio)
+        {
+            ColocarNoLaboratorio(jogador);
+            return;
+        }
         if (esperandoJogadores)
         {
             if (JogadoresNaRodada() >= MinimoDeJogadores)
@@ -491,6 +501,7 @@ public partial class ModoDeDiversao
         {
             infeccoes.Remove(quem.Slot);
             corridas.Remove(quem.Slot);
+            EsquecerVagaDoLaboratorio(quem.Slot);
             if (!quem.IsBot) GuardarDiarioDasEntidades(quem.PlayerName);
         }
         // Quem chegar depois não pode herdar uma partida que ninguém mais está jogando.
@@ -699,8 +710,13 @@ public partial class ModoDeDiversao
     private static NivelDoMutante NivelPelasInfeccoes(NivelDoMutante[] niveis, int infeccoes) =>
         niveis.LastOrDefault(nivel => infeccoes >= nivel.InfeccoesParaChegar) ?? niveis[0];
 
-    private NivelDoMutante NivelDe(CCSPlayerController jogador) =>
-        NivelPelasInfeccoes(mutanteDaRodada.Niveis, infeccoes.GetValueOrDefault(jogador.Slot));
+    /// <summary>No laboratório, o nível pedido no chat vale enquanto as infecções não passarem dele.</summary>
+    private NivelDoMutante NivelDe(CCSPlayerController jogador)
+    {
+        var pelasInfeccoes = NivelPelasInfeccoes(mutanteDaRodada.Niveis, infeccoes.GetValueOrDefault(jogador.Slot));
+        if (!niveisDoLaboratorio.TryGetValue(jogador.Slot, out var fixo) || fixo <= pelasInfeccoes.Nivel) return pelasInfeccoes;
+        return mutanteDaRodada.Niveis.FirstOrDefault(nivel => nivel.Nivel == fixo) ?? pelasInfeccoes;
+    }
 
     /// <summary>Ganha só a diferença de vida: quem estava ferido continua ferido. Morto, o nível vale quando renascer.</summary>
     private void SubirDeNivel(CCSPlayerController mutante, NivelDoMutante antigo, NivelDoMutante novo)
@@ -1029,7 +1045,7 @@ public partial class ModoDeDiversao
 
     private void ConferirFimDaRodada()
     {
-        if (!rodadaEmAndamento || !sorteioFeito) return;
+        if (Config.Laboratorio || !rodadaEmAndamento || !sorteioFeito) return;
         var jogadores = Utilities.GetPlayers().Where(jogador => jogador is { IsValid: true }).ToList();
         if (!jogadores.Any(jogador => jogador is { PawnIsAlive: true, Team: CsTeam.CounterTerrorist }))
         {
@@ -1050,6 +1066,12 @@ public partial class ModoDeDiversao
         if (jogador is not { IsValid: true }) return HookResult.Continue;
         var eraMutante = jogador.Team == CsTeam.Terrorist;
         if (eraMutante) MostrarQuedaDoMutante(jogador);
+        // No laboratório cada um volta no lado em que estava: humano que cai não vira mutante.
+        if (Config.Laboratorio)
+        {
+            ColocarNoLaboratorio(jogador);
+            return HookResult.Continue;
+        }
         if (esperandoJogadores)
         {
             AddTimer(mutanteDaRodada.SegundosParaRenascer, () => ColocarNaRodada(jogador));

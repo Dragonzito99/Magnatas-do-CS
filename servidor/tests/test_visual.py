@@ -100,10 +100,13 @@ def test_boneco_proprio_so_de_uma_lista_fechada_e_carregado_com_o_mapa():
     assert "OnServerPrecacheResources" in texto
     vestir = metodo("private void VestirBoneco(")
     # Caminho que o site mandar e não estiver na lista não vira modelo (um modelo desconhecido derruba o jogo de quem vê).
-    assert "Bonecos.TryGetValue(visual.Boneco" in vestir
-    assert "BonecoNoServidor(" in vestir
-    assert "NoPacote(" in metodo("private Boneco? BonecoNoServidor(")
-    assert ".SetModel(visual.Boneco)" in vestir
+    no_servidor = metodo("private Boneco? BonecoNoServidor(")
+    assert "Bonecos.TryGetValue(caminho" in no_servidor
+    assert "NoPacote(" in no_servidor
+    # O que veste passa sempre pela lista: o da conta fora do laboratório, o do chat dentro dele.
+    assert "BonecoNoServidor(caminho)" in metodo("private (string Caminho, Boneco Boneco)? BonecoDe(")
+    assert "BonecoDe(jogador)" in vestir
+    assert ".SetModel(achado.Caminho)" in vestir
 
 
 def test_veste_o_boneco_ao_nascer_e_logo_depois_de_entrar():
@@ -123,7 +126,7 @@ def test_gestos_do_boneco_proprio_por_comando_que_da_para_por_numa_tecla():
         assert f'AddCommand("css_{gesto}"' in texto
     fazer = metodo("private void FazerGesto(")
     # Só quem tem boneco com gestos, vivo, e um gesto por vez.
-    assert "boneco.Gestos == null" in fazer
+    assert "achado.Boneco.Gestos is not { } modeloDosGestos" in fazer
     assert "PawnIsAlive" in fazer
     assert "gestos.ContainsKey(jogador.Slot)" in fazer
     # O corpo some e para; no lugar, o modelo de cena toca o gesto, criado já com tudo (como a queda do mutante).

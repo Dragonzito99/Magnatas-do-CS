@@ -1,6 +1,6 @@
 import type { Papel, Usuario } from '@/bd/esquema';
 
-export type Acao = 'gerar_convite_ilimitado' | 'ver_equipe' | 'mudar_papel' | 'dar_convites' | 'moderar' | 'decidir_banimento' | 'publicar_noticia' | 'testar_competitivo' | 'testar_mutacao' | 'ver_quedas' | 'ajustar_grana' | 'ver_envios' | 'cuidar_dos_servidores' | 'convite_com_presente';
+export type Acao = 'gerar_convite_ilimitado' | 'ver_equipe' | 'mudar_papel' | 'dar_convites' | 'moderar' | 'decidir_banimento' | 'publicar_noticia' | 'testar_competitivo' | 'testar_mutacao' | 'usar_laboratorio' | 'ver_quedas' | 'ajustar_grana' | 'ver_envios' | 'cuidar_dos_servidores' | 'convite_com_presente';
 
 const REGRAS: Record<Acao, Papel[]> = {
   gerar_convite_ilimitado: ['gm', 'adm'],
@@ -12,6 +12,7 @@ const REGRAS: Record<Acao, Papel[]> = {
   publicar_noticia: ['adm'],
   testar_competitivo: ['adm'],
   testar_mutacao: ['adm'],
+  usar_laboratorio: ['adm'],
   ver_quedas: ['adm'],
   ajustar_grana: ['adm'],
   ver_envios: ['adm'],

@@ -1461,7 +1461,7 @@ def test_teste_com_bots_poe_os_bots_a_cada_rodada():
 
 def test_teste_com_bots_nao_vale_xp():
     fecha = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index("void FecharPartida"):]
-    assert fecha.index("if (testeComBots) return;") < fecha.index("Config.SiteUrl")
+    assert fecha.index("if (testeComBots || Config.Laboratorio) return;") < fecha.index("Config.SiteUrl")
 
 
 def test_teste_com_bots_nao_forca_bot_e_deixa_entrar_antes_da_pessoa():

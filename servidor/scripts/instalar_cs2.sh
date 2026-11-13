@@ -52,6 +52,8 @@ como_cs2 ln -sf "$STEAMCMD/linux64/steamclient.so" "$CASA/.steam/sdk64/steamclie
 
 install -o "$USUARIO" -g "$USUARIO" -m 755 "$ORIGEM/scripts/iniciar_cs2.sh" "$ORIGEM/scripts/atualizar_cs2.sh" "$ORIGEM/scripts/conferir_cs2.sh" "$ORIGEM/scripts/atualizar_lista.sh" "$ORIGEM/scripts/iniciar_diversao.sh" "$ORIGEM/scripts/ligar_diversao.sh" "$ORIGEM/scripts/desligar_diversao.sh" "$CASA/bin/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$CASA/bin/"
+# Roda como root e mexe nos segredos: fica fora da pasta do cs2, que o usuário dos servidores pode alterar.
+install -o root -g root -m 700 "$ORIGEM/scripts/guardar_token_steam.sh" /usr/local/sbin/
 runuser -u "$USUARIO" -- mkdir -p "$CASA/bin/diversao"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM"/config/diversao/* "$CASA/bin/diversao/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/config/server.cfg" "$SERVIDOR/game/csgo/cfg/server.cfg"
@@ -88,6 +90,8 @@ chmod 644 /etc/cron.d/magnatas-ligar
 
 if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
   ufw allow 27015/udp
+  # Os dois laboratórios do Adm (aba Testes do site).
+  ufw allow 27022:27023/udp
 fi
 
 echo "CS2 instalado em $SERVIDOR."

@@ -50,7 +50,7 @@ public sealed class Visual
 public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVisual>
 {
     public override string ModuleName => "Magnatas: visual da loja";
-    public override string ModuleVersion => "1.0.0";
+    public override string ModuleVersion => "1.1.0";
 
     // Prazo curto: se o site demorar, o jogador fala com o nome normal e o jogo segue.
     private static readonly HttpClient Site = new() { Timeout = TimeSpan.FromSeconds(3) };
@@ -71,12 +71,16 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
     // Personagens feitos para uma conta só (campo boneco no site). Cada versão vai numa pasta nova do pacote dos
     // personagens, um item da Oficina que todo servidor manda baixar (mm_extra_addons). Caminho que não estiver aqui não
     // vira modelo. Gestos: o modelo de cena com as animações extras do personagem (ver ferramentas/mutante).
-    private sealed record Boneco(string Pacote, string? Gestos);
+    // Só no laboratório: personagem novo, ou versão nova, que o Adm testa antes de liberar (dono, 13/11/2026). Ele não
+    // veste em nenhum outro servidor, nem na conta que já aponte para ele; aprovado, a marca sai.
+    private sealed record Boneco(string Pacote, string? Gestos, bool SoNoLaboratorio = false);
     private const string PacoteDosPersonagens = "3837571705";
     private static readonly Dictionary<string, Boneco> Bonecos = new()
     {
         ["models/magnatas/marfioso_v1/mutante.vmdl"] = new(PacoteDosPersonagens, null),
         ["models/magnatas/adm_v1/mutante.vmdl"] = new(PacoteDosPersonagens, "models/magnatas/adm_v1/gestos/gestos.vmdl"),
+        // O herói da super Negev da Mutação, para ser visto de perto.
+        ["models/magnatas/heroi_v1/mutante.vmdl"] = new(PacoteDosPersonagens, null, SoNoLaboratorio: true),
     };
     // Quanto dura cada gesto (a flexão repete três vezes).
     private static readonly Dictionary<string, float> SegundosDosGestos = new()
@@ -125,6 +129,7 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
             if (NaMutacao()) return;
             foreach (var (modelo, boneco) in Bonecos)
             {
+                if (boneco.SoNoLaboratorio && !NoLaboratorioDePersonagens()) continue;
                 manifesto.AddResource(modelo);
                 if (boneco.Gestos != null) manifesto.AddResource(boneco.Gestos);
             }
@@ -144,42 +149,68 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
             foreach (var vaga in gestos.Keys.ToList()) EncerrarGesto(vaga, devolverCorpo: true);
             return HookResult.Continue;
         });
+        if (NoLaboratorioDePersonagens()) LigarLaboratorio();
     }
 
     private HookResult AoNascer(EventPlayerSpawn evento, GameEventInfo informacao)
     {
         var jogador = evento.Userid;
+        if (jogador is not { IsValid: true }) return HookResult.Continue;
+        // Bot só se veste no laboratório, com o personagem que o Adm pediu no !bot.
+        if (jogador.IsBot)
+        {
+            if (!NoLaboratorioDePersonagens()) return HookResult.Continue;
+            PedidoDoBot(jogador);
+        }
+        else if (jogador.SteamID == 0) return HookResult.Continue;
         // No quadro seguinte o corpo já existe; a Mutação veste o zumbi só 0,1 s depois, e fica por cima.
-        if (jogador is { IsValid: true, IsBot: false } && jogador.SteamID > 0) Server.NextFrame(() => VestirBoneco(jogador));
+        Server.NextFrame(() => VestirBoneco(jogador));
         return HookResult.Continue;
     }
 
-    /// <summary>O boneco próprio da conta, se ela tem um da lista e o pacote dele já está neste servidor.</summary>
-    private Boneco? BonecoNoServidor(CCSPlayerController jogador, Visual visual)
+    /// <summary>O personagem da lista, se o pacote dele já está neste servidor.</summary>
+    private Boneco? BonecoNoServidor(string? caminho)
     {
-        if (visual.Boneco == null || !Bonecos.TryGetValue(visual.Boneco, out var boneco)) return null;
-        if (!bonecosNoServidor.TryGetValue(visual.Boneco, out var noServidor))
+        if (caminho == null || !Bonecos.TryGetValue(caminho, out var boneco)) return null;
+        if (boneco.SoNoLaboratorio && !NoLaboratorioDePersonagens()) return null;
+        if (!bonecosNoServidor.TryGetValue(caminho, out var noServidor))
         {
-            noServidor = NoPacote(boneco.Pacote, Path.GetDirectoryName(visual.Boneco)!.Replace('\\', '/'));
-            bonecosNoServidor[visual.Boneco] = noServidor;
-            Console.WriteLine($"[Magnatas] Boneco {visual.Boneco} no servidor: {(noServidor ? "sim" : "não")}.");
+            noServidor = NoPacote(boneco.Pacote, Path.GetDirectoryName(caminho)!.Replace('\\', '/'));
+            bonecosNoServidor[caminho] = noServidor;
+            Console.WriteLine($"[Magnatas] Boneco {caminho} no servidor: {(noServidor ? "sim" : "não")}.");
         }
         return noServidor ? boneco : null;
+    }
+
+    /// <summary>
+    /// O que vestir: no laboratório de personagens, só o que o Adm escolheu no chat (o !tirar volta ao boneco do jogo);
+    /// nos outros servidores, o personagem próprio da conta.
+    /// </summary>
+    private (string Caminho, Boneco Boneco)? BonecoDe(CCSPlayerController jogador)
+    {
+        var caminho = NoLaboratorioDePersonagens()
+            ? escolhas.GetValueOrDefault(jogador.Slot)
+            : !jogador.IsBot && visuais.TryGetValue(jogador.SteamID, out var visual) ? visual.Boneco : null;
+        var boneco = BonecoNoServidor(caminho);
+        return boneco == null ? null : (caminho!, boneco);
     }
 
     /// <summary>
     /// Na Mutação o corpo é da Mutação: trocar para o boneco próprio e, 0,1 s depois, para o zumbi derrubou o servidor
     /// (WriteEnterPVS, 10/11/2026 19:54). A Diversão copia este plugin para a pasta de cada modo.
     /// </summary>
-    private static bool NaMutacao() => Server.GameDirectory.Replace('\\', '/').Contains("/diversao/mutacao/");
+    private static bool NaMutacao()
+    {
+        var pasta = Server.GameDirectory.Replace('\\', '/');
+        // O laboratório de mutantes é a Mutação: o mesmo cuidado vale lá.
+        return pasta.Contains("/diversao/mutacao/") || pasta.Contains("/diversao/laboratorio-mutantes/");
+    }
 
     /// <summary>Veste o personagem próprio da conta, se ela tem um e o pacote dele já está neste servidor.</summary>
     private void VestirBoneco(CCSPlayerController jogador)
     {
         if (jogador is not { IsValid: true, PawnIsAlive: true } || NaMutacao()) return;
-        if (!visuais.TryGetValue(jogador.SteamID, out var visual) || visual.Boneco == null) return;
-        if (!Bonecos.TryGetValue(visual.Boneco, out _)) return;
-        if (BonecoNoServidor(jogador, visual) != null) jogador.PlayerPawn.Value?.SetModel(visual.Boneco);
+        if (BonecoDe(jogador) is { } achado) jogador.PlayerPawn.Value?.SetModel(achado.Caminho);
     }
 
     /// <summary>
@@ -189,9 +220,7 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
     private void FazerGesto(CCSPlayerController? jogador, string gesto)
     {
         if (jogador is not { IsValid: true, PawnIsAlive: true } || gestos.ContainsKey(jogador.Slot) || NaMutacao()) return;
-        if (!visuais.TryGetValue(jogador.SteamID, out var visual)) return;
-        var boneco = BonecoNoServidor(jogador, visual);
-        if (boneco == null || boneco.Gestos == null) return;
+        if (BonecoDe(jogador) is not { } achado || achado.Boneco.Gestos is not { } modeloDosGestos) return;
         var corpo = jogador.PlayerPawn.Value;
         if (corpo is not { IsValid: true } || corpo.AbsOrigin == null || corpo.AbsRotation == null) return;
 
@@ -199,7 +228,7 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
         if (cena == null) return;
         // Tudo vai na criação, como a queda do mutante: trocar o modelo depois de nascer dava erro no servidor.
         var valores = new CEntityKeyValues();
-        valores.SetString("model", boneco.Gestos);
+        valores.SetString("model", modeloDosGestos);
         valores.SetVector("origin", new Vector(corpo.AbsOrigin.X, corpo.AbsOrigin.Y, corpo.AbsOrigin.Z));
         valores.SetAngle("angles", new QAngle(0, corpo.AbsRotation.Y, 0));
         valores.SetString("DefaultAnim", gesto);
@@ -281,7 +310,12 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
     private HookResult AoEntrar(EventPlayerConnectFull evento, GameEventInfo informacao)
     {
         var jogador = evento.Userid;
-        if (jogador is { IsValid: true, IsBot: false } && jogador.SteamID > 0) _ = BuscarVisuais([jogador.SteamID], avisar: true);
+        if (jogador is { IsValid: true, IsBot: false } && jogador.SteamID > 0)
+        {
+            _ = BuscarVisuais([jogador.SteamID], avisar: true);
+            // No laboratório, sem a resposta do site dizendo que é Adm, a pessoa sai: na dúvida, fecha.
+            if (NoLaboratorio()) AddTimer(SegundosParaConfirmarAdm, () => ConferirAdmNoLaboratorio(jogador));
+        }
         return HookResult.Continue;
     }
 
@@ -295,7 +329,11 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
     private HookResult AoSair(EventPlayerDisconnect evento, GameEventInfo informacao)
     {
         var jogador = evento.Userid;
-        if (jogador is { IsValid: true }) EncerrarGesto(jogador.Slot, devolverCorpo: false);
+        if (jogador is { IsValid: true })
+        {
+            EncerrarGesto(jogador.Slot, devolverCorpo: false);
+            escolhas.Remove(jogador.Slot);
+        }
         if (jogador is { IsValid: true } && jogador.SteamID > 0)
         {
             avisados.Remove(jogador.SteamID);
@@ -335,6 +373,7 @@ public partial class MagnatasVisual : BasePlugin, IPluginConfig<ConfiguracaoDoVi
             if (dados.TryGetValue(conta.ToString(), out var visual)) visuais[conta] = visual;
             else visuais.Remove(conta);
         }
+        foreach (var jogador in Pessoas().Where(pessoa => contas.Contains(pessoa.SteamID))) ConferirAdmNoLaboratorio(jogador);
         if (!avisar) return;
         foreach (var jogador in Pessoas().Where(pessoa => contas.Contains(pessoa.SteamID)))
         {
