@@ -31,6 +31,12 @@ async function exigirAdm(tx: Bd | Transacao, ator: Pick<Usuario, 'id'>): Promise
   await exigirPermissao(tx, ator, 'publicar_noticia');
 }
 
+/** Arquivo da fila de notícias: a primeira linha é o título (o # do markdown sai) e o resto é o texto. */
+export function noticiaDoArquivo(conteudo: string): DadosDaNoticia {
+  const [primeira = '', ...resto] = conteudo.split(/\r?\n/);
+  return { titulo: primeira.replace(/^#+\s*/, '').trim(), texto: resto.join('\n').trim() };
+}
+
 /** Sem ator, é o script de patch de aviso rodando no servidor: não há conta para conferir. */
 export async function criarNoticia(bd: Bd, ator: Pick<Usuario, 'id'> | null, dados: DadosDaNoticia, agora: Date = new Date()): Promise<Noticia> {
   const valores = validar(dados);

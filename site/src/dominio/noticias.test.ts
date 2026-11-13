@@ -3,7 +3,7 @@ import type { Bd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { SemPermissao } from './equipe';
-import { apagarNoticia, criarNoticia, editarNoticia, LIMITES_DA_NOTICIA, noticiaPorId, NoticiaInvalida, ultimasNoticias } from './noticias';
+import { apagarNoticia, criarNoticia, editarNoticia, LIMITES_DA_NOTICIA, noticiaDoArquivo, noticiaPorId, NoticiaInvalida, ultimasNoticias } from './noticias';
 
 let bd: Bd;
 let adm: Usuario;
@@ -80,4 +80,11 @@ test.each(['https://outro.site/x.png', '//outro.site/x.png', '/\\outro.site/x.pn
 test('imagem do próprio site é aceita, e vazia vira sem imagem', async () => {
   expect((await criarNoticia(bd, adm, { titulo: 'Oi', texto: 'Oi', imagem: '/mapas/luxville.webp' }, AGORA)).imagem).toBe('/mapas/luxville.webp');
   expect((await criarNoticia(bd, adm, { titulo: 'Oi', texto: 'Oi', imagem: '  ' }, AGORA)).imagem).toBeNull();
+});
+
+test('arquivo da fila: a primeira linha é o título (sem o # do markdown) e o resto é o texto', () => {
+  expect(noticiaDoArquivo('# Insígnias e perfil novo\r\n\r\nChegaram as insígnias.\r\n\r\nEscolha a principal.\r\n')).toEqual({
+    titulo: 'Insígnias e perfil novo',
+    texto: 'Chegaram as insígnias.\n\nEscolha a principal.',
+  });
 });
