@@ -10,6 +10,12 @@ def test_agenda_a_atualizacao_da_lista_de_liberados():
     assert "/etc/cron.d/magnatas-lista" in INSTALADOR
 
 
+def test_servidor_de_jogo_volta_sozinho_quando_a_maquina_reinicia():
+    # Numa queda da hospedagem o site voltava sozinho, mas o jogo ficava fora até alguém ligar na mão.
+    assert re.search(r"@reboot \$USUARIO sleep \d+ && bash \$CASA/bin/iniciar_cs2\.sh", INSTALADOR)
+    assert "/etc/cron.d/magnatas-ligar" in INSTALADOR
+
+
 def test_instala_o_agendador_quando_falta():
     assert re.search(r"PACOTES=\(.*\bcron\b", INSTALADOR)
     assert "cronie" in INSTALADOR

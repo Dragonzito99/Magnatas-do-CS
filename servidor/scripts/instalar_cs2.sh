@@ -80,6 +80,12 @@ cat > /etc/cron.d/magnatas-lista <<AGENDA
 AGENDA
 chmod 644 /etc/cron.d/magnatas-lista
 
+# Se a máquina reiniciar (queda na hospedagem, 13/11/2026), o servidor de jogo volta sozinho; o site já voltava.
+cat > /etc/cron.d/magnatas-ligar <<AGENDA
+@reboot $USUARIO sleep 60 && bash $CASA/bin/iniciar_cs2.sh >>$CASA/iniciar_ao_ligar.log 2>&1
+AGENDA
+chmod 644 /etc/cron.d/magnatas-ligar
+
 if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
   ufw allow 27015/udp
 fi
