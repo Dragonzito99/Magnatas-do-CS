@@ -1954,7 +1954,8 @@ def test_o_diario_das_entidades_diz_qual_numero_derrubou_o_jogo():
     # As quedas "missing client entity N" dão só o número; sem saber o que era o N no servidor, cada correção era
     # um palpite (13/11/2026). O diário guarda o que nasce e o que some e vai para um arquivo quando alguém sai.
     ligar = metodo_da_mutacao("private void LigarMutacao(")
-    assert "RegisterListener<Listeners.OnEntityCreated>(AnotarNascimento)" in ligar
+    # O nascimento é anotado já montado (OnEntitySpawned, como o TirarComandosDoMapa), não no meio da criação.
+    assert "RegisterListener<Listeners.OnEntitySpawned>(AnotarNascimento)" in ligar
     assert "RegisterListener<Listeners.OnEntityDeleted>(AnotarSumico)" in ligar
     sair = metodo_da_mutacao("public HookResult AoSairDaMutacao(")
     assert "GuardarDiarioDasEntidades(" in sair
@@ -1963,6 +1964,18 @@ def test_o_diario_das_entidades_diz_qual_numero_derrubou_o_jogo():
     # Só os últimos: o diário não cresce sem fim nem enche o disco.
     assert re.search(r"MaximoNoDiario = \d+;", CODIGO_DA_MUTACAO)
     assert re.search(r"ArquivosDoDiario = \d+;", CODIGO_DA_MUTACAO)
+
+
+def test_o_diario_nunca_le_o_nome_de_quem_esta_sumindo_nem_anota_a_troca_de_mapa():
+    # 13/11/2026: a Mutação caía 5 s depois de ligar, na troca da Dust 2 para o mapa da Oficina. Nessa troca somem milhares
+    # de coisas, e o diário lia o nome (DesignerName) de cada uma enquanto ela era apagada: o servidor caía (segfault).
+    sumico = metodo_da_mutacao("private void AnotarSumico(")
+    assert "DesignerName" not in sumico
+    assert "trocandoDeMapa" in sumico
+    assert "trocandoDeMapa" in metodo_da_mutacao("private void AnotarNascimento(")
+    ligar = metodo_da_mutacao("private void LigarMutacao(")
+    assert "RegisterListener<Listeners.OnMapEnd>(() => trocandoDeMapa = true)" in ligar
+    assert "trocandoDeMapa = false;" in ligar
 
 
 def test_o_g_fica_no_registro_do_servidor_para_conferir():

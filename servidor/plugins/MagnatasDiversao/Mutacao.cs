@@ -525,8 +525,9 @@ public partial class ModoDeDiversao
         RegisterListener<Listeners.OnTick>(PoderNoE);
         RegisterListener<Listeners.OnTick>(PuloDuplo);
         RegisterListener<Listeners.OnEntitySpawned>(TirarComandosDoMapa);
-        RegisterListener<Listeners.OnEntityCreated>(AnotarNascimento);
+        RegisterListener<Listeners.OnEntitySpawned>(AnotarNascimento);
         RegisterListener<Listeners.OnEntityDeleted>(AnotarSumico);
+        RegisterListener<Listeners.OnMapEnd>(() => trocandoDeMapa = true);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
@@ -563,6 +564,7 @@ public partial class ModoDeDiversao
         });
         RegisterListener<Listeners.OnMapStart>(mapa =>
         {
+            trocandoDeMapa = false;
             // O pacote novo chega numa troca de mapa, então a conferência se refaz a cada mapa.
             zumbiNoServidor = null;
             morteNoServidor = null;
@@ -1142,17 +1144,32 @@ public partial class ModoDeDiversao
     private const int MaximoNoDiario = 4000;
     private const int ArquivosDoDiario = 20;
     private readonly Queue<string> diarioDasEntidades = new();
+    // Entre o fim de um mapa e o início do próximo o diário não anota: é quando tudo some de uma vez.
+    private bool trocandoDeMapa;
 
-    private void Anotar(string acao, CEntityInstance entidade)
+    private void Anotar(string linha)
     {
         if (Config.Regra != "mutacao") return;
-        diarioDasEntidades.Enqueue($"{DateTime.Now:HH:mm:ss.fff} tick={Server.TickCount} {acao} n={entidade.Index} {entidade.DesignerName}");
+        diarioDasEntidades.Enqueue($"{DateTime.Now:HH:mm:ss.fff} tick={Server.TickCount} {linha}");
         while (diarioDasEntidades.Count > MaximoNoDiario) diarioDasEntidades.Dequeue();
     }
 
-    private void AnotarNascimento(CEntityInstance entidade) => Anotar("nasce", entidade);
+    /// <summary>Já montada (OnEntitySpawned), a entidade tem nome; na troca de mapa, nada é anotado.</summary>
+    private void AnotarNascimento(CEntityInstance entidade)
+    {
+        if (trocandoDeMapa) return;
+        Anotar($"nasce n={entidade.Index} {entidade.DesignerName}");
+    }
 
-    private void AnotarSumico(CEntityInstance entidade) => Anotar("some", entidade);
+    /// <summary>
+    /// Só o número: ler o nome de quem está sendo apagado derrubou o servidor na troca da Dust 2 para o mapa da Oficina,
+    /// quando somem milhares de coisas de uma vez (13/11/2026, a Mutação caía 5 s depois de ligar). O nome vem do nascimento.
+    /// </summary>
+    private void AnotarSumico(CEntityInstance entidade)
+    {
+        if (trocandoDeMapa) return;
+        Anotar($"some n={entidade.Index}");
+    }
 
     /// <summary>Quando uma pessoa sai (a queda do jogo aparece no servidor como saída por tempo esgotado), o diário vai para um arquivo.</summary>
     private void GuardarDiarioDasEntidades(string quem)
