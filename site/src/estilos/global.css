@@ -3159,6 +3159,11 @@ button.moeda-da-shop {
   scrollbar-width: none;
 }
 
+/* Sem encolher: no celular o menu rola de lado em vez de um item passar por cima do outro */
+.menu-itens > * {
+  flex: none;
+}
+
 .item-principal {
   display: flex;
   flex: none;
@@ -3352,6 +3357,48 @@ a.item-principal:hover > span,
   .botao-painel .icone {
     width: 18px;
     height: 18px;
+  }
+
+  /* No celular quem encolhe é o logo, para a conta nunca sair da tela */
+  .faixa-linha {
+    gap: 8px;
+  }
+
+  .faixa-logo {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .faixa-logo img {
+    max-width: 100%;
+    height: auto;
+    max-height: 34px;
+  }
+
+  .faixa-conta {
+    flex: none;
+    gap: 6px;
+  }
+
+  .saldo-de-grana {
+    padding: 0 8px;
+  }
+}
+
+/* Celular estreito: botões mais justos para o logo não sumir */
+@media (max-width: 400px) {
+  .faixa-conta {
+    gap: 4px;
+  }
+
+  .botao-painel,
+  .saldo-de-grana {
+    gap: 3px;
+    padding: 0 6px;
+  }
+
+  .faixa .botao-conta > .icone {
+    display: none;
   }
 
   .numeros-painel {
