@@ -504,6 +504,7 @@ public partial class ModoDeDiversao
         {
             infeccoes.Remove(quem.Slot);
             corridas.Remove(quem.Slot);
+            if (!quem.IsBot) GuardarDiarioDasEntidades(quem.PlayerName);
         }
         // Quem chegar depois não pode herdar uma partida que ninguém mais está jogando.
         if (!Pessoas().Any(pessoa => pessoa.Slot != quem?.Slot))
@@ -524,6 +525,8 @@ public partial class ModoDeDiversao
         RegisterListener<Listeners.OnTick>(PoderNoE);
         RegisterListener<Listeners.OnTick>(PuloDuplo);
         RegisterListener<Listeners.OnEntitySpawned>(TirarComandosDoMapa);
+        RegisterListener<Listeners.OnEntityCreated>(AnotarNascimento);
+        RegisterListener<Listeners.OnEntityDeleted>(AnotarSumico);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
         AddCommandListener("drop", AoApertarG, HookMode.Pre);
@@ -1113,10 +1116,51 @@ public partial class ModoDeDiversao
         valores.SetInt("solid", 0);
         queda.DispatchSpawn(valores);
         MudarTamanho(queda, NivelDe(jogador).Tamanho);
-        AddTimer(SegundosDaCenaDaMorte, () =>
+        // Pela alça, como a fumaça: se a rodada reiniciar nestes 4 s, a cena some com o mapa e o número dela pode já ser
+        // de outra coisa que o jogo de quem está no servidor tem; apagar pelo objeto guardado apagava essa outra coisa.
+        var alca = queda.EntityHandle.Raw;
+        AddTimer(SegundosDaCenaDaMorte, () => ApagarPelaAlca(alca, "prop_dynamic"));
+    }
+
+    /// <summary>Apaga só se o número ainda é da mesma coisa (a alça inteira, com o serial) e do mesmo tipo.</summary>
+    private static void ApagarPelaAlca(uint alca, string nome)
+    {
+        var entidade = Utilities.GetEntityFromIndex<CBaseEntity>((int)(alca & MascaraDoNumeroDoObjeto));
+        if (entidade is { IsValid: true } && entidade.EntityHandle.Raw == alca && entidade.DesignerName == nome) entidade.Remove();
+    }
+
+    // O diário das entidades: as quedas "missing client entity N" só dizem o número, e o diário diz o que era (13/11/2026).
+    private const int MaximoNoDiario = 4000;
+    private const int ArquivosDoDiario = 20;
+    private readonly Queue<string> diarioDasEntidades = new();
+
+    private void Anotar(string acao, CEntityInstance entidade)
+    {
+        if (Config.Regra != "mutacao") return;
+        diarioDasEntidades.Enqueue($"{DateTime.Now:HH:mm:ss.fff} tick={Server.TickCount} {acao} n={entidade.Index} {entidade.DesignerName}");
+        while (diarioDasEntidades.Count > MaximoNoDiario) diarioDasEntidades.Dequeue();
+    }
+
+    private void AnotarNascimento(CEntityInstance entidade) => Anotar("nasce", entidade);
+
+    private void AnotarSumico(CEntityInstance entidade) => Anotar("some", entidade);
+
+    /// <summary>Quando uma pessoa sai (a queda do jogo aparece no servidor como saída por tempo esgotado), o diário vai para um arquivo.</summary>
+    private void GuardarDiarioDasEntidades(string quem)
+    {
+        if (diarioDasEntidades.Count == 0) return;
+        try
         {
-            if (queda.IsValid) queda.Remove();
-        });
+            var pasta = Path.Combine(ModuleDirectory, "diario_das_entidades");
+            Directory.CreateDirectory(pasta);
+            var nome = string.Concat(quem.Where(char.IsLetterOrDigit));
+            File.WriteAllLines(Path.Combine(pasta, $"{DateTime.Now:yyyyMMdd_HHmmss}_{nome}.log"), diarioDasEntidades);
+            foreach (var velho in Directory.GetFiles(pasta, "*.log").OrderByDescending(arquivo => arquivo).Skip(ArquivosDoDiario)) File.Delete(velho);
+        }
+        catch (Exception erro) when (erro is IOException or UnauthorizedAccessException)
+        {
+            Console.WriteLine($"[Magnatas] Não deu para guardar o diário das entidades: {erro.Message}");
+        }
     }
 
     private void RenascerComoMutante(CCSPlayerController jogador)

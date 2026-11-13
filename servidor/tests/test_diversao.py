@@ -1619,7 +1619,7 @@ def test_a_cena_da_morte_esconde_o_corpo_e_some_sozinha():
     assert "queda.DispatchSpawn(valores);" in cena
     assert "Color.FromArgb(0," in cena and "m_clrRender" in cena
     assert "MudarTamanho(queda, NivelDe(jogador).Tamanho)" in cena
-    assert "AddTimer(SegundosDaCenaDaMorte" in cena and ".Remove()" in cena
+    assert 'AddTimer(SegundosDaCenaDaMorte, () => ApagarPelaAlca(alca, "prop_dynamic"))' in cena
 
 
 def test_a_cena_da_morte_so_aparece_quando_o_pacote_do_servidor_tem_o_modelo():
@@ -1939,6 +1939,31 @@ def test_a_fumaca_some_pela_alca_e_nunca_apaga_outra_coisa():
     preparar = metodo_da_mutacao("public HookResult AoPrepararRodadaDaMutacao(")
     assert "fumacas.Clear();" in preparar
     assert "ApagarFumacasDoG()" in preparar
+
+
+def test_a_cena_da_queda_do_mutante_some_pela_alca_e_nunca_apaga_outra_coisa():
+    # O mesmo defeito da fumaça (queda de 11/11/2026): a cena de 4 s era apagada pelo objeto guardado, e se a rodada
+    # reiniciasse no meio, o número dela podia já ser de outra coisa que o jogo de quem está no servidor tinha.
+    queda = metodo_da_mutacao("private void MostrarQuedaDoMutante(")
+    assert "if (queda.IsValid) queda.Remove();" not in queda
+    assert "queda.EntityHandle.Raw" in queda
+    apagar = metodo_da_mutacao("private static void ApagarPelaAlca(")
+    assert "entidade.EntityHandle.Raw == alca" in apagar and "entidade.DesignerName == nome" in apagar
+
+
+def test_o_diario_das_entidades_diz_qual_numero_derrubou_o_jogo():
+    # As quedas "missing client entity N" dão só o número; sem saber o que era o N no servidor, cada correção era
+    # um palpite (13/11/2026). O diário guarda o que nasce e o que some e vai para um arquivo quando alguém sai.
+    ligar = metodo_da_mutacao("private void LigarMutacao(")
+    assert "RegisterListener<Listeners.OnEntityCreated>(AnotarNascimento)" in ligar
+    assert "RegisterListener<Listeners.OnEntityDeleted>(AnotarSumico)" in ligar
+    sair = metodo_da_mutacao("public HookResult AoSairDaMutacao(")
+    assert "GuardarDiarioDasEntidades(" in sair
+    guardar = metodo_da_mutacao("private void GuardarDiarioDasEntidades(")
+    assert "diario_das_entidades" in guardar
+    # Só os últimos: o diário não cresce sem fim nem enche o disco.
+    assert re.search(r"MaximoNoDiario = \d+;", CODIGO_DA_MUTACAO)
+    assert re.search(r"ArquivosDoDiario = \d+;", CODIGO_DA_MUTACAO)
 
 
 def test_o_g_fica_no_registro_do_servidor_para_conferir():
