@@ -5,6 +5,8 @@
 # no começo do nome (01-..., 02-...).
 # Uso: sudo -u magnatas bash /opt/magnatas/site/scripts/publicar-proxima-noticia.sh
 set -euo pipefail
+# Chamado de uma pasta que o usuário do site não lê (ex.: /root), o find falhava e o script parava calado (13/11/2026).
+cd /
 
 FILA=${FILA_DE_NOTICIAS:-/opt/magnatas/noticias/fila}
 FEITAS=${NOTICIAS_PUBLICADAS:-/opt/magnatas/noticias/publicadas}
