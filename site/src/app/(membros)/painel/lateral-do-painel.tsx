@@ -11,6 +11,7 @@ export type ParteDoPainel =
   | 'partidas'
   | 'servidores'
   | 'olho'
+  | 'chamados'
   | 'convites'
   | 'noticias'
   | 'grana'
@@ -39,10 +40,7 @@ async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: Pa
         <>
           <small>Segurança</small>
           {item('olho', '/olho-de-aguia', 'Olho de Águia', casos.denuncias + casos.propostas)}
-          <Link href="/olho-de-aguia#chamados">
-            Chamados
-            {casos.chamados > 0 && <b>{casos.chamados}</b>}
-          </Link>
+          {item('chamados', '/painel/chamados', 'Chamados', casos.chamados)}
         </>
       )}
       <small>Clube</small>

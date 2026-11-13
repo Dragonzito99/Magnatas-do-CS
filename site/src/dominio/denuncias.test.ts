@@ -256,3 +256,14 @@ test('membrosOnline traz só contas ativas vistas há menos de 2 minutos, sem da
   expect(lista[0]).not.toHaveProperty('cpfHmac');
   expect(lista[0]).not.toHaveProperty('steamid64');
 });
+
+test('chamado de partida de teste contra bots não vira denúncia: só fecha (13/11/2026)', async () => {
+  await gmOnline();
+  await bd.update(partidas).set({ tipo: 'teste' }).where(eq(partidas.id, partida.id));
+  const { chamado } = await chamarEquipe(bd, time1[0], partida.id, AGORA);
+  await bd.update(partidas).set({ estado: 'encerrada' }).where(eq(partidas.id, partida.id));
+  await converterChamadosSemResposta(bd);
+  const [recarregado] = await bd.select().from(chamados).where(eq(chamados.id, chamado.id));
+  expect(recarregado.estado).toBe('atendido');
+  expect(await bd.select().from(denuncias)).toEqual([]);
+});

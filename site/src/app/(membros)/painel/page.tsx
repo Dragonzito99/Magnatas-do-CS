@@ -131,7 +131,7 @@ export default async function PainelAdm() {
             <section className="painel">
               <div className="cabeca-painel">
                 <h2>Chamados</h2>
-                <Link href="/olho-de-aguia#chamados">Ver tudo</Link>
+                <Link href="/painel/chamados">Ver tudo</Link>
               </div>
               {chamados.length === 0 && <p className="vazio">Ninguém chamou a equipe agora.</p>}
               {chamados.map((chamado) => (

@@ -11767,3 +11767,11 @@ a.linha-simples-adm:hover span {
   flex: none;
   width: 100%;
 }
+
+/* Decisão de uma denúncia: recusar (contorno) à esquerda, aprovar e punir (vermelho) à direita. */
+.decisao-do-caso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}

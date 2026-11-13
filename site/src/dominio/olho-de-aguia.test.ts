@@ -5,7 +5,7 @@ import { auditoria, banimentos, chamados, denuncias, denunciasDeMensagem, denunc
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
 import { ConclusaoInvalida, contagemDeCasos, denunciar, DenunciaIndisponivel } from './denuncias';
 import { SemPermissao } from './equipe';
-import { casoEscolhido, chamadosEmAndamento, encerrarCaso, encerrarDenunciaDaDiversao, listarCasosDeDenuncia, listarDenunciasDaDiversao, listarDenunciasDeMensagem, motivoDaProposta, resolverDenunciaDeMensagem } from './olho-de-aguia';
+import { casoEscolhido, chamadosEmAndamento, chamadosRecentes, encerrarCaso, encerrarDenunciaDaDiversao, listarCasosDeDenuncia, listarDenunciasDaDiversao, listarDenunciasDeMensagem, motivoDaProposta, resolverDenunciaDeMensagem } from './olho-de-aguia';
 import { pedirAmizade, responderAmizade } from './amigos';
 import { conversaDiretaCom, denunciarMensagem, enviarMensagem, mensagensDe } from './mensagens';
 
@@ -367,4 +367,36 @@ test('arquivar deixa a mensagem, e quem escreveu ou denunciou não resolve a pr�
   await resolverDenunciaDeMensagem(bd, gm, denuncia.id, 'arquivar');
   expect(await mensagensDe(bd, denunciante, conversa, AGORA)).toHaveLength(1);
   expect((await bd.select().from(denunciasDeMensagem))[0]).toMatchObject({ estado: 'encerrada', conclusao: 'Arquivada sem apagar' });
+});
+
+test('partida de teste contra bots: o Adm que chamou e jogou pode fechar o caso (13/11/2026)', async () => {
+  const adm = await criarUsuario(bd, { estado: 'ativo', papel: 'adm' });
+  const teste = await criarPartidaCom([adm], { tipo: 'teste' });
+  await semAcusado(adm.id, teste.id);
+  const [caso] = await listarCasosDeDenuncia(bd, adm, AGORA);
+  expect(caso.podeEncerrar).toBe(true);
+  await encerrarCaso(bd, adm, { partidaId: teste.id, acusadoId: null }, 'Teste do Adm contra bots.');
+  expect(await listarCasosDeDenuncia(bd, adm, AGORA)).toEqual([]);
+});
+
+test('em partida de verdade, quem denunciou continua sem poder fechar o próprio caso', async () => {
+  const adm = await criarUsuario(bd, { estado: 'ativo', papel: 'adm' });
+  const real = await criarPartidaCom([adm, acusado]);
+  await semAcusado(adm.id, real.id);
+  const [caso] = await listarCasosDeDenuncia(bd, adm, AGORA);
+  expect(caso.podeEncerrar).toBe(false);
+  await expect(encerrarCaso(bd, adm, { partidaId: real.id, acusadoId: null }, 'x')).rejects.toBeInstanceOf(SemPermissao);
+});
+
+test('chamadosRecentes: os já resolvidos, o mais novo primeiro, com quem chamou e quem atendeu (só a equipe vê)', async () => {
+  const aoVivo = await criarPartidaCom([denunciante, acusado], { estado: 'ao_vivo' });
+  await bd.insert(chamados).values([
+    { partidaId: partida.id, chamadoPor: denunciante.id, estado: 'atendido', atendidoPor: gm.id, criadoEm: minutos(50) },
+    { partidaId: partida.id, chamadoPor: outroDenunciante.id, estado: 'virou_denuncia', criadoEm: minutos(20) },
+    { partidaId: aoVivo.id, chamadoPor: denunciante.id, estado: 'aberto', criadoEm: minutos(5) },
+  ]);
+  const recentes = await chamadosRecentes(bd, gm);
+  expect(recentes.map((linha) => linha.estado)).toEqual(['virou_denuncia', 'atendido']);
+  expect(recentes[1]).toMatchObject({ chamadoPorApelido: 'quem_denunciou', atendidoPorApelido: gm.apelido });
+  await expect(chamadosRecentes(bd, membro)).rejects.toBeInstanceOf(SemPermissao);
 });

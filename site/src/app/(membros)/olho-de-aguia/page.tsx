@@ -4,12 +4,12 @@ import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { listarBanimentosAbertos } from '@/dominio/banimentos';
-import { casoEscolhido, chamadosEmAndamento, listarCasosDeDenuncia, listarDenunciasDaDiversao, listarDenunciasDeMensagem, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
-import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
+import { casoEscolhido, listarCasosDeDenuncia, listarDenunciasDaDiversao, listarDenunciasDeMensagem, type CasoDeDenuncia } from '@/dominio/olho-de-aguia';
+import { NOME_DA_GRAVACAO, nomeDaPartida, nomeDoMapa } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { Avatar } from '../avatar';
 import { BotaoConfirmar } from '../botao-confirmar';
-import { apagarDeMensagem, arquivarDeMensagem, atender, encerrar, encerrarDaDiversao, proporDoCaso, suspenderDoCaso } from './acoes';
+import { apagarDeMensagem, arquivarDeMensagem, encerrar, encerrarDaDiversao, proporDoCaso, suspenderDaDiversao, suspenderDoCaso } from './acoes';
 import { TelaDoPainel } from '../painel/lateral-do-painel';
 import { AssistirNoCs2 } from './assistir-no-cs2';
 
@@ -92,33 +92,33 @@ function DetalheDoCaso({ caso }: { caso: CasoDeDenuncia }) {
       <form className="conclusao-do-caso">
         <input type="hidden" name="partidaId" value={partida.id} />
         <input type="hidden" name="acusadoId" value={acusado?.id ?? ''} />
-        <textarea name="conclusao" aria-label="Conclusão da análise" placeholder="Conclusão da análise..." maxLength={480} required rows={2} />
-        <div className="acoes">
+        <textarea name="conclusao" aria-label="Conclusão da análise" placeholder="O que a equipe viu (vai junto da decisão)..." maxLength={480} required rows={2} />
+        <div className="decisao-do-caso">
           {caso.podeEncerrar && (
             <BotaoConfirmar
               formAction={encerrar}
-              mensagem={`Encerrar o caso de ${acusado ? apelido : 'acusado a definir'}, na ${nomeDaPartida(partida)}? Isso não pode ser desfeito.`}
-              className="botao cinza pequeno"
+              mensagem={`${jaPunido ? 'Encerrar' : 'Recusar'} a denúncia ${acusado ? `contra ${apelido}` : 'a definir'}, na ${nomeDaPartida(partida)}? Isso não pode ser desfeito.`}
+              className="botao contorno pequeno"
             >
-              {jaPunido ? 'Encerrar caso' : 'Encerrar sem punição'}
+              {jaPunido ? 'Encerrar caso' : 'Recusar denúncia'}
             </BotaoConfirmar>
           )}
           {acusado?.estado === 'ativo' && (
             <BotaoConfirmar
               formAction={suspenderDoCaso}
-              mensagem={`Suspender ${apelido} agora? A pessoa sai da partida e fica sem acesso até um Adm decidir.`}
-              className="botao cinza pequeno"
+              mensagem={`Aprovar a denúncia e suspender ${apelido} agora? A pessoa sai da partida e fica sem acesso até um Adm decidir.`}
+              className="botao vermelho pequeno"
             >
-              Suspender
+              Aprovar e suspender
             </BotaoConfirmar>
           )}
           {acusado && acusado.estado !== 'banido' && !caso.temPropostaAberta && (
-            <BotaoConfirmar formAction={proporDoCaso} mensagem={`Propor o banimento de ${apelido}?`} className="botao cinza pequeno">
-              Propor banimento
+            <BotaoConfirmar formAction={proporDoCaso} mensagem={`Aprovar a denúncia e propor o banimento de ${apelido}?`} className="botao vermelho pequeno">
+              Aprovar e propor banimento
             </BotaoConfirmar>
           )}
         </div>
-        {!caso.podeEncerrar && <small className="apoio">Você está envolvido nesse caso, então outra pessoa da equipe precisa encerrar.</small>}
+        {!caso.podeEncerrar && <small className="apoio">Você jogou ou denunciou nesta partida, então outra pessoa da equipe precisa decidir.</small>}
       </form>
     </section>
   );
@@ -129,8 +129,7 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
   if (!pode(usuario, 'moderar')) redirect('/inicio');
   const { caso: chave, erro } = await searchParams;
   const bd = obterBd();
-  const [chamados, casos, propostas, daDiversao, deMensagem] = await Promise.all([
-    chamadosEmAndamento(bd, usuario),
+  const [casos, propostas, daDiversao, deMensagem] = await Promise.all([
     listarCasosDeDenuncia(bd, usuario),
     listarBanimentosAbertos(bd, usuario),
     listarDenunciasDaDiversao(bd, usuario),
@@ -148,23 +147,6 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
           {ERROS[erro]}
         </p>
       )}
-      <div id="chamados" className="ancora-do-painel" />
-      {chamados.map((chamado) => (
-        <div className="chamado-agora" key={chamado.id}>
-          <span>
-            <strong>CHAMADO AGORA</strong>
-            {nomeDaPartida({ tipo: chamado.partidaTipo, numero: chamado.partidaNumero })}, {TEXTOS_DO_ESTADO[chamado.estado].etiqueta.toLowerCase()}. Chamado por{' '}
-            {chamado.chamadoPorApelido}.
-          </span>
-          <form action={atender}>
-            <input type="hidden" name="chamadoId" value={chamado.id} />
-            <button type="submit" className="botao ouro pequeno">
-              Assistir ao vivo
-            </button>
-          </form>
-        </div>
-      ))}
-
       {casos.length === 0 && (
         <section className="painel">
           <p className="vazio">{encerrado ? 'Este caso já foi encerrado, e não há outras denúncias do mix abertas.' : 'Nenhuma denúncia do mix aberta.'}</p>
@@ -232,14 +214,24 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
               <form className="conclusao-do-caso">
                 <input type="hidden" name="denunciaId" value={denuncia.id} />
                 <textarea name="conclusao" aria-label={`Conclusão da denúncia contra ${denuncia.acusado.apelido}`} placeholder="Conclusão da análise..." maxLength={480} required rows={2} />
-                <div className="acoes">
+                <input type="hidden" name="acusadoId" value={denuncia.acusado.id} />
+                <div className="decisao-do-caso">
                   <BotaoConfirmar
                     formAction={encerrarDaDiversao}
-                    mensagem={`Encerrar a denúncia contra ${denuncia.acusado.apelido}? Para punir, use a ficha do jogador.`}
-                    className="botao cinza pequeno"
+                    mensagem={`Recusar a denúncia contra ${denuncia.acusado.apelido}? Ela fecha sem punição.`}
+                    className="botao contorno pequeno"
                   >
-                    Encerrar
+                    Recusar denúncia
                   </BotaoConfirmar>
+                  {denuncia.acusado.estado === 'ativo' && (
+                    <BotaoConfirmar
+                      formAction={suspenderDaDiversao}
+                      mensagem={`Aprovar a denúncia e suspender ${denuncia.acusado.apelido} agora?`}
+                      className="botao vermelho pequeno"
+                    >
+                      Aprovar e suspender
+                    </BotaoConfirmar>
+                  )}
                   <Link className="botao cinza pequeno" href={`/jogadores/${denuncia.acusado.id}`}>
                     Ver ficha
                   </Link>
@@ -275,16 +267,16 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
             {denuncia.podeResolver ? (
               <form className="conclusao-do-caso">
                 <input type="hidden" name="denunciaId" value={denuncia.id} />
-                <div className="acoes">
+                <div className="decisao-do-caso">
+                  <BotaoConfirmar formAction={arquivarDeMensagem} mensagem="Recusar a denúncia e deixar a mensagem?" className="botao contorno pequeno">
+                    Recusar denúncia
+                  </BotaoConfirmar>
                   <BotaoConfirmar
                     formAction={apagarDeMensagem}
-                    mensagem={`Apagar esta mensagem de ${denuncia.autor.apelido}? Ela some da conversa para todos.`}
-                    className="botao cinza pequeno"
+                    mensagem={`Aprovar a denúncia e apagar esta mensagem de ${denuncia.autor.apelido}? Ela some da conversa para todos.`}
+                    className="botao vermelho pequeno"
                   >
-                    Apagar mensagem
-                  </BotaoConfirmar>
-                  <BotaoConfirmar formAction={arquivarDeMensagem} mensagem="Arquivar a denúncia e deixar a mensagem?" className="botao cinza pequeno">
-                    Arquivar
+                    Aprovar e apagar mensagem
                   </BotaoConfirmar>
                   <Link className="botao cinza pequeno" href={`/jogadores/${denuncia.autor.id}`}>
                     Ver ficha

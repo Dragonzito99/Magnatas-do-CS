@@ -43,8 +43,8 @@ export async function atender(dados: FormData) {
   try {
     ({ partidaId } = await atenderChamado(obterBd(), ator, chamadoId));
   } catch (erro) {
-    if (erro instanceof SemPermissao) redirect(`${CAMINHO}?erro=jogando`);
-    if (erro instanceof ChamadoIndisponivel) redirect(`${CAMINHO}?erro=chamado`);
+    if (erro instanceof SemPermissao) redirect(`/painel/chamados?erro=jogando`);
+    if (erro instanceof ChamadoIndisponivel) redirect(`/painel/chamados?erro=chamado`);
     throw erro;
   }
   revalidatePath(CAMINHO);
@@ -66,12 +66,26 @@ export async function encerrar(dados: FormData) {
   revalidatePath(CAMINHO);
 }
 
+/**
+ * Aprovar a denúncia é punir e fechar o caso de uma vez (dono, 13/11/2026: "não tem como aprovar ou recusar"). Se quem
+ * pune está envolvido no caso, a punição vale e o caso fica aberto para outra pessoa da equipe fechar.
+ */
+async function fecharDepoisDePunir(ator: { id: string }, partidaId: string, acusadoId: string, conclusao: string): Promise<void> {
+  try {
+    await encerrarCaso(obterBd(), ator, { partidaId, acusadoId }, conclusao);
+  } catch (erro) {
+    if (!(erro instanceof SemPermissao || erro instanceof DenunciaIndisponivel)) throw erro;
+  }
+}
+
 export async function suspenderDoCaso(dados: FormData) {
   const partidaId = idDe(dados, 'partidaId');
   const acusadoId = idDe(dados, 'acusadoId');
+  const conclusao = String(dados.get('conclusao') ?? '');
   const ator = await exigirAcesso(CAMINHO);
   try {
-    await suspender(obterBd(), controladorDoAmbiente(), ator, acusadoId, String(dados.get('conclusao') ?? ''));
+    await suspender(obterBd(), controladorDoAmbiente(), ator, acusadoId, conclusao);
+    await fecharDepoisDePunir(ator, partidaId, acusadoId, `Aprovada: conta suspensa. ${conclusao}`.slice(0, 480));
   } catch (erro) {
     voltarComErro(`${partidaId}:${acusadoId}`, erro);
   }
@@ -85,8 +99,10 @@ export async function proporDoCaso(dados: FormData) {
   const bd = obterBd();
   const [partida] = await bd.select({ tipo: partidas.tipo, numero: partidas.numero }).from(partidas).where(eq(partidas.id, partidaId));
   if (!partida) redirect(CAMINHO);
+  const conclusao = String(dados.get('conclusao') ?? '');
   try {
-    await proporBanimento(bd, ator, acusadoId, motivoDaProposta(partida, String(dados.get('conclusao') ?? '')));
+    await proporBanimento(bd, ator, acusadoId, motivoDaProposta(partida, conclusao));
+    await fecharDepoisDePunir(ator, partidaId, acusadoId, `Aprovada: banimento proposto. ${conclusao}`.slice(0, 480));
   } catch (erro) {
     voltarComErro(`${partidaId}:${acusadoId}`, erro);
   }
@@ -99,6 +115,24 @@ export async function encerrarDaDiversao(dados: FormData) {
   const ator = await exigirAcesso(CAMINHO);
   try {
     await encerrarDenunciaDaDiversao(obterBd(), ator, id, String(dados.get('conclusao') ?? ''));
+  } catch (erro) {
+    if (erro instanceof SemPermissao) redirect(`${CAMINHO}?erro=propria#diversao`);
+    const codigo = codigoDoErro(erro);
+    if (codigo) redirect(`${CAMINHO}?erro=${codigo}#diversao`);
+    throw erro;
+  }
+  revalidatePath(CAMINHO);
+}
+
+/** Aprovar a denúncia da Diversão: suspende o acusado e fecha a denúncia com a conclusão. */
+export async function suspenderDaDiversao(dados: FormData) {
+  const id = idDe(dados, 'denunciaId');
+  const acusadoId = idDe(dados, 'acusadoId');
+  const conclusao = String(dados.get('conclusao') ?? '');
+  const ator = await exigirAcesso(CAMINHO);
+  try {
+    await suspender(obterBd(), controladorDoAmbiente(), ator, acusadoId, conclusao);
+    await encerrarDenunciaDaDiversao(obterBd(), ator, id, `Aprovada: conta suspensa. ${conclusao}`.slice(0, 480));
   } catch (erro) {
     if (erro instanceof SemPermissao) redirect(`${CAMINHO}?erro=propria#diversao`);
     const codigo = codigoDoErro(erro);

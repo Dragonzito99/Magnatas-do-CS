@@ -158,11 +158,16 @@ export async function atenderChamado(bd: Bd, gm: Pick<Usuario, 'id'>, chamadoId:
 /** Quando a partida acaba sem ninguém atender, a reclamação vira denúncia em vez de sumir. */
 export async function converterChamadosSemResposta(bd: Bd): Promise<void> {
   const parados = await bd
-    .select({ id: chamados.id })
+    .select({ id: chamados.id, tipo: partidas.tipo })
     .from(chamados)
     .innerJoin(partidas, eq(chamados.partidaId, partidas.id))
     .where(and(eq(chamados.estado, 'aberto'), inArray(partidas.estado, ['encerrada', 'cancelada'])));
-  for (const { id } of parados) {
+  for (const { id, tipo } of parados) {
+    // Teste do Adm contra bots: não há ninguém para denunciar, o chamado só fecha (13/11/2026).
+    if (tipo === 'teste') {
+      await bd.update(chamados).set({ estado: 'atendido' }).where(and(eq(chamados.id, id), eq(chamados.estado, 'aberto')));
+      continue;
+    }
     try {
       await bd.transaction(async (tx) => {
         const [chamado] = await tx

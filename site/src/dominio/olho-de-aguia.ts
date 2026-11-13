@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, isNull, ne } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Bd } from '@/bd/conexao';
 import { banimentos, chamados, denuncias, denunciasDeMensagem, denunciasDiversao, gravacoes, mensagens, partidaJogadores, partidas, usuarios, xpPartidas, type EstadoUsuario, type Partida, type Usuario } from '@/bd/esquema';
@@ -109,8 +109,9 @@ export async function listarCasosDeDenuncia(bd: Bd, leitor: Pick<Usuario, 'id'>,
       temPropostaAberta: propostas.some((proposta) => proposta.usuarioId === acusadoId),
       gravacao: situacao,
       ...(situacao === 'disponivel' && gravacao ? { gravacaoId: gravacao.id } : {}),
-      // Sem acusado definido, o culpado pode ser qualquer um que jogou.
-      podeEncerrar: !envolvido && (acusadoId !== null || !jogouNaPartida(leitor.id)),
+      // Sem acusado definido, o culpado pode ser qualquer um que jogou. No teste do Adm contra bots não há ninguém
+      // para proteger: quem jogou e chamou pode fechar (13/11/2026).
+      podeEncerrar: partida.tipo === 'teste' || (!envolvido && (acusadoId !== null || !jogouNaPartida(leitor.id))),
     };
   });
 
@@ -137,8 +138,11 @@ export async function encerrarCaso(
     );
     const abertas = await tx.select().from(denuncias).where(doCaso).for('update');
     if (abertas.length === 0) throw new DenunciaIndisponivel();
-    if (caso.acusadoId === gm.id || abertas.some((denuncia) => denuncia.denuncianteId === gm.id)) throw new SemPermissao();
-    if (!caso.acusadoId) {
+    const [{ tipo }] = await tx.select({ tipo: partidas.tipo }).from(partidas).where(eq(partidas.id, caso.partidaId));
+    // No teste do Adm contra bots não há outro jogador para proteger: quem jogou e chamou pode fechar.
+    const deTeste = tipo === 'teste';
+    if (!deTeste && (caso.acusadoId === gm.id || abertas.some((denuncia) => denuncia.denuncianteId === gm.id))) throw new SemPermissao();
+    if (!deTeste && !caso.acusadoId) {
       const [jogou] = await tx
         .select({ id: partidaJogadores.usuarioId })
         .from(partidaJogadores)
@@ -154,6 +158,31 @@ export async function encerrarCaso(
       detalhes: { partidaId: caso.partidaId, denuncias: abertas.map((denuncia) => denuncia.id), conclusao: texto },
     });
   });
+}
+
+/** Os chamados já resolvidos (atendidos ou que viraram denúncia), para a tela Chamados do Painel ADM. */
+export async function chamadosRecentes(bd: Bd, leitor: Pick<Usuario, 'id'>, limite = 30) {
+  await exigirPermissao(bd, leitor, 'moderar');
+  const quemChamou = alias(usuarios, 'quem_chamou');
+  const quemAtendeu = alias(usuarios, 'quem_atendeu');
+  return bd
+    .select({
+      id: chamados.id,
+      estado: chamados.estado,
+      criadoEm: chamados.criadoEm,
+      partidaId: partidas.id,
+      partidaNumero: partidas.numero,
+      partidaTipo: partidas.tipo,
+      chamadoPorApelido: quemChamou.apelido,
+      atendidoPorApelido: quemAtendeu.apelido,
+    })
+    .from(chamados)
+    .innerJoin(partidas, eq(chamados.partidaId, partidas.id))
+    .innerJoin(quemChamou, eq(chamados.chamadoPor, quemChamou.id))
+    .leftJoin(quemAtendeu, eq(chamados.atendidoPor, quemAtendeu.id))
+    .where(ne(chamados.estado, 'aberto'))
+    .orderBy(desc(chamados.criadoEm))
+    .limit(limite);
 }
 
 export async function chamadosEmAndamento(bd: Bd, leitor: Pick<Usuario, 'id'>) {
