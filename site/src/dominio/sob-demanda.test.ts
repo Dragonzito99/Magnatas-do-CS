@@ -3,14 +3,18 @@ import { eq } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { estadosDaDiversao, servidoresDiversao, type ServidorDiversao, type Usuario } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
+import { SemPermissao } from './equipe';
+import { ligarManutencao } from './manutencao';
 import {
   acompanharDiversao,
   adiarDesligamento,
   estadosDaTela,
   LimiteDeServidores,
+  ligarPeloJogar,
   pedirParaLigar,
   PRAZO_PARA_LIGAR_MS,
   PRAZO_SEM_RESPOSTA_MS,
+  ESPERA_PARA_RELIGAR_MS,
   TEMPO_VAZIO_MS,
   type ControleDaDiversao,
 } from './sob-demanda';
@@ -48,7 +52,8 @@ function criarControle(): ControleDaDiversao & { chamadas: string[] } {
 
 beforeEach(async () => {
   bd = await criarBancoDeTeste();
-  await bd.update(servidoresDiversao).set({ ativo: true });
+  // Os testes partem de todos sob demanda; o sempre ligado (Mutação, migração 0039) é marcado em cada teste que precisa.
+  await bd.update(servidoresDiversao).set({ ativo: true, sobDemanda: true });
   const linhas = await bd.select().from(servidoresDiversao);
   servidores = Object.fromEntries(linhas.map((linha) => [linha.nomeNoServidor!, linha]));
   jogador = await criarUsuario(bd, { estado: 'ativo' });
@@ -260,4 +265,38 @@ test('adiar não liga nem mexe em servidor desligado ou com gente', async () => 
   await adiarDesligamento(bd, servidores.fantasma.id, AGORA);
   expect((await estadoDe('equipe')).vazioDesde).toBeNull();
   expect((await estadoDe('fantasma'))?.estado ?? 'desligado').toBe('desligado');
+});
+
+test('por enquanto só o Adm liga um modo pela tela Jogar; membro entra nos que já estão ligados (dono, 13/11/2026)', async () => {
+  await expect(ligarPeloJogar(bd, controle, servidores.fantasma.id, jogador, 3, AGORA)).rejects.toBeInstanceOf(SemPermissao);
+  const gm = await criarUsuario(bd, { estado: 'ativo', papel: 'gm' });
+  await expect(ligarPeloJogar(bd, controle, servidores.fantasma.id, gm, 3, AGORA)).rejects.toBeInstanceOf(SemPermissao);
+  expect(controle.chamadas).toEqual([]);
+  const adm = await criarUsuario(bd, { estado: 'ativo', papel: 'adm' });
+  expect(await ligarPeloJogar(bd, controle, servidores.fantasma.id, adm, 3, AGORA)).toBe('ligando');
+  expect(controle.chamadas).toEqual(['ligar fantasma']);
+});
+
+test('modo sempre ligado (Mutação) que caiu volta sozinho, depois da espera; sob demanda não (dono, 13/11/2026)', async () => {
+  await bd.update(servidoresDiversao).set({ sobDemanda: false }).where(eq(servidoresDiversao.id, servidores.mutacao.id));
+  await bd.insert(estadosDaDiversao).values([
+    { servidorId: servidores.mutacao.id, estado: 'desligado', desde: AGORA },
+    { servidorId: servidores.fantasma.id, estado: 'desligado', desde: AGORA },
+  ]);
+  // Logo depois de cair, espera: um servidor caindo sem parar não fica ligando de novo a cada volta.
+  await acompanharDiversao(bd, controle, perguntar, depois(ESPERA_PARA_RELIGAR_MS - 1_000));
+  expect(controle.chamadas).toEqual([]);
+  await acompanharDiversao(bd, controle, perguntar, depois(ESPERA_PARA_RELIGAR_MS + 1_000));
+  expect(controle.chamadas).toEqual(['ligar mutacao']);
+  expect((await estadoDe('mutacao')).estado).toBe('ligando');
+  expect((await estadoDe('fantasma')).estado).toBe('desligado');
+});
+
+test('em manutenção o modo sempre ligado não é religado', async () => {
+  await bd.update(servidoresDiversao).set({ sobDemanda: false }).where(eq(servidoresDiversao.id, servidores.mutacao.id));
+  await bd.insert(estadosDaDiversao).values({ servidorId: servidores.mutacao.id, estado: 'desligado', desde: AGORA });
+  const adm = await criarUsuario(bd, { estado: 'ativo', papel: 'adm' });
+  await ligarManutencao(bd, adm, AGORA);
+  await acompanharDiversao(bd, controle, perguntar, depois(ESPERA_PARA_RELIGAR_MS + 1_000));
+  expect(controle.chamadas).toEqual([]);
 });

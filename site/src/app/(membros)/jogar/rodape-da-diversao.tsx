@@ -19,6 +19,7 @@ export const ERROS_DA_DIVERSAO: Record<string, string> = {
   indisponivel: 'Este modo não pode ser ligado agora.',
   manutencao: 'Os servidores estão em manutenção. Mix e Diversão voltam assim que o servidor for atualizado.',
   celular: 'Pelo celular dá para ver tudo, mas o servidor só liga pelo PC, onde o CS2 roda.',
+  'so-adm': 'Por enquanto quem liga os modos é a equipe. Entre nos que estão ligados.',
 };
 
 export function nomeDoModo(modo: ServidorDiversao['modo']) {
@@ -33,6 +34,7 @@ export function RodapeDoCartao({
   agora,
   celular = false,
   emManutencao = false,
+  podeLigar = false,
 }: {
   servidor: ServidorDiversao;
   situacao: SituacaoDoServidor;
@@ -43,6 +45,8 @@ export function RodapeDoCartao({
   celular?: boolean;
   /** Servidores em manutenção: no lugar de ligar, o aviso de que falta a atualização. */
   emManutencao?: boolean;
+  /** Por enquanto só o Adm liga (dono, 13/11/2026); quem não pode vê o modo desligado, sem botão. */
+  podeLigar?: boolean;
 }) {
   const estado = estadoDoCartao(servidor, situacao, guardado?.estado, guardado?.teste);
   if (estado === 'em_breve') return <span className="etiqueta">Em breve</span>;
@@ -62,6 +66,7 @@ export function RodapeDoCartao({
   if (estado === 'trocando_mapa') return <span className="etiqueta">Trocando de mapa...</span>;
   if (estado === 'desligado_sob_demanda') {
     if (emManutencao) return <AguardandoAtualizacao curto />;
+    if (!podeLigar) return <span className="etiqueta">Desligado</span>;
     if (celular) return <span className="etiqueta">Ligue pelo PC</span>;
     const falhou = guardado?.erro && agora - guardado.desde.getTime() < AVISO_DE_FALHA_MS;
     return (

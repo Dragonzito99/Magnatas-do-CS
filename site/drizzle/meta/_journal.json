@@ -274,6 +274,13 @@
       "when": 1794509801540,
       "tag": "0038_convites_com_presente",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1794594398047,
+      "tag": "0039_mutacao_sempre_ligada",
+      "breakpoints": true
     }
   ]
 }

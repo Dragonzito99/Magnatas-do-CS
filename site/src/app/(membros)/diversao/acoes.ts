@@ -9,7 +9,8 @@ import { obterBd } from '@/bd/conexao';
 import { ehCelular } from '@/dominio/aparelho';
 import { lerModo } from '@/dominio/diversao';
 import { EmManutencao } from '@/dominio/manutencao';
-import { adiarDesligamento, LimiteDeServidores, maximoDeLigados, pedirParaLigar, ServidorIndisponivel } from '@/dominio/sob-demanda';
+import { SemPermissao } from '@/dominio/equipe';
+import { adiarDesligamento, ligarPeloJogar, LimiteDeServidores, maximoDeLigados, ServidorIndisponivel } from '@/dominio/sob-demanda';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
 
@@ -30,11 +31,12 @@ export async function ligar(dados: FormData): Promise<void> {
   let erro: string | undefined;
   try {
     const { controle } = diversaoDoAmbiente(controladorDoAmbiente());
-    await pedirParaLigar(obterBd(), controle, servidorId.data, ator, maximoDeLigados(process.env.DIVERSAO_MAXIMO_LIGADOS));
+    await ligarPeloJogar(obterBd(), controle, servidorId.data, ator, maximoDeLigados(process.env.DIVERSAO_MAXIMO_LIGADOS));
   } catch (falha) {
     if (falha instanceof LimiteDeServidores) erro = 'limite';
     else if (falha instanceof ServidorIndisponivel) erro = 'indisponivel';
     else if (falha instanceof EmManutencao) erro = 'manutencao';
+    else if (falha instanceof SemPermissao) erro = 'so-adm';
     else throw falha;
   }
   revalidatePath('/jogar');

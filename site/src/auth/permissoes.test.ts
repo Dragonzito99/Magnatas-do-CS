@@ -17,6 +17,9 @@ test.each<[Papel, Acao, boolean]>([
   ['jogador', 'dar_convites', false],
   ['gm', 'dar_convites', false],
   ['adm', 'dar_convites', true],
+  ['jogador', 'ligar_diversao', false],
+  ['gm', 'ligar_diversao', false],
+  ['adm', 'ligar_diversao', true],
 ])('%s pode %s: %s', (papel, acao, esperado) => {
   expect(pode(conta(papel), acao)).toBe(esperado);
 });

@@ -1,7 +1,8 @@
 import { and, asc, eq, inArray, isNotNull } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { estadosDaDiversao, servidoresDiversao, type EstadoDaDiversao, type ServidorDiversao } from '@/bd/esquema';
-import { exigirServidoresNoAr } from './manutencao';
+import { exigirPermissao } from './equipe';
+import { exigirServidoresNoAr, manutencaoAtual } from './manutencao';
 
 /** Liga e desliga um servidor da Diversão pelo nome dele na VPS. */
 export type ControleDaDiversao = { ligar(nome: string): Promise<void>; desligar(nome: string): Promise<void> };
@@ -11,6 +12,8 @@ export const PRAZO_PARA_LIGAR_MS = 3 * 60_000;
 export const TEMPO_VAZIO_MS = 5 * 60_000;
 /** Na troca de mapa o servidor fica alguns segundos sem responder: só depois disso conta como desligado. */
 export const PRAZO_SEM_RESPOSTA_MS = 45_000;
+/** Modo sempre ligado que caiu espera isto antes de religar, para um servidor caindo sem parar não ligar a cada volta. */
+export const ESPERA_PARA_RELIGAR_MS = 2 * 60_000;
 export const MAXIMO_LIGADOS_PADRAO = 3;
 /** O nome vai para um comando: só letras minúsculas, números e hífen. */
 export const NOME_NO_SERVIDOR_VALIDO = /^[a-z0-9-]{1,32}$/;
@@ -126,6 +129,19 @@ export async function pedirParaLigar(
   }
 }
 
+/** O botão Ligar da tela Jogar: só quem tem 'ligar_diversao' (hoje, só o Adm). Quem não pode entra nos que já estão ligados. */
+export async function ligarPeloJogar(
+  bd: Bd,
+  controle: ControleDaDiversao,
+  servidorId: string,
+  ator: { id: string },
+  maximo: number,
+  agora: Date = new Date(),
+): Promise<'ligando' | 'ligado' | 'desligado'> {
+  await exigirPermissao(bd, ator, 'ligar_diversao');
+  return pedirParaLigar(bd, controle, servidorId, ator, maximo, agora);
+}
+
 type Mudanca = Partial<Pick<EstadoDaDiversao, 'estado' | 'desde' | 'vazioDesde' | 'semRespostaDesde' | 'erro'>>;
 
 /** O que fazer com um servidor, dada a resposta dele. Devolve a mudança no estado e se é para fechar o servidor. */
@@ -186,6 +202,40 @@ export async function acompanharDiversao(
       await controle.desligar(servidor.nomeNoServidor).catch((erro) => {
         console.warn(`Não foi possível desligar o servidor ${servidor.nomeNoServidor} da Diversão:`, erro);
       });
+    }
+  }
+  await religarOsSempreLigados(bd, controle, respostas, agora);
+}
+
+/** Modo sempre ligado (sob_demanda = false, como a Mutação desde 13/11/2026) que caiu volta sozinho, depois da espera. */
+async function religarOsSempreLigados(
+  bd: Bd,
+  controle: ControleDaDiversao,
+  respostas: { servidor: ServidorDiversao; resposta: RespostaDoServidor }[],
+  agora: Date,
+): Promise<void> {
+  if (await manutencaoAtual(bd)) return;
+  for (const { servidor, resposta } of respostas) {
+    const nome = servidor.nomeNoServidor;
+    if (servidor.sobDemanda || resposta.ligado || !nome || !nomeValido(nome)) continue;
+    const religar = await bd.transaction(async (tx) => {
+      const [estado] = await tx.select().from(estadosDaDiversao).where(eq(estadosDaDiversao.servidorId, servidor.id)).for('update');
+      if (!estado || estado.estado !== 'desligado' || agora.getTime() - estado.desde.getTime() < ESPERA_PARA_RELIGAR_MS) return false;
+      await tx
+        .update(estadosDaDiversao)
+        .set({ estado: 'ligando', desde: agora, vazioDesde: null, semRespostaDesde: null, pedidoPor: null, erro: null })
+        .where(eq(estadosDaDiversao.servidorId, servidor.id));
+      return true;
+    });
+    if (!religar) continue;
+    try {
+      await controle.ligar(nome);
+    } catch (erro) {
+      console.warn(`Não foi possível religar o servidor ${nome} da Diversão:`, erro);
+      await bd
+        .update(estadosDaDiversao)
+        .set({ estado: 'desligado', desde: agora, erro: mensagemDoErro(erro) })
+        .where(and(eq(estadosDaDiversao.servidorId, servidor.id), eq(estadosDaDiversao.estado, 'ligando')));
     }
   }
 }

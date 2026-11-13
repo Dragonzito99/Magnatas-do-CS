@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { exigirAcesso } from '@/auth/guarda';
+import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
 import { ehCelular } from '@/dominio/aparelho';
 import { clasDosUsuarios } from '@/dominio/clas';
@@ -258,7 +259,7 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
                               </small>
                             </span>
                             <span className="rodape-da-variacao">
-                              <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} celular={celular} emManutencao={!!manutencao} />
+                              <RodapeDoCartao servidor={servidor} situacao={situacoes[indice]} guardado={guardados.get(servidor.id)} modo={modoDaDiversao} agora={agora} celular={celular} emManutencao={!!manutencao} podeLigar={pode(usuario, 'ligar_diversao')} />
                             </span>
                           </div>
                         );
