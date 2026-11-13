@@ -11934,3 +11934,36 @@ a.linha-simples-adm:hover span {
     white-space: normal;
   }
 }
+
+/* Cartão das patentes no Início: os escudos dos 6 grupos subindo como escada, com brilho dourado no topo. */
+.cartao-das-patentes {
+  background:
+    radial-gradient(circle at 78% 18%, rgba(245, 179, 1, 0.35), transparent 45%),
+    radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.35), transparent 55%),
+    #0c0716;
+}
+
+.escada-das-patentes {
+  position: absolute;
+  inset: 22px 22px 112px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.5%;
+}
+
+.escada-das-patentes .insignia {
+  width: 15.5%;
+  height: auto;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
+}
+
+.escada-das-patentes .insignia:nth-child(2) { margin-bottom: 6%; }
+.escada-das-patentes .insignia:nth-child(3) { margin-bottom: 12%; }
+.escada-das-patentes .insignia:nth-child(4) { margin-bottom: 18%; }
+.escada-das-patentes .insignia:nth-child(5) { margin-bottom: 24%; }
+.escada-das-patentes .insignia:nth-child(6) {
+  width: 21%;
+  margin-bottom: 30%;
+  filter: drop-shadow(0 0 18px rgba(245, 179, 1, 0.65));
+}

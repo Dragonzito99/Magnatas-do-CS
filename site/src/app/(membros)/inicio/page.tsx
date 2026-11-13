@@ -1,5 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { InsigniaDaPatente } from '../insignia-da-patente';
+import { patentesPorGrupo } from '@/dominio/xp';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
 import { bombandoAgora } from '@/dominio/bombando';
@@ -104,8 +106,13 @@ export default async function Inicio() {
             <p>Os servidores ligam na hora. Abra um.</p>
           </Link>
         )}
-        <Link href="/patentes" className="cartao-destaque">
-          <Image src="/mapas/biochemical-hotel.webp" alt="" width={480} height={540} />
+        <Link href="/patentes" className="cartao-destaque cartao-das-patentes">
+          {/* A arte são as próprias patentes, um escudo por grupo subindo do Rua ao Topo (dono, 13/11/2026: a foto do mapa não tinha nada a ver). */}
+          <div className="escada-das-patentes" aria-hidden="true">
+            {patentesPorGrupo().map(({ grupo, patentes }) => (
+              <InsigniaDaPatente key={grupo} patente={{ grupo, ordemNoGrupo: patentes.at(-1)?.ordemNoGrupo ?? 1 }} />
+            ))}
+          </div>
           <span className="selo-modo">Novo</span>
           <h2>Patentes com níveis</h2>
           <p>83 degraus, do Recruta ao Magnata Lendário.</p>
