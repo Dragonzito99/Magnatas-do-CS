@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { pode } from '@/auth/permissoes';
 import { usuarioAtual } from '@/auth/sessao-atual';
@@ -24,6 +23,7 @@ import { Cabecalho } from './cabecalho';
 import { ManterPresenca } from './manter-presenca';
 import { Sino } from './sino';
 import { VoltarParaAPartida } from './voltar-para-a-partida';
+import { RodapeDoSite } from '../rodape-do-site';
 
 export default async function LayoutDeMembros({ children }: { children: React.ReactNode }) {
   const usuario = await usuarioAtual();
@@ -63,10 +63,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         {partida && <VoltarParaAPartida partidaId={partida.id} />}
         {children}
       </main>
-      <footer className="rodape-do-site largura">
-        <Link href="/regras">Regras do clube</Link>
-        <Link href="/privacidade">Privacidade</Link>
-      </footer>
+      <RodapeDoSite />
       <AvisoDeSala sala={sala ? { nome: sala.nome, membros: sala.membros.length, emPartida: sala.partidaId !== null } : null} />
       <BarraDeAmigos amigos={amigos} pendentes={pedidos.length + convites.length} naoLidas={naoLidas} grupos={grupos} />
       <JanelaDeConversa />
