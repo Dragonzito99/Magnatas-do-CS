@@ -1956,7 +1956,6 @@ def test_o_diario_das_entidades_diz_qual_numero_derrubou_o_jogo():
     ligar = metodo_da_mutacao("private void LigarMutacao(")
     # O nascimento é anotado já montado (OnEntitySpawned, como o TirarComandosDoMapa), não no meio da criação.
     assert "RegisterListener<Listeners.OnEntitySpawned>(AnotarNascimento)" in ligar
-    assert "RegisterListener<Listeners.OnEntityDeleted>(AnotarSumico)" in ligar
     sair = metodo_da_mutacao("public HookResult AoSairDaMutacao(")
     assert "GuardarDiarioDasEntidades(" in sair
     guardar = metodo_da_mutacao("private void GuardarDiarioDasEntidades(")
@@ -1966,16 +1965,13 @@ def test_o_diario_das_entidades_diz_qual_numero_derrubou_o_jogo():
     assert re.search(r"ArquivosDoDiario = \d+;", CODIGO_DA_MUTACAO)
 
 
-def test_o_diario_nunca_le_o_nome_de_quem_esta_sumindo_nem_anota_a_troca_de_mapa():
-    # 13/11/2026: a Mutação caía 5 s depois de ligar, na troca da Dust 2 para o mapa da Oficina. Nessa troca somem milhares
-    # de coisas, e o diário lia o nome (DesignerName) de cada uma enquanto ela era apagada: o servidor caía (segfault).
-    sumico = metodo_da_mutacao("private void AnotarSumico(")
-    assert "DesignerName" not in sumico
-    assert "trocandoDeMapa" in sumico
+def test_o_diario_nao_escuta_quem_some_porque_derrubava_a_mutacao_na_troca_de_mapa():
+    # 13/11/2026: a Mutação caía ao trocar da Dust 2 para o mapa da Oficina. Sem o plugin ela ficava de pé; ler o nome e
+    # depois até só o número de cada entidade apagada (OnEntityDeleted) derrubava o servidor. O diário anota só quem nasce:
+    # o "missing client entity N" se acha pelo último nascimento com aquele número.
+    assert "OnEntityDeleted" not in CODIGO_DA_MUTACAO
+    assert "AnotarSumico" not in CODIGO_DA_MUTACAO
     assert "trocandoDeMapa" in metodo_da_mutacao("private void AnotarNascimento(")
-    ligar = metodo_da_mutacao("private void LigarMutacao(")
-    assert "RegisterListener<Listeners.OnMapEnd>(() => trocandoDeMapa = true)" in ligar
-    assert "trocandoDeMapa = false;" in ligar
 
 
 def test_o_g_fica_no_registro_do_servidor_para_conferir():

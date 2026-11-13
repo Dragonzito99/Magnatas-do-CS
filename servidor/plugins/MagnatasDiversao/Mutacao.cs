@@ -525,8 +525,8 @@ public partial class ModoDeDiversao
         RegisterListener<Listeners.OnTick>(PoderNoE);
         RegisterListener<Listeners.OnTick>(PuloDuplo);
         RegisterListener<Listeners.OnEntitySpawned>(TirarComandosDoMapa);
+        // Só quem nasce: escutar quem some derrubava a Mutação na troca para o mapa da Oficina (13/11/2026).
         RegisterListener<Listeners.OnEntitySpawned>(AnotarNascimento);
-        RegisterListener<Listeners.OnEntityDeleted>(AnotarSumico);
         RegisterListener<Listeners.OnMapEnd>(() => trocandoDeMapa = true);
         AddTimer(IntervaloDoAvisoDeEspera, AvisarQueFaltaJogador, TimerFlags.REPEAT);
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
@@ -1154,21 +1154,14 @@ public partial class ModoDeDiversao
         while (diarioDasEntidades.Count > MaximoNoDiario) diarioDasEntidades.Dequeue();
     }
 
-    /// <summary>Já montada (OnEntitySpawned), a entidade tem nome; na troca de mapa, nada é anotado.</summary>
+    /// <summary>
+    /// Já montada (OnEntitySpawned), a entidade tem nome; na troca de mapa, nada é anotado. Para o "missing client entity
+    /// N", vale o último nascimento com o número N.
+    /// </summary>
     private void AnotarNascimento(CEntityInstance entidade)
     {
         if (trocandoDeMapa) return;
         Anotar($"nasce n={entidade.Index} {entidade.DesignerName}");
-    }
-
-    /// <summary>
-    /// Só o número: ler o nome de quem está sendo apagado derrubou o servidor na troca da Dust 2 para o mapa da Oficina,
-    /// quando somem milhares de coisas de uma vez (13/11/2026, a Mutação caía 5 s depois de ligar). O nome vem do nascimento.
-    /// </summary>
-    private void AnotarSumico(CEntityInstance entidade)
-    {
-        if (trocandoDeMapa) return;
-        Anotar($"some n={entidade.Index}");
     }
 
     /// <summary>Quando uma pessoa sai (a queda do jogo aparece no servidor como saída por tempo esgotado), o diário vai para um arquivo.</summary>
