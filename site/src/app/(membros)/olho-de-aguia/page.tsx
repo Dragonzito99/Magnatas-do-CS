@@ -283,8 +283,18 @@ export default async function OlhoDeAguia({ searchParams }: { searchParams: Prom
                   </Link>
                 </div>
               </form>
+            ) : denuncia.podeRetirar ? (
+              <form className="conclusao-do-caso">
+                <input type="hidden" name="denunciaId" value={denuncia.id} />
+                <div className="decisao-do-caso">
+                  <BotaoConfirmar formAction={arquivarDeMensagem} mensagem="Retirar a sua denúncia? A mensagem continua na conversa." className="botao contorno pequeno">
+                    Retirar minha denúncia
+                  </BotaoConfirmar>
+                </div>
+                <small className="apoio">Foi você quem denunciou: pode retirar, e apagar a mensagem fica para outra pessoa da equipe.</small>
+              </form>
             ) : (
-              <small className="apoio">Você está envolvido nesta denúncia, então outra pessoa da equipe precisa resolver.</small>
+              <small className="apoio">A mensagem é sua, então outra pessoa da equipe precisa resolver.</small>
             )}
           </div>
         ))}

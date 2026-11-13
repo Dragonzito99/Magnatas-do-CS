@@ -342,7 +342,7 @@ test('denúncia de mensagem chega à equipe com o texto, conta no sino e não re
   await expect(listarDenunciasDeMensagem(bd, membro)).rejects.toBeInstanceOf(SemPermissao);
   const lista = await listarDenunciasDeMensagem(bd, gm);
   expect(lista).toHaveLength(1);
-  expect(lista[0]).toMatchObject({ texto: 'xingamento', autor: { id: acusado.id, apelido: 'acusado' }, denuncianteApelido: 'quem_denunciou', podeResolver: true });
+  expect(lista[0]).toMatchObject({ texto: 'xingamento', autor: { id: acusado.id, apelido: 'acusado' }, denuncianteApelido: 'quem_denunciou', podeResolver: true, podeRetirar: false });
 });
 
 test('apagar a mensagem denunciada some com ela para todos e fecha a denúncia, com auditoria', async () => {
@@ -399,4 +399,23 @@ test('chamadosRecentes: os já resolvidos, o mais novo primeiro, com quem chamou
   expect(recentes.map((linha) => linha.estado)).toEqual(['virou_denuncia', 'atendido']);
   expect(recentes[1]).toMatchObject({ chamadoPorApelido: 'quem_denunciou', atendidoPorApelido: gm.apelido });
   await expect(chamadosRecentes(bd, membro)).rejects.toBeInstanceOf(SemPermissao);
+});
+
+test('quem denunciou a mensagem pode retirar a própria denúncia, mas não apagar a mensagem (13/11/2026)', async () => {
+  const { conversa } = await mensagemDenunciada('oi');
+  await bd.update(usuarios).set({ papel: 'adm' }).where(eq(usuarios.id, denunciante.id));
+  const [denuncia] = await listarDenunciasDeMensagem(bd, denunciante);
+  expect(denuncia).toMatchObject({ podeResolver: false, podeRetirar: true });
+  await expect(resolverDenunciaDeMensagem(bd, denunciante, denuncia.id, 'apagar')).rejects.toBeInstanceOf(SemPermissao);
+  await resolverDenunciaDeMensagem(bd, denunciante, denuncia.id, 'arquivar');
+  expect(await mensagensDe(bd, denunciante, conversa, AGORA)).toHaveLength(1);
+  expect((await bd.select().from(denunciasDeMensagem))[0]).toMatchObject({ estado: 'encerrada', conclusao: 'Retirada por quem denunciou' });
+});
+
+test('quem escreveu a mensagem não retira nem resolve a denúncia contra ela', async () => {
+  await mensagemDenunciada('xingamento');
+  await bd.update(usuarios).set({ papel: 'gm' }).where(eq(usuarios.id, acusado.id));
+  const [denuncia] = await listarDenunciasDeMensagem(bd, acusado);
+  expect(denuncia).toMatchObject({ podeResolver: false, podeRetirar: false });
+  await expect(resolverDenunciaDeMensagem(bd, acusado, denuncia.id, 'arquivar')).rejects.toBeInstanceOf(SemPermissao);
 });

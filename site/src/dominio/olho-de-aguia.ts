@@ -297,6 +297,8 @@ export type DenunciaDeMensagem = {
   autor: UsuarioPublico & { estado: EstadoUsuario };
   denuncianteApelido: string;
   podeResolver: boolean;
+  /** Quem denunciou pode desistir da própria denúncia (fecha sem apagar); julgar é de outra pessoa da equipe. */
+  podeRetirar: boolean;
 };
 
 /** As denúncias abertas de mensagens das conversas (dono, 12/11/2026), da mais antiga para a mais nova. */
@@ -320,7 +322,11 @@ export async function listarDenunciasDeMensagem(bd: Bd, leitor: Pick<Usuario, 'i
     .innerJoin(denunciante, eq(denunciante.id, denunciasDeMensagem.denuncianteId))
     .where(ne(denunciasDeMensagem.estado, 'encerrada'))
     .orderBy(asc(denunciasDeMensagem.criadoEm));
-  return abertas.map(({ denuncianteId, ...linha }) => ({ ...linha, podeResolver: linha.autor.id !== leitor.id && denuncianteId !== leitor.id }));
+  return abertas.map(({ denuncianteId, ...linha }) => ({
+    ...linha,
+    podeResolver: linha.autor.id !== leitor.id && denuncianteId !== leitor.id,
+    podeRetirar: linha.autor.id !== leitor.id && denuncianteId === leitor.id,
+  }));
 }
 
 const CONCLUSAO_DA_MENSAGEM = { apagar: 'Mensagem apagada', arquivar: 'Arquivada sem apagar' } as const;
@@ -338,8 +344,10 @@ export async function resolverDenunciaDeMensagem(bd: Bd, gm: Pick<Usuario, 'id'>
       .where(and(eq(denunciasDeMensagem.id, id), ne(denunciasDeMensagem.estado, 'encerrada')))
       .for('update');
     if (!aberta) throw new DenunciaIndisponivel();
-    if (aberta.autorId === gm.id || aberta.denuncianteId === gm.id) throw new SemPermissao();
-    const conclusao = CONCLUSAO_DA_MENSAGEM[decisao];
+    // Quem escreveu nunca resolve. Quem denunciou só retira a própria denúncia (13/11/2026): apagar é de outra pessoa.
+    const retirando = aberta.denuncianteId === gm.id;
+    if (aberta.autorId === gm.id || (retirando && decisao !== 'arquivar')) throw new SemPermissao();
+    const conclusao = retirando ? 'Retirada por quem denunciou' : CONCLUSAO_DA_MENSAGEM[decisao];
     const fechar = { estado: 'encerrada' as const, analistaId: gm.id, conclusao };
     if (decisao === 'apagar') {
       await tx.update(mensagens).set({ apagadaEm: agora }).where(eq(mensagens.id, aberta.mensagemId));
