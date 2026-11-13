@@ -6,22 +6,22 @@ import { obterBd } from '@/bd/conexao';
 import { listarBanimentosAbertos } from '@/dominio/banimentos';
 import { contagemDeCasos, membrosOnline } from '@/dominio/denuncias';
 import { nomeDoMapaConhecido } from '@/dominio/diversao';
-import { listarMembros } from '@/dominio/equipe';
 import { manutencaoAtual } from '@/dominio/manutencao';
 import { chamadosEmAndamento, listarCasosDeDenuncia } from '@/dominio/olho-de-aguia';
-import { partidasDoDia, quedasDoPainel, servidoresDoPainel } from '@/dominio/painel';
-import { NOME_DO_PAPEL } from '@/dominio/textos-da-conta';
+import { quedasDoPainel, servidoresDoPainel } from '@/dominio/painel';
+import { numerosDoDash } from '@/dominio/painel-adm';
 import { nomeDaPartida, nomeDoMapa, TEXTOS_DO_ESTADO } from '@/dominio/textos-da-partida';
 import { Atualizar } from '../atualizar';
 import { atender } from '../olho-de-aguia/acoes';
 import { mudarManutencao } from './acoes';
-import { TelaDoPainel } from './lateral-do-painel';
+import { GraficoDeDias, NumeroDoPainel, TelaDoPainel } from './lateral-do-painel';
 
 const CASOS_NO_RESUMO = 4;
 const horaDaQueda = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
+const reais = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const NOME_DO_ESTADO_DO_SERVIDOR = { ligado: 'Ligado', ligando: 'Ligando', desligado: 'Desligado' } as const;
 
-/** O Resumo do Painel ADM, como no rascunho: os números do clube, os casos, os chamados, os servidores e a equipe. */
+/** O Dashboard do Painel ADM (dono, 13/11/2026: "um dash completo"): membros, jogo, dinheiro, gráficos e o que pede atenção. */
 export default async function PainelAdm() {
   const usuario = await exigirAcesso('/painel');
   if (!pode(usuario, 'ver_equipe')) redirect('/inicio');
@@ -30,11 +30,10 @@ export default async function PainelAdm() {
   const moderar = pode(usuario, 'moderar');
   const verQuedas = pode(usuario, 'ver_quedas');
   const cuidarDosServidores = pode(usuario, 'cuidar_dos_servidores');
-  const [contagem, membros, online, hoje, servidores, casos, propostas, chamados, quedas, manutencao] = await Promise.all([
+  const [contagem, numeros, online, servidores, casos, propostas, chamados, quedas, manutencao] = await Promise.all([
     moderar ? contagemDeCasos(bd, usuario) : null,
-    listarMembros(bd),
+    numerosDoDash(bd),
     membrosOnline(bd),
-    partidasDoDia(bd),
     servidoresDoPainel(bd),
     moderar ? listarCasosDeDenuncia(bd, usuario) : [],
     moderar ? listarBanimentosAbertos(bd, usuario) : [],
@@ -42,9 +41,9 @@ export default async function PainelAdm() {
     verQuedas ? quedasDoPainel(bd) : [],
     manutencaoAtual(bd),
   ]);
-  const ativos = membros.filter((membro) => membro.estado === 'ativo').length;
   const abertos = contagem ? contagem.chamados + contagem.denuncias + contagem.propostas : 0;
-  const equipe = membros.filter((membro) => membro.papel !== 'jogador');
+  const ligados = servidores.filter((servidor) => servidor.estado === 'ligado').length;
+  const { membros, dinheiro } = numeros;
 
   return (
     <>
@@ -52,25 +51,42 @@ export default async function PainelAdm() {
       <TelaDoPainel
         usuario={usuario}
         atual="resumo"
-        titulo="Resumo"
+        titulo="Dashboard"
       >
-        <div className="numeros-painel">
-          <div className={abertos > 0 ? 'numero-painel alerta' : 'numero-painel'}>
-            <span>Casos abertos</span>
-            <b>{abertos}</b>
-          </div>
-          <div className="numero-painel">
-            <span>Membros ativos</span>
-            <b>{ativos}</b>
-          </div>
-          <div className="numero-painel ok">
-            <span>Online agora</span>
-            <b>{online.length}</b>
-          </div>
-          <div className="numero-painel">
-            <span>Partidas hoje</span>
-            <b>{hoje}</b>
-          </div>
+        <h3 className="faixa-adm">Membros</h3>
+        <div className="numeros-adm">
+          <NumeroDoPainel rotulo="Contas" valor={membros.total} apoio={`${membros.ativos} ativas`} href="/painel/usuarios" />
+          <NumeroDoPainel rotulo="Online agora" valor={online.length} cor="verde" />
+          <NumeroDoPainel rotulo="Novos hoje" valor={membros.novosHoje} apoio={`${membros.novos7Dias} na semana`} cor="ouro" />
+          <NumeroDoPainel
+            rotulo="Esperando verificação"
+            valor={membros.aguardandoVerificacao}
+            cor={membros.aguardandoVerificacao > 0 ? 'azul' : 'cinza'}
+            href="/painel/usuarios?estado=aguardando_verificacao"
+          />
+          <NumeroDoPainel rotulo="Suspensos e banidos" valor={membros.punidos} cor={membros.punidos > 0 ? 'vermelho' : 'cinza'} href="/painel/usuarios?estado=suspenso" />
+          <NumeroDoPainel rotulo="Convites usados" valor={numeros.convitesUsados7Dias} apoio="nos últimos 7 dias" href="/convites" />
+        </div>
+
+        <h3 className="faixa-adm">Jogo e dinheiro</h3>
+        <div className="numeros-adm">
+          <NumeroDoPainel rotulo="Partidas hoje" valor={numeros.partidas.hoje} apoio={`${numeros.partidas.semana} na semana`} href="/painel/partidas" />
+          <NumeroDoPainel rotulo="Servidores ligados" valor={ligados} apoio={`de ${servidores.length} da Diversão`} cor="verde" href="/painel/servidores" />
+          <NumeroDoPainel rotulo="Casos abertos" valor={abertos} cor={abertos > 0 ? 'vermelho' : 'cinza'} href={moderar ? '/olho-de-aguia' : undefined} />
+          <NumeroDoPainel
+            rotulo="Vendas do mês"
+            valor={reais.format((dinheiro.magcoinsDoMesCentavos + dinheiro.mensalidadesDoMesCentavos) / 100)}
+            apoio="MagCoins e mensalidades"
+            cor="ouro"
+            href={pode(usuario, 'ver_envios') ? '/painel/envios' : undefined}
+          />
+          <NumeroDoPainel rotulo="Premium" valor={dinheiro.premiumAtivos} apoio="assinaturas em dia" cor="ouro" href="/painel/usuarios?premium=1" />
+          <NumeroDoPainel rotulo="Apoiadores" valor={dinheiro.apoiadoresAtivos} apoio="Bronze, Prata e Ouro" />
+        </div>
+
+        <div className="graficos-adm">
+          <GraficoDeDias titulo="Cadastros por dia" pontos={numeros.cadastrosPorDia} />
+          <GraficoDeDias titulo="Partidas por dia" pontos={numeros.partidasPorDia} />
         </div>
 
         {moderar && (
@@ -140,7 +156,7 @@ export default async function PainelAdm() {
           <section className="painel">
             <div className="cabeca-painel">
               <h2>Servidores</h2>
-              <Link href="/jogar">Ver no Jogar</Link>
+              <Link href="/painel/servidores">Gerenciar</Link>
             </div>
             {cuidarDosServidores && (
               <form action={mudarManutencao} className="linha-caso linha-da-manutencao">
@@ -195,27 +211,6 @@ export default async function PainelAdm() {
           </section>
         )}
 
-        <section className="painel">
-          <div className="cabeca-painel">
-            <h2>Membros e cargos</h2>
-            <Link href="/equipe">Ver todos</Link>
-          </div>
-          {equipe.map((membro) => (
-            <div className="linha-caso" key={membro.id}>
-              <div>
-                <Link href={`/jogadores/${membro.id}`}>{membro.apelido}</Link>
-                <small>
-                  {membro.convidadoPorApelido ? `Convidado por ${membro.convidadoPorApelido}` : 'Sem convite registrado'} · {membro.convitesRestantes}{' '}
-                  {membro.convitesRestantes === 1 ? 'convite' : 'convites'}
-                </small>
-              </div>
-              <span className="selo-caso">{NOME_DO_PAPEL[membro.papel]}</span>
-              <Link className="botao contorno pequeno" href="/equipe">
-                Editar
-              </Link>
-            </div>
-          ))}
-        </section>
       </TelaDoPainel>
     </>
   );

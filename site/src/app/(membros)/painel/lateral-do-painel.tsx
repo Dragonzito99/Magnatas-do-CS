@@ -5,12 +5,20 @@ import { obterBd } from '@/bd/conexao';
 import type { Usuario } from '@/bd/esquema';
 import { contagemDeCasos } from '@/dominio/denuncias';
 
-export type ParteDoPainel = 'resumo' | 'olho' | 'membros' | 'noticias' | 'grana' | 'envios';
+export type ParteDoPainel =
+  | 'resumo'
+  | 'usuarios'
+  | 'partidas'
+  | 'servidores'
+  | 'olho'
+  | 'convites'
+  | 'noticias'
+  | 'grana'
+  | 'envios'
+  | 'registro'
+  | 'membros';
 
-// O que ainda não tem tela fica listado, apagado, para a equipe saber o que vem por aí.
-const EM_BREVE = ['Punições', 'Partidas', 'Servidores', 'Suas ideias aqui'];
-
-/** O menu da lateral do Painel ADM, como no rascunho. Cada um vê só o que o cargo permite. */
+/** O menu da lateral do Painel ADM, no padrão da Shop. Cada um vê só o que o cargo permite. */
 async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: ParteDoPainel }) {
   const moderar = pode(usuario, 'moderar');
   const casos = moderar ? await contagemDeCasos(obterBd(), usuario) : null;
@@ -22,7 +30,11 @@ async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: Pa
   );
   return (
     <nav className="painel-lado" aria-label="Partes do painel">
-      {item('resumo', '/painel', 'Resumo')}
+      {item('resumo', '/painel', 'Dashboard')}
+      <small>Gestão</small>
+      {item('usuarios', '/painel/usuarios', 'Usuários')}
+      {item('partidas', '/painel/partidas', 'Partidas rolando')}
+      {item('servidores', '/painel/servidores', 'Servidores')}
       {casos && (
         <>
           <small>Segurança</small>
@@ -34,16 +46,11 @@ async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: Pa
         </>
       )}
       <small>Clube</small>
-      {item('membros', '/equipe', 'Membros e cargos')}
+      {item('convites', '/convites', 'Convites')}
       {pode(usuario, 'publicar_noticia') && item('noticias', '/equipe/noticias', 'Notícias')}
       {pode(usuario, 'ajustar_grana') && item('grana', '/painel/grana', 'Grana')}
       {pode(usuario, 'ver_envios') && item('envios', '/painel/envios', 'Envios e vendas')}
-      <small>Em breve</small>
-      {EM_BREVE.map((nome) => (
-        <span key={nome} className="breve">
-          {nome}
-        </span>
-      ))}
+      {item('registro', '/painel/registro', 'Registro da equipe')}
     </nav>
   );
 }
@@ -82,5 +89,64 @@ export function TelaDoPainel({
         </div>
       </div>
     </>
+  );
+}
+
+/** Um número do dashboard: rótulo, valor grande e uma linha de apoio, com a faixa de cor embaixo como na Shop. */
+export function NumeroDoPainel({
+  rotulo,
+  valor,
+  apoio,
+  cor = 'roxo',
+  href,
+}: {
+  rotulo: string;
+  valor: ReactNode;
+  apoio?: ReactNode;
+  cor?: 'roxo' | 'ouro' | 'verde' | 'vermelho' | 'azul' | 'cinza';
+  href?: string;
+}) {
+  const conteudo = (
+    <>
+      <span>{rotulo}</span>
+      <b>{valor}</b>
+      {apoio && <small>{apoio}</small>}
+    </>
+  );
+  return href ? (
+    <Link href={href} className="numero-adm" data-cor={cor}>
+      {conteudo}
+    </Link>
+  ) : (
+    <div className="numero-adm" data-cor={cor}>
+      {conteudo}
+    </div>
+  );
+}
+
+/** Barras de um dado por dia (14 dias). O valor de cada dia aparece ao passar o mouse e no texto escondido para leitor de tela. */
+export function GraficoDeDias({ titulo, pontos }: { titulo: string; pontos: { dia: string; total: number }[] }) {
+  const maior = Math.max(1, ...pontos.map((ponto) => ponto.total));
+  const soma = pontos.reduce((total, ponto) => total + ponto.total, 0);
+  return (
+    <figure className="grafico-adm">
+      <figcaption>
+        <span>{titulo}</span>
+        <b>{soma}</b>
+        <small>nos últimos {pontos.length} dias</small>
+      </figcaption>
+      <div className="barras-adm" role="img" aria-label={`${titulo}: ${pontos.map((ponto) => `${ponto.dia} ${ponto.total}`).join(', ')}`}>
+        {pontos.map((ponto, indice) => (
+          <div key={ponto.dia} className="barra-adm" title={`${ponto.dia}: ${ponto.total}`}>
+            <i style={{ height: `${Math.round((ponto.total / maior) * 100)}%` }} data-hoje={indice === pontos.length - 1 ? '' : undefined} />
+            <em>{ponto.total > 0 && (ponto.total === maior || indice === pontos.length - 1) ? ponto.total : ''}</em>
+          </div>
+        ))}
+      </div>
+      <div className="dias-adm" aria-hidden>
+        <span>{pontos[0]?.dia}</span>
+        <span>hoje</span>
+      </div>
+    </figure>
   );
 }

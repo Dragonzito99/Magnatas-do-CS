@@ -169,6 +169,19 @@ export async function ajustarGrana(bd: Bd, ator: Pick<Usuario, 'id'>, alvoId: st
   });
 }
 
+/** O Adm dá ou tira MagCoins pelo Painel ADM (ex.: compra que não caiu), com motivo; livro-caixa e auditoria. */
+export async function ajustarMagcoin(bd: Bd, ator: Pick<Usuario, 'id'>, alvoId: string, quantidade: number, motivo: string): Promise<void> {
+  const texto = motivo.trim();
+  if (!Number.isInteger(quantidade) || quantidade === 0 || texto.length < 3) throw new AjusteInvalido();
+  await bd.transaction(async (tx) => {
+    await exigirPermissao(tx, ator, 'ajustar_grana');
+    const [alvo] = await tx.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.id, alvoId));
+    if (!alvo) throw new AjusteInvalido();
+    await lancarMoeda(tx, { moeda: 'magcoin', usuarioId: alvoId, tipo: 'ajuste', quantidade, referencia: randomUUID(), detalhes: { motivo: texto }, atorId: ator.id });
+    await registrarAuditoria(tx, { atorId: ator.id, acao: 'ajustar_magcoin', alvoId, detalhes: { quantidade, motivo: texto } });
+  });
+}
+
 /** Saldo de uma conta, para o cabeçalho. */
 export async function saldoDe(bd: Bd, usuarioId: string): Promise<number> {
   const [conta] = await bd.select({ grana: usuarios.grana }).from(usuarios).where(eq(usuarios.id, usuarioId));

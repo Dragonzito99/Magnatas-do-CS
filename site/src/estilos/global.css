@@ -11218,3 +11218,552 @@ a.titulo-da-linha:hover {
     display: none;
   }
 }
+
+/* ===== Painel ADM no padrão da Shop (dono, 13/11/2026: "refaz igual a shop") =====
+   Cantos retos, cartões escuros com a faixa de cor embaixo, títulos em itálico e maiúsculas, filtros quadrados. */
+.painel-lado {
+  border-radius: 0;
+  background: var(--painel);
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.painel-lado a:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.painel-lado a.ativo {
+  background: var(--tinta);
+  color: #0a0612;
+}
+
+.topo-da-parte {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.aviso.ok {
+  background: rgba(74, 222, 128, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.5);
+}
+
+[data-cor] {
+  --cor: var(--roxo);
+}
+[data-cor='ouro'] {
+  --cor: var(--ouro);
+}
+[data-cor='verde'] {
+  --cor: var(--verde);
+}
+[data-cor='vermelho'] {
+  --cor: #ef4444;
+}
+[data-cor='azul'] {
+  --cor: #38bdf8;
+}
+[data-cor='cinza'] {
+  --cor: #6b6280;
+}
+
+.faixa-adm {
+  margin: 10px 0 -4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.numeros-adm {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.numero-adm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 116px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 3px solid var(--cor);
+  background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--cor) 16%, transparent), transparent 60%), var(--painel);
+  color: var(--tinta);
+  text-decoration: none;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+a.numero-adm:hover {
+  transform: translateY(-3px);
+  border-color: var(--cor);
+}
+
+.numero-adm span {
+  color: var(--tinta-2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.numero-adm b {
+  font: italic 700 34px/1 var(--fonte-titulo), sans-serif;
+}
+
+.numero-adm small {
+  margin-top: auto;
+  color: var(--tinta-2);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.graficos-adm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grafico-adm {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.grafico-adm figcaption {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.grafico-adm figcaption span {
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.grafico-adm figcaption b {
+  margin-left: auto;
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+}
+
+.grafico-adm figcaption small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.barras-adm {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 120px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.barra-adm {
+  position: relative;
+  flex: 1;
+}
+
+.barra-adm:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.barra-adm i {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  left: 2px;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--roxo);
+}
+
+.barra-adm i[data-hoje] {
+  background: var(--ouro);
+}
+
+.barra-adm em {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  color: var(--tinta-2);
+  font: normal 600 11px/1 var(--fonte-mono), monospace;
+  text-align: center;
+}
+
+.dias-adm {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--tinta-2);
+  font-size: 11px;
+}
+
+.busca-adm {
+  display: flex;
+  gap: 8px;
+}
+
+.busca-adm input,
+.cartao-acao-adm input,
+.cartao-acao-adm select {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: #0b0713;
+}
+
+.tabela-adm {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.cabeca-da-tabela-adm,
+.linha-da-tabela-adm {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) 1.3fr 0.7fr 0.8fr 0.8fr 1fr 0.9fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+}
+
+.registro-adm .cabeca-da-tabela-adm,
+.registro-adm .linha-da-tabela-adm {
+  grid-template-columns: 0.9fr 1fr 1.3fr 1fr minmax(0, 2fr);
+}
+
+.cabeca-da-tabela-adm {
+  color: var(--tinta-2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.linha-da-tabela-adm {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+a.linha-da-tabela-adm:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.conta-adm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.conta-adm .avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.conta-adm span {
+  display: grid;
+  min-width: 0;
+}
+
+.conta-adm b,
+.conta-adm small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conta-adm small,
+.detalhe-adm {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.selos-adm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.selo-adm {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--cor) 70%, transparent);
+  background: color-mix(in srgb, var(--cor) 16%, transparent);
+  font: normal 600 11px/1.3 var(--fonte-inter), sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ficha-adm,
+.cartao-adm {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.ficha-adm-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ficha-adm-topo .avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 18px;
+}
+
+.ficha-adm-topo > div:nth-child(2) {
+  display: grid;
+  gap: 4px;
+}
+
+.ficha-adm-topo b {
+  font: italic 700 26px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.ficha-adm-topo small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.ficha-adm-links {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.dados-adm {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 18px;
+  margin: 14px 0 0;
+}
+
+.dados-adm dt {
+  color: var(--tinta-2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dados-adm dd {
+  margin: 2px 0 0;
+}
+
+.acoes-adm {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.cartao-acao-adm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 3px solid var(--ouro);
+  background: var(--painel);
+}
+
+.cartao-acao-adm.perigo {
+  border-bottom-color: #ef4444;
+}
+
+.cartao-acao-adm b {
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.cartao-acao-adm small {
+  color: var(--tinta-2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cartao-acao-adm .botao {
+  margin-top: auto;
+}
+
+.botao.vermelho {
+  background: #ef4444;
+  color: #fff;
+}
+
+.colunas-adm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cartao-adm h3 {
+  margin-bottom: 6px;
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.linha-simples-adm {
+  display: grid;
+  gap: 2px;
+  padding: 9px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+a.linha-simples-adm:hover span {
+  text-decoration: underline;
+}
+
+.linha-simples-adm small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.manutencao-adm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.manutencao-adm > div {
+  display: grid;
+  gap: 2px;
+}
+
+.manutencao-adm small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.grade-adm {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.cartao-servidor-adm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 3px solid var(--cor);
+  background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--cor) 14%, transparent), transparent 60%), var(--painel);
+}
+
+.tipo-adm {
+  color: var(--tinta-2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cartao-servidor-adm > b {
+  font: italic 700 22px/1.05 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.cartao-servidor-adm > small {
+  color: var(--tinta-2);
+  font-size: 12px;
+}
+
+.cartao-servidor-adm p {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.placar-adm {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.botoes-adm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+@media (max-width: 1100px) {
+  .numeros-adm {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .numeros-adm,
+  .dados-adm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .graficos-adm,
+  .colunas-adm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cabeca-da-tabela-adm {
+    display: none;
+  }
+
+  .linha-da-tabela-adm,
+  .registro-adm .linha-da-tabela-adm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .linha-da-tabela-adm > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .ficha-adm-links {
+    margin-left: 0;
+  }
+}
+
+/* As partes antigas do painel (Olho de Águia, chamados, quedas, Grana, Envios, Notícias) no mesmo padrão. */
+.painel-conteudo .painel {
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.painel-conteudo .selo-caso {
+  border-radius: 0;
+  border: 1px solid rgba(168, 85, 247, 0.6);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.painel-conteudo .selo-caso.vermelho {
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.painel-conteudo .selo-caso.verde {
+  border-color: rgba(74, 222, 128, 0.6);
+}
+
+.painel-conteudo .botao {
+  border-radius: 0;
+}
+
+.cartao-acao-adm input,
+.cartao-acao-adm select {
+  flex: none;
+  width: 100%;
+}

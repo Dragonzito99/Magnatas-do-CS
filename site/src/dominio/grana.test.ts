@@ -4,7 +4,7 @@ import type { Bd } from '@/bd/conexao';
 import { auditoria, lancamentosDeGrana, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario, recarregar } from '@/bd/teste';
 import { SemPermissao } from './equipe';
-import { abrirGrana, ajustarGrana, buscarContasDaGrana, divergencias, extrato, granaDoXp, lancarGrana, lancarMoeda, SaldoInsuficiente } from './grana';
+import { abrirGrana, ajustarGrana, ajustarMagcoin, buscarContasDaGrana, divergencias, extrato, granaDoXp, lancarGrana, lancarMoeda, SaldoInsuficiente } from './grana';
 import { lancarXp, type GanhoDePartida } from './xp';
 
 let bd: Bd;
@@ -164,4 +164,20 @@ test('extrato e conferência separam as moedas', async () => {
   expect(await divergencias(bd)).toEqual([]);
   await bd.update(usuarios).set({ magcoin: 7 }).where(eq(usuarios.id, conta.id));
   expect(await divergencias(bd)).toEqual([{ usuarioId: conta.id, apelido: conta.apelido, moeda: 'magcoin', saldo: 7, soma: 100 }]);
+});
+
+test('MagCoins: só o Adm ajusta, com motivo, separado da Grana e com auditoria (Painel ADM, 13/11/2026)', async () => {
+  const adm = await criarUsuario(bd, { papel: 'adm', estado: 'ativo' });
+  const gm = await criarUsuario(bd, { papel: 'gm', estado: 'ativo' });
+  const alvo = await criarUsuario(bd, { estado: 'ativo' });
+  await expect(ajustarMagcoin(bd, gm, alvo.id, 50, 'presente')).rejects.toBeInstanceOf(SemPermissao);
+  await expect(ajustarMagcoin(bd, adm, alvo.id, 50, ' ')).rejects.toThrow();
+  await expect(ajustarMagcoin(bd, adm, alvo.id, -1, 'tirar')).rejects.toBeInstanceOf(SaldoInsuficiente);
+  await ajustarMagcoin(bd, adm, alvo.id, 80, 'compra que não caiu');
+  const conta = await recarregar(bd, alvo);
+  expect(conta.magcoin).toBe(80);
+  expect(conta.grana).toBe(0);
+  const registros = await bd.select().from(auditoria).where(eq(auditoria.acao, 'ajustar_magcoin'));
+  expect(registros).toHaveLength(1);
+  expect(registros[0].detalhes).toMatchObject({ quantidade: 80, motivo: 'compra que não caiu' });
 });
