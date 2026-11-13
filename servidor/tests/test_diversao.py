@@ -2092,6 +2092,20 @@ def test_healix_pula_mais_alto_do_nivel_2_e_tem_pulo_duplo_no_3():
     assert "RegisterListener<Listeners.OnTick>(PuloDuplo)" in CODIGO_DA_MUTACAO
 
 
+def test_o_aperto_que_tira_do_chao_e_o_pulo_normal_e_nao_gasta_o_duplo():
+    # Laboratório, 13/11/2026: no mesmo tick do aperto o jogo já tirou a HEALIX do chão (botao=True chao=False z=290), e
+    # o plugin gastava o pulo duplo ali, trocando a subida de 290 pela de 220: o pulo saía mais baixo e sem duplo.
+    duplo = metodo_da_mutacao("private void PuloDuplo(")
+    assert "noArNoTickAnterior" in duplo
+    disparo = duplo[duplo.index("else if (pulando"):duplo.index("ImpulsoDoPuloDuplo")]
+    assert "noArNoTickAnterior.Contains(jogador.Slot)" in disparo
+    # O estado do tick vale para o próximo: guardado depois da decisão.
+    assert duplo.index("ImpulsoDoPuloDuplo") < duplo.index("noArNoTickAnterior.Add(jogador.Slot)")
+    # Quem sai da conta (morreu, virou humano, saiu) não deixa o "no ar" para trás.
+    fora = duplo[duplo.index("if (!HealixComPulo("):duplo.index("continue;")]
+    assert "noArNoTickAnterior.Remove(jogador.Slot)" in fora
+
+
 def test_a_mutacao_baixa_o_pacote_da_healix_que_o_plugin_usa():
     # Item novo da Oficina, subido pelo dono em 11/11/2026 (magnatas_healix_v1).
     pacote = re.search(r'PacoteDaHealix = "(\d*)"', CODIGO_DA_MUTACAO).group(1)

@@ -150,6 +150,8 @@ public partial class ModoDeDiversao
     private readonly Dictionary<int, (float Fim, float Recarga)> curas = new();
     private readonly HashSet<int> segurandoPulo = new();
     private readonly HashSet<int> puloDuploUsado = new();
+    // Por vaga: quem estava no ar no tick anterior. Separa o aperto que sai do chão (pulo normal) do aperto no ar (duplo).
+    private readonly HashSet<int> noArNoTickAnterior = new();
     // Pacote dos personagens (dono, 10/11/2026): quem pega a super Negev vira o herói. Os bonecos próprios (ADM,
     // Marfioso) ficam fora da Mutação, a pedido do dono: trocar um boneco nosso por outro com o jogador vivo fechou o
     // jogo três vezes no dia (19:54, 20:37, 20:56), e o boneco do jogo virando zumbi nunca. Sem o pacote, o portador
@@ -1356,6 +1358,7 @@ public partial class ModoDeDiversao
             if (!HealixComPulo(jogador, NivelDoPuloDuplo) || jogador.PlayerPawn.Value is not { } corpo)
             {
                 segurandoPulo.Remove(jogador.Slot);
+                noArNoTickAnterior.Remove(jogador.Slot);
                 continue;
             }
             var pulando = (jogador.Buttons & PlayerButtons.Jump) != 0;
@@ -1364,7 +1367,9 @@ public partial class ModoDeDiversao
             if (!jogador.IsBot && pulando != segurandoPulo.Contains(jogador.Slot))
                 Console.WriteLine($"[Magnatas] Pulo de {jogador.PlayerName}: botao={pulando} chao={noChao} usado={puloDuploUsado.Contains(jogador.Slot)} z={corpo.AbsVelocity.Z:0} flags={corpo.Flags}.");
             if (noChao) puloDuploUsado.Remove(jogador.Slot);
-            else if (pulando && !segurandoPulo.Contains(jogador.Slot) && puloDuploUsado.Add(jogador.Slot))
+            // No tick do aperto que sai do chão o jogo já tirou a HEALIX do chão: esse é o pulo normal. O duplo só conta se
+            // ela já estava no ar no tick anterior (laboratório, 13/11/2026: o duplo saía no primeiro aperto, mais baixo).
+            else if (pulando && !segurandoPulo.Contains(jogador.Slot) && noArNoTickAnterior.Contains(jogador.Slot) && puloDuploUsado.Add(jogador.Slot))
             {
                 var velocidade = corpo.AbsVelocity;
                 corpo.Teleport(null, null, new Vector(velocidade.X, velocidade.Y, ImpulsoDoPuloDuplo));
@@ -1372,6 +1377,8 @@ public partial class ModoDeDiversao
             }
             if (pulando) segurandoPulo.Add(jogador.Slot);
             else segurandoPulo.Remove(jogador.Slot);
+            if (noChao) noArNoTickAnterior.Remove(jogador.Slot);
+            else noArNoTickAnterior.Add(jogador.Slot);
         }
     }
 
