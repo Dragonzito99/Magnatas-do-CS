@@ -12,6 +12,7 @@ import { etapaDoTeste, servidorDaMutacao } from '@/dominio/teste-mutacao';
 import { controladorDoAmbiente } from '@/servidor-jogo/controlador';
 import { diversaoDoAmbiente } from '@/servidor-jogo/diversao-do-ambiente';
 import { BotaoCopiar } from '../botao-copiar';
+import { TelaDoPainel } from '../painel/lateral-do-painel';
 import { AvisarAoEntrar, TempoLigando } from '../diversao/esperar-e-entrar';
 import { ligarLaboratorioPelaTela, testarCompetitivo, testarMutacao } from './acoes';
 
@@ -48,11 +49,8 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
   );
 
   return (
-    <>
-      <div className="topo-pagina">
-        <h1>Testes</h1>
-      </div>
-      <p className="apoio">Só o Adm vê esta aba. Nenhum teste vale XP nem aparece no perfil.</p>
+    <TelaDoPainel usuario={usuario} atual="testes" titulo="Testes e laboratório">
+      <p className="apoio">Nenhum teste vale XP nem aparece no perfil.</p>
       {erro && ERROS[erro] && (
         <p role="alert" className="aviso">
           {ERROS[erro]}
@@ -145,6 +143,6 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
           ))}
         </section>
       )}
-    </>
+    </TelaDoPainel>
   );
 }

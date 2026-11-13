@@ -10,6 +10,7 @@ export type ParteDoPainel =
   | 'usuarios'
   | 'partidas'
   | 'servidores'
+  | 'testes'
   | 'olho'
   | 'chamados'
   | 'convites'
@@ -36,6 +37,8 @@ async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: Pa
       {item('usuarios', '/painel/usuarios', 'Usuários')}
       {item('partidas', '/painel/partidas', 'Partidas rolando')}
       {item('servidores', '/painel/servidores', 'Servidores')}
+      {(pode(usuario, 'testar_competitivo') || pode(usuario, 'testar_mutacao') || pode(usuario, 'usar_laboratorio')) &&
+        item('testes', '/testes', 'Testes e laboratório')}
       {casos && (
         <>
           <small>Segurança</small>
