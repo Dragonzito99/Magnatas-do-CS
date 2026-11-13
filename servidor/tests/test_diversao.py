@@ -1399,14 +1399,13 @@ def test_a_contagem_toca_o_som_para_todos_e_acaba_quando_o_mutante_aparece():
     comeca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void ComecarRodadaDaMutacao"):CODIGO_DA_MUTACAO.index("void SortearMutantes")]
     # O som termina junto com o sorteio.
     assert "AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, () =>" in comeca and "TocarContagem();" in comeca
-    assert "MostrarContagem, TimerFlags.REPEAT" in comeca
     toca = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TocarContagem"):]
     toca = toca[:toca.index(FIM_DO_METODO)]
     assert "new RecipientFilter" in toca and "EmitSound(SomDaContagem" in toca
 
 
 def test_a_contagem_nao_sobra_de_uma_rodada_para_outra():
-    for timer in ["relogioDaContagem", "somDaContagem"]:
+    for timer in ["somDaContagem"]:
         assert CODIGO_DA_MUTACAO.index(f"Parar(ref {timer})") < CODIGO_DA_MUTACAO.index(f"{timer} = AddTimer")
         for trecho in ["void EncerrarRodadaDaMutacao", "EventRoundPrestart"]:
             assert f"Parar(ref {timer})" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(trecho):]
@@ -2010,14 +2009,21 @@ def test_o_aviso_de_espera_e_a_contagem_vao_pela_tela_repetida_a_cada_tick():
     # O "Esperando mais um jogador", mandado a cada 2 s, aparecia como um quadrado branco sem texto (dono, 11/11/2026).
     # Igual à barra do poder: calculado 4 vezes por segundo e repetido a cada tick pelo RepetirTelas.
     falta = metodo_da_mutacao("private void AvisarQueFaltaJogador(")
-    contagem = metodo_da_mutacao("private void MostrarContagem(")
-    assert "PrintToCenterHtml(" not in falta and "PrintToCenterHtml(" not in contagem
+    assert "PrintToCenterHtml(" not in falta
     tela = metodo_da_mutacao("private void AtualizarTelaDaMutacao(")
     assert "AvisoGeral()" in tela
     assert tela.index("cartoes.TryGetValue(") < tela.index("AvisoGeral()") < tela.index("HudDoPoder(")
     geral = metodo_da_mutacao("private string? AvisoGeral(")
     assert "esperandoJogadores" in geral and "Esperando mais um jogador" in geral
-    assert "segundosAteOMutante" in geral and "O mutante vai aparecer" in geral
+
+
+
+def test_sem_numero_da_contagem_na_tela_so_o_som():
+    # O número no meio da tela estava errado; fica só o som da contagem (dono, 13/11/2026).
+    assert "segundosAteOMutante" not in CODIGO_DA_MUTACAO
+    assert "O mutante vai aparecer" not in CODIGO_DA_MUTACAO
+    assert "relogioDaContagem" not in CODIGO_DA_MUTACAO and "MostrarContagem" not in CODIGO_DA_MUTACAO
+    assert "TocarContagem();" in CODIGO_DA_MUTACAO
 
 
 def test_na_dust_2_zumbi_ninguem_fica_na_sala_de_espera_do_mapa():

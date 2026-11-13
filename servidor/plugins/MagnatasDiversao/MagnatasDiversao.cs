@@ -122,7 +122,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     }
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.11.1";
+    public override string ModuleVersion => "1.11.2";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 

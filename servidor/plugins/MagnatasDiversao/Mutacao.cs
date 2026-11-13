@@ -58,7 +58,6 @@ public partial class ModoDeDiversao
     private const string SomDaVitoriaDosMagnatas = "magnatas.vitoria_mutantes";
     private const string SomDaVitoriaDosMutantes = "magnatas.vitoria_magnatas";
     private const float SegundosDoSomDaContagem = 11.5f;
-    private const int SegundosDaContagemNaTela = 10;
     // Sozinho não há o que jogar: a rodada fica parada, sem contar, até chegar mais alguém.
     private const int MinimoDeJogadores = 2;
     private const float EsperaParaConferirOFim = 0.5f;
@@ -182,9 +181,7 @@ public partial class ModoDeDiversao
     private readonly TipoDeMutante mutanteDaRodada = MutanteComum;
     private CounterStrikeSharp.API.Modules.Timers.Timer? relogioDoSorteio;
     private CounterStrikeSharp.API.Modules.Timers.Timer? fimDaRodada;
-    private CounterStrikeSharp.API.Modules.Timers.Timer? relogioDaContagem;
     private CounterStrikeSharp.API.Modules.Timers.Timer? somDaContagem;
-    private int segundosAteOMutante;
     private bool esperandoJogadores;
     // Pedido pelo site, na aba Testes do Adm. Vale até o servidor desligar: troca o mapa, mas o plugin continua o mesmo.
     private bool testeComBots;
@@ -211,7 +208,6 @@ public partial class ModoDeDiversao
         Server.ExecuteCommand("mp_drop_knife_enable 1");
         Parar(ref relogioDoSorteio);
         Parar(ref fimDaRodada);
-        Parar(ref relogioDaContagem);
         Parar(ref somDaContagem);
         infeccoes.Clear();
         corridas.Clear();
@@ -261,8 +257,6 @@ public partial class ModoDeDiversao
             EncerrarRodadaDaMutacao(RoundEndReason.CTsWin);
         });
 
-        segundosAteOMutante = (int)SegundosParaEspalhar;
-        relogioDaContagem = AddTimer(1f, MostrarContagem, TimerFlags.REPEAT);
         somDaContagem = AddTimer(SegundosParaEspalhar - SegundosDoSomDaContagem, () =>
         {
             somDaContagem = null;
@@ -274,12 +268,6 @@ public partial class ModoDeDiversao
     /// <summary>Bots contam, para os testes com bots.</summary>
     private static int JogadoresNaRodada() =>
         Utilities.GetPlayers().Count(jogador => jogador is { IsValid: true, IsHLTV: false, Team: CsTeam.Terrorist or CsTeam.CounterTerrorist });
-
-    private void MostrarContagem()
-    {
-        // O número na tela vem do AvisoGeral, repetido a cada tick como a barra do poder.
-        segundosAteOMutante--;
-    }
 
     /// <summary>Cada um ouve o som no próprio ouvido, na mesma altura, onde quer que esteja no mapa.</summary>
     private void TocarParaTodos(string som)
@@ -416,7 +404,6 @@ public partial class ModoDeDiversao
         rodadaEmAndamento = false;
         Parar(ref relogioDoSorteio);
         Parar(ref fimDaRodada);
-        Parar(ref relogioDaContagem);
         Parar(ref somDaContagem);
 
         var humanosVenceram = motivo == RoundEndReason.CTsWin;
@@ -915,13 +902,11 @@ public partial class ModoDeDiversao
         }
     }
 
-    /// <summary>O aviso que vale para todos agora: esperando mais um jogador ou a contagem até o mutante aparecer.</summary>
+    /// <summary>O aviso que vale para todos agora: esperando mais um jogador. A contagem na tela saiu (dono, 13/11/2026); fica o som.</summary>
     private string? AvisoGeral()
     {
         if (esperandoJogadores)
             return "<font color='#f5b301' class='fontSize-l'>Esperando mais um jogador</font><br><font color='#ffffff'>A partida começa com 2 ou mais</font>";
-        if (rodadaEmAndamento && !sorteioFeito && segundosAteOMutante > 0 && segundosAteOMutante <= SegundosDaContagemNaTela)
-            return $"<font color='#ff4d4d' class='fontSize-xl'>{segundosAteOMutante}</font><br><font color='#ffffff'>O mutante vai aparecer</font>";
         return null;
     }
 
@@ -1176,7 +1161,6 @@ public partial class ModoDeDiversao
         rodadaEmAndamento = false;
         var portadorAnterior = portadorDaSuperArma;
         portadorDaSuperArma = null;
-        Parar(ref relogioDaContagem);
         Parar(ref somDaContagem);
         infeccoes.Clear();
         corridas.Clear();
