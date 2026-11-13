@@ -92,6 +92,15 @@ test('provedor reprovou: a conta continua sem acesso e pode tentar de novo', asy
   expect((await recarregar(bd, usuario)).estado).toBe('ativo');
 });
 
+test('a Didit devolve a mesma sessão ainda aberta ao começar de novo: não duplica nem quebra', async () => {
+  const { usuario, referencia } = await pendente();
+  await iniciarVerificacao(bd, usuario, 'didit', referencia);
+  expect(await bd.select().from(verificacoes)).toHaveLength(1);
+  // A mesma referência de outra conta nunca é aceita.
+  const outro = await criarUsuario(bd, { steamid64: STEAM_B });
+  await expect(iniciarVerificacao(bd, outro, 'didit', referencia)).rejects.toThrow();
+});
+
 test('aprovado sem CPF válido é reprovado', async () => {
   const { usuario, referencia } = await pendente();
   expect(await aplicar({ referencia, aprovado: true, cpf: '123', nascimento: ADULTO })).toBe('reprovada');

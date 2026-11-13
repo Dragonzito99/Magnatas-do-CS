@@ -59,7 +59,9 @@ export async function iniciarVerificacao(
   provedor: string,
   referencia: string,
 ): Promise<void> {
-  await bd.insert(verificacoes).values({ usuarioId: usuario.id, provedor, referencia });
+  // A Didit devolve a mesma sessão enquanto a anterior da conta não termina: aí já está guardada e segue valendo.
+  await bd.insert(verificacoes).values({ usuarioId: usuario.id, provedor, referencia }).onConflictDoNothing({ target: verificacoes.referencia });
+  if (!(await verificacaoPertenceA(bd, referencia, usuario.id))) throw new Error('Verificação de outra conta.');
 }
 
 /** A última verificação ainda sem resultado da conta, para a volta da Didit conferir na hora. */
