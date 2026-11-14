@@ -64,8 +64,10 @@ def test_personagens_e_mutantes_em_portas_proprias_fora_das_da_diversao():
 def test_na_dust_2_sem_mapa_da_oficina_nem_rotacao(servidor):
     # Os bots só andam em mapa com o caminho deles; a Dust 2 tem.
     campos = conf(servidor)
+    # O de personagens pode abrir um mapa da Oficina em teste (o cassino, 13/11/2026); lá os bots podem ficar parados.
     assert campos["MAPA"] == "de_dust2"
-    assert campos.get("OFICINA", "") == ""
+    if servidor != "laboratorio-personagens":
+        assert campos.get("OFICINA", "") == ""
     assert campos.get("ROTACAO", "") == ""
 
 
