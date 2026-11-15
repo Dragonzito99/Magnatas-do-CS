@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { pode } from '@/auth/permissoes';
 import { obterBd } from '@/bd/conexao';
-import { estadosDaDiversao } from '@/bd/esquema';
+import { estadosDaDiversao, servidoresDiversao } from '@/bd/esquema';
 import { ehCelular } from '@/dominio/aparelho';
 import { alvoDoServidor, comandoDeConectar, linkDeEntrar, situacaoDoServidor } from '@/dominio/diversao';
 import { alvoDoLaboratorio, etapaDoLaboratorio, LABORATORIOS, pedidoRecente } from '@/dominio/laboratorio';
@@ -40,6 +40,10 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
   const alvo = mutacao ? alvoDoServidor(mutacao, process.env.DIVERSAO_HOST) : null;
   const senha = process.env.SERVIDOR_SENHA ?? '';
   const celular = ehCelular(await headers());
+  // Ilha Lemnos antes de abrir para todos (15/11/2026): o Adm entra por aqui, porque na tela Jogar ela ainda não aparece.
+  const [ilha] = pode(usuario, 'cuidar_de_lemnos') ? await bd.select().from(servidoresDiversao).where(eq(servidoresDiversao.modo, 'lemnos')) : [];
+  const alvoDaIlha = ilha ? alvoDoServidor(ilha, process.env.DIVERSAO_HOST) : null;
+  const ilhaNoAr = alvoDaIlha ? (await situacaoDoServidor(controladorDoAmbiente(), alvoDaIlha)).ligado : false;
   const laboratorios = await Promise.all(
     LABORATORIOS.map(async (laboratorio) => {
       const alvoDoLab = alvoDoLaboratorio(laboratorio, process.env.DIVERSAO_HOST);
@@ -141,6 +145,32 @@ export default async function Testes({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
           ))}
+        </section>
+      )}
+      {ilha && alvoDaIlha && (
+        <section className="painel">
+          <h2>Ilha Lemnos</h2>
+          <p className="apoio">
+            {ilha.ativo ? 'Aberta para todos, pela tela Jogar.' : 'Ainda escondida dos jogadores. Só você entra, por aqui, para testar e marcar o mapa (!marcar).'}
+          </p>
+          <div className="linha">
+            <div>
+              <b>Ilha Lemnos · Sirocco</b>
+              <p className="apoio">{ilhaNoAr ? 'No ar.' : 'Desligada.'}</p>
+            </div>
+            <div className="acoes">
+              {ilhaNoAr ? (
+                <>
+                  {comandoDeConectar(alvoDaIlha, senha) && <BotaoCopiar texto={comandoDeConectar(alvoDaIlha, senha)!} />}
+                  <a className="botao ouro pequeno" href={linkDeEntrar(alvoDaIlha, senha)}>
+                    Entrar
+                  </a>
+                </>
+              ) : (
+                <span className="etiqueta">Desligada</span>
+              )}
+            </div>
+          </div>
         </section>
       )}
     </TelaDoPainel>
