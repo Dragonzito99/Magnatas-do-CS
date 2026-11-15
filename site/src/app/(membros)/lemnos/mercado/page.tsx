@@ -8,13 +8,14 @@ import { ARMAS, armaLemnos, GRANADAS, granadaLemnos, MOCHILAS, mochilaLemnos, no
 import { ilhaAberta } from '@/dominio/lemnos/estatisticas';
 import { bauDaLemnos } from '@/dominio/lemnos/mercado';
 import { DIAS_A_VENDA } from '@/dominio/loja';
-import { BotaoConfirmar } from '../../botao-confirmar';
+import { BotaoDeDoisToques } from '../botao-de-dois-toques';
 import { CarteiraDaShop } from '../../loja/carteira-da-shop';
 import { FecharComEsc } from '../../loja/fechar-com-esc';
 import { Preco } from '../../loja/preco-da-shop';
 import { comprarGrana, comprarMagcoin, comprarUmaMochila, vender } from '../acoes';
 import { AvisoDaIlha } from '../avisos';
 import { AbasDaIlha, ImagemDoItem, TipoDoItem } from '../componentes';
+import { CompraNaJanela, type GrupoDeCompra } from './compra-na-janela';
 
 type Aba = 'armas' | 'granadas' | 'mochilas' | 'vender';
 const ABAS: { valor: Aba; nome: string }[] = [
@@ -129,9 +130,9 @@ export default async function MercadoDaIlha({ searchParams }: { searchParams: Pr
               <span>
                 {saque.length} itens no baú, valendo <Preco valor={totalDoSaque} />
               </span>
-              <BotaoConfirmar className="botao-da-shop" mensagem={`Vender todo o saque por ${totalDoSaque} Grana?`}>
+              <BotaoDeDoisToques className="botao-da-shop" pergunta={`Confirmar: vender tudo por ${totalDoSaque}`}>
                 Vender tudo
-              </BotaoConfirmar>
+              </BotaoDeDoisToques>
             </form>
             <div className="grade-da-shop">
               {tiposDoSaque.map((id) => {
@@ -156,9 +157,9 @@ export default async function MercadoDaIlha({ searchParams }: { searchParams: Pr
                       {linhas.map((linha) => (
                         <input key={linha.linha} type="hidden" name="linha" value={linha.linha} />
                       ))}
-                      <BotaoConfirmar className="botao-da-shop" mensagem={`Vender ${linhas.length > 1 ? `${linhas.length}× ` : ''}${nomeLemnos(id)} por ${valor} Grana?`}>
+                      <BotaoDeDoisToques className="botao-da-shop" pergunta={`Confirmar: vender por ${valor}`}>
                         Vender por {valor}
-                      </BotaoConfirmar>
+                      </BotaoDeDoisToques>
                     </form>
                   </div>
                 );
@@ -176,39 +177,85 @@ function JanelaDeCompra({ id, aba, usuario, tenho, fechar, erro, ok }: { id: str
   const arma = armaLemnos(id);
   const granada = granadaLemnos(id);
   const mochila = mochilaLemnos(id);
-  const escondidos = (
-    <>
-      <input type="hidden" name="itemId" value={id} />
-      <input type="hidden" name="codigo" value={randomUUID()} />
-      <input type="hidden" name="aba" value={aba} />
-      <input type="hidden" name="item" value={id} />
-    </>
-  );
-  const botao = (moeda: 'grana' | 'magcoin', preco: number, rotulo: string, nome: string, valor: string, mensagem: string, classe = 'dia-da-janela') => {
-    const conteudo = (
-      <>
-        <span>{rotulo}</span>
-        <Preco valor={preco} moeda={moeda} />
-      </>
-    );
-    const saldo = moeda === 'grana' ? usuario.grana : usuario.magcoin;
-    if (preco > saldo)
-      return moeda === 'magcoin' ? (
-        <Link key={valor} href="/apoio" className={`${classe} sem-saldo`} title="Comprar MagCoin">
-          {conteudo}
-        </Link>
-      ) : (
-        <span key={valor} className={`${classe} sem-saldo`} title={`Faltam ${preco - saldo} Grana`}>
-          {conteudo}
-        </span>
-      );
-    return (
-      <BotaoConfirmar key={valor} className={classe} name={nome} value={valor} mensagem={mensagem}>
-        {conteudo}
-      </BotaoConfirmar>
-    );
-  };
   const nome = nomeLemnos(id);
+  const falta = (moeda: 'grana' | 'magcoin', preco: number) => Math.max(preco - (moeda === 'grana' ? usuario.grana : usuario.magcoin), 0);
+  const grupos: GrupoDeCompra[] = [];
+
+  if (arma || granada) {
+    const unidade = arma?.precoGrana ?? granada?.precoGrana ?? 0;
+    grupos.push({
+      titulo: 'Com Grana · uso único, perde ao morrer',
+      moeda: 'grana',
+      acao: comprarGrana,
+      campo: 'quantidade',
+      opcoes: QUANTIDADES.map((quantidade) => ({
+        valor: String(quantidade),
+        rotulo: `${quantidade}×`,
+        preco: unidade * quantidade,
+        frase: `Comprar ${quantidade}× ${nome} por ${unidade * quantidade} Grana`,
+        falta: falta('grana', unidade * quantidade),
+      })),
+    });
+  }
+  if (arma) {
+    grupos.push({
+      titulo: 'Com MagCoin · volta ao baú quando você morre',
+      moeda: 'magcoin',
+      acao: comprarMagcoin,
+      campo: 'dias',
+      opcoes: [
+        ...DIAS_A_VENDA.map((quantidade) => ({
+          valor: String(quantidade),
+          rotulo: dias(quantidade),
+          preco: arma.precoMagcoinDias[quantidade],
+          frase: `Comprar ${nome} por ${dias(quantidade)} · ${arma.precoMagcoinDias[quantidade]} MagCoins`,
+          falta: falta('magcoin', arma.precoMagcoinDias[quantidade]),
+        })),
+        {
+          valor: 'sempre',
+          rotulo: 'Para sempre · nunca se perde',
+          preco: arma.precoMagcoinSempre,
+          frase: `Comprar ${nome} para sempre · ${arma.precoMagcoinSempre} MagCoins`,
+          falta: falta('magcoin', arma.precoMagcoinSempre),
+          largo: true,
+        },
+      ],
+    });
+  }
+  if (mochila?.precoGranaDias) {
+    const precos = mochila.precoGranaDias;
+    grupos.push({
+      titulo: 'Com Grana · por dias',
+      moeda: 'grana',
+      acao: comprarUmaMochila,
+      campo: 'dias',
+      opcoes: DIAS_A_VENDA.map((quantidade) => ({
+        valor: String(quantidade),
+        rotulo: dias(quantidade),
+        preco: precos[quantidade],
+        frase: `Comprar ${nome} por ${dias(quantidade)} · ${precos[quantidade]} Grana`,
+        falta: falta('grana', precos[quantidade]),
+      })),
+    });
+    if (mochila.precoMagcoinSempre !== null) {
+      grupos.push({
+        titulo: 'Com MagCoin',
+        moeda: 'magcoin',
+        acao: comprarUmaMochila,
+        campo: 'dias',
+        opcoes: [
+          {
+            valor: 'sempre',
+            rotulo: 'Para sempre',
+            preco: mochila.precoMagcoinSempre,
+            frase: `Comprar ${nome} para sempre · ${mochila.precoMagcoinSempre} MagCoins`,
+            falta: falta('magcoin', mochila.precoMagcoinSempre),
+            largo: true,
+          },
+        ],
+      });
+    }
+  }
 
   return (
     <div className="janela-da-shop" role="dialog" aria-modal="true" aria-labelledby="nome-na-janela">
@@ -231,61 +278,12 @@ function JanelaDeCompra({ id, aba, usuario, tenho, fechar, erro, ok }: { id: str
             {mochila && `Carrega ${mochila.espacos} itens de saque em vez de 8. Se você morrer, ela volta vazia para o baú.`}
           </p>
           <AvisoDaIlha erro={erro} />
-
-          {(arma || granada) && (
-            <>
-              <span className="rotulo-da-janela">Com Grana · uso único, perde ao morrer</span>
-              <form action={comprarGrana} className="dias-da-janela">
-                {escondidos}
-                {QUANTIDADES.map((quantidade) => {
-                  const preco = (arma?.precoGrana ?? granada?.precoGrana ?? 0) * quantidade;
-                  return botao('grana', preco, `${quantidade}×`, 'quantidade', String(quantidade), `Comprar ${quantidade}× ${nome} por ${preco} Grana?`);
-                })}
-              </form>
-            </>
-          )}
-
-          {arma && (
-            <>
-              <span className="rotulo-da-janela">Com MagCoin · volta ao baú quando você morre</span>
-              <form action={comprarMagcoin} className="dias-da-janela">
-                {escondidos}
-                {DIAS_A_VENDA.map((quantidade) =>
-                  botao('magcoin', arma.precoMagcoinDias[quantidade], dias(quantidade), 'dias', String(quantidade), `Comprar ${nome} por ${dias(quantidade)}, por ${arma.precoMagcoinDias[quantidade]} MagCoins?`),
-                )}
-              </form>
-              <form action={comprarMagcoin}>
-                {escondidos}
-                {botao('magcoin', arma.precoMagcoinSempre, 'Para sempre · nunca se perde', 'dias', 'sempre', `Comprar ${nome} para sempre, por ${arma.precoMagcoinSempre} MagCoins?`, 'para-sempre-da-janela')}
-              </form>
-            </>
-          )}
-
-          {mochila?.precoGranaDias && (
-            <>
-              <span className="rotulo-da-janela">Com Grana · por dias</span>
-              <form action={comprarUmaMochila} className="dias-da-janela">
-                {escondidos}
-                {DIAS_A_VENDA.map((quantidade) =>
-                  botao('grana', mochila.precoGranaDias![quantidade], dias(quantidade), 'dias', String(quantidade), `Comprar ${nome} por ${dias(quantidade)}, por ${mochila.precoGranaDias![quantidade]} Grana?`),
-                )}
-              </form>
-              {mochila.precoMagcoinSempre !== null && (
-                <>
-                  <span className="rotulo-da-janela">Com MagCoin</span>
-                  <form action={comprarUmaMochila}>
-                    {escondidos}
-                    {botao('magcoin', mochila.precoMagcoinSempre, 'Para sempre', 'dias', 'sempre', `Comprar ${nome} para sempre, por ${mochila.precoMagcoinSempre} MagCoins?`, 'para-sempre-da-janela')}
-                  </form>
-                </>
-              )}
-            </>
-          )}
           {ok === 'compra' && (
-            <p className="posse-na-janela">
-              Está no seu baú. <Link href="/lemnos">Pôr no kit</Link>
+            <p className="aviso presente-aberto" role="status">
+              Comprado! Está no seu baú. <Link href="/lemnos">Pôr no kit</Link>
             </p>
           )}
+          <CompraNaJanela grupos={grupos} escondidos={{ itemId: id, codigo: randomUUID(), aba, item: id }} />
         </div>
       </div>
     </div>

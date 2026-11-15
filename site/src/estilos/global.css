@@ -12196,6 +12196,84 @@ button.cartao-da-shop {
   justify-self: start;
 }
 
+/* A compra dentro da janela: toca na opção, ela fica dourada, e o botão grande diz o que vai ser comprado. */
+.compra-na-janela {
+  display: grid;
+  gap: 14px;
+}
+
+.grupo-da-compra {
+  display: grid;
+  gap: 8px;
+}
+
+.dia-da-janela.escolhido,
+.para-sempre-da-janela.escolhido {
+  border-color: var(--ouro);
+  background: var(--ouro-fraco);
+  box-shadow: 0 0 0 1px var(--ouro) inset;
+}
+
+.dia-da-janela:disabled,
+.para-sempre-da-janela:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dia-da-janela:disabled:hover,
+.para-sempre-da-janela:disabled:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.falta-da-janela {
+  justify-self: start;
+  color: #c4a8ff;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.falta-da-janela:hover {
+  color: var(--tinta);
+}
+
+.confirmar-da-janela {
+  margin-top: 4px;
+}
+
+.comprar-da-janela {
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  background: linear-gradient(180deg, #ffd24a, var(--ouro));
+  color: var(--sobre-ouro);
+  font: italic 800 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(245, 179, 1, 0.25);
+}
+
+.comprar-da-janela:hover {
+  filter: brightness(1.08);
+}
+
+.comprar-da-janela:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.escolha-uma-opcao {
+  padding: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  color: var(--tinta-2);
+  text-align: center;
+}
+
+.botao-da-shop.perguntando {
+  background: #c0262d;
+  border-color: #c0262d;
+  color: #fff;
+}
+
 /* Vender todo o saque de uma vez. */
 .vender-tudo {
   display: flex;
