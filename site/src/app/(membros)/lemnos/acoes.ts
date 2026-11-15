@@ -47,11 +47,14 @@ async function tentar(base: string, dados: FormData, fazer: () => Promise<unknow
   redirect(voltar(base, dados, { ok }));
 }
 
+export type RespostaDoKit = { ok: true } | { ok: false; erro: 'em-campo' | 'item' | 'conta' };
+
 /**
- * Troca uma peça do kit (um clique no espaço e outro no item). lugar: principal, secundaria, mochila ou granada; na
- * granada, "por" acrescenta uma e "tirar" tira a da posição.
+ * Troca uma peça do kit (arrastando, pela janela ou tirando uma granada). Não recarrega a página: responde se deu certo,
+ * e a tela se atualiza no lugar, sem voltar para o topo (dono, 15/11/2026). lugar: principal, secundaria, mochila ou
+ * granada; na granada, "por" acrescenta uma e "tirar" tira a da posição.
  */
-export async function trocarPeca(dados: FormData): Promise<void> {
+export async function mexerNoKit(dados: FormData): Promise<RespostaDoKit> {
   const usuario = await naIlha('/lemnos');
   const atual = await kitDe(obterBd(), usuario.id);
   const valor = texto(dados, 'valor') || null;
@@ -62,7 +65,16 @@ export async function trocarPeca(dados: FormData): Promise<void> {
   if (lugar === 'mochila') novo.mochila = valor;
   if (lugar === 'granada' && texto(dados, 'acao') === 'por' && valor) novo.granadas.push(valor);
   if (lugar === 'granada' && texto(dados, 'acao') === 'tirar') novo.granadas.splice(Number(texto(dados, 'indice')), 1);
-  await tentar('/lemnos', new FormData(), () => escolherKit(obterBd(), usuario, novo), 'kit');
+  try {
+    await escolherKit(obterBd(), usuario, novo);
+  } catch (erro) {
+    if (erro instanceof EmCampo) return { ok: false, erro: 'em-campo' };
+    if (erro instanceof ItemInvalido) return { ok: false, erro: 'item' };
+    if (erro instanceof ContaSemAcesso) return { ok: false, erro: 'conta' };
+    throw erro;
+  }
+  revalidatePath('/lemnos');
+  return { ok: true };
 }
 
 export async function comprarGrana(dados: FormData): Promise<void> {

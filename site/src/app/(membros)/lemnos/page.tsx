@@ -11,8 +11,7 @@ import { bauDaLemnos, type ItemDoBauLemnos } from '@/dominio/lemnos/mercado';
 import { eq } from 'drizzle-orm';
 import { CarteiraDaShop } from '../loja/carteira-da-shop';
 import { FecharComEsc } from '../loja/fechar-com-esc';
-import { trocarPeca } from './acoes';
-import { AreaDoArrasto, ItemQueArrasta, LugarQueRecebe, type LugarDoKit } from './arrastar-para-o-kit';
+import { AreaDoArrasto, BotaoDoKit, ItemQueArrasta, LugarQueRecebe, type LugarDoKit } from './arrastar-para-o-kit';
 import { AvisoDaIlha } from './avisos';
 import { AbasDaIlha, ImagemDoItem, TipoDoItem, TopoDaIlha } from './componentes';
 
@@ -161,15 +160,12 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
                   </Link>
                 );
               return (
-                <form key={indice} action={trocarPeca} className="granada-do-kit">
-                  <input type="hidden" name="lugar" value="granada" />
-                  <input type="hidden" name="acao" value="tirar" />
-                  <input type="hidden" name="indice" value={indice} />
+                <div key={indice} className="granada-do-kit">
                   <ImagemDoItem id={granada} />
-                  <button type="submit" disabled={!!aberta} aria-label={`Tirar ${granadaLemnos(granada)?.nome}`} title="Tirar do kit">
+                  <BotaoDoKit campos={{ lugar: 'granada', acao: 'tirar', indice: String(indice) }} disabled={!!aberta} rotulo={`Tirar ${granadaLemnos(granada)?.nome} do kit`}>
                     ×
-                  </button>
-                </form>
+                  </BotaoDoKit>
+                </div>
               );
             })}
           </div>
@@ -216,7 +212,6 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
           </div>
         </>
       )}
-      </AreaDoArrasto>
 
       {sessoes.length > 0 && (
         <>
@@ -257,11 +252,7 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
             ) : (
               <div className="grade-da-shop">
                 {opcoes(escolhendo).map((id) => (
-                  <form key={id} action={trocarPeca}>
-                    <input type="hidden" name="lugar" value={escolhendo} />
-                    <input type="hidden" name="acao" value="por" />
-                    <input type="hidden" name="valor" value={id} />
-                    <button type="submit" className={`cartao-da-shop raridade-${raridadeLemnos(id)}`}>
+                  <BotaoDoKit key={id} campos={{ lugar: escolhendo, acao: 'por', valor: id }} fecharJanela className={`cartao-da-shop raridade-${raridadeLemnos(id)}`}>
                       <span className="palco-do-cartao">
                         <ImagemDoItem id={id} />
                         <span className="tenho-do-cartao">×{quantas(id)}</span>
@@ -270,23 +261,21 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
                         <TipoDoItem id={id} />
                         <b className="nome-do-cartao">{nomeLemnos(id)}</b>
                       </span>
-                    </button>
-                  </form>
+                  </BotaoDoKit>
                 ))}
               </div>
             )}
             {escolhendo !== 'granada' && (
-              <form action={trocarPeca} className="tirar-do-kit">
-                <input type="hidden" name="lugar" value={escolhendo} />
-                <input type="hidden" name="valor" value="" />
-                <button type="submit" className="botao-da-shop vazado">
+              <div className="tirar-do-kit">
+                <BotaoDoKit campos={{ lugar: escolhendo, valor: '' }} fecharJanela className="botao-da-shop vazado">
                   {escolhendo === 'secundaria' ? 'Usar a Glock de graça' : escolhendo === 'mochila' ? 'Usar a mochila básica' : 'Entrar sem arma principal'}
-                </button>
-              </form>
+                </BotaoDoKit>
+              </div>
             )}
           </div>
         </div>
       )}
+      </AreaDoArrasto>
     </div>
   );
 }

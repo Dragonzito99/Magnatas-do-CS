@@ -12264,6 +12264,26 @@ a.granada-do-kit:hover {
   }
 }
 
+/* O aviso pequeno de quando o kit muda, sem recarregar a página. */
+.aviso-do-kit {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 60;
+  padding: 12px 22px;
+  border-left: 4px solid var(--verde);
+  background: #12261a;
+  color: var(--tinta);
+  font-weight: 700;
+  transform: translateX(-50%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.aviso-do-kit.ruim {
+  border-left-color: #ff5a5a;
+  background: #2a1214;
+}
+
 /* A janela de escolher o que vai no espaço do kit. */
 .escolha-do-kit {
   display: grid;
