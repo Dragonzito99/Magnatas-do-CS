@@ -323,3 +323,12 @@ def test_posto_novo_nao_prende_quem_esta_dentro():
     fonte = codigo()
     posto = fonte.split("private void ConferirPosto(")[1].split("\n    }")[0]
     assert "NoPosto(fora)" in posto
+
+
+def test_ao_pegar_mostra_o_item_com_raridade_e_valor():
+    # O dono não via o que tinha saído da caixa (15/11/2026): o item pego aparece em destaque e no chat.
+    fonte = codigo()
+    pegar = fonte.split("private void TentarPegar(")[1].split("\n    }")[0]
+    assert "MostrarOQuePegou(" in pegar
+    mostrar = fonte.split("private static void MostrarOQuePegou(")[1].split("\n    }")[0]
+    assert "Você pegou" in mostrar and "PrintToChat" in mostrar and "PrintToCenterHtml" in mostrar

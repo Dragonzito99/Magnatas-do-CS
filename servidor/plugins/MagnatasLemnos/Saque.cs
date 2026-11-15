@@ -1,3 +1,4 @@
+using System.Net;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Timers;
@@ -44,6 +45,20 @@ public partial class IlhaLemnos
         ["barra_de_ouro"] = "Barra de ouro",
         ["maleta_de_diamantes"] = "Maleta de diamantes",
         ["maco_de_notas"] = "Maço de notas",
+    };
+
+    /// <summary>Raridade e valor de cada saque, como no catálogo do site (dinheiro vira grana na extração).</summary>
+    private static readonly Dictionary<string, (string Raridade, string Cor, int Valor)> ValorDoSaque = new()
+    {
+        ["relogio"] = ("comum", "#c9ccd4", 3),
+        ["celular"] = ("comum", "#c9ccd4", 5),
+        ["radio"] = ("comum", "#c9ccd4", 4),
+        ["joias"] = ("raro", "#6aa8ff", 20),
+        ["notebook"] = ("raro", "#6aa8ff", 25),
+        ["documentos"] = ("raro", "#6aa8ff", 15),
+        ["barra_de_ouro"] = ("lendário", "#f5b301", 100),
+        ["maleta_de_diamantes"] = ("lendário", "#f5b301", 120),
+        ["maco_de_notas"] = ("dinheiro", "#6eff6e", 8),
     };
 
     private readonly List<CoisaNoChao> noChao = new();
@@ -129,7 +144,7 @@ public partial class IlhaLemnos
             .OrderBy(coisa => Distancia(lugar, new Ponto { X = coisa.Lugar.X, Y = coisa.Lugar.Y, Z = coisa.Lugar.Z }))
             .FirstOrDefault();
         if (perto == null) return;
-        var pegou = 0;
+        var pegos = new List<string>();
         while (perto.Itens.Count > 0)
         {
             if (estado.Mochila.Count >= estado.Espacos)
@@ -138,15 +153,29 @@ public partial class IlhaLemnos
                 break;
             }
             estado.Mochila.Add(perto.Itens[0]);
+            pegos.Add(perto.Itens[0]);
             perto.Itens.RemoveAt(0);
-            pegou++;
         }
         if (perto.Itens.Count == 0)
         {
             Tirar(perto);
             if (perto.DeCaixa is { } deCaixa) ReaparecerDepois(deCaixa);
         }
-        if (pegou > 0) MostrarMochila(jogador, estado);
+        if (pegos.Count > 0) MostrarOQuePegou(jogador, estado, pegos);
+    }
+
+    /// <summary>O que acabou de sair da caixa (ou da mochila no chão), em destaque e no chat, com a raridade e o valor.</summary>
+    private static void MostrarOQuePegou(CCSPlayerController jogador, NaIlha estado, List<string> pegos)
+    {
+        var linhas = pegos.GroupBy(item => item).Select(grupo =>
+        {
+            var nome = NomeDoSaque.GetValueOrDefault(grupo.Key, grupo.Key);
+            var (raridade, cor, valor) = ValorDoSaque.GetValueOrDefault(grupo.Key, ("comum", "#c9ccd4", 0));
+            var quantos = grupo.Count() > 1 ? $" ×{grupo.Count()}" : "";
+            jogador.PrintToChat($" [Ilha Lemnos] Você pegou: {nome}{quantos} ({raridade}, vale {valor * grupo.Count()}).");
+            return $"<font color='{cor}' class='fontSize-l'>{WebUtility.HtmlEncode(nome)}{quantos}</font><br><font color='{cor}'>{raridade} · vale {valor * grupo.Count()}</font>";
+        });
+        jogador.PrintToCenterHtml($"Você pegou<br>{string.Join("<br>", linhas)}<br><font color='#ab9fc2'>Mochila {estado.Mochila.Count}/{estado.Espacos}</font>", 4);
     }
 
     private void TirarMochilasVencidas()
