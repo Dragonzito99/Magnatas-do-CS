@@ -62,7 +62,8 @@ export const xpPartidas = pgTable(
   (tabela) => [unique('xp_partidas_conta_referencia').on(tabela.usuarioId, tabela.referencia), index('xp_partidas_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],
 );
 
-export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste', 'pagamento', 'mensalidade', 'estorno', 'insignia', 'presente']);
+// venda: saque vendido no mercado da Ilha Lemnos; lemnos: dinheiro solto trazido numa extração (15/11/2026).
+export const tipoGrana = pgEnum('tipo_grana', ['partida', 'abertura', 'compra', 'ajuste', 'pagamento', 'mensalidade', 'estorno', 'insignia', 'presente', 'venda', 'lemnos']);
 export const moeda = pgEnum('moeda', ['grana', 'magcoin']);
 
 /**
@@ -312,7 +313,7 @@ export const servidores = pgTable('servidores', {
   criadoEm: criadoEm(),
 });
 
-export const modoDiversao = pgEnum('modo_diversao', ['cada_um', 'equipe', 'mutacao', 'fantasma']);
+export const modoDiversao = pgEnum('modo_diversao', ['cada_um', 'equipe', 'mutacao', 'fantasma', 'lemnos']);
 
 // A futura tela de Adm cria e edita estas linhas.
 export const servidoresDiversao = pgTable(
@@ -953,3 +954,100 @@ export type Assinatura = typeof assinaturas.$inferSelect;
 export type Envio = typeof envios.$inferSelect;
 export type Papel = Usuario['papel'];
 export type EstadoUsuario = Usuario['estado'];
+
+// Ilha Lemnos, o modo extração (dono, 15/11/2026). O site manda no que existe; o servidor só conta o que aconteceu.
+export const tipoItemLemnos = pgEnum('tipo_item_lemnos', ['arma', 'granada', 'mochila', 'saque']);
+export const origemItemLemnos = pgEnum('origem_item_lemnos', ['grana', 'magcoin', 'achado']);
+export const situacaoItemLemnos = pgEnum('situacao_item_lemnos', ['no_bau', 'em_campo', 'perdido', 'vendido', 'gasto']);
+export const fimDaSessaoLemnos = pgEnum('fim_da_sessao_lemnos', ['saiu', 'morreu_saindo', 'kick_afk', 'kick_acampar', 'queda']);
+export const tipoEventoLemnos = pgEnum('tipo_evento_lemnos', ['inicio', 'entrada', 'renascer', 'extracao', 'morte', 'saida']);
+export const motivoPunicaoLemnos = pgEnum('motivo_punicao_lemnos', ['afk', 'acampar']);
+
+/** As sessões: do momento em que o jogador entra no servidor até sair. Os números alimentam a tela de estatísticas. */
+export const lemnosSessoes = pgTable(
+  'lemnos_sessoes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    porta: integer('porta').notNull(),
+    iniciadaEm: timestamp('iniciada_em', { withTimezone: true }).notNull().defaultNow(),
+    encerradaEm: timestamp('encerrada_em', { withTimezone: true }),
+    fim: fimDaSessaoLemnos('fim'),
+    // O tamanho da mochila da vida atual, para recusar extração com mais saque do que cabe.
+    espacos: integer('espacos').notNull().default(8),
+    abates: integer('abates').notNull().default(0),
+    mortes: integer('mortes').notNull().default(0),
+    extracoes: integer('extracoes').notNull().default(0),
+    granaGanha: integer('grana_ganha').notNull().default(0),
+    vistaEm: timestamp('vista_em', { withTimezone: true }),
+  },
+  (tabela) => [index('lemnos_sessoes_conta_fim_idx').on(tabela.usuarioId, tabela.encerradaEm)],
+);
+
+/** O baú da extração: uma linha por unidade (cada AK de grana é uma linha), nunca apagada; a situação conta o fim dela. */
+export const lemnosItens = pgTable(
+  'lemnos_itens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    tipo: tipoItemLemnos('tipo').notNull(),
+    itemId: text('item_id').notNull(),
+    origem: origemItemLemnos('origem').notNull(),
+    situacao: situacaoItemLemnos('situacao').notNull().default('no_bau'),
+    // Vazio: para sempre (Magcoin) ou de uso único (grana, achado).
+    expiraEm: timestamp('expira_em', { withTimezone: true }),
+    sessaoId: uuid('sessao_id').references(() => lemnosSessoes.id),
+    criadoEm: criadoEm(),
+    atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (tabela) => [index('lemnos_itens_conta_situacao_idx').on(tabela.usuarioId, tabela.situacao)],
+);
+
+/** O que o jogador escolheu levar. Guarda o tipo do item; a unidade sai na hora de entrar. */
+export const lemnosKits = pgTable('lemnos_kits', {
+  usuarioId: uuid('usuario_id')
+    .primaryKey()
+    .references(() => usuarios.id),
+  principal: text('principal'),
+  secundaria: text('secundaria'),
+  granadas: jsonb('granadas').$type<string[]>().notNull().default([]),
+  mochila: text('mochila'),
+  atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Cada aviso do servidor, uma vez só: a referência é única e a resposta gravada volta igual num reenvio. */
+export const lemnosEventos = pgTable(
+  'lemnos_eventos',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    sessaoId: uuid('sessao_id').references(() => lemnosSessoes.id),
+    tipo: tipoEventoLemnos('tipo').notNull(),
+    referencia: text('referencia').notNull().unique(),
+    detalhes: jsonb('detalhes'),
+    resposta: jsonb('resposta'),
+    criadoEm: criadoEm(),
+  },
+  (tabela) => [index('lemnos_eventos_tipo_data_idx').on(tabela.tipo, tabela.criadoEm)],
+);
+
+/** Kicks por AFK ou por acampar e o banimento que vier deles. Vale só para a Ilha Lemnos, nunca para o clube. */
+export const lemnosPunicoes = pgTable(
+  'lemnos_punicoes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id),
+    motivo: motivoPunicaoLemnos('motivo').notNull(),
+    criadoEm: criadoEm(),
+    banidoAte: timestamp('banido_ate', { withTimezone: true }),
+    banidoParaSempre: boolean('banido_para_sempre').notNull().default(false),
+    desfeitaEm: timestamp('desfeita_em', { withTimezone: true }),
+    desfeitaPor: uuid('desfeita_por').references(() => usuarios.id),
+  },
+  (tabela) => [index('lemnos_punicoes_conta_data_idx').on(tabela.usuarioId, tabela.criadoEm)],
+);

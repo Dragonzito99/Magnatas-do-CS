@@ -281,6 +281,13 @@
       "when": 1794594398047,
       "tag": "0039_mutacao_sempre_ligada",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794770410301,
+      "tag": "0040_ilha_lemnos",
+      "breakpoints": true
     }
   ]
 }

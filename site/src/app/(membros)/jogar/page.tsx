@@ -40,6 +40,7 @@ const DESCRICAO_DO_MODO: Record<ModoDeDiversao, string> = {
   equipe: 'Renasce na base. Ganha o time que fizer mais abates.',
   mutacao: 'Quem é pego vira mutante. O último humano ganha a super Negev.',
   fantasma: 'Invisíveis de faca contra armados.',
+  lemnos: 'Entre com seu kit, pegue o saque e chegue vivo à extração.',
 };
 
 const ERROS: Record<string, string> = {

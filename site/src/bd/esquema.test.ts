@@ -86,12 +86,13 @@ test('a migração dá o nome de cada servidor pela porta', () => {
   }
 });
 
-test('depois das migrações, os servidores cadastrados já têm nome e são sob demanda', async () => {
+test('depois das migrações, os servidores cadastrados já têm nome e só a Mutação fica sempre ligada', async () => {
   const bd = await criarBancoDeTeste();
   const linhas = await bd.select().from(servidoresDiversao);
   const porPorta = Object.fromEntries(linhas.map((linha) => [linha.porta, linha.nomeNoServidor]));
   expect(porPorta).toMatchObject({ 27016: 'ak-desert', 27017: 'pistola', 27018: 'awp', 27019: 'equipe', 27020: 'mutacao', 27021: 'fantasma' });
-  expect(linhas.every((linha) => linha.sobDemanda)).toBe(true);
+  // A Mutação fica sempre ligada desde 13/11/2026 (migração 0039).
+  expect(linhas.filter((linha) => !linha.sobDemanda).map((linha) => linha.nomeNoServidor)).toEqual(['mutacao']);
 });
 
 test('a mesma insígnia não entra duas vezes para a mesma conta', async () => {
