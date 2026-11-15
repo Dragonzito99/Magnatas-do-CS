@@ -293,3 +293,13 @@ def test_quem_sai_antes_da_resposta_da_entrada_nao_deixa_sessao_aberta():
     fonte = codigo()
     entrada = fonte.split("private HookResult AoEntrar(")[1].split("\n    }")[0]
     assert 'Avisar("saida"' in entrada
+
+
+def test_kit_espera_o_jogo_e_entrega_de_novo_o_que_sumiu():
+    # O jogo monta o jogador logo depois de nascer e tirava as armas entregues cedo demais (dono, 15/11/2026).
+    fonte = codigo()
+    nascer = fonte.split("private HookResult AoNascer(")[1].split("\n    }")[0]
+    assert "AddTimer(EsperaAposNascer" in nascer
+    assert "Server.NextFrame" not in nascer
+    ligar = fonte.split("private void LigarArmasAoKit(")[1].split("\n    }")[0]
+    assert "GiveNamedItem(peca.Classe)" in ligar

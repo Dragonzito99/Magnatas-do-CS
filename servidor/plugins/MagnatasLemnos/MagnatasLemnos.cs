@@ -63,6 +63,7 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
 {
     private const float SegundosParaRenascer = 5f;
     private const float IntervaloDoPasso = 0.25f;
+    private const float EsperaAposNascer = 0.2f;
 
     private readonly Dictionary<ulong, NaIlha> naIlha = new();
 
@@ -194,7 +195,8 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
     {
         var jogador = evento.Userid;
         if (jogador is not { IsValid: true } || !naIlha.TryGetValue(jogador.SteamID, out var estado) || estado.KitPendente == null) return HookResult.Continue;
-        Server.NextFrame(() =>
+        // No momento do evento, o jogo ainda está montando o jogador: arma entregue antes disso some.
+        AddTimer(EsperaAposNascer, () =>
         {
             if (jogador.IsValid && jogador.PawnIsAlive) PrepararVida(jogador, estado);
         });

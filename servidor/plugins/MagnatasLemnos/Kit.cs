@@ -63,12 +63,15 @@ public partial class IlhaLemnos
             foreach (var peca in dela) livres.Remove(peca);
             estado.ArmasDoKit[arma.Index] = dela;
         }
+        if (!armas.Any(alca => alca.Value is { IsValid: true } arma && EhFacaOuBomba(arma.DesignerName))) jogador.GiveNamedItem("weapon_knife");
         if (livres.Count == 0) return;
         if (tentativa >= TentativasDeLigarOKit)
         {
             Console.WriteLine($"[Lemnos] {livres.Count} peças do kit de {jogador.PlayerName} não apareceram na mão.");
             return;
         }
+        // O que o jogo tirou da mão volta: a peça que não está em nenhuma arma é entregue de novo.
+        if (jogador.PawnIsAlive) foreach (var peca in livres) jogador.GiveNamedItem(peca.Classe);
         AddTimer(EsperaParaLigarAsArmas, () => LigarArmasAoKit(jogador, estado, livres, tentativa + 1));
     }
 
