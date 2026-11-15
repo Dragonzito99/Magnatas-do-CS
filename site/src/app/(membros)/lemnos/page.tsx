@@ -12,6 +12,7 @@ import { eq } from 'drizzle-orm';
 import { CarteiraDaShop } from '../loja/carteira-da-shop';
 import { FecharComEsc } from '../loja/fechar-com-esc';
 import { trocarPeca } from './acoes';
+import { AreaDoArrasto, ItemQueArrasta, LugarQueRecebe, type LugarDoKit } from './arrastar-para-o-kit';
 import { AvisoDaIlha } from './avisos';
 import { AbasDaIlha, ImagemDoItem, TipoDoItem, TopoDaIlha } from './componentes';
 
@@ -89,17 +90,27 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
     agora,
   );
   const extracoes = sessoes.reduce((soma, sessao) => soma + sessao.extracoes, 0);
+  /** Para onde o item do baú pode ser arrastado; null se não vai no kit (saque, vencido, já na ilha). */
+  const lugarDe = (grupo: Grupo): LugarDoKit | null => {
+    if (grupo.validade === 'venceu' || grupo.validade === 'na ilha agora') return null;
+    if (grupo.tipo === 'granada') return 'granada';
+    if (grupo.tipo === 'mochila') return 'mochila';
+    if (grupo.tipo === 'arma') return armaLemnos(grupo.itemId)?.lugar ?? null;
+    return null;
+  };
 
   const espaco = (lugar: Exclude<Lugar, 'granada'>, id: string | null, vazio: string) => {
     const mostrado = id ?? (lugar === 'secundaria' ? 'glock' : lugar === 'mochila' ? 'basica' : null);
     const detalhe = id === null && lugar === 'secundaria' ? 'De graça · nunca se perde' : id === null && lugar === 'mochila' ? '8 espaços · todo mundo tem' : null;
     return (
+      <LugarQueRecebe lugar={lugar}>
       <Link href={aberta ? '/lemnos' : `/lemnos?escolher=${lugar}`} scroll={false} className={`espaco-do-kit raridade-${mostrado ? raridadeLemnos(mostrado) : 'comum'}${mostrado ? '' : ' vazio'}`}>
         <small>{NOME_DO_LUGAR[lugar]}</small>
         {mostrado ? <ImagemDoItem id={mostrado} /> : <span className="mais-do-kit">+</span>}
         <b>{mostrado ? (lugar === 'secundaria' && id === null ? PISTOLA_DE_GRACA.nome : nomeLemnos(mostrado)) : vazio}</b>
-        <em>{detalhe ?? (id && lugar === 'mochila' ? `${mochilaLemnos(id)?.espacos} espaços` : id ? `${quantas(id)} no baú` : 'Toque para escolher')}</em>
+        <em>{detalhe ?? (id && lugar === 'mochila' ? `${mochilaLemnos(id)?.espacos} espaços` : id ? `${quantas(id)} no baú` : 'Toque ou arraste do baú')}</em>
       </Link>
+      </LugarQueRecebe>
     );
   };
 
@@ -129,13 +140,15 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
         </p>
       )}
 
+      <AreaDoArrasto ligado={!aberta}>
       <div className="secao-da-shop">
         <h2>Seu kit</h2>
-        <span className="legenda-da-secao">É com isso que você entra. Toque num espaço para trocar.</span>
+        <span className="legenda-da-secao">É com isso que você entra. Arraste um item do baú para o espaço, ou toque no espaço.</span>
       </div>
       <div className="kit-equipado">
         {espaco('principal', kit.principal, 'Sem arma principal')}
         {espaco('secundaria', kit.secundaria, '')}
+        <LugarQueRecebe lugar="granada">
         <div className="espaco-do-kit granadas-do-kit">
           <small>Granadas · até 4</small>
           <div className="lista-de-granadas">
@@ -161,6 +174,7 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
             })}
           </div>
         </div>
+        </LugarQueRecebe>
         {espaco('mochila', kit.mochila, '')}
       </div>
 
@@ -187,7 +201,7 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
           </nav>
           <div className="grade-da-shop">
             {grupos.map((grupo) => (
-              <div key={grupo.chave} className={`cartao-da-shop raridade-${raridadeLemnos(grupo.itemId)}`}>
+              <ItemQueArrasta key={grupo.chave} lugar={lugarDe(grupo)} itemId={grupo.itemId} className={`cartao-da-shop raridade-${raridadeLemnos(grupo.itemId)}`}>
                 <span className="palco-do-cartao">
                   <ImagemDoItem id={grupo.itemId} />
                   <span className={`tempo-do-cartao ${grupo.classe}`}>{grupo.validade}</span>
@@ -197,11 +211,12 @@ export default async function IlhaLemnos({ searchParams }: { searchParams: Promi
                   <TipoDoItem id={grupo.itemId} />
                   <b className="nome-do-cartao">{nomeLemnos(grupo.itemId)}</b>
                 </span>
-              </div>
+              </ItemQueArrasta>
             ))}
           </div>
         </>
       )}
+      </AreaDoArrasto>
 
       {sessoes.length > 0 && (
         <>

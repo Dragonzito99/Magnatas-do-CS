@@ -12165,6 +12165,59 @@ a.granada-do-kit:hover {
   background: #c0262d;
 }
 
+/* Arrastar do baú para o kit: só o espaço certo acende, os outros apagam. */
+.lugar-do-kit {
+  display: grid;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.lugar-do-kit > .espaco-do-kit {
+  height: 100%;
+}
+
+.lugar-do-kit.aceita > .espaco-do-kit {
+  border: 2px dashed var(--ouro);
+  box-shadow: 0 0 0 4px var(--ouro-fraco), 0 0 28px rgba(245, 179, 1, 0.35);
+  animation: chamar-o-item 1s ease-in-out infinite alternate;
+}
+
+.lugar-do-kit.em-cima {
+  transform: scale(1.03);
+}
+
+.lugar-do-kit.em-cima > .espaco-do-kit {
+  background: var(--ouro-fraco);
+}
+
+.lugar-do-kit.apagado {
+  opacity: 0.3;
+}
+
+.lugar-do-kit.trocando {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+@keyframes chamar-o-item {
+  to {
+    box-shadow: 0 0 0 6px var(--ouro-fraco), 0 0 40px rgba(245, 179, 1, 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lugar-do-kit.aceita > .espaco-do-kit {
+    animation: none;
+  }
+}
+
+.cartao-da-shop.arrastavel {
+  cursor: grab;
+}
+
+.cartao-da-shop.arrastavel:active {
+  cursor: grabbing;
+}
+
 /* A janela de escolher o que vai no espaço do kit. */
 .escolha-do-kit {
   display: grid;
