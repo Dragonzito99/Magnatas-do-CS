@@ -106,3 +106,142 @@ def test_todos_nao_liga_a_ilha():
 def test_compilar_faz_o_plugin_da_ilha():
     assert "plugins/MagnatasLemnos" in COMPILAR
     assert "MagnatasLemnos.dll" in COMPILAR
+
+
+# Tarefa 12: a base do plugin (site, kit e postos)
+
+
+def test_lemnos_nao_registra_OnEntityDeleted():
+    # Derrubou a Mutação em 13/11/2026: nunca registrar.
+    assert "OnEntityDeleted" not in codigo()
+
+
+def test_toda_chamada_ao_site_passa_pela_fila():
+    fonte = codigo()
+    assert fonte.count("SendAsync(") == 1, "só a fila fala com o site"
+    for aviso in ["inicio", "entrada", "renascer", "extracao", "morte", "saida"]:
+        assert f'Avisar("{aviso}"' in fonte
+
+
+def test_referencia_com_prefixo_lemnos():
+    assert re.search(r'\$"lemnos:\{Config\.Porta\}:\{Guid\.NewGuid\(\)', codigo())
+
+
+def test_fila_reenvia_ate_10_minutos():
+    fonte = codigo()
+    assert "PrazoDaFila = TimeSpan.FromMinutes(10)" in fonte
+    # Recusa do site (4xx) não se repete; erro do site (5xx) e falha de rede, sim.
+    assert "< 500" in fonte
+
+
+def test_safe_zone_bloqueia_dano():
+    fonte = codigo()
+    assert "Listeners.OnEntityTakeDamagePre" in fonte
+    assert "NoPosto(" in fonte
+
+
+def test_arma_magcoin_some_do_chao_na_morte():
+    fonte = codigo()
+    assert "TirarDoChaoAsQueNaoCaem" in fonte
+    assert re.search(r"Magcoin \|\| .*Gratis", fonte)
+
+
+def test_arma_magcoin_nao_se_larga():
+    assert 'AddCommandListener("drop"' in codigo()
+
+
+def test_avisa_inicio_ao_carregar():
+    fonte = codigo()
+    load = fonte.split("public override void Load")[1].split("\n    }")[0]
+    assert 'Avisar("inicio"' in load
+
+
+def test_nome_e_versao_do_plugin():
+    fonte = codigo()
+    assert 'ModuleName => "Magnatas: Ilha Lemnos"' in fonte
+    assert 'ModuleVersion => "0.1.0"' in fonte
+
+
+def test_classe_da_m4_silenciada_e_da_usp_pelo_numero_do_item():
+    fonte = codigo()
+    assert '"weapon_m4a1_silencer"' in fonte and '"weapon_usp_silencer"' in fonte
+
+
+# Tarefa 13: saque, mochila e extração
+
+
+def test_extracao_espera_10_segundos_parado():
+    assert "SegundosParaExtrair = 10" in codigo()
+
+
+def test_mochila_respeita_espacos():
+    fonte = codigo()
+    assert "Mochila cheia" in fonte
+    assert re.search(r"Count >= .*Espacos", fonte)
+
+
+def test_mochila_cai_ao_morrer_e_some_em_5_minutos():
+    fonte = codigo()
+    assert "DeixarMochilaNoChao" in fonte
+    assert "MinutosDaMochilaNoChao = 5" in fonte
+
+
+def test_saque_reaparece():
+    fonte = codigo()
+    assert "MinutosParaReaparecerMin = 5" in fonte and "MinutosParaReaparecerMax = 10" in fonte
+
+
+def test_pegar_com_use():
+    fonte = codigo()
+    assert "PlayerButtons.Use" in fonte
+    assert "DistanciaParaPegar = 80" in fonte
+
+
+def test_extracao_mostra_o_texto_do_dono():
+    assert "Você extraiu da Ilha Lemnos" in codigo()
+
+
+# Tarefa 14: vigia, saída e reinício diário
+
+
+def test_afk_3_minutos_mais_30_segundos():
+    fonte = codigo()
+    assert "SegundosAteAvisoAfk = 180" in fonte and "SegundosAteKickAfk = 210" in fonte
+
+
+def test_acampar_10_minutos_300_unidades():
+    fonte = codigo()
+    assert "SegundosAteAvisoAcampar = 600" in fonte and "SegundosAteKickAcampar = 660" in fonte
+    assert "RaioDeAcampar = 300" in fonte
+
+
+def test_kick_manda_motivo_antes_de_desconectar():
+    fonte = codigo()
+    kick = fonte.split("private void Expulsar(")[1].split("\n    }")[0]
+    assert kick.index('Avisar("saida"') < kick.index("kickid")
+
+
+def test_reinicio_as_5_de_brasilia_com_avisos():
+    fonte = codigo()
+    assert '"America/Sao_Paulo"' in fonte
+    assert "HoraDoReinicio = 5" in fonte
+    assert "MinutosDeAviso = [10, 5, 1]" in fonte
+    assert 'ExecuteCommand("quit")' in fonte
+
+
+# Tarefa 15: marcar o mapa andando por ele
+
+
+def test_marcar_so_adm():
+    fonte = codigo()
+    marcar = fonte.split("private void ComandoMarcar(")[1].split("\n    }")[0]
+    assert "Adm" in marcar
+    for comando in ['"css_marcar"', '"css_marcados"', '"css_desmarcar"']:
+        assert comando in fonte
+
+
+def test_marcar_grava_no_arquivo_do_mapa():
+    fonte = codigo()
+    assert "Config.ArquivoDoMapa" in fonte
+    assert "File.WriteAllText" in fonte
+    assert "RaioDoPosto = 600" in fonte and "RaioDaSaida = 150" in fonte
