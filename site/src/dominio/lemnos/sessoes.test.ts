@@ -39,6 +39,7 @@ test('entrar abre sessão e põe o kit em campo', async () => {
   await escolherKit(bd, ana, { principal: 'ak47', secundaria: null, granadas: [], mochila: null }, AGORA);
   const resposta = await entrar(ana, STEAM_A);
   expect(resposta.kit.principal).toMatchObject({ linha: ak, classe: 'weapon_ak47' });
+  expect(resposta.adm).toBe(false);
   expect(await linha(ak)).toMatchObject({ situacao: 'em_campo', sessaoId: resposta.sessao });
   expect(await sessaoDe(resposta.sessao)).toMatchObject({ usuarioId: ana.id, porta: 27024, encerradaEm: null, espacos: 8 });
 });
@@ -49,6 +50,12 @@ test('entrar duas vezes com a mesma referência devolve a mesma sessão', async 
   const segunda = await entrarNaIlha(bd, { porta: 27024, steamid64: STEAM_A, referencia }, AGORA);
   expect(segunda).toEqual(primeira);
   expect(await bd.select().from(lemnosSessoes)).toHaveLength(1);
+});
+
+test('a entrada diz ao servidor quem é o Adm (para o !marcar)', async () => {
+  const adm = await criarUsuario(bd, { estado: 'ativo', papel: 'adm', steamid64: '76561198000000099' });
+  expect(adm.papel).toBe('adm');
+  expect((await entrar(adm, '76561198000000099')).adm).toBe(true);
 });
 
 test('quem não é membro ativo fica de fora', async () => {

@@ -11969,6 +11969,10 @@ a.linha-simples-adm:hover span {
 }
 
 /* Ilha Lemnos (15/11/2026): kit, baú da extração, mercado e estatísticas, no visual da Magnata Shop. */
+.ilha-lemnos {
+  padding-bottom: 32px;
+}
+
 .lore-da-ilha {
   max-width: 760px;
   margin-bottom: 14px;

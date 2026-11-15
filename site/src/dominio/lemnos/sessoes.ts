@@ -20,7 +20,7 @@ export class SessaoEncerrada extends Error {
   }
 }
 
-export type RespostaDaEntrada = { ok: true; sessao: string; kit: KitDaEntrada } | { ok: false; motivo: 'nao_membro' | 'banido'; ate: string | null };
+export type RespostaDaEntrada = { ok: true; sessao: string; kit: KitDaEntrada; adm: boolean } | { ok: false; motivo: 'nao_membro' | 'banido'; ate: string | null };
 export type ArmaNaMao = { linha: string | null; classe: string };
 export type MotivoDaSaida = 'saiu' | 'kick_afk' | 'kick_acampar';
 
@@ -81,7 +81,8 @@ export async function entrarNaIlha(bd: Bd, pedido: { porta: number; steamid64: s
     const [sessao] = await tx.insert(lemnosSessoes).values({ usuarioId: conta.id, porta: pedido.porta, iniciadaEm: agora }).returning();
     const kit = await separarKit(tx, conta.id, sessao.id, agora);
     await tx.update(lemnosSessoes).set({ espacos: kit.espacos }).where(eq(lemnosSessoes.id, sessao.id));
-    return { sessaoId: sessao.id, resposta: { ok: true, sessao: sessao.id, kit } };
+    // adm: o servidor abre o !marcar (marcar postos, saídas e caixas andando pelo mapa) só para o Adm.
+    return { sessaoId: sessao.id, resposta: { ok: true, sessao: sessao.id, kit, adm: conta.papel === 'adm' } };
   });
 }
 
