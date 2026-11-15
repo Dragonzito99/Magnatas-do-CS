@@ -26,6 +26,7 @@ public partial class IlhaLemnos
     private void Passo()
     {
         TirarMochilasVencidas();
+        PrenderArmasQueNaoCaem();
         foreach (var jogador in Pessoas())
         {
             if (!naIlha.TryGetValue(jogador.SteamID, out var estado) || estado.Sessao == null || estado.JaSaiu) continue;

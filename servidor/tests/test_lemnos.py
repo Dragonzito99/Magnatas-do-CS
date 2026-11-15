@@ -245,3 +245,51 @@ def test_marcar_grava_no_arquivo_do_mapa():
     assert "Config.ArquivoDoMapa" in fonte
     assert "File.WriteAllText" in fonte
     assert "RaioDoPosto = 600" in fonte and "RaioDaSaida = 150" in fonte
+
+
+# Revisão final (15/11/2026)
+
+
+def test_arma_que_nao_cai_some_se_sair_da_mao_do_dono():
+    # Pegar outra arma com E troca e larga a atual sem passar pelo comando drop.
+    fonte = codigo()
+    assert "PrenderArmasQueNaoCaem" in fonte
+    passo = fonte.split("private void Passo()")[1].split("\n    }")[0]
+    assert "PrenderArmasQueNaoCaem()" in passo
+
+
+def test_arma_de_outro_kit_nao_vira_achada():
+    fonte = codigo()
+    mao = fonte.split("private List<ArmaNaMao> ArmasNaMao(")[1].split("\n    }")[0]
+    assert "DeOutroKit(" in mao
+
+
+def test_ligar_o_kit_tenta_de_novo_ate_ligar_tudo():
+    assert "TentativasDeLigarOKit" in codigo()
+
+
+def test_tirar_do_chao_confere_a_classe_da_entidade():
+    fonte = codigo()
+    tirar = fonte.split("TirarDoChaoAsQueNaoCaem(List<")[1].split("\n    }")[0]
+    assert "ClasseDe(arma)" in tirar
+
+
+def test_erro_na_resposta_nao_mata_a_fila():
+    fonte = codigo()
+    fila = fonte.split("private async Task EsvaziarFila(")[1].split("\n    }")[0]
+    assert fila.count("catch (Exception") >= 2
+
+
+def test_reinicio_fecha_como_queda_sem_avisar_saida():
+    # O site fecha como queda no próximo início: as armas voltam ao baú (projeto).
+    fonte = codigo()
+    reiniciar = fonte.split("private void ReiniciarAgora()")[1].split("\n    }")[0]
+    assert 'Avisar("saida"' not in reiniciar
+    assert "JaSaiu = true" in reiniciar
+    assert "volte a um posto" not in fonte
+
+
+def test_quem_sai_antes_da_resposta_da_entrada_nao_deixa_sessao_aberta():
+    fonte = codigo()
+    entrada = fonte.split("private HookResult AoEntrar(")[1].split("\n    }")[0]
+    assert 'Avisar("saida"' in entrada

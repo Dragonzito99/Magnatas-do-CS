@@ -11,6 +11,7 @@ namespace MagnatasLemnos;
 public partial class IlhaLemnos
 {
     private const float EsperaParaLigarAsArmas = 0.3f;
+    private const int TentativasDeLigarOKit = 5;
 
     /// <summary>
     /// A classe que o site conhece. O nome interno da M4A1-S, da USP-S e do R8 é o da M4A4, da P2000 e da Deagle: só o
@@ -42,26 +43,68 @@ public partial class IlhaLemnos
         pecas.AddRange(kit.Granadas);
         foreach (var peca in pecas) jogador.GiveNamedItem(peca.Classe);
         // A arma só aparece na lista do jogador um pouco depois de entregue.
-        AddTimer(EsperaParaLigarAsArmas, () => LigarArmasAoKit(jogador, estado, pecas));
+        AddTimer(EsperaParaLigarAsArmas, () => LigarArmasAoKit(jogador, estado, pecas, 1));
     }
 
-    private static void LigarArmasAoKit(CCSPlayerController jogador, NaIlha estado, List<PecaDoKit> pecas)
+    /// <summary>
+    /// Liga cada peça do kit à entidade da arma. A que não apareceu ainda é tentada de novo: arma de MagCoin ou Glock de
+    /// graça sem ligação seria contada como achada e duplicaria.
+    /// </summary>
+    private void LigarArmasAoKit(CCSPlayerController jogador, NaIlha estado, List<PecaDoKit> pecas, int tentativa)
     {
         if (!jogador.IsValid || jogador.PlayerPawn.Value?.WeaponServices?.MyWeapons is not { } armas) return;
         var livres = new List<PecaDoKit>(pecas);
         foreach (var alca in armas)
         {
-            if (alca.Value is not { IsValid: true } arma) continue;
+            if (alca.Value is not { IsValid: true } arma || estado.ArmasDoKit.ContainsKey(arma.Index)) continue;
             var classe = ClasseDe(arma);
             var dela = livres.Where(peca => peca.Classe == classe).ToList();
             if (dela.Count == 0) continue;
             foreach (var peca in dela) livres.Remove(peca);
             estado.ArmasDoKit[arma.Index] = dela;
         }
+        if (livres.Count == 0) return;
+        if (tentativa >= TentativasDeLigarOKit)
+        {
+            Console.WriteLine($"[Lemnos] {livres.Count} peças do kit de {jogador.PlayerName} não apareceram na mão.");
+            return;
+        }
+        AddTimer(EsperaParaLigarAsArmas, () => LigarArmasAoKit(jogador, estado, livres, tentativa + 1));
+    }
+
+    /// <summary>A entidade é uma arma de MagCoin ou a Glock de graça do kit de outra pessoa.</summary>
+    private bool DeOutroKit(uint indice, ulong dono) =>
+        naIlha.Any(par => par.Key != dono && par.Value.ArmasDoKit.TryGetValue(indice, out var pecas) && pecas.Any(peca => peca.Magcoin || peca.Gratis));
+
+    /// <summary>
+    /// A arma de MagCoin e a Glock de graça nunca passam de mão. Pegar outra arma com E larga a atual sem passar pelo
+    /// comando drop: a cada passo, a que saiu da mão do dono some do mapa (a de MagCoin continua no baú dele).
+    /// </summary>
+    private void PrenderArmasQueNaoCaem()
+    {
+        foreach (var (steam, estado) in naIlha)
+        {
+            var dono = PessoaPorSteam(steam);
+            foreach (var (indice, pecas) in estado.ArmasDoKit.ToList())
+            {
+                if (!pecas.Any(peca => peca.Magcoin || peca.Gratis)) continue;
+                var arma = Utilities.GetEntityFromIndex<CBasePlayerWeapon>((int)indice);
+                if (arma is not { IsValid: true } || !arma.DesignerName.StartsWith("weapon_") || !pecas.Any(peca => peca.Classe == ClasseDe(arma)))
+                {
+                    estado.ArmasDoKit.Remove(indice);
+                    continue;
+                }
+                var naMao = dono?.PlayerPawn.Value?.WeaponServices?.MyWeapons.Any(alca => alca.Value?.Index == indice) == true;
+                if (naMao) continue;
+                arma.Remove();
+                estado.ArmasDoKit.Remove(indice);
+                if (dono is { IsValid: true }) dono.PrintToCenterHtml("Essa arma não sai da sua mão: ela voltou para o seu baú.", 3);
+            }
+        }
     }
 
     /// <summary>O que o jogador tem na mão agora, como o site espera. A Glock de graça não conta.</summary>
-    private static List<ArmaNaMao> ArmasNaMao(CCSPlayerController jogador, NaIlha estado)
+    private List<ArmaNaMao> ArmasNaMao(CCSPlayerController jogador, NaIlha estado)
     {
         var lista = new List<ArmaNaMao>();
         if (jogador.PlayerPawn.Value?.WeaponServices?.MyWeapons is not { } armas) return lista;
@@ -73,6 +116,8 @@ public partial class IlhaLemnos
                 lista.AddRange(pecas.Where(peca => !peca.Gratis).Select(peca => new ArmaNaMao { Linha = peca.Linha, Classe = peca.Classe }));
                 continue;
             }
+            // A de MagCoin ou a Glock de graça de outra pessoa nunca vira achada: ela some no próximo passo.
+            if (DeOutroKit(arma.Index, jogador.SteamID)) continue;
             lista.Add(new ArmaNaMao { Linha = null, Classe = ClasseDe(arma) });
         }
         return lista.Take(20).ToList();
@@ -85,7 +130,8 @@ public partial class IlhaLemnos
         {
             if (!pecas.Any(peca => peca.Magcoin || peca.Gratis)) continue;
             var arma = Utilities.GetEntityFromIndex<CBasePlayerWeapon>((int)indice);
-            if (arma is { IsValid: true }) arma.Remove();
+            // O número pode já ser de outra coisa: só tira se ainda é a mesma arma.
+            if (arma is { IsValid: true } && arma.DesignerName.StartsWith("weapon_") && pecas.Any(peca => peca.Classe == ClasseDe(arma))) arma.Remove();
         }
     }
 

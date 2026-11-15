@@ -99,9 +99,37 @@ public partial class IlhaLemnos
         {
             await foreach (var aviso in fila.Reader.ReadAllAsync(fim))
             {
-                var resposta = await Enviar(aviso, fim);
-                Interlocked.Decrement(ref avisosPendentes);
-                if (aviso.Depois is { } depois) await Server.NextFrameAsync(() => depois(resposta));
+                // Um erro num aviso (ou na resposta dele) não pode parar a fila: os seguintes continuam saindo.
+                try
+                {
+                    var resposta = await Enviar(aviso, fim);
+                    if (aviso.Depois is { } depois)
+                    {
+                        await Server.NextFrameAsync(() =>
+                        {
+                            try
+                            {
+                                depois(resposta);
+                            }
+                            catch (Exception erro)
+                            {
+                                Console.WriteLine($"[Lemnos] Falha ao tratar a resposta de {aviso.Nome}: {erro.GetType().Name}.");
+                            }
+                        });
+                    }
+                }
+                catch (OperationCanceledException) when (fim.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception erro)
+                {
+                    Console.WriteLine($"[Lemnos] Falha no aviso {aviso.Nome}: {erro.GetType().Name}.");
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref avisosPendentes);
+                }
             }
         }
         catch (OperationCanceledException)

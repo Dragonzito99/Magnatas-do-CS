@@ -153,8 +153,19 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
         Avisar("entrada", new { porta = Config.Porta, steamid64 = steam.ToString(), referencia = NovaReferencia() }, json =>
         {
             var pessoa = PessoaPorSteam(steam);
-            if (pessoa == null || !naIlha.TryGetValue(steam, out var atual) || atual != estado) return;
             var resposta = Ler<RespostaDaEntrada>(json);
+            if (pessoa == null || !naIlha.TryGetValue(steam, out var atual) || atual != estado)
+            {
+                // Saiu antes da resposta: a sessão abriu sem ninguém. Fecha na hora, com o kit de volta ao baú.
+                if (resposta is { Ok: true, Sessao: { } sessaoSemNinguem, Kit: { } kitSemNinguem })
+                {
+                    var pecas = new List<PecaDoKit?> { kitSemNinguem.Principal, kitSemNinguem.Secundaria };
+                    pecas.AddRange(kitSemNinguem.Granadas);
+                    var armas = pecas.Where(peca => peca?.Linha != null).Select(peca => new ArmaNaMao { Linha = peca!.Linha, Classe = peca.Classe }).ToList();
+                    Avisar("saida", new { sessao = sessaoSemNinguem, referencia = NovaReferencia(), motivo = "saiu", naSafeZone = true, gastas = new List<string>(), armas });
+                }
+                return;
+            }
             if (resposta == null)
             {
                 Chutar(pessoa, "A Ilha Lemnos não conseguiu falar com o site. Tente de novo em instantes.");
