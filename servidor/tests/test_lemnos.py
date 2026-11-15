@@ -316,3 +316,10 @@ def test_rodada_reiniciada_devolve_o_kit_de_quem_estava_vivo():
     nascer = fonte.split("private HookResult AoNascer(")[1].split("\n    }")[0]
     assert "KitAtual" in nascer
     assert "Morto" in nascer
+
+
+def test_posto_novo_nao_prende_quem_esta_dentro():
+    # Marcar um posto onde o Adm estava fazia o plugin empurrá-lo "para fora" para o mesmo lugar, sem parar (15/11/2026).
+    fonte = codigo()
+    posto = fonte.split("private void ConferirPosto(")[1].split("\n    }")[0]
+    assert "NoPosto(fora)" in posto

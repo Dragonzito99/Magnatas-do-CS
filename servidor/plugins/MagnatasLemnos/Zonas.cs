@@ -96,6 +96,13 @@ public partial class IlhaLemnos
             return;
         }
         if (!estado.SaiuDoPosto || estado.UltimoLugarFora is not { } fora) return;
+        // O último lugar "de fora" virou parte de um posto (um posto novo foi marcado ali): não há para onde empurrar.
+        if (NoPosto(fora))
+        {
+            estado.SaiuDoPosto = false;
+            estado.UltimoLugarFora = null;
+            return;
+        }
         corpo.Teleport(fora, corpo.AbsRotation, new Vector(0, 0, 0));
         jogador.PrintToCenterHtml("<font color='#ff5a5a'>O posto não abre para quem já saiu.</font>", 2);
     }
