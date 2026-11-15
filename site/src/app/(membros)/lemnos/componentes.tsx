@@ -59,3 +59,15 @@ export function TopoDaIlha({ entrar, numeros, children }: { entrar: string; nume
     </section>
   );
 }
+
+/** A chamada da ilha dentro da Magnata Shop e do Baú, para quem está lá achar o mercado e o baú da ilha. */
+export function ChamadaDaIlha({ onde }: { onde: 'loja' | 'bau' }) {
+  return (
+    <Link href={onde === 'loja' ? '/lemnos/mercado' : '/lemnos'} className="chamada-da-ilha">
+      <span className="selo-da-raridade">Novo · Modo extração</span>
+      <b>Ilha Lemnos</b>
+      <span>{onde === 'loja' ? 'Armas, granadas e mochilas para a ilha estão no Mercado da ilha.' : 'Suas armas, mochilas e o saque da ilha ficam no Baú da ilha.'}</span>
+      <em>{onde === 'loja' ? 'Ir ao Mercado da ilha →' : 'Abrir o Baú da ilha →'}</em>
+    </Link>
+  );
+}

@@ -16,6 +16,7 @@ export function Cabecalho({
   testes = false,
   grana = null,
   magcoin = 0,
+  ilha = false,
 }: {
   usuario: UsuarioPublico;
   patente: Patente;
@@ -28,6 +29,8 @@ export function Cabecalho({
   /** O saldo de Grana; vazio enquanto a loja está fechada para esta conta. */
   grana?: number | null;
   magcoin?: number;
+  /** Quem pode entrar na Ilha Lemnos vê ela no menu. */
+  ilha?: boolean;
 }) {
   return (
     <header className="cabecalho">
@@ -95,7 +98,7 @@ export function Cabecalho({
           </div>
         </div>
       </div>
-      <MenuPrincipal discord={discord} testes={testes} loja={grana !== null} />
+      <MenuPrincipal discord={discord} testes={testes} loja={grana !== null} ilha={ilha} />
     </header>
   );
 }

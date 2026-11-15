@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
+import { ilhaAberta } from '@/dominio/lemnos/estatisticas';
+import { ChamadaDaIlha } from '../lemnos/componentes';
 import { bauDe, itemDoCatalogo, lojaAberta, NOME_DA_RARIDADE, NOME_DO_TIPO, RARIDADE, type ItemDoBau, type TipoDeItem } from '@/dominio/loja';
 import { descreverPresente, DIAS_DOS_ITENS, DIAS_DOS_OUTROS_MUTANTES, ITENS_DO_PRESENTE, MUTANTES_DO_PRESENTE, presentesFechados } from '@/dominio/presentes';
 import { Avatar } from '../avatar';
@@ -41,6 +43,7 @@ function tempo(posse: ItemDoBau): { texto: string; classe: string } {
  */
 export default async function Bau({ searchParams }: { searchParams: Promise<{ erro?: string; ver?: string; presente?: string }> }) {
   const usuario = await exigirAcesso('/bau');
+  const ilha = await ilhaAberta(obterBd(), usuario);
   if (!lojaAberta(usuario)) redirect('/inicio');
   const { erro, ver, presente: aberto } = await searchParams;
   const [bau, fechados] = await Promise.all([bauDe(obterBd(), usuario.id), presentesFechados(obterBd(), usuario.id)]);
@@ -79,6 +82,7 @@ export default async function Bau({ searchParams }: { searchParams: Promise<{ er
   return (
     <div className="tela-jogar">
       <CarteiraDaShop titulo="Baú" usuario={usuario} bau={false} />
+      {ilha && <ChamadaDaIlha onde="bau" />}
       {erro && (
         <p role="alert" className="aviso">
           Esse item não está valendo. Compre de novo na Shop para usar.

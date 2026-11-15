@@ -99,3 +99,16 @@ test('como no rascunho, o Ranking abre Comunidade, Mix do mês e MVPs', () => {
     ['MVPs', '/ranking?aba=mvps'],
   ]);
 });
+
+test('com a ilha aberta, Ilha Lemnos entra no menu com kit, mercado e venda, e o Baú mostra os dois baús', () => {
+  const itens = itensDoMenu(true, true);
+  expect(itens.map((candidato) => candidato.nome).slice(-2)).toEqual(['Baú', 'Ilha Lemnos']);
+  expect(itens.at(-1)?.filhos?.map((filho) => [filho.nome, filho.href])).toEqual([
+    ['Meu kit e baú', '/lemnos'],
+    ['Mercado', '/lemnos/mercado'],
+    ['Vender saque', '/lemnos/mercado?aba=vender'],
+  ]);
+  expect(itens.find((candidato) => candidato.nome === 'Baú')?.filhos?.map((filho) => filho.href)).toEqual(['/bau', '/lemnos']);
+  expect(itensDoMenu(false, true).at(-1)?.nome).toBe('Ilha Lemnos');
+  expect(itensDoMenu(true, false).map((candidato) => candidato.nome)).not.toContain('Ilha Lemnos');
+});

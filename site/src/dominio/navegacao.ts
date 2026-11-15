@@ -53,10 +53,32 @@ const MAGNATA_SHOP: ItemDoMenu = {
 // O baú fica ao lado da loja, a pedido do dono: é onde a pessoa escolhe o que usar.
 const BAU: ItemDoMenu = { nome: 'Baú', href: '/bau' };
 
-/** Enquanto a loja não abre para todos (só o Adm vê), Magnata Shop continua "em breve" e o Baú não aparece. */
-export function itensDoMenu(loja: boolean): ItemDoMenu[] {
-  if (!loja) return ITENS_DO_MENU;
-  return [...ITENS_DO_MENU.map((item) => (item.nome === MAGNATA_SHOP.nome ? MAGNATA_SHOP : item)), BAU];
+// A Ilha Lemnos no menu (dono, 15/11/2026): o caminho para o kit e o mercado não pode ficar escondido.
+const ILHA_LEMNOS: ItemDoMenu = {
+  nome: 'Ilha Lemnos',
+  href: '/lemnos',
+  filhos: [
+    { nome: 'Meu kit e baú', href: '/lemnos' },
+    { nome: 'Mercado', href: '/lemnos/mercado' },
+    { nome: 'Vender saque', href: '/lemnos/mercado?aba=vender' },
+  ],
+};
+const BAU_COM_A_ILHA: ItemDoMenu = {
+  ...BAU,
+  filhos: [
+    { nome: 'Baú da Shop', href: '/bau' },
+    { nome: 'Baú da Ilha Lemnos', href: '/lemnos' },
+  ],
+};
+
+/**
+ * Enquanto a loja não abre para todos (só o Adm vê), Magnata Shop continua "em breve" e o Baú não aparece. A Ilha
+ * Lemnos aparece para quem pode entrar nela (por enquanto, só o Adm).
+ */
+export function itensDoMenu(loja: boolean, ilha = false): ItemDoMenu[] {
+  if (!loja) return ilha ? [...ITENS_DO_MENU, ILHA_LEMNOS] : ITENS_DO_MENU;
+  const comALoja = ITENS_DO_MENU.map((item) => (item.nome === MAGNATA_SHOP.nome ? MAGNATA_SHOP : item));
+  return ilha ? [...comALoja, BAU_COM_A_ILHA, ILHA_LEMNOS] : [...comALoja, BAU];
 }
 
 // Salas, mix e Diversão ficam juntos na tela Jogar, com filtros.

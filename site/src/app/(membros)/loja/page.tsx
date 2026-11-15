@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { exigirAcesso } from '@/auth/guarda';
 import { obterBd } from '@/bd/conexao';
+import { ilhaAberta } from '@/dominio/lemnos/estatisticas';
+import { ChamadaDaIlha } from '../lemnos/componentes';
 import {
   bauDe,
   CATALOGO,
@@ -51,6 +53,7 @@ type Usuario = Awaited<ReturnType<typeof exigirAcesso>>;
  */
 export default async function Loja({ searchParams }: { searchParams: Promise<{ aba?: string; item?: string; erro?: string; comprado?: string }> }) {
   const usuario = await exigirAcesso('/loja');
+  const ilha = await ilhaAberta(obterBd(), usuario);
   if (!lojaAberta(usuario)) redirect('/inicio');
   const { aba: pedida, item: pedido, erro, comprado } = await searchParams;
   const agora = new Date();
@@ -95,6 +98,7 @@ export default async function Loja({ searchParams }: { searchParams: Promise<{ a
       <AbasDaLoja atual="loja" />
 
       <CarteiraDaShop titulo="Magnata Shop" usuario={usuario} />
+      {ilha && <ChamadaDaIlha onde="loja" />}
 
       <div className="topo-da-shop">
         <DestaquesDaShop

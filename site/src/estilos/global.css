@@ -12218,6 +12218,52 @@ a.granada-do-kit:hover {
   cursor: grabbing;
 }
 
+/* A chamada da ilha dentro da Magnata Shop e do Baú. */
+.chamada-da-ilha {
+  --raridade: var(--ouro);
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 20px;
+  padding: 16px 20px;
+  border: 1px solid rgba(245, 179, 1, 0.3);
+  border-left: 4px solid var(--ouro);
+  background:
+    linear-gradient(90deg, rgba(7, 4, 13, 0.95), rgba(7, 4, 13, 0.7)),
+    url('/mapas/lemnos.webp') center / cover;
+  color: var(--tinta);
+  text-decoration: none;
+  transition: border-color 0.12s, transform 0.12s;
+}
+
+.chamada-da-ilha:hover {
+  transform: translateY(-2px);
+  border-color: var(--ouro);
+}
+
+.chamada-da-ilha b {
+  font: italic 800 24px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.chamada-da-ilha span:not(.selo-da-raridade) {
+  color: var(--tinta-2);
+}
+
+.chamada-da-ilha em {
+  color: var(--ouro);
+  font-style: normal;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .chamada-da-ilha {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
 /* A janela de escolher o que vai no espaço do kit. */
 .escolha-do-kit {
   display: grid;

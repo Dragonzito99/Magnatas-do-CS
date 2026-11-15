@@ -20,6 +20,7 @@ import { AvisoDeManutencao } from './aviso-de-manutencao';
 import { AvisoDePartida } from './aviso-de-partida';
 import { AvisoDeSala } from './aviso-de-sala';
 import { Cabecalho } from './cabecalho';
+import { ilhaAberta } from '@/dominio/lemnos/estatisticas';
 import { ManterPresenca } from './manter-presenca';
 import { Sino } from './sino';
 import { VoltarParaAPartida } from './voltar-para-a-partida';
@@ -29,7 +30,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
   const usuario = await usuarioAtual();
   if (!usuario) redirect('/');
 
-  const [notificacoes, partida, sala, amigos, pedidos, convites, conversas, manutencao] = await Promise.all([
+  const [notificacoes, partida, sala, amigos, pedidos, convites, conversas, manutencao, ilha] = await Promise.all([
     notificacoesDe(obterBd(), usuario),
     partidaAtualDe(obterBd(), usuario.id),
     minhaSala(obterBd(), usuario.id),
@@ -38,6 +39,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
     convitesDeSalaPara(obterBd(), usuario.id),
     conversasDe(obterBd(), usuario.id),
     manutencaoAtual(obterBd()),
+    ilhaAberta(obterBd(), usuario),
   ]);
   const naoLidas = conversas.reduce((soma, conversa) => soma + conversa.naoLidas, 0);
   const grupos = conversas.flatMap((conversa) => (conversa.tipo === 'direta' ? [] : [{ id: conversa.id, nome: conversa.nome, tipo: conversa.tipo as 'grupo' | 'cla', naoLidas: conversa.naoLidas }]));
@@ -56,6 +58,7 @@ export default async function LayoutDeMembros({ children }: { children: React.Re
         casosDaEquipe={pode(usuario, 'ver_equipe') ? casosDe(notificacoes) : null}
         grana={lojaAberta(usuario) ? usuario.grana : null}
         magcoin={usuario.magcoin}
+        ilha={ilha}
       />
       {manutencao && <AvisoDeManutencao />}
       <main className="conteudo largura">
