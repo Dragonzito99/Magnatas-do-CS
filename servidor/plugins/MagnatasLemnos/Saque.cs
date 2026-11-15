@@ -172,7 +172,7 @@ public partial class IlhaLemnos
             var nome = NomeDoSaque.GetValueOrDefault(grupo.Key, grupo.Key);
             var (raridade, cor, valor) = ValorDoSaque.GetValueOrDefault(grupo.Key, ("comum", "#c9ccd4", 0));
             var quantos = grupo.Count() > 1 ? $" ×{grupo.Count()}" : "";
-            jogador.PrintToChat($" [Ilha Lemnos] Você pegou: {nome}{quantos} ({raridade}, vale {valor * grupo.Count()}).");
+            jogador.PrintToChat($" \x04[Ilha Lemnos]\x01 Você pegou: {nome}{quantos} ({raridade}, vale {valor * grupo.Count()}).");
             return $"<font color='{cor}' class='fontSize-l'>{WebUtility.HtmlEncode(nome)}{quantos}</font><br><font color='{cor}'>{raridade} · vale {valor * grupo.Count()}</font>";
         });
         jogador.PrintToCenterHtml($"Você pegou<br>{string.Join("<br>", linhas)}<br><font color='#ab9fc2'>Mochila {estado.Mochila.Count}/{estado.Espacos}</font>", 4);
