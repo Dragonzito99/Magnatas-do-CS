@@ -248,3 +248,23 @@ Mais à frente, o dono quer **fazer o próprio mapa à mão** no editor do CS2, 
 - Os lugares exatos de safe zones, saídas e caixas no dm_royale, marcados andando pelo mapa no Laboratório.
 - O desenho das telas novas do site (baú da extração, seção da loja, estatísticas), seguindo o visual da Magnata Shop.
 - A divisão em tarefas e a ordem de construção.
+
+## Mutantes na ilha (antecipado do mundo vivo, dono, 15/11/2026)
+
+O dono pediu para trazer os mutantes agora, antes de abrir a ilha. Desenho curto, combinado em conversa:
+
+- **O que são:** bots do computador com o boneco do mutante da Mutação (pacote 3836643990), só de faca. Ficam no time
+  CT; os jogadores, no TR. Todos contra todos continua valendo entre jogadores; mutante não fere mutante.
+- **Onde ficam:** zonas marcadas pelo Adm andando pelo mapa, com `!marcar mutantes [raio]` (raio padrão 900). Cada
+  mutante nasce numa zona sorteada e, se se afastar demais (2,5× o raio), volta para ela.
+- **Quantos:** 2 por zona, no máximo 6 no mapa, para não pesar no servidor nem tirar vaga de gente (vagas sobem para 26).
+- **Força:** três níveis sorteados ao nascer, com o boneco de cada nível da Mutação:
+  - nível 1: 200 de vida, 70%;
+  - nível 2: 400 de vida e mais rápido, 25%;
+  - nível 3: 800 de vida, o "chefe", 5%.
+- **Recompensa:** ao morrer, deixa saque no chão, que some em 5 minutos:
+  - nível 1: 50% de chance de comum ou dinheiro;
+  - nível 2: sempre deixa, raro ou dinheiro;
+  - nível 3: sempre deixa, com 40% de chance de lendário.
+- **Volta:** 2 minutos depois de morto, numa zona sorteada.
+- **Fora do escopo agora:** XP por matar mutante, animais, poderes no E dos mutantes.
