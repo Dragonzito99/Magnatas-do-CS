@@ -2,10 +2,9 @@ import { randomUUID } from 'node:crypto';
 import Link from 'next/link';
 import type { Usuario } from '@/bd/esquema';
 import { DIAS_A_VENDA, NOME_DA_RARIDADE, NOME_DO_TIPO, PRECOS, PRECOS_MAGCOIN, precoDeHoje, RARIDADE, type ItemDaLoja, type ItemDoBau, type TipoDeItem } from '@/dominio/loja';
-import { BotaoConfirmar } from '../botao-confirmar';
+import { CompraNaJanela } from '../compra-na-janela';
 import { comprar, comprarComMagcoin } from './acoes';
 import { FecharComEsc } from './fechar-com-esc';
-import { Preco } from './preco-da-shop';
 import { PreviaGrande } from './previa-do-item';
 
 const ERROS: Record<string, string> = {
@@ -81,57 +80,45 @@ export function JanelaDoItem({
           )}
 
           {posse?.diasRestantes !== null && (
-            <>
-              <span className="rotulo-da-janela">Com Grana</span>
-              <form action={comprar} className="dias-da-janela">
-                <input type="hidden" name="itemId" value={item.id} />
-                <input type="hidden" name="codigo" value={randomUUID()} />
-                {DIAS_A_VENDA.map((quantidade) => {
-                  const preco = precoDeHoje(item, quantidade, agora);
-                  const cheio = PRECOS[item.tipo][quantidade];
-                  const conteudo = (
-                    <>
-                      <span>{dias(quantidade)}</span>
-                      <Preco valor={preco} antes={preco < cheio ? cheio : undefined} />
-                    </>
-                  );
-                  if (preco > usuario.grana)
-                    return (
-                      <span key={quantidade} className="dia-da-janela sem-saldo" title={`Faltam ${preco - usuario.grana} Grana`}>
-                        {conteudo}
-                      </span>
-                    );
-                  return (
-                    <BotaoConfirmar
-                      key={quantidade}
-                      className="dia-da-janela"
-                      name="dias"
-                      value={String(quantidade)}
-                      mensagem={`Comprar ${NOME_DO_TIPO[item.tipo]} ${item.nome} por ${dias(quantidade)}, por ${preco} Grana?`}
-                    >
-                      {conteudo}
-                    </BotaoConfirmar>
-                  );
-                })}
-              </form>
-
-              <span className="rotulo-da-janela">Com MagCoin</span>
-              <form action={comprarComMagcoin}>
-                <input type="hidden" name="itemId" value={item.id} />
-                <input type="hidden" name="codigo" value={randomUUID()} />
-                {precoParaSempre > usuario.magcoin ? (
-                  <Link href="/apoio" className="para-sempre-da-janela sem-saldo">
-                    <span>Para sempre · comprar MagCoin</span>
-                    <Preco valor={precoParaSempre} moeda="magcoin" />
-                  </Link>
-                ) : (
-                  <BotaoConfirmar className="para-sempre-da-janela" mensagem={`Comprar ${NOME_DO_TIPO[item.tipo]} ${item.nome} para sempre, por ${precoParaSempre} MagCoins?`}>
-                    <span>Para sempre</span>
-                    <Preco valor={precoParaSempre} moeda="magcoin" />
-                  </BotaoConfirmar>
-                )}
-              </form>
-            </>
+            <CompraNaJanela
+              escondidos={{ itemId: item.id, codigo: randomUUID() }}
+              grupos={[
+                {
+                  titulo: 'Com Grana',
+                  moeda: 'grana',
+                  acao: comprar,
+                  campo: 'dias',
+                  opcoes: DIAS_A_VENDA.map((quantidade) => {
+                    const preco = precoDeHoje(item, quantidade, agora);
+                    const cheio = PRECOS[item.tipo][quantidade];
+                    return {
+                      valor: String(quantidade),
+                      rotulo: dias(quantidade),
+                      preco,
+                      antes: preco < cheio ? cheio : undefined,
+                      frase: `Comprar ${item.nome} por ${dias(quantidade)} · ${preco} Grana`,
+                      falta: Math.max(preco - usuario.grana, 0),
+                    };
+                  }),
+                },
+                {
+                  titulo: 'Com MagCoin',
+                  moeda: 'magcoin',
+                  acao: comprarComMagcoin,
+                  campo: 'sempre',
+                  opcoes: [
+                    {
+                      valor: 'sim',
+                      rotulo: 'Para sempre',
+                      preco: precoParaSempre,
+                      frase: `Comprar ${item.nome} para sempre · ${precoParaSempre} MagCoins`,
+                      falta: Math.max(precoParaSempre - usuario.magcoin, 0),
+                      largo: true,
+                    },
+                  ],
+                },
+              ]}
+            />
           )}
         </div>
       </div>

@@ -15,7 +15,7 @@ import { Preco } from '../../loja/preco-da-shop';
 import { comprarGrana, comprarMagcoin, comprarUmaMochila, vender } from '../acoes';
 import { AvisoDaIlha } from '../avisos';
 import { AbasDaIlha, ImagemDoItem, TipoDoItem } from '../componentes';
-import { CompraNaJanela, type GrupoDeCompra } from './compra-na-janela';
+import { CompraNaJanela, type GrupoDeCompra } from '../../compra-na-janela';
 
 type Aba = 'armas' | 'granadas' | 'mochilas' | 'vender';
 const ABAS: { valor: Aba; nome: string }[] = [

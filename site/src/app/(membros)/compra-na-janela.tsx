@@ -3,13 +3,15 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Preco } from '../../loja/preco-da-shop';
+import { Preco } from './loja/preco-da-shop';
 
 export type OpcaoDeCompra = {
   /** O que vai no campo do formulário: a quantidade, os dias ou "sempre". */
   valor: string;
   rotulo: string;
   preco: number;
+  /** O preço cheio, riscado ao lado, quando a opção está em oferta. */
+  antes?: number;
   /** A frase do botão grande, como "Comprar 1× FAMAS por 45 Grana". */
   frase: string;
   /** Quanto falta, se não dá para comprar agora. */
@@ -21,7 +23,7 @@ export type GrupoDeCompra = {
   titulo: string;
   moeda: 'grana' | 'magcoin';
   acao: (dados: FormData) => Promise<void>;
-  campo: 'quantidade' | 'dias';
+  campo: string;
   opcoes: OpcaoDeCompra[];
 };
 
@@ -63,7 +65,7 @@ export function CompraNaJanela({ grupos, escondidos }: { grupos: GrupoDeCompra[]
               onClick={() => setEscolhida({ grupo: indiceDoGrupo, opcao: indice })}
             >
               <span>{item.rotulo}</span>
-              <Preco valor={item.preco} moeda={cada.moeda} />
+              <Preco valor={item.preco} antes={item.antes} moeda={cada.moeda} />
             </button>
           );
         };
