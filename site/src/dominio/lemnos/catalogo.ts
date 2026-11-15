@@ -99,7 +99,7 @@ const FUZIS = ['ak47', 'm4a1', 'm4a1_silencer', 'galilar', 'famas'];
 /** A imagem do item no site: as armas padrão do CS2 (sem skin) e ícones próprios para mochila e saque. */
 export function imagemLemnos(id: string): string {
   if (armaLemnos(id) || granadaLemnos(id)) return `/lemnos/armas/${id}.webp`;
-  if (mochilaLemnos(id)) return '/lemnos/itens/mochila.svg';
+  if (mochilaLemnos(id)) return `/lemnos/itens/mochila-${id}.svg`;
   return `/lemnos/itens/${id}.svg`;
 }
 
