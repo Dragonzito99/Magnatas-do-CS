@@ -90,3 +90,37 @@ export function armaPelaClasse(classe: string) {
 export function granadaPelaClasse(classe: string) {
   return GRANADAS.find((item) => item.classe === classe);
 }
+
+export type RaridadeLemnos = 'comum' | 'raro' | 'epico' | 'lendario';
+
+const SMGS = ['mp9', 'mac10', 'ump45'];
+const FUZIS = ['ak47', 'm4a1', 'm4a1_silencer', 'galilar', 'famas'];
+
+/** A imagem do item no site: as armas padrão do CS2 (sem skin) e ícones próprios para mochila e saque. */
+export function imagemLemnos(id: string): string {
+  if (armaLemnos(id) || granadaLemnos(id)) return `/lemnos/armas/${id}.webp`;
+  if (mochilaLemnos(id)) return '/lemnos/itens/mochila.svg';
+  return `/lemnos/itens/${id}.svg`;
+}
+
+export function categoriaLemnos(id: string): string {
+  if (granadaLemnos(id)) return 'Granada';
+  if (mochilaLemnos(id)) return 'Mochila';
+  if (saqueLemnos(id)) return saqueLemnos(id)?.raridade === 'dinheiro' ? 'Dinheiro' : 'Saque';
+  if (id === 'awp') return 'Sniper';
+  if (FUZIS.includes(id)) return 'Fuzil';
+  if (SMGS.includes(id)) return 'Submetralhadora';
+  return 'Pistola';
+}
+
+/** A cor do cartão, no mesmo jeito da Magnata Shop: quanto mais forte o item, mais rara a cor. */
+export function raridadeLemnos(id: string): RaridadeLemnos {
+  const saque = saqueLemnos(id);
+  if (saque) return saque.raridade === 'dinheiro' ? 'raro' : saque.raridade;
+  const mochila = mochilaLemnos(id);
+  if (mochila) return mochila.espacos >= 20 ? 'lendario' : mochila.espacos >= 16 ? 'epico' : mochila.espacos >= 12 ? 'raro' : 'comum';
+  if (id === 'awp') return 'lendario';
+  if (FUZIS.includes(id)) return 'epico';
+  if (SMGS.includes(id) || id === 'deagle') return 'raro';
+  return 'comum';
+}

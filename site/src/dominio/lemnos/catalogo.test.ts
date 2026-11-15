@@ -66,3 +66,18 @@ test('nenhum id se repete entre os quatro catálogos e a busca acha cada um', ()
   expect(saqueLemnos('joias')?.valor).toBe(20);
   expect(armaLemnos('nao_existe')).toBeUndefined();
 });
+
+test('todo item tem imagem que existe, categoria e raridade', async () => {
+  const { existsSync } = await import('node:fs');
+  const path = await import('node:path');
+  const { categoriaLemnos, imagemLemnos, raridadeLemnos } = await import('./catalogo');
+  for (const item of [...ARMAS, ...GRANADAS, ...MOCHILAS, ...SAQUES]) {
+    const imagem = imagemLemnos(item.id);
+    expect(existsSync(path.resolve(__dirname, '../../../public', imagem.slice(1))), imagem).toBe(true);
+    expect(categoriaLemnos(item.id)).toBeTruthy();
+    expect(['comum', 'raro', 'epico', 'lendario']).toContain(raridadeLemnos(item.id));
+  }
+  expect(categoriaLemnos('awp')).toBe('Sniper');
+  expect(categoriaLemnos('ak47')).toBe('Fuzil');
+  expect(raridadeLemnos('awp')).toBe('lendario');
+});

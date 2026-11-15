@@ -11968,118 +11968,347 @@ a.linha-simples-adm:hover span {
   filter: drop-shadow(0 0 18px rgba(245, 179, 1, 0.65));
 }
 
-/* Ilha Lemnos (15/11/2026): kit, baú da extração, mercado e estatísticas, no visual da Magnata Shop. */
+/* Ilha Lemnos (15/11/2026): no visual da Magnata Shop, com a foto de cada arma e um topo que chama para jogar. */
 .ilha-lemnos {
   padding-bottom: 32px;
 }
 
-.lore-da-ilha {
-  max-width: 760px;
-  margin-bottom: 14px;
+.arma-da-ilha {
+  width: 88%;
+  max-height: 78%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6));
+  transition: transform 0.15s;
 }
 
-.kit-da-ilha {
+.cartao-da-shop:hover .arma-da-ilha {
+  transform: scale(1.06) rotate(-2deg);
+}
+
+.arma-da-ilha.grande {
+  width: 100%;
+  max-height: 240px;
+}
+
+/* O topo: a ilha atrás, a frase que chama e os dois botões. */
+.heroi-da-ilha {
+  --raridade: var(--ouro);
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
-  align-items: end;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: 3px solid var(--ouro);
-  background: var(--painel);
-  margin-bottom: 22px;
+  justify-items: start;
+  margin: 8px 0 26px;
+  padding: 34px 32px;
+  overflow: hidden;
+  border-bottom: 4px solid var(--ouro);
+  background:
+    linear-gradient(90deg, rgba(7, 4, 13, 0.97), rgba(7, 4, 13, 0.75) 50%, rgba(7, 4, 13, 0.3)),
+    radial-gradient(circle at 80% 30%, rgba(245, 179, 1, 0.25), transparent 55%),
+    url('/mapas/lemnos.webp') center / cover,
+    #0d1a12;
 }
 
-.kit-da-ilha label {
-  display: grid;
-  gap: 6px;
+.heroi-da-ilha h2 {
+  font: italic 800 clamp(40px, 7vw, 72px) / 0.9 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
 }
 
-.kit-da-ilha label > span {
+.heroi-da-ilha p {
+  max-width: 620px;
   color: var(--tinta-2);
-  font-size: 13px;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-.kit-da-ilha select {
-  padding: 9px 10px;
-  border: 1px solid var(--linha);
-  background: var(--painel-2);
+.heroi-da-ilha p b {
   color: var(--tinta);
 }
 
-.bau-da-ilha,
-.mercado-da-ilha {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 10px;
-  padding: 0;
-  margin: 0 0 22px;
-  list-style: none;
+.numeros-do-heroi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  color: var(--tinta-2);
 }
 
-.bau-da-ilha li,
-.mercado-da-ilha li {
+.numeros-do-heroi b {
+  color: var(--ouro);
+  font: italic 700 22px/1 var(--fonte-titulo), sans-serif;
+}
+
+.explicacao-do-mercado {
+  margin-bottom: 14px;
+}
+
+.explicacao-do-mercado b {
+  color: var(--tinta);
+}
+
+/* O kit: os espaços grandes com a arma na mão, como o equipado do Baú. */
+.kit-equipado {
   display: grid;
+  grid-template-columns: 1.4fr 1fr 1.2fr 1fr;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.espaco-do-kit {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  justify-items: center;
   gap: 6px;
+  min-height: 230px;
   padding: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--painel);
+  border-bottom: 3px solid var(--raridade);
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--raridade) 26%, transparent), transparent 70%), var(--painel);
+  color: var(--tinta);
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.12s, border-color 0.12s;
 }
 
-.bau-da-ilha li.vencido {
-  opacity: 0.55;
+a.espaco-do-kit:hover {
+  transform: translateY(-3px);
+  border-color: var(--raridade);
 }
 
-.bau-da-ilha small,
-.mercado-da-ilha small {
+.espaco-do-kit.vazio {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: transparent;
+}
+
+.espaco-do-kit small {
+  justify-self: start;
   color: var(--tinta-2);
-  text-transform: uppercase;
   font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.bau-da-ilha em {
+.espaco-do-kit .arma-da-ilha {
+  align-self: center;
+  width: 100%;
+  max-height: 130px;
+}
+
+.espaco-do-kit b {
+  font: italic 700 20px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.espaco-do-kit em {
   color: var(--ouro);
   font-style: normal;
   font-size: 13px;
 }
 
-.mercado-da-ilha form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.mais-do-kit {
+  align-self: center;
+  color: #4a3f5c;
+  font-size: 56px;
+  line-height: 1;
 }
 
-.mercado-da-ilha select {
-  flex: 1 1 140px;
-  padding: 8px;
-  border: 1px solid var(--linha);
-  background: var(--painel-2);
+.granadas-do-kit {
+  grid-template-rows: auto 1fr;
+}
+
+.lista-de-granadas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.granada-do-kit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0713;
+  color: #4a3f5c;
+  font-size: 28px;
+  text-decoration: none;
+}
+
+.granada-do-kit.vazio {
+  border-style: dashed;
+}
+
+a.granada-do-kit:hover {
+  border-color: var(--ouro);
+  color: var(--ouro);
+}
+
+.granada-do-kit .arma-da-ilha {
+  width: 80%;
+}
+
+.granada-do-kit button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.6);
   color: var(--tinta);
+  cursor: pointer;
+}
+
+.granada-do-kit button:hover {
+  background: #c0262d;
+}
+
+/* A janela de escolher o que vai no espaço do kit. */
+.escolha-do-kit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 16px;
+  width: min(920px, 100%);
+  padding: 26px;
+}
+
+.escolha-do-kit h2 {
+  font: italic 700 28px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.escolha-do-kit .grade-da-shop {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+button.cartao-da-shop {
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tirar-do-kit {
+  justify-self: start;
+}
+
+/* Vender todo o saque de uma vez. */
+.vender-tudo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--ouro);
+  background: var(--painel);
+  font-size: 16px;
+}
+
+/* As últimas idas: verde quando extraiu, vermelho quando morreu. */
+.idas-da-ilha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.ida-da-ilha {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid #ff5a5a;
+  background: var(--painel);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.ida-da-ilha.extraiu {
+  border-left-color: var(--verde);
+}
+
+.ida-da-ilha small {
+  color: var(--tinta-2);
+}
+
+.ida-da-ilha b {
+  font: italic 700 18px/1 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.ida-da-ilha span {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+/* O resultado de quando sai da ilha. */
+.resultado-da-ilha {
+  --raridade: var(--verde);
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 24px;
+  padding: 30px;
+  border-bottom: 4px solid var(--verde);
+  background: radial-gradient(circle at 85% 20%, rgba(74, 222, 128, 0.22), transparent 55%), var(--painel);
+}
+
+.resultado-da-ilha.morreu {
+  --raridade: #ff5a5a;
+  border-bottom-color: #ff5a5a;
+  background: radial-gradient(circle at 85% 20%, rgba(255, 90, 90, 0.22), transparent 55%), var(--painel);
+}
+
+.resultado-da-ilha .selo-da-raridade {
+  justify-self: start;
+}
+
+.resultado-da-ilha h1 {
+  font: italic 800 clamp(32px, 6vw, 56px) / 0.95 var(--fonte-titulo), sans-serif;
+  text-transform: uppercase;
+}
+
+.resultado-da-ilha p {
+  color: var(--tinta-2);
 }
 
 .numeros-da-ilha {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 10px;
-  margin: 16px 0 22px;
+  margin-top: 8px;
 }
 
 .numeros-da-ilha span {
   display: grid;
   gap: 4px;
-  padding: 16px;
+  padding: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-top: 3px solid var(--ouro);
-  background: var(--painel);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .numeros-da-ilha b {
-  font: italic 700 32px/1 var(--fonte-titulo), sans-serif;
+  font: italic 700 30px/1 var(--fonte-titulo), sans-serif;
 }
 
 .numeros-da-ilha small {
   color: var(--tinta-2);
+}
+
+@media (max-width: 900px) {
+  .kit-equipado {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .heroi-da-ilha {
+    padding: 26px 18px;
+  }
 }
 
 /* Listas simples do Painel ADM (Ilha Lemnos): uma linha por item, com o botão à direita. */

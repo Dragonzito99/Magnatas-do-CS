@@ -7,12 +7,11 @@ import { obterBd } from '@/bd/conexao';
 import { ContaSemAcesso } from '@/dominio/disponibilidade';
 import { SaldoInsuficiente } from '@/dominio/grana';
 import { ilhaAberta } from '@/dominio/lemnos/estatisticas';
-import { EmCampo, escolherKit } from '@/dominio/lemnos/kit';
+import { EmCampo, escolherKit, kitDe, type KitEscolhido } from '@/dominio/lemnos/kit';
 import { comprarArmaComMagcoin, comprarComGrana, comprarMochila, venderSaque } from '@/dominio/lemnos/mercado';
 import { DIAS_A_VENDA, ItemInvalido, JaEhSeu, type DiasAVenda } from '@/dominio/loja';
 
 const texto = (dados: FormData, campo: string) => String(dados.get(campo) ?? '');
-const ouNulo = (valor: string) => (valor === '' ? null : valor);
 const dias = (valor: string): DiasAVenda | null => (valor === 'sempre' ? null : (DIAS_A_VENDA.find((opcao) => String(opcao) === valor) ?? 1));
 
 async function naIlha(destino: string) {
@@ -21,36 +20,56 @@ async function naIlha(destino: string) {
   return usuario;
 }
 
+/** O endereço de volta, com o aviso: mantém a aba e o item que estavam abertos. */
+function voltar(base: string, dados: FormData, aviso: Record<string, string>): string {
+  const parametros = new URLSearchParams();
+  for (const campo of ['aba', 'item']) {
+    const valor = texto(dados, campo);
+    if (/^[a-z0-9_]{1,30}$/.test(valor)) parametros.set(campo, valor);
+  }
+  for (const [chave, valor] of Object.entries(aviso)) parametros.set(chave, valor);
+  return `${base}?${parametros.toString()}`;
+}
+
 /** Traduz o erro do domínio para o aviso da tela e volta para ela. */
-async function tentar(destino: string, fazer: () => Promise<unknown>, ok: string): Promise<never> {
+async function tentar(base: string, dados: FormData, fazer: () => Promise<unknown>, ok: string): Promise<never> {
   try {
     await fazer();
   } catch (erro) {
-    if (erro instanceof SaldoInsuficiente) redirect(`${destino}?erro=${erro.moeda === 'grana' ? 'grana' : 'magcoin'}`);
-    if (erro instanceof EmCampo) redirect(`${destino}?erro=em-campo`);
-    if (erro instanceof JaEhSeu) redirect(`${destino}?erro=ja-seu`);
-    if (erro instanceof ItemInvalido) redirect(`${destino}?erro=item`);
-    if (erro instanceof ContaSemAcesso) redirect(`${destino}?erro=conta`);
+    if (erro instanceof SaldoInsuficiente) redirect(voltar(base, dados, { erro: erro.moeda === 'grana' ? 'grana' : 'magcoin' }));
+    if (erro instanceof EmCampo) redirect(voltar(base, dados, { erro: 'em-campo' }));
+    if (erro instanceof JaEhSeu) redirect(voltar(base, dados, { erro: 'ja-seu' }));
+    if (erro instanceof ItemInvalido) redirect(voltar(base, dados, { erro: 'item' }));
+    if (erro instanceof ContaSemAcesso) redirect(voltar(base, dados, { erro: 'conta' }));
     throw erro;
   }
   revalidatePath('/', 'layout');
-  redirect(`${destino}?ok=${ok}`);
+  redirect(voltar(base, dados, { ok }));
 }
 
-export async function escolher(dados: FormData): Promise<void> {
+/**
+ * Troca uma peça do kit (um clique no espaço e outro no item). lugar: principal, secundaria, mochila ou granada; na
+ * granada, "por" acrescenta uma e "tirar" tira a da posição.
+ */
+export async function trocarPeca(dados: FormData): Promise<void> {
   const usuario = await naIlha('/lemnos');
-  const granadas = ['granada1', 'granada2', 'granada3', 'granada4'].map((campo) => texto(dados, campo)).filter((valor) => valor !== '');
-  await tentar(
-    '/lemnos',
-    () => escolherKit(obterBd(), usuario, { principal: ouNulo(texto(dados, 'principal')), secundaria: ouNulo(texto(dados, 'secundaria')), granadas, mochila: ouNulo(texto(dados, 'mochila')) }),
-    'kit',
-  );
+  const atual = await kitDe(obterBd(), usuario.id);
+  const valor = texto(dados, 'valor') || null;
+  const lugar = texto(dados, 'lugar');
+  const novo: KitEscolhido = { ...atual, granadas: [...atual.granadas] };
+  if (lugar === 'principal') novo.principal = valor;
+  if (lugar === 'secundaria') novo.secundaria = valor;
+  if (lugar === 'mochila') novo.mochila = valor;
+  if (lugar === 'granada' && texto(dados, 'acao') === 'por' && valor) novo.granadas.push(valor);
+  if (lugar === 'granada' && texto(dados, 'acao') === 'tirar') novo.granadas.splice(Number(texto(dados, 'indice')), 1);
+  await tentar('/lemnos', new FormData(), () => escolherKit(obterBd(), usuario, novo), 'kit');
 }
 
 export async function comprarGrana(dados: FormData): Promise<void> {
   const usuario = await naIlha('/lemnos/mercado');
   await tentar(
     '/lemnos/mercado',
+    dados,
     () => comprarComGrana(obterBd(), usuario, { itemId: texto(dados, 'itemId'), quantidade: Number(texto(dados, 'quantidade')), codigo: texto(dados, 'codigo') }),
     'compra',
   );
@@ -58,15 +77,15 @@ export async function comprarGrana(dados: FormData): Promise<void> {
 
 export async function comprarMagcoin(dados: FormData): Promise<void> {
   const usuario = await naIlha('/lemnos/mercado');
-  await tentar('/lemnos/mercado', () => comprarArmaComMagcoin(obterBd(), usuario, { itemId: texto(dados, 'itemId'), dias: dias(texto(dados, 'dias')), codigo: texto(dados, 'codigo') }), 'compra');
+  await tentar('/lemnos/mercado', dados, () => comprarArmaComMagcoin(obterBd(), usuario, { itemId: texto(dados, 'itemId'), dias: dias(texto(dados, 'dias')), codigo: texto(dados, 'codigo') }), 'compra');
 }
 
 export async function comprarUmaMochila(dados: FormData): Promise<void> {
   const usuario = await naIlha('/lemnos/mercado');
-  await tentar('/lemnos/mercado', () => comprarMochila(obterBd(), usuario, { itemId: texto(dados, 'itemId'), dias: dias(texto(dados, 'dias')), codigo: texto(dados, 'codigo') }), 'compra');
+  await tentar('/lemnos/mercado', dados, () => comprarMochila(obterBd(), usuario, { itemId: texto(dados, 'itemId'), dias: dias(texto(dados, 'dias')), codigo: texto(dados, 'codigo') }), 'compra');
 }
 
 export async function vender(dados: FormData): Promise<void> {
   const usuario = await naIlha('/lemnos/mercado');
-  await tentar('/lemnos/mercado', () => venderSaque(obterBd(), usuario, { linhas: dados.getAll('linha').map(String), codigo: texto(dados, 'codigo') }), 'venda');
+  await tentar('/lemnos/mercado', dados, () => venderSaque(obterBd(), usuario, { linhas: dados.getAll('linha').map(String), codigo: texto(dados, 'codigo') }), 'venda');
 }
