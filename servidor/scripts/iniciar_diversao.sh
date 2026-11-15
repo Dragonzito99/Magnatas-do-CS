@@ -18,8 +18,8 @@ fi
 if [ "$NOME" = "todos" ]; then
   for arquivo in "$CONFIGS"/*.conf; do
     nome=$(basename "$arquivo" .conf)
-    # Os laboratórios só ligam pela aba Testes do site, quando o Adm pede.
-    case "$nome" in laboratorio-*) continue ;; esac
+    # Os laboratórios só ligam pela aba Testes do site, quando o Adm pede. A Ilha Lemnos, quem liga é o site.
+    case "$nome" in laboratorio-* | ilha-lemnos) continue ;; esac
     bash "${BASH_SOURCE[0]}" "$nome"
   done
   exit 0
@@ -100,21 +100,42 @@ cp -au "$SERVIDOR/csgo/cfg/." "$PASTA/csgo/cfg/"
 rm -rf "$PASTA/csgo/cfg/MatchZy"
 cp -au "$SERVIDOR/csgo/addons" "$PASTA/csgo/"
 rm -rf "$PASTA_DOS_PLUGINS/MatchZy"
-mkdir -p "$PASTA_DOS_PLUGINS/MagnatasDiversao"
-cp "$PLUGIN" "$PASTA_DOS_PLUGINS/MagnatasDiversao/MagnatasDiversao.dll"
-CONFIG_DO_PLUGIN=$PASTA/csgo/addons/counterstrikesharp/configs/plugins/MagnatasDiversao
-mkdir -p "$CONFIG_DO_PLUGIN"
-# O plugin usa o endereço e o token para informar o resultado ao site, então o arquivo só pode ser lido pelo usuário cs2.
 # shellcheck disable=SC1090
 source "$SEGREDOS"
 : "${SITE_URL:=}" "${SERVIDOR_TOKEN:=}"
-touch "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
-chmod 600 "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
-# Laboratório: o plugin abre os comandos de teste do Adm, nunca manda resultado ao site e desliga sozinho quando vazio.
-EH_LABORATORIO=false
-[ "${LABORATORIO:-}" = "1" ] && EH_LABORATORIO=true
-printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "Porta": %s, "SiteUrl": "%s", "Token": "%s", "Rotacao": "%s", "Laboratorio": %s, "ConfigVersion": 1 }\n' \
-  "$ARMA_PRINCIPAL" "$REGRA" "$PORTA" "$SITE_URL" "$SERVIDOR_TOKEN" "${ROTACAO:-}" "$EH_LABORATORIO" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+if [ "${PLUGIN_DO_MODO:-}" = "MagnatasLemnos" ]; then
+  # Ilha Lemnos (15/11/2026): plugin próprio no lugar do MagnatasDiversao, para mudança na ilha não derrubar a Mutação.
+  PLUGIN_DA_ILHA=$CASA/bin/MagnatasLemnos.dll
+  if [ ! -f "$PLUGIN_DA_ILHA" ]; then
+    echo "Falta o plugin em $PLUGIN_DA_ILHA. Rode: sudo bash compilar_plugin.sh" >&2
+    exit 1
+  fi
+  rm -rf "$PASTA_DOS_PLUGINS/MagnatasDiversao"
+  mkdir -p "$PASTA_DOS_PLUGINS/MagnatasLemnos"
+  cp "$PLUGIN_DA_ILHA" "$PASTA_DOS_PLUGINS/MagnatasLemnos/MagnatasLemnos.dll"
+  # O arquivo do mapa (postos, saídas, caixas e chão) fica junto do plugin; o !marcar escreve nele.
+  ARQUIVO_DO_MAPA=$PASTA_DOS_PLUGINS/MagnatasLemnos/mapa-$OFICINA.json
+  [ -f "$ARQUIVO_DO_MAPA" ] || cp "$CASA/bin/lemnos/$OFICINA.json" "$ARQUIVO_DO_MAPA"
+  CONFIG_DO_LEMNOS=$PASTA/csgo/addons/counterstrikesharp/configs/plugins/MagnatasLemnos
+  mkdir -p "$CONFIG_DO_LEMNOS"
+  touch "$CONFIG_DO_LEMNOS/MagnatasLemnos.json"
+  chmod 600 "$CONFIG_DO_LEMNOS/MagnatasLemnos.json"
+  printf '{ "SiteUrl": "%s", "Token": "%s", "Porta": %s, "ArquivoDoMapa": "%s", "ConfigVersion": 1 }\n' \
+    "$SITE_URL" "$SERVIDOR_TOKEN" "$PORTA" "$ARQUIVO_DO_MAPA" > "$CONFIG_DO_LEMNOS/MagnatasLemnos.json"
+else
+  mkdir -p "$PASTA_DOS_PLUGINS/MagnatasDiversao"
+  cp "$PLUGIN" "$PASTA_DOS_PLUGINS/MagnatasDiversao/MagnatasDiversao.dll"
+  CONFIG_DO_PLUGIN=$PASTA/csgo/addons/counterstrikesharp/configs/plugins/MagnatasDiversao
+  mkdir -p "$CONFIG_DO_PLUGIN"
+  # O plugin usa o endereço e o token para informar o resultado ao site, então o arquivo só pode ser lido pelo usuário cs2.
+  touch "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+  chmod 600 "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+  # Laboratório: o plugin abre os comandos de teste do Adm, nunca manda resultado ao site e desliga sozinho quando vazio.
+  EH_LABORATORIO=false
+  [ "${LABORATORIO:-}" = "1" ] && EH_LABORATORIO=true
+  printf '{ "ArmaPrincipal": "%s", "Regra": "%s", "Porta": %s, "SiteUrl": "%s", "Token": "%s", "Rotacao": "%s", "Laboratorio": %s, "ConfigVersion": 1 }\n' \
+    "$ARMA_PRINCIPAL" "$REGRA" "$PORTA" "$SITE_URL" "$SERVIDOR_TOKEN" "${ROTACAO:-}" "$EH_LABORATORIO" > "$CONFIG_DO_PLUGIN/MagnatasDiversao.json"
+fi
 cp "$SERVIDOR/csgo/gameinfo.gi" "$PASTA/csgo/gameinfo.gi"
 cat "$CONFIGS/$BASE" "$CONFIGS/$NOME.cfg" > "$PASTA/csgo/cfg/magnatas_diversao.cfg"
 # O jogo aplica as regras padrão do modo ao carregar o mapa, e só este arquivo vem depois delas.

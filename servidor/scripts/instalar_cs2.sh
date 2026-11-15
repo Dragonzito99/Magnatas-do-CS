@@ -56,6 +56,9 @@ install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/ferramentas/gameinfo.py" "$C
 install -o root -g root -m 700 "$ORIGEM/scripts/guardar_token_steam.sh" /usr/local/sbin/
 runuser -u "$USUARIO" -- mkdir -p "$CASA/bin/diversao"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM"/config/diversao/* "$CASA/bin/diversao/"
+# Ilha Lemnos: o arquivo de cada mapa (postos, saídas, caixas e chão), copiado para a pasta do plugin na primeira vez.
+runuser -u "$USUARIO" -- mkdir -p "$CASA/bin/lemnos"
+install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM"/config/lemnos/* "$CASA/bin/lemnos/"
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$ORIGEM/config/server.cfg" "$SERVIDOR/game/csgo/cfg/server.cfg"
 
 # O site (usuário magnatas) liga e desliga os servidores da Diversão só por estes dois scripts.
@@ -92,6 +95,8 @@ if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
   ufw allow 27015/udp
   # Os dois laboratórios do Adm (aba Testes do site).
   ufw allow 27022:27023/udp
+  # Ilha Lemnos, sempre ligada.
+  ufw allow 27024/udp
 fi
 
 echo "CS2 instalado em $SERVIDOR."

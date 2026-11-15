@@ -41,6 +41,12 @@ DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_CLI_HOME="$OBRA/casa" \
 install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida/MagnatasDiversao.dll" "$CASA/bin/"
 echo "Plugin compilado em $CASA/bin/MagnatasDiversao.dll."
 
+# A Ilha Lemnos tem plugin próprio (15/11/2026): o iniciar_diversao.sh põe ele só no servidor da ilha.
+cp -r "$ORIGEM/plugins/MagnatasLemnos" "$OBRA/lemnos"
+DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_CLI_HOME="$OBRA/casa"   "$SDK/dotnet" build "$OBRA/lemnos" -c Release -o "$OBRA/saida-lemnos" -p:CssApi="$API" -v quiet --nologo
+install -o "$USUARIO" -g "$USUARIO" -m 644 "$OBRA/saida-lemnos/MagnatasLemnos.dll" "$CASA/bin/"
+echo "Plugin da Ilha Lemnos compilado em $CASA/bin/MagnatasLemnos.dll."
+
 # O servidor do competitivo só tem o MatchZy. Este plugin pequeno diz ao site quem já entrou na partida, porque o
 # status do CS2 não mostra o SteamID. A pasta do competitivo não é refeita a cada início, então ele vai direto para lá.
 cp -r "$ORIGEM/plugins/MagnatasLista" "$OBRA/lista"
