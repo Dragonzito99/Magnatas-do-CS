@@ -2,11 +2,11 @@ import { eq } from 'drizzle-orm';
 import type { Bd } from '@/bd/conexao';
 import { servidoresDiversao } from '@/bd/esquema';
 
-/** O servidor da Ilha Lemnos no Sirocco da Oficina. Nasce desligado: só abre para todos com o OK do dono. */
+/** O servidor da Ilha Lemnos no Sirocco da Oficina (3649316235; o id fica no .conf da VPS). A foto é provisória até a do Sirocco. Nasce desligado: só abre para todos com o OK do dono. */
 export const SERVIDOR_DA_LEMNOS = {
   modo: 'lemnos',
-  armas: '',
-  mapa: '3649316235',
+  armas: 'Extração',
+  mapa: 'Sirocco',
   foto: '/mapas/lemnos.webp',
   porta: 27024,
   vagas: 20,

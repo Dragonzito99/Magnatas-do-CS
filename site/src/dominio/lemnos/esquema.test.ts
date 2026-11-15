@@ -9,7 +9,7 @@ test('a migração cria as tabelas da Ilha Lemnos e o servidor desligado', async
   expect(await garantirServidorDaLemnos(bd)).toBe('criado');
   expect(await garantirServidorDaLemnos(bd)).toBe('ja_existia');
   const [servidor] = await bd.select().from(servidoresDiversao).where(eq(servidoresDiversao.modo, 'lemnos'));
-  expect(servidor).toMatchObject({ porta: 27024, vagas: 20, ativo: false, sobDemanda: false, nomeNoServidor: 'ilha-lemnos', mapa: '3649316235' });
+  expect(servidor).toMatchObject({ porta: 27024, vagas: 20, ativo: false, sobDemanda: false, nomeNoServidor: 'ilha-lemnos', mapa: 'Sirocco', armas: 'Extração' });
   expect(await bd.select().from(lemnosItens)).toEqual([]);
 });
 

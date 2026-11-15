@@ -43,6 +43,7 @@ export const MODOS_DE_DIVERSAO: readonly { valor: ModoDeDiversao; nome: string }
   { valor: 'equipe', nome: 'Equipe x Equipe' },
   { valor: 'mutacao', nome: 'Mutação' },
   { valor: 'fantasma', nome: 'Fantasma' },
+  { valor: 'lemnos', nome: 'Ilha Lemnos' },
 ];
 
 const TEMPO_GUARDADA_MS = 10_000;

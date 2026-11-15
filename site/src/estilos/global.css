@@ -11967,3 +11967,113 @@ a.linha-simples-adm:hover span {
   margin-bottom: 30%;
   filter: drop-shadow(0 0 18px rgba(245, 179, 1, 0.65));
 }
+
+/* Ilha Lemnos (15/11/2026): kit, baú da extração, mercado e estatísticas, no visual da Magnata Shop. */
+.lore-da-ilha {
+  max-width: 760px;
+  margin-bottom: 14px;
+}
+
+.kit-da-ilha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--ouro);
+  background: var(--painel);
+  margin-bottom: 22px;
+}
+
+.kit-da-ilha label {
+  display: grid;
+  gap: 6px;
+}
+
+.kit-da-ilha label > span {
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.kit-da-ilha select {
+  padding: 9px 10px;
+  border: 1px solid var(--linha);
+  background: var(--painel-2);
+  color: var(--tinta);
+}
+
+.bau-da-ilha,
+.mercado-da-ilha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+  padding: 0;
+  margin: 0 0 22px;
+  list-style: none;
+}
+
+.bau-da-ilha li,
+.mercado-da-ilha li {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.bau-da-ilha li.vencido {
+  opacity: 0.55;
+}
+
+.bau-da-ilha small,
+.mercado-da-ilha small {
+  color: var(--tinta-2);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.bau-da-ilha em {
+  color: var(--ouro);
+  font-style: normal;
+  font-size: 13px;
+}
+
+.mercado-da-ilha form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mercado-da-ilha select {
+  flex: 1 1 140px;
+  padding: 8px;
+  border: 1px solid var(--linha);
+  background: var(--painel-2);
+  color: var(--tinta);
+}
+
+.numeros-da-ilha {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 16px 0 22px;
+}
+
+.numeros-da-ilha span {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 3px solid var(--ouro);
+  background: var(--painel);
+}
+
+.numeros-da-ilha b {
+  font: italic 700 32px/1 var(--fonte-titulo), sans-serif;
+}
+
+.numeros-da-ilha small {
+  color: var(--tinta-2);
+}

@@ -7,13 +7,14 @@ import { chamadosDe, claDoUsuario, pedidosDoCla } from './clas';
 import { contagemDeCasos } from './denuncias';
 import { desafiosDaSala, type DesafioDaSala } from './desafios';
 import { insigniasNaoVistas, textoDoPremio } from './insignias';
+import { sessaoNaoVista } from './lemnos/estatisticas';
 import { partidaAtualDe } from './partidas';
 import { presentesFechados } from './presentes';
 import { minhaSala } from './salas';
 import { patenteDe } from './xp';
 
 export type Notificacao = {
-  tipo: 'desafio' | 'partida' | 'patente' | 'insignia' | 'avaliar' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala' | 'presente';
+  tipo: 'desafio' | 'partida' | 'patente' | 'insignia' | 'avaliar' | 'cla' | 'chamados' | 'denuncias' | 'propostas' | 'amizade' | 'sala' | 'presente' | 'lemnos';
   texto: string;
   href: string;
   quantidade: number;
@@ -44,6 +45,10 @@ export async function notificacoesDe(bd: Bd, usuario: Usuario, agora: Date = new
       lista.push({ tipo: 'desafio', texto, href: '/jogar?modo=competitivo', quantidade: recebidos.length });
     }
   }
+
+  // Quem saiu da Ilha Lemnos vê como foi (dono, 15/11/2026).
+  const naoVista = await sessaoNaoVista(bd, usuario.id);
+  if (naoVista) lista.push({ tipo: 'lemnos', texto: 'Você saiu da Ilha Lemnos: veja como foi', href: `/lemnos/sessoes/${naoVista.id}`, quantidade: 1 });
 
   const partida = await partidaAtualDe(bd, usuario.id);
   if (partida?.estado === 'aguardando_jogadores') {

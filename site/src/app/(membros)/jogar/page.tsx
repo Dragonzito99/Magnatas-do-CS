@@ -248,6 +248,11 @@ export default async function Jogar({ searchParams }: { searchParams: Promise<{ 
                     <div className="dados-do-modo">
                       <h3>{modo.nome}</h3>
                       <p>{DESCRICAO_DO_MODO[modo.valor]}</p>
+                      {modo.valor === 'lemnos' && (
+                        <Link className="link-do-espaco" href="/lemnos">
+                          Montar o kit
+                        </Link>
+                      )}
                       {itens.map(({ servidor, indice }) => {
                         const mapa = mapaDoCartao(servidor, situacoes[indice]);
                         return (
