@@ -37,16 +37,18 @@ public partial class IlhaLemnos
             "saida" => (mapa.Saidas, raioPedido > 0 ? raioPedido : RaioDaSaida),
             "caixa" => (mapa.Caixas, 0f),
             "chao" => (mapa.Chao, 0f),
+            "mutantes" => (mapa.Mutantes, raioPedido > 0 ? raioPedido : RaioDaZonaDeMutantes),
             _ => ((List<Ponto>?)null, 0f),
         };
         if (lista == null)
         {
-            comando.ReplyToCommand("Use: !marcar safe|saida|caixa|chao [raio]");
+            comando.ReplyToCommand("Use: !marcar safe|saida|caixa|chao|mutantes [raio]");
             return;
         }
         lista.Add(new Ponto { X = lugar.X, Y = lugar.Y, Z = lugar.Z, Raio = raio });
         marcacoes.Push(lista);
         SalvarMapa();
+        if (lista == mapa.Mutantes) LigarMutantes();
         comando.ReplyToCommand($"Marcado: {tipo} nº {lista.Count}{(raio > 0 ? $", raio {raio:0}" : "")}.");
     }
 
@@ -57,7 +59,7 @@ public partial class IlhaLemnos
             comando.ReplyToCommand("Só o Adm vê as marcações.");
             return;
         }
-        comando.ReplyToCommand($"Postos: {mapa.SafeZones.Count} · Saídas: {mapa.Saidas.Count} · Caixas: {mapa.Caixas.Count} · Chão: {mapa.Chao.Count}");
+        comando.ReplyToCommand($"Postos: {mapa.SafeZones.Count} · Saídas: {mapa.Saidas.Count} · Caixas: {mapa.Caixas.Count} · Chão: {mapa.Chao.Count} · Mutantes: {mapa.Mutantes.Count}");
     }
 
     private void ComandoDesmarcar(CCSPlayerController? jogador, CommandInfo comando)

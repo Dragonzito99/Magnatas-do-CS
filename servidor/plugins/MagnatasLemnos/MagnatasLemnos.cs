@@ -99,8 +99,20 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
             return HookResult.Continue;
         });
         RegisterListener<Listeners.OnEntityTakeDamagePre>(AoReceberDano);
-        RegisterListener<Listeners.OnServerPrecacheResources>(manifesto => manifesto.AddResource(Config.ModeloDoSaque));
-        RegisterListener<Listeners.OnMapStart>(_ => AddTimer(5f, EspalharSaque, TimerFlags.STOP_ON_MAPCHANGE));
+        RegisterListener<Listeners.OnServerPrecacheResources>(manifesto =>
+        {
+            manifesto.AddResource(Config.ModeloDoSaque);
+            PrepararBonecosDoMutante(manifesto);
+        });
+        RegisterListener<Listeners.OnMapStart>(_ =>
+        {
+            mutantes.Clear();
+            AddTimer(5f, () =>
+            {
+                EspalharSaque();
+                LigarMutantes();
+            }, TimerFlags.STOP_ON_MAPCHANGE);
+        });
         AddCommandListener("drop", AoLargarArma, HookMode.Pre);
         AddCommand("css_mochila", "Mostra o que está na sua mochila", (jogador, _) =>
         {
@@ -112,6 +124,7 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
         AddTimer(IntervaloDoPasso, Passo, TimerFlags.REPEAT);
         AddTimer(1f, Vigiar, TimerFlags.REPEAT);
         AddTimer(30f, ConferirReinicio, TimerFlags.REPEAT);
+        AddTimer(5f, CuidarDosMutantes, TimerFlags.REPEAT);
         if (hotReload) Server.NextFrame(EspalharSaque);
     }
 
@@ -197,6 +210,12 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
     private HookResult AoNascer(EventPlayerSpawn evento, GameEventInfo informacao)
     {
         var jogador = evento.Userid;
+        if (jogador is { IsValid: true, IsBot: true })
+        {
+            var bot = jogador;
+            AddTimer(EsperaAposNascer, () => PrepararMutante(bot));
+            return HookResult.Continue;
+        }
         if (jogador is not { IsValid: true } || !naIlha.TryGetValue(jogador.SteamID, out var estado) || estado.Sessao == null) return HookResult.Continue;
         // Nasceu sem ter morrido: o jogo reiniciou a rodada e tirou as armas. Volta o kit da vida atual, menos o que já gastou.
         if (estado.KitPendente == null && !estado.Morto && estado.KitAtual is { } atual)
@@ -233,6 +252,11 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
     private HookResult AoMorrer(EventPlayerDeath evento, GameEventInfo informacao)
     {
         var jogador = evento.Userid;
+        if (jogador is { IsValid: true, IsBot: true })
+        {
+            AoMorrerOMutante(jogador);
+            return HookResult.Continue;
+        }
         if (jogador is not { IsValid: true } || !naIlha.TryGetValue(jogador.SteamID, out var estado) || estado.Sessao == null) return HookResult.Continue;
         var matador = evento.Attacker is { IsValid: true, IsBot: false } autor && autor.SteamID != jogador.SteamID ? autor.SteamID.ToString() : null;
         var onde = jogador.PlayerPawn.Value?.AbsOrigin is { } lugar ? Copia(lugar) : null;

@@ -22,6 +22,8 @@ public sealed class MapaDaIlha
     [JsonPropertyName("saidas")] public List<Ponto> Saidas { get; set; } = new();
     [JsonPropertyName("caixas")] public List<Ponto> Caixas { get; set; } = new();
     [JsonPropertyName("chao")] public List<Ponto> Chao { get; set; } = new();
+    /// <summary>Zonas dos mutantes (bots), marcadas com !marcar mutantes.</summary>
+    [JsonPropertyName("mutantes")] public List<Ponto> Mutantes { get; set; } = new();
 }
 
 /// <summary>
@@ -43,7 +45,7 @@ public partial class IlhaLemnos
         {
             Console.WriteLine($"[Lemnos] Não deu para ler o arquivo do mapa: {erro.GetType().Name}.");
         }
-        Console.WriteLine($"[Lemnos] Mapa: {mapa.SafeZones.Count} postos, {mapa.Saidas.Count} saídas, {mapa.Caixas.Count} caixas, {mapa.Chao.Count} pontos de chão.");
+        Console.WriteLine($"[Lemnos] Mapa: {mapa.SafeZones.Count} postos, {mapa.Saidas.Count} saídas, {mapa.Caixas.Count} caixas, {mapa.Chao.Count} pontos de chão, {mapa.Mutantes.Count} zonas de mutantes.");
     }
 
     private static float Distancia(Vector lugar, Ponto ponto)
@@ -74,6 +76,7 @@ public partial class IlhaLemnos
         try
         {
             if (alvo.DesignerName != "player") return HookResult.Continue;
+            if (CorpoDeBot(alvo) && CorpoDeBot(dano.Attacker.Value)) return HookResult.Handled;
             if (alvo.AbsOrigin is { } lugarDoAlvo && NoPosto(lugarDoAlvo)) return HookResult.Handled;
             if (dano.Attacker.Value is { DesignerName: "player" } autor && new CCSPlayerPawn(autor.Handle).AbsOrigin is { } lugarDoAutor && NoPosto(lugarDoAutor))
                 return HookResult.Handled;

@@ -45,7 +45,8 @@ def test_lemnos_usa_o_plugin_proprio():
     campos = conf()
     assert campos["PLUGIN_DO_MODO"] == "MagnatasLemnos"
     assert campos["PORTA"] == "27024"
-    assert campos["VAGAS"] == "20"
+    # 20 pessoas e até 6 mutantes (bots).
+    assert campos["VAGAS"] == "26"
     assert campos["OFICINA"] == "3649316235"
     assert campos["REGRA"] == "lemnos"
     assert campos["GAME_TYPE"] == "3" and campos["GAME_MODE"] == "0"
@@ -88,7 +89,7 @@ def test_config_do_plugin_com_permissao_600():
 
 def test_arquivo_do_mapa_e_json_valido():
     dados = json.loads(ARQUIVO_DO_MAPA.read_text(encoding="utf-8"))
-    assert set(dados) == {"safeZones", "saidas", "caixas", "chao"}
+    assert {"safeZones", "saidas", "caixas", "chao"} <= set(dados) <= {"safeZones", "saidas", "caixas", "chao", "mutantes"}
     assert "config/lemnos" in INSTALADOR
 
 
@@ -332,3 +333,52 @@ def test_ao_pegar_mostra_o_item_com_raridade_e_valor():
     assert "MostrarOQuePegou(" in pegar
     mostrar = fonte.split("private static void MostrarOQuePegou(")[1].split("\n    }")[0]
     assert "Você pegou" in mostrar and "PrintToChat" in mostrar and "PrintToCenterHtml" in mostrar
+
+
+# Mutantes na ilha (15/11/2026)
+
+
+def test_mutantes_marcados_pelo_adm_com_raio_padrao():
+    fonte = codigo()
+    assert '"mutantes" =>' in fonte
+    assert "RaioDaZonaDeMutantes = 900" in fonte
+    assert '[JsonPropertyName("mutantes")]' in fonte
+
+
+def test_quantos_mutantes_2_por_zona_no_maximo_6():
+    fonte = codigo()
+    assert "MutantesPorZona = 2" in fonte and "MaximoDeMutantes = 6" in fonte
+    assert "bot_join_team ct" in fonte
+
+
+def test_niveis_do_mutante_com_vida_e_chance():
+    fonte = codigo()
+    assert "(1, 200," in fonte and "(2, 400," in fonte and "(3, 800," in fonte
+    assert "0.70" in fonte and "0.25" in fonte and "0.05" in fonte
+
+
+def test_mutante_so_de_faca_com_boneco_da_mutacao():
+    fonte = codigo()
+    preparar = fonte.split("private void PrepararMutante(")[1].split("\n    }")[0]
+    assert 'GiveNamedItem("weapon_knife")' in preparar
+    assert "RemoveWeapons()" in preparar
+    assert "models/magnatas/mutante_v2" in fonte
+    assert '"3836643990"' in fonte
+
+
+def test_mutante_nao_fere_mutante():
+    fonte = codigo()
+    dano = fonte.split("private HookResult AoReceberDano(")[1].split("\n    }")[0]
+    assert "CorpoDeBot(" in dano
+
+
+def test_mutante_volta_em_2_minutos_e_deixa_saque():
+    fonte = codigo()
+    assert "MinutosParaOMutanteVoltar = 2" in fonte
+    assert "DeixarSaqueDoMutante(" in fonte
+    assert "AfastamentoMaximo = 2.5f" in fonte
+
+
+def test_ilha_carrega_o_pacote_do_mutante_e_o_comportamento_de_caca():
+    assert "3836643990" in valor_no_cfg("mm_extra_addons")
+    assert "deathmatch" in valor_no_cfg("mp_bot_ai_bt")
