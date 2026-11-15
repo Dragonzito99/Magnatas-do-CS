@@ -57,7 +57,7 @@ export async function comprarComGrana(
       detalhes: { lemnos: true, itemId: item.id, quantidade, preco },
     });
     if (!lancado) return 'repetido';
-    const tipo = arma ? 'arma' : 'granada';
+    const tipo: 'arma' | 'granada' = arma ? 'arma' : 'granada';
     await tx.insert(lemnosItens).values(Array.from({ length: quantidade }, () => ({ usuarioId: usuario.id, tipo, itemId: item.id, origem: 'grana' as const, criadoEm: agora, atualizadoEm: agora })));
     return 'comprado';
   });
