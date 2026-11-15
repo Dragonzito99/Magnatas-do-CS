@@ -36,6 +36,9 @@ public sealed class NaIlha
     public bool Adm { get; set; }
     public int Espacos { get; set; } = 8;
     public KitDaEntrada? KitPendente { get; set; }
+    /// <summary>O kit da vida atual, para devolver se o jogo reiniciar a rodada (e tirar as armas de todo mundo).</summary>
+    public KitDaEntrada? KitAtual { get; set; }
+    public bool Morto { get; set; }
     /// <summary>A entidade de cada arma ou granada do kit e as peças dela (duas flashes ficam na mesma entidade).</summary>
     public Dictionary<uint, List<PecaDoKit>> ArmasDoKit { get; } = new();
     public List<string> Gastas { get; } = new();
@@ -194,7 +197,14 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
     private HookResult AoNascer(EventPlayerSpawn evento, GameEventInfo informacao)
     {
         var jogador = evento.Userid;
-        if (jogador is not { IsValid: true } || !naIlha.TryGetValue(jogador.SteamID, out var estado) || estado.KitPendente == null) return HookResult.Continue;
+        if (jogador is not { IsValid: true } || !naIlha.TryGetValue(jogador.SteamID, out var estado) || estado.Sessao == null) return HookResult.Continue;
+        // Nasceu sem ter morrido: o jogo reiniciou a rodada e tirou as armas. Volta o kit da vida atual, menos o que já gastou.
+        if (estado.KitPendente == null && !estado.Morto && estado.KitAtual is { } atual)
+        {
+            atual.Granadas = atual.Granadas.Where(granada => granada.Linha == null || !estado.Gastas.Contains(granada.Linha)).ToList();
+            estado.KitPendente = atual;
+        }
+        if (estado.KitPendente == null) return HookResult.Continue;
         // No momento do evento, o jogo ainda está montando o jogador: arma entregue antes disso some.
         AddTimer(EsperaAposNascer, () =>
         {
@@ -208,6 +218,8 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
     {
         if (estado.KitPendente is not { } kit) return;
         estado.KitPendente = null;
+        estado.KitAtual = kit;
+        estado.Morto = false;
         DarKit(jogador, estado, kit);
         estado.SaiuDoPosto = false;
         estado.UltimoLugarFora = null;
@@ -224,6 +236,8 @@ public partial class IlhaLemnos : BasePlugin, IPluginConfig<ConfiguracaoDaIlha>
         if (jogador is not { IsValid: true } || !naIlha.TryGetValue(jogador.SteamID, out var estado) || estado.Sessao == null) return HookResult.Continue;
         var matador = evento.Attacker is { IsValid: true, IsBot: false } autor && autor.SteamID != jogador.SteamID ? autor.SteamID.ToString() : null;
         var onde = jogador.PlayerPawn.Value?.AbsOrigin is { } lugar ? Copia(lugar) : null;
+        estado.Morto = true;
+        estado.KitAtual = null;
         Avisar("morte", new { sessao = estado.Sessao, referencia = NovaReferencia(), matador, gastas = estado.Gastas.ToList() });
         estado.Gastas.Clear();
         if (onde != null) DeixarMochilaNoChao(onde, estado.Mochila);

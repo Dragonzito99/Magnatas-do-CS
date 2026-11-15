@@ -303,3 +303,16 @@ def test_kit_espera_o_jogo_e_entrega_de_novo_o_que_sumiu():
     assert "Server.NextFrame" not in nascer
     ligar = fonte.split("private void LigarArmasAoKit(")[1].split("\n    }")[0]
     assert "GiveNamedItem(peca.Classe)" in ligar
+
+
+@pytest.mark.parametrize("comando", ["mp_warmuptime_all_players_connected", "mp_warmup_online_enabled"])
+def test_ilha_sem_aquecimento(comando):
+    # Sem estas, o jogo fazia aquecimento e, no fim dele, tirava as armas de todo mundo (dono, 15/11/2026).
+    assert valor_no_cfg(comando) == "0"
+
+
+def test_rodada_reiniciada_devolve_o_kit_de_quem_estava_vivo():
+    fonte = codigo()
+    nascer = fonte.split("private HookResult AoNascer(")[1].split("\n    }")[0]
+    assert "KitAtual" in nascer
+    assert "Morto" in nascer
