@@ -55,7 +55,7 @@
 
 ## Parte A: site
 
-### Tarefa 1: tabelas, migração e o servidor no banco
+### Task 1: tabelas, migração e o servidor no banco
 
 **Files:**
 - Modify: `site/src/bd/esquema.ts`
@@ -116,7 +116,7 @@
 - [ ] **Step 4:** Rodar o teste e o `tsc`: PASS. Os testes de `sob-demanda`, `diversao` e `servidores-pela-equipe` também passam. Se algum quebrar por causa do novo servidor `lemnos`, ajustar só a fixture.
 - [ ] **Step 5:** Commit `feat(lemnos): tabelas e servidor da Ilha Lemnos`.
 
-### Tarefa 2: catálogo e tabela de preços (proposta)
+### Task 2: catálogo e tabela de preços (proposta)
 
 **Files:**
 - Create: `site/src/dominio/lemnos/catalogo.ts`
@@ -170,7 +170,7 @@
 - [ ] **Step 4:** PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 3: mercado (comprar e vender) e baú
+### Task 3: mercado (comprar e vender) e baú
 
 **Files:**
 - Create: `site/src/dominio/lemnos/mercado.ts`
@@ -212,7 +212,7 @@
 - [ ] **Step 4:** PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 4: o kit escolhido
+### Task 4: o kit escolhido
 
 **Files:**
 - Create: `site/src/dominio/lemnos/kit.ts`
@@ -246,7 +246,7 @@
 - [ ] **Step 4:** PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 5: sessões e o que acontece em cada aviso
+### Task 5: sessões e o que acontece em cada aviso
 
 **Files:**
 - Create: `site/src/dominio/lemnos/sessoes.ts`
@@ -296,7 +296,7 @@
 - [ ] **Step 4:** PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 6: punições em escada
+### Task 6: punições em escada
 
 **Files:**
 - Create: `site/src/dominio/lemnos/punicoes.ts`
@@ -327,7 +327,7 @@
 - [ ] **Step 4:** PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 7: XP pelos abates, sem a grana do XP
+### Task 7: XP pelos abates, sem a grana do XP
 
 **Files:**
 - Modify: `site/src/dominio/xp.ts`, em `GanhoDePartida` e `lancarXp`
@@ -353,7 +353,7 @@
 - [ ] **Step 4:** PASS. Rodar todos os testes de `xp`, `xp-diversao` e `partidas-xp`, que não podem mudar.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 8: rotas que o servidor chama
+### Task 8: rotas que o servidor chama
 
 **Files:**
 - Create: `site/src/dominio/lemnos/api.ts`
@@ -383,7 +383,7 @@
 - [ ] **Step 4:** PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 9: telas do jogador
+### Task 9: telas do jogador
 
 **Files:**
 - Create:
@@ -420,7 +420,7 @@
 - [ ] **Step 4:** PASS, mais `tsc` e `eslint`. Abrir as três telas no preview `site`, com o banco local, e conferir pelo `read_page` que comprar, vender, escolher o kit e ver as estatísticas funcionam.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 10: Painel ADM da Ilha Lemnos
+### Task 10: Painel ADM da Ilha Lemnos
 
 **Files:**
 - Create: `site/src/app/(membros)/painel/lemnos/page.tsx` e `acoes.ts`
@@ -444,7 +444,7 @@
 
 ## Parte B: servidor
 
-### Tarefa 11: configuração e scripts
+### Task 11: configuração e scripts
 
 **Files:**
 - Create: `servidor/config/diversao/ilha-lemnos.conf` e `ilha-lemnos.cfg`
@@ -487,7 +487,7 @@
 - [ ] **Step 4:** `python -m pytest tests -q` com tudo passando: os 470 de antes e os novos.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 12: plugin, a base (site, kit e safe zones)
+### Task 12: plugin, a base (site, kit e safe zones)
 
 **Files:**
 - Create: `servidor/plugins/MagnatasLemnos/` com:
@@ -532,7 +532,7 @@
 - [ ] **Step 5:** Com o OK do dono, compilar na VPS. Precisa sair sem warnings, porque o projeto usa `TreatWarningsAsErrors`.
 - [ ] **Step 6:** Commit.
 
-### Tarefa 13: plugin, saque, mochila e extração
+### Task 13: plugin, saque, mochila e extração
 
 **Files:**
 - Create: `servidor/plugins/MagnatasLemnos/Saque.cs`, `Mochila.cs` e `Extracao.cs`
@@ -568,7 +568,7 @@
 - [ ] **Step 4:** pytest PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 14: plugin, vigia, saída e reinício diário
+### Task 14: plugin, vigia, saída e reinício diário
 
 **Files:**
 - Create: `servidor/plugins/MagnatasLemnos/Vigia.cs` e `Reinicio.cs`
@@ -597,7 +597,7 @@
 - [ ] **Step 4:** pytest PASS.
 - [ ] **Step 5:** Commit.
 
-### Tarefa 15: marcar o mapa andando por ele
+### Task 15: marcar o mapa andando por ele
 
 **Files:**
 - Create: `servidor/plugins/MagnatasLemnos/Marcar.cs`
@@ -626,7 +626,7 @@
 
   Depois, baixar o arquivo e fazer commit.
 
-### Tarefa 16: prova real e abertura
+### Task 16: prova real e abertura
 
 - [ ] **Step 1:** Com o OK do dono, publicar o site com a migração, pelo comando de publicação de sempre.
 - [ ] **Step 2:** Com o OK do dono, compilar, instalar e ligar o `ilha-lemnos` de verdade, com a troca de mapa. Conferir no registro:
