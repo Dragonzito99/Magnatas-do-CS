@@ -1,4 +1,4 @@
-# Modo Extração, etapa 1: desenho
+# Lemnos (modo extração), etapa 1: desenho
 
 Data: 15/11/2026. Combinado com o dono em conversa, nos dias 14 e 15/11/2026.
 
@@ -169,7 +169,9 @@ Mais à frente, o dono quer **fazer o próprio mapa à mão** no editor do CS2, 
   - **saqueadores**, humanos que ficaram na ilha;
   - **mutantes**, os infectados da Mutação;
   - **animais mutados**.
-- **Nome do modo:** a escolher com o dono. Ideias: "Zona Morta", "A Ilha", "Quarentena".
+- **Nome do modo: Lemnos (dono, 15/11/2026).** Na mitologia, é a ilha onde Hefesto caiu do Olimpo e montou a forja, o que liga o modo
+  à Forja de Hefesto. É também o nome da ilha da história. Subtítulo proposto: "Lemnos: Zona de Quarentena". Textos: "Entrar em
+  Lemnos", "Você extraiu de Lemnos", "Morreu em Lemnos".
 
 ## Economia
 
