@@ -3,9 +3,9 @@ import path from 'node:path';
 import { eq, sql } from 'drizzle-orm';
 import { beforeEach, expect, test } from 'vitest';
 import type { Bd } from '@/bd/conexao';
-import { usuarios, xpPartidas } from '@/bd/esquema';
+import { lancamentosDeGrana, usuarios, xpPartidas } from '@/bd/esquema';
 import { criarBancoDeTeste, criarUsuario } from '@/bd/teste';
-import { COMO_GANHAR_XP, lancarXp, PATENTES, patenteDe, patentesPorGrupo, progressoDe, xpDaPartida, type GanhoDePartida } from './xp';
+import { COMO_GANHAR_XP, lancarXp, PATENTES, patenteDe, patentesPorGrupo, progressoDe, xpDaPartida, xpDeLemnos, type GanhoDePartida } from './xp';
 
 let bd: Bd;
 
@@ -162,4 +162,22 @@ test('a página das patentes mostra os 6 grupos, cada patente com os seus nívei
 test('o "como ganhar XP" da página usa os mesmos valores da conta', () => {
   expect(COMO_GANHAR_XP).toEqual({ jogar: 300, vitoria: 300, empate: 150, abate: 20, maximoPorAbates: 500, maximoPorPartida: 1100 });
   expect(xpDaPartida({ jogouAteOFim: true, resultado: 'vitoria', abates: 1 })).toBe(COMO_GANHAR_XP.jogar + COMO_GANHAR_XP.vitoria + COMO_GANHAR_XP.abate);
+});
+
+test('xpDeLemnos conta só os abates, com o teto dos abates', () => {
+  expect(xpDeLemnos(0)).toBe(0);
+  expect(xpDeLemnos(3)).toBe(60);
+  expect(xpDeLemnos(30)).toBe(500);
+});
+
+test('xpFixo substitui a conta e semGrana não cria linha de grana', async () => {
+  const conta = await criarUsuario(bd);
+  const ganho: GanhoDePartida = { usuarioId: conta.id, origem: 'diversao', referencia: 'lemnos:sessao-1', abates: 3, resultado: 'derrota', jogouAteOFim: true, xpFixo: 60, semGrana: true };
+  const [lancado] = await bd.transaction((tx) => lancarXp(tx, [ganho]));
+  expect(lancado.xp).toBe(60);
+  const grana = await bd.select().from(lancamentosDeGrana).where(eq(lancamentosDeGrana.usuarioId, conta.id));
+  expect(grana).toEqual([]);
+  const [atual] = await bd.select().from(usuarios).where(eq(usuarios.id, conta.id));
+  expect(atual.xpTotal).toBe(60);
+  expect(atual.grana).toBe(0);
 });

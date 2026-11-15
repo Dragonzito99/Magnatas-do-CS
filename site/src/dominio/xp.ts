@@ -89,6 +89,10 @@ export type GanhoDePartida = {
   mortes?: number | null;
   mapa?: string | null;
   placar?: string | null;
+  /** Ilha Lemnos: o XP já vem contado (só pelos abates), no lugar da conta de xpDaPartida. */
+  xpFixo?: number;
+  /** Ilha Lemnos: a grana do modo vem só do saque, então o XP não paga grana (dono, 15/11/2026). */
+  semGrana?: boolean;
 };
 
 export type XpLancado = { usuarioId: string; xp: number; xpTotal: number; subiuPara: Patente | null };
@@ -98,6 +102,11 @@ export function xpDaPartida({ jogouAteOFim, resultado, abates }: Pick<GanhoDePar
   const porResultado = resultado === 'vitoria' ? XP_POR_VITORIA : resultado === 'empate' ? XP_POR_EMPATE : 0;
   const porAbates = Math.min(Math.max(abates, 0) * XP_POR_ABATE, XP_MAXIMO_POR_ABATES);
   return Math.min(XP_POR_JOGAR + porResultado + porAbates, XP_MAXIMO_POR_PARTIDA);
+}
+
+/** Ilha Lemnos: só os abates contam, sem o XP de participar, para entrar e sair repetido não render XP. */
+export function xpDeLemnos(abates: number): number {
+  return Math.min(Math.max(abates, 0) * XP_POR_ABATE, XP_MAXIMO_POR_ABATES);
 }
 
 export function patenteDe(xpTotal: number): Patente {
@@ -122,7 +131,7 @@ export async function marcarPatenteVista(bd: Bd, usuarioId: string): Promise<voi
 export async function lancarXp(tx: Transacao, ganhos: GanhoDePartida[]): Promise<XpLancado[]> {
   const lancados: XpLancado[] = [];
   for (const ganho of ganhos) {
-    const xp = xpDaPartida(ganho);
+    const xp = ganho.xpFixo ?? xpDaPartida(ganho);
     const [novo] = await tx
       .insert(xpPartidas)
       .values({
@@ -141,9 +150,11 @@ export async function lancarXp(tx: Transacao, ganhos: GanhoDePartida[]): Promise
     if (!novo) continue;
     // A Grana da partida vem junto do XP, com a mesma referência: a partida que já pagou não paga de novo.
     // Membro ganha a mais, pelo nível que tem no dia da partida.
-    const nivel = await nivelAtivo(tx, ganho.usuarioId);
-    const grana = Math.floor(granaDoXp(xp) * (1 + (nivel ? NIVEIS[nivel].bonusGrana : 0)) + 1e-9);
-    await lancarGrana(tx, { usuarioId: ganho.usuarioId, tipo: 'partida', quantidade: grana, referencia: ganho.referencia, detalhes: nivel ? { nivel } : undefined });
+    if (!ganho.semGrana) {
+      const nivel = await nivelAtivo(tx, ganho.usuarioId);
+      const grana = Math.floor(granaDoXp(xp) * (1 + (nivel ? NIVEIS[nivel].bonusGrana : 0)) + 1e-9);
+      await lancarGrana(tx, { usuarioId: ganho.usuarioId, tipo: 'partida', quantidade: grana, referencia: ganho.referencia, detalhes: nivel ? { nivel } : undefined });
+    }
     const [conta] = await tx
       .update(usuarios)
       .set({ xpTotal: sql`${usuarios.xpTotal} + ${xp}` })
