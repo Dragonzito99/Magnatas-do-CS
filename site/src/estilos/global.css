@@ -12077,3 +12077,31 @@ a.linha-simples-adm:hover span {
 .numeros-da-ilha small {
   color: var(--tinta-2);
 }
+
+/* Listas simples do Painel ADM (Ilha Lemnos): uma linha por item, com o botão à direita. */
+.lista-adm {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  margin: 8px 0 20px;
+  list-style: none;
+}
+
+.lista-adm li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--painel);
+}
+
+.lista-adm li em {
+  color: var(--ouro);
+  font-style: normal;
+}
+
+.lista-adm li form {
+  margin-left: auto;
+}

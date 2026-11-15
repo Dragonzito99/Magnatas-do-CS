@@ -18,6 +18,7 @@ export type ParteDoPainel =
   | 'grana'
   | 'envios'
   | 'registro'
+  | 'lemnos'
   | 'membros';
 
 /** O menu da lateral do Painel ADM, no padrão da Shop. Cada um vê só o que o cargo permite. */
@@ -39,6 +40,7 @@ async function LateralDoPainel({ usuario, atual }: { usuario: Usuario; atual: Pa
       {item('servidores', '/painel/servidores', 'Servidores')}
       {(pode(usuario, 'testar_competitivo') || pode(usuario, 'testar_mutacao') || pode(usuario, 'usar_laboratorio')) &&
         item('testes', '/testes', 'Testes e laboratório')}
+      {pode(usuario, 'cuidar_de_lemnos') && item('lemnos', '/painel/lemnos', 'Ilha Lemnos')}
       {casos && (
         <>
           <small>Segurança</small>

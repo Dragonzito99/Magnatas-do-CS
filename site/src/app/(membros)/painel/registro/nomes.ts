@@ -2,6 +2,7 @@
 export const NOME_DA_ACAO: Record<string, string> = {
   ajustar_grana: 'Ajustou Grana',
   ajustar_magcoin: 'Ajustou MagCoins',
+  lemnos_desfazer_banimento: 'Desfez punição da Ilha Lemnos',
   assinatura_cancelada: 'Assinatura cancelada',
   atender_chamado: 'Atendeu um chamado',
   baixar_gravacao: 'Baixou uma gravação',
