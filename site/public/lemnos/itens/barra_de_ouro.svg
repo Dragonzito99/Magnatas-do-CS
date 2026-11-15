@@ -1,1 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 96"><defs><linearGradient id="o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#d48a00"/></linearGradient><linearGradient id="m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b5470"/><stop offset="1" stop-color="#2a2438"/></linearGradient><linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9b8ff"/><stop offset="1" stop-color="#8b3fe0"/></linearGradient></defs><g stroke="#a66a00" stroke-width="2"><path d="M20 70l10-20h34l10 20z" fill="url(#o)"/><path d="M54 70l10-20h34l10 20z" fill="url(#o)"/><path d="M37 50l10-20h34l10 20z" fill="url(#o)"/></g><path d="M50 36h26" stroke="#fff6c8" stroke-width="3"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+  <linearGradient id="topo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff4c2"/><stop offset="0.5" stop-color="#f0c247"/><stop offset="1" stop-color="#c88a12"/></linearGradient>
+  <linearGradient id="frente" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9a024"/><stop offset="1" stop-color="#8d5a07"/></linearGradient>
+  <linearGradient id="lado" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a86d0b"/><stop offset="1" stop-color="#6e4404"/></linearGradient>
+</defs>
+<ellipse cx="64" cy="116" rx="50" ry="6" fill="#000" opacity="0.45"/>
+<g>
+  <path d="M14 104 L22 86 H58 L66 104 Z" fill="url(#frente)"/><path d="M22 86 L26 78 H54 L58 86 Z" fill="url(#topo)"/>
+  <path d="M62 104 L70 86 H106 L114 104 Z" fill="url(#frente)"/><path d="M70 86 L74 78 H102 L106 86 Z" fill="url(#topo)"/>
+  <path d="M38 80 L46 62 H82 L90 80 Z" fill="url(#frente)"/><path d="M46 62 L50 54 H78 L82 62 Z" fill="url(#topo)"/>
+</g>
+<g font-family="Arial Black,Arial" font-size="5" fill="#7a4d05" text-anchor="middle" opacity="0.8">
+  <text x="64" y="74">999.9</text><text x="40" y="98">999.9</text><text x="88" y="98">999.9</text>
+</g>
+<g stroke="#fffbe0" stroke-width="1.5" opacity="0.8"><path d="M52 57 H74"/><path d="M28 81 H48"/><path d="M76 81 H96"/></g>
+<path d="M88 46 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 z" fill="#fffbe0" opacity="0.9"/>
+</svg>

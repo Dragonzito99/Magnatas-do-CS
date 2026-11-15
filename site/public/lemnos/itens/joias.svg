@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 96"><defs><linearGradient id="o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#d48a00"/></linearGradient><linearGradient id="m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b5470"/><stop offset="1" stop-color="#2a2438"/></linearGradient><linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9b8ff"/><stop offset="1" stop-color="#8b3fe0"/></linearGradient></defs><path d="M24 14c10 30 70 30 80 0" stroke="url(#o)" stroke-width="5" fill="none"/><g fill="url(#r)" stroke="#fff" stroke-width="1.5"><path d="M64 46l14 14-14 26-14-26z"/><circle cx="38" cy="34" r="6"/><circle cx="90" cy="34" r="6"/></g><path d="M50 60h28" stroke="#fff" stroke-width="1.5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+  <linearGradient id="ouro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset="0.45" stop-color="#e2a92e"/><stop offset="1" stop-color="#8a5a0c"/></linearGradient>
+  <linearGradient id="pedra" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a9a"/><stop offset="0.5" stop-color="#c3112e"/><stop offset="1" stop-color="#5e0614"/></linearGradient>
+</defs>
+<ellipse cx="64" cy="116" rx="30" ry="6" fill="#000" opacity="0.45"/>
+<path d="M22 22 C 24 62, 48 80, 64 82 C 80 80, 104 62, 106 22" fill="none" stroke="#6b4508" stroke-width="5" stroke-linecap="round"/>
+<path d="M22 22 C 24 62, 48 80, 64 82 C 80 80, 104 62, 106 22" fill="none" stroke="url(#ouro)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="3 1.5"/>
+<path d="M64 82 v6" stroke="url(#ouro)" stroke-width="3"/>
+<path d="M50 88 H78 L72 98 L64 112 L56 98 Z" fill="url(#ouro)" stroke="#6b4508" stroke-width="1"/>
+<path d="M54 90 H74 L69 98 L64 108 L59 98 Z" fill="url(#pedra)"/>
+<path d="M54 90 L64 96 L74 90 M59 98 L64 96 L69 98 M64 96 V108" stroke="#ffd0d8" stroke-width="0.8" fill="none" opacity="0.7"/>
+<path d="M57 91 L62 93" stroke="#fff" stroke-width="1.5" opacity="0.8"/>
+<circle cx="40" cy="58" r="2" fill="#fff6d0" opacity="0.8"/><circle cx="90" cy="54" r="1.6" fill="#fff6d0" opacity="0.7"/>
+</svg>

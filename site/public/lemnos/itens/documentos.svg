@@ -1,1 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 96"><defs><linearGradient id="o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#d48a00"/></linearGradient><linearGradient id="m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b5470"/><stop offset="1" stop-color="#2a2438"/></linearGradient><linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9b8ff"/><stop offset="1" stop-color="#8b3fe0"/></linearGradient></defs><path d="M18 22h32l8 8h52v56H18z" fill="#c9a35c"/><rect x="28" y="14" width="64" height="60" rx="2" fill="#f3eefc" transform="rotate(-6 60 44)"/><path d="M18 36h92v50H18z" fill="#e3bd6e"/><rect x="38" y="52" width="52" height="16" rx="2" fill="none" stroke="#c0262d" stroke-width="3" transform="rotate(-8 64 60)"/><text x="64" y="65" font-family="Arial Black,Arial" font-size="11" fill="#c0262d" text-anchor="middle" transform="rotate(-8 64 60)">SECRETO</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+  <linearGradient id="pasta" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3a06a"/><stop offset="1" stop-color="#8c6c3d"/></linearGradient>
+  <linearGradient id="papel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1ece0"/><stop offset="1" stop-color="#cfc8b8"/></linearGradient>
+</defs>
+<ellipse cx="64" cy="116" rx="44" ry="6" fill="#000" opacity="0.45"/>
+<g transform="rotate(-6 64 64)">
+  <rect x="30" y="16" width="64" height="80" rx="2" fill="url(#papel)"/>
+  <g stroke="#8a8476" stroke-width="1.6"><path d="M38 28h40M38 34h48M38 40h44M38 46h48M38 52h30"/></g>
+  <rect x="62" y="56" width="22" height="18" fill="#2a2a2a" opacity="0.85"/>
+</g>
+<path d="M18 34 H50 L56 40 H110 V108 Q110 112 106 112 H22 Q18 112 18 108 Z" fill="#7a5c30"/>
+<path d="M18 46 H110 V108 Q110 112 106 112 H22 Q18 112 18 108 Z" fill="url(#pasta)" stroke="#5e4522" stroke-width="1.2"/>
+<path d="M18 46 H110" stroke="#e2c58f" stroke-width="1" opacity="0.6"/>
+<g transform="rotate(-8 64 82)">
+  <rect x="24" y="72" width="80" height="20" rx="2" fill="none" stroke="#9c1c1c" stroke-width="3"/>
+  <text x="64" y="86.5" font-family="Arial Black,Impact,Arial" font-size="9" fill="#9c1c1c" text-anchor="middle">CONFIDENCIAL</text>
+</g>
+<rect x="88" y="100" width="16" height="6" rx="1" fill="#5e4522" opacity="0.5"/>
+</svg>
