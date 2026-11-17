@@ -1,0 +1,2 @@
+# Reinicia os servidores sozinho: ligado por uns 3 dias, o CS2 fica em câmera lenta (dono, 16/11/2026).
+*/30 * * * * root bash /usr/local/bin/magnatas-reiniciar.sh >> /var/log/magnatas-reiniciar.log 2>&1
