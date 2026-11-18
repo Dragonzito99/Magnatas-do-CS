@@ -2,10 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
+import { SOM_DA_PARTIDA_ENCONTRADA } from '@/dominio/sons-da-partida';
 
 const TITULO_DO_AVISO = 'Partida encontrada!';
 const CORPO_DO_AVISO = 'Você tem 30 segundos para aceitar.';
-const SOM = '/sons/partida-encontrada.wav';
 const PISCADA_MS = 900;
 const CHAVE_DOS_AVISADOS = 'magnatas:partidas-avisadas';
 
@@ -63,7 +63,7 @@ export function AvisoDePartida() {
       if (jaAvisou(partidaId)) return;
       const destino = `/partidas/${partidaId}`;
       // O navegador só toca som depois de a pessoa ter mexido na página; se recusar, segue sem som.
-      new Audio(SOM).play().catch(() => undefined);
+      new Audio(SOM_DA_PARTIDA_ENCONTRADA).play().catch(() => undefined);
       if (!document.hidden) {
         router.push(destino);
         return;

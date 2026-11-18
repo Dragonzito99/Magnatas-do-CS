@@ -28,6 +28,7 @@ import { aceitar, cancelar, chamar, denunciarJogador, elogiarJogador, vetar } fr
 import { CaraOuCoroa } from './cara-ou-coroa';
 import { Relogio } from './relogio';
 import { RelogioRedondo } from './relogio-redondo';
+import { SonsDaPartida } from './sons-da-partida';
 import { marcarVistas, resultadoDaConta } from '@/dominio/avaliar';
 import { SeuResultado } from '../seu-resultado';
 
@@ -452,6 +453,12 @@ export default async function PaginaDaPartida({
   return (
     <>
       {ativa && <Atualizar segundos={3} />}
+      <SonsDaPartida
+        partidaId={partida.id}
+        estado={partida.estado}
+        jogaNaPartida={jogaNaPartida}
+        aceitou={aceites.some((linha) => linha.usuarioId === usuario.id && linha.aceitou)}
+      />
       <section className="capa-partida" style={fundoDoMapa(partida.mapa, 'linear-gradient(90deg, rgba(7, 4, 13, 0.95) 35%, rgba(7, 4, 13, 0.6))')}>
         <span className="selo-modo ouro">
           {seloDaPartida(partida)} · #{partida.numero}
