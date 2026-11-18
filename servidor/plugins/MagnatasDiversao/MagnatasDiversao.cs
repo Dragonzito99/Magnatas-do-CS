@@ -126,7 +126,7 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
     }
 
     public override string ModuleName => "Magnatas: Diversão";
-    public override string ModuleVersion => "1.12.3";
+    public override string ModuleVersion => "1.12.4";
 
     public ConfiguracaoDoModo Config { get; set; } = new();
 
@@ -484,8 +484,12 @@ public partial class ModoDeDiversao : BasePlugin, IPluginConfig<ConfiguracaoDoMo
         {
             AddTimer(EsperaAposNascer, () =>
             {
-                LevarParaOMapa(jogador);
-                if (jogador != null && EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador);
+                // Quem acabou de ser infectado volta para onde estava, já vestido de mutante.
+                if (!VoltarAoLugarDaTransformacao(jogador))
+                {
+                    LevarParaOMapa(jogador);
+                    if (jogador != null && EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador);
+                }
                 EntregarArmaDoHumano(jogador);
             });
             if (Config.Laboratorio) AddTimer(EsperaParaVirarNoLaboratorio, () => AoNascerNoLaboratorio(jogador));

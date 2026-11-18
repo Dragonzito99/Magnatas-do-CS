@@ -902,7 +902,7 @@ def test_quem_ja_tem_ak_ou_m4_fica_com_ela():
 def test_so_quem_virou_mutante_perde_as_armas_ao_nascer():
     # Bot que entra como TR antes do sorteio não é mutante: tirar as armas dele junto do reinício também derruba o jogo.
     nasce = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index('else if (Config.Regra == "mutacao")', CODIGO_DO_PLUGIN.index("HookResult AoNascer")):]
-    assert "EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador)" in nasce[:500]
+    assert "EhMutanteDeVerdade(jogador)) AplicarAtributosDoMutante(jogador)" in nasce[:700]
     confere = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("bool EhMutanteDeVerdade"):]
     assert "rodadaEmAndamento && sorteioFeito" in confere[:400]
 
@@ -1391,7 +1391,7 @@ def test_o_nivel_zera_a_cada_rodada_e_com_quem_sai():
 
 def test_quem_vira_mutante_comeca_no_nivel_um():
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TransformarEmMutante"):]
-    assert trecho.index("infeccoes.Remove(jogador.Slot)") < trecho.index("AplicarAtributosDoMutante(jogador)")
+    assert trecho.index("infeccoes.Remove(jogador.Slot)") < trecho.index("RenascerNoMesmoLugar(jogador)")
 
 
 def test_a_contagem_toca_o_som_para_todos_e_acaba_quando_o_mutante_aparece():
@@ -1527,7 +1527,7 @@ def test_a_corrida_zera_junto_com_o_nivel():
         assert "corridas.Clear()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index(inicio):]
     assert "corridas.Remove(" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):]
     trecho = CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("void TransformarEmMutante"):]
-    assert trecho.index("corridas.Remove(jogador.Slot)") < trecho.index("AplicarAtributosDoMutante(jogador)")
+    assert trecho.index("corridas.Remove(jogador.Slot)") < trecho.index("RenascerNoMesmoLugar(jogador)")
 
 
 def test_o_teste_volta_para_a_dust_2_se_o_mapa_da_oficina_abrir_por_cima():
@@ -2133,3 +2133,25 @@ def test_o_plugin_dos_banners_aponta_para_o_pacote_que_o_equipe_baixa():
     banners = (RAIZ / "plugins" / "MagnatasVisual" / "Banners.cs").read_text(encoding="utf-8")
     assert f'PacoteDosBanners = "{PACOTE_DOS_BANNERS}"' in banners
     assert PACOTE_DOS_BANNERS in valor("mm_extra_addons", "equipe")
+
+
+def test_quem_e_infectado_nao_troca_de_boneco_vivo():
+    # 17/11/2026: o jogo de quem estava no servidor fechava na infecção ("OnPreserveEntity: missing client entity"),
+    # porque o boneco trocava e as armas saíam com o jogador vivo. Como no nível (10/11), o boneco vem ao renascer:
+    # o infectado renasce do lado dos mutantes, no mesmo lugar e olhando para o mesmo lado, e lá se veste.
+    transforma = metodo_da_mutacao("private void TransformarEmMutante(")
+    assert "AplicarAtributosDoMutante(" not in transforma and "SetModel" not in transforma
+    assert transforma.index("SwitchTeam(CsTeam.Terrorist)") < transforma.index("RenascerNoMesmoLugar(jogador)")
+    renasce = metodo_da_mutacao("private void RenascerNoMesmoLugar(")
+    assert "voltarAoLugar[jogador.Slot]" in renasce and "EyeAngles" in renasce
+    assert "jogador.Respawn()" in renasce
+    volta = metodo_da_mutacao("private bool VoltarAoLugarDaTransformacao(")
+    assert "voltarAoLugar.Remove(jogador.Slot" in volta
+    assert volta.index("Teleport(") < volta.index("AplicarAtributosDoMutante(jogador)")
+    nasce = CODIGO_DO_PLUGIN[CODIGO_DO_PLUGIN.index('else if (Config.Regra == "mutacao")', CODIGO_DO_PLUGIN.index("HookResult AoNascer")):]
+    assert nasce.index("VoltarAoLugarDaTransformacao(jogador)") < nasce.index("LevarParaOMapa(jogador)")
+
+
+def test_o_lugar_da_infeccao_nao_passa_de_uma_rodada_nem_fica_com_quem_sai():
+    assert "voltarAoLugar.Clear()" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventRoundPrestart"):][:1500]
+    assert "voltarAoLugar.Remove(quem.Slot)" in CODIGO_DA_MUTACAO[CODIGO_DA_MUTACAO.index("EventPlayerDisconnect"):][:800]

@@ -189,6 +189,8 @@ public partial class ModoDeDiversao
     private bool testeComBots;
     // Infecções de cada mutante na rodada, pela vaga. Decidem o nível.
     private readonly Dictionary<int, int> infeccoes = new();
+    // Onde estava (e para onde olhava) quem acabou de ser infectado: ele renasce ali, já do lado dos mutantes.
+    private readonly Dictionary<int, (Vector Lugar, QAngle Olhar)> voltarAoLugar = new();
     // Por vaga: até quando a corrida vale e quando o G volta a funcionar, no relógio do servidor.
     private readonly Dictionary<int, (float Fim, float Recarga)> corridas = new();
     private bool rodadaEmAndamento;
@@ -503,6 +505,7 @@ public partial class ModoDeDiversao
         {
             infeccoes.Remove(quem.Slot);
             corridas.Remove(quem.Slot);
+            voltarAoLugar.Remove(quem.Slot);
             EsquecerVagaDoLaboratorio(quem.Slot);
             if (!quem.IsBot) GuardarDiarioDasEntidades(quem.PlayerName);
         }
@@ -635,12 +638,36 @@ public partial class ModoDeDiversao
         escudos.Remove(jogador.Slot);
         fumacas.Remove(jogador.Slot);
         curas.Remove(jogador.Slot);
-        AplicarAtributosDoMutante(jogador);
+        RenascerNoMesmoLugar(jogador);
         AvisarOQueOMutanteFaz(jogador);
         if (autor is { IsValid: true }) ContarTransformacao(autor);
         // Encerrar a rodada no mesmo instante em que as armas do infectado saem, ainda dentro do golpe, derrubava o jogo
         // de quem estava no servidor ("OnPreserveEntity") na infecção do último humano. O fim vem logo depois.
         AddTimer(EsperaParaConferirOFim, ConferirFimDaRodada);
+    }
+
+    /// <summary>
+    /// O infectado renasce do lado dos mutantes, e ao nascer volta para onde estava e se veste
+    /// (VoltarAoLugarDaTransformacao). Trocar o boneco e tirar as armas com ele vivo fechava o jogo de quem estava no
+    /// servidor ("OnPreserveEntity: missing client entity", 17/11/2026), como já tinha acontecido com o nível (10/11).
+    /// </summary>
+    private void RenascerNoMesmoLugar(CCSPlayerController jogador)
+    {
+        if (jogador.PlayerPawn.Value is { AbsOrigin: { } lugar, EyeAngles: { } olhar })
+            voltarAoLugar[jogador.Slot] = (new Vector(lugar.X, lugar.Y, lugar.Z), new QAngle(olhar.X, olhar.Y, 0));
+        jogador.Respawn();
+    }
+
+    /// <summary>Ao nascer: quem acabou de ser infectado volta ao lugar e vira mutante. Devolve false para os outros.</summary>
+    private bool VoltarAoLugarDaTransformacao(CCSPlayerController? jogador)
+    {
+        if (jogador is not { IsValid: true } || !voltarAoLugar.Remove(jogador.Slot, out var volta)) return false;
+        if (jogador is { PawnIsAlive: true, Team: CsTeam.Terrorist } && jogador.PlayerPawn.Value is { } corpo)
+        {
+            corpo.Teleport(volta.Lugar, volta.Olhar, new Vector(0, 0, 0));
+            AplicarAtributosDoMutante(jogador);
+        }
+        return true;
     }
 
     private void ContarTransformacao(CCSPlayerController autor)
@@ -1193,6 +1220,7 @@ public partial class ModoDeDiversao
     {
         if (Config.Regra != "mutacao") return HookResult.Continue;
         rodadaEmAndamento = false;
+        voltarAoLugar.Clear();
         var portadorAnterior = portadorDaSuperArma;
         portadorDaSuperArma = null;
         Parar(ref somDaContagem);
