@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Insígnias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pagina: #07040d; --painel: #120a1f; --escuro: #0c0716; --tinta: #f3eefc; --apoio: #b9a8d6;
+      --linha: rgba(168, 85, 247, 0.28); --roxo: #a855f7; --verde: #4ade80; --ouro: #f5b301;
+      --titulo: 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--pagina); color: var(--tinta); font: 15px/1.5 'Inter', system-ui, sans-serif; }
+    .largura { width: min(1100px, 100% - 32px); margin: 0 auto; }
+    h1, h2, h3 { margin: 0; font-family: var(--titulo); font-style: italic; text-transform: uppercase; letter-spacing: 0; }
+    .etapa { margin: 36px 0 14px; color: var(--ouro); font: italic 700 15px/1 var(--titulo); text-transform: uppercase; letter-spacing: .08em; }
+    .explica { margin: 0 0 18px; color: var(--apoio); max-width: 720px; }
+
+    /* Topo do perfil */
+    .topo { position: relative; overflow: hidden; border-bottom: 3px solid var(--ouro);
+      background: linear-gradient(90deg, rgba(7,4,13,.96) 30%, rgba(7,4,13,.55)), url('/mapas/dust2.webp') center/cover; }
+    .topo .largura { display: flex; align-items: center; gap: 22px; padding: 30px 0; }
+    .avatar { width: 112px; height: 112px; border: 3px solid var(--ouro); border-radius: 10px; background: #2a1650 url('/marca/personagem.webp') center 15%/cover; box-shadow: 0 0 24px rgba(245,179,1,.35); }
+    .nome { font: italic 800 46px/1 var(--titulo); }
+    .linha-do-nome { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+    .patente { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255,255,255,.06); border: 1px solid var(--linha); font: italic 700 15px/1 var(--titulo); text-transform: uppercase; }
+    .principal { display: inline-flex; align-items: center; gap: 8px; padding: 3px 12px 3px 4px; border: 1px solid rgba(245,179,1,.45); background: rgba(245,179,1,.08); font: italic 700 15px/1 var(--titulo); text-transform: uppercase; }
+    .principal svg { width: 34px; height: 34px; }
+    .principal small { display: block; color: var(--apoio); font: 600 11px/1 'Inter'; text-transform: none; font-style: normal; }
+
+    .abas { display: flex; gap: 4px; margin-top: 18px; border-bottom: 1px solid var(--linha); }
+    .abas span { padding: 10px 18px; color: var(--apoio); font: italic 700 17px/1 var(--titulo); text-transform: uppercase; }
+    .abas .ativa { color: var(--tinta); border-bottom: 3px solid var(--ouro); }
+
+    /* Resumo */
+    .resumo { display: flex; gap: 14px; margin: 18px 0; flex-wrap: wrap; }
+    .resumo div { flex: 1; min-width: 160px; padding: 14px 16px; background: var(--painel); border: 1px solid var(--linha); }
+    .resumo b { display: block; font: italic 800 30px/1 var(--titulo); }
+    .resumo span { color: var(--apoio); font-size: 13px; }
+
+    /* Famílias */
+    .familias { display: grid; gap: 12px; }
+    .familia { display: grid; grid-template-columns: 190px 1fr; align-items: center; gap: 16px; padding: 14px 18px; background: var(--painel); border: 1px solid var(--linha); }
+    .familia h3 { font-size: 24px; }
+    .familia p { margin: 2px 0 8px; color: var(--apoio); font-size: 13px; }
+    .barra { height: 6px; background: rgba(255,255,255,.08); }
+    .barra i { display: block; height: 100%; background: var(--ouro); }
+    .falta { margin-top: 6px; color: var(--apoio); font-size: 12px; }
+    .niveis { display: flex; gap: 10px; justify-content: space-between; }
+    .nivel { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+    .nivel svg { width: 74px; height: 74px; }
+    .nivel b { font: italic 700 14px/1 var(--titulo); text-transform: uppercase; }
+    .nivel small { color: var(--apoio); font-size: 11px; }
+    .nivel.trancada svg { filter: grayscale(1) brightness(.45); opacity: .55; }
+    .nivel.trancada b { color: #6f6585; }
+    .nivel.escolhida svg { filter: drop-shadow(0 0 10px rgba(245,179,1,.7)); }
+    .nivel.escolhida b::after { content: ' ★'; color: var(--ouro); }
+
+    /* Escala dos níveis */
+    .escala { display: flex; gap: 22px; flex-wrap: wrap; padding: 22px; background: var(--painel); border: 1px solid var(--linha); }
+    .escala div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .escala svg { width: 110px; height: 110px; }
+    .escala b { font: italic 700 18px/1 var(--titulo); text-transform: uppercase; }
+
+    /* Na partida e no ranking */
+    .lugares { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+    .lugar { padding: 16px; background: var(--painel); border: 1px solid var(--linha); }
+    .lugar h3 { font-size: 18px; margin-bottom: 10px; color: var(--apoio); }
+    .linha-jogador { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.06); }
+    .linha-jogador svg { width: 28px; height: 28px; }
+    .linha-jogador .mini { width: 30px; height: 30px; border-radius: 4px; background: #2a1650 url('/marca/personagem.webp') center 15%/cover; }
+    .linha-jogador b { flex: 1; }
+    .aviso { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid rgba(245,179,1,.5); background: linear-gradient(90deg, rgba(245,179,1,.15), transparent); }
+    .aviso svg { width: 64px; height: 64px; }
+    .aviso b { display: block; font: italic 800 22px/1.05 var(--titulo); text-transform: uppercase; }
+    .aviso span { color: var(--apoio); font-size: 13px; }
+    .rodape { height: 60px; }
+    @media (max-width: 760px) {
+      .familia { grid-template-columns: 1fr; }
+      .nivel svg { width: 52px; height: 52px; }
+      .nome { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="topo">
+    <div class="largura">
+      <div class="avatar" aria-hidden="true"></div>
+      <div>
+        <h1 class="nome">Aposentado| Dragonzito</h1>
+        <div class="linha-do-nome">
+          <span class="patente">&#128737; Associado 2</span>
+          <span class="principal" id="principal"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="largura">
+    <nav class="abas" aria-label="Perfil">
+      <span>Visão geral</span><span class="ativa">Insígnias</span><span>Partidas</span><span>Baú</span>
+    </nav>
+
+    <div class="resumo">
+      <div><b>11 de 30</b><span>insígnias conquistadas</span></div>
+      <div><b>2 Ouro</b><span>o nível mais alto até agora</span></div>
+      <div><b>Mira · Prata</b><span>próxima: faltam 112 headshots</span></div>
+    </div>
+
+    <p class="etapa">1. A aba Insígnias do perfil</p>
+    <p class="explica">Cada família numa linha, do Bronze à Lendária. As conquistadas brilham, as que faltam ficam apagadas, e a barra mostra quanto falta para a próxima. A estrela marca a insígnia principal, que você escolhe clicando.</p>
+    <div class="familias" id="familias"></div>
+
+    <p class="etapa">2. Os 5 níveis de uma insígnia</p>
+    <p class="explica">O desenho é o mesmo na família, e o que muda é a cor, a moldura e o brilho. A Lendária ganha asas.</p>
+    <div class="escala" id="escala"></div>
+
+    <p class="etapa">3. Onde a insígnia principal aparece</p>
+    <div class="lugares">
+      <div class="lugar">
+        <h3>No ranking e nas salas, ao lado do nome</h3>
+        <div id="ranking"></div>
+      </div>
+      <div class="lugar">
+        <h3>Quando alguém ganha uma nova</h3>
+        <div class="aviso" id="aviso"></div>
+      </div>
+    </div>
+    <div class="rodape"></div>
+  </main>
+
+  <script>
+    const NIVEIS = [
+      { nome: 'Bronze', claro: '#f0b27a', escuro: '#7a3f12' },
+      { nome: 'Prata', claro: '#f1f5f9', escuro: '#64748b' },
+      { nome: 'Ouro', claro: '#ffe27a', escuro: '#a16207' },
+      { nome: 'Platina', claro: '#b5f6ff', escuro: '#0e7490' },
+      { nome: 'Lendária', claro: '#f0abfc', escuro: '#7e22ce' },
+    ];
+    // Ícone de cada família, desenhado num quadro de 100 x 100 com o centro em 50, 50.
+    const ICONES = {
+      mira: '<circle cx="50" cy="50" r="15" fill="none" stroke-width="5"/><path d="M50 27v12M50 61v12M27 50h12M61 50h12" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="50" r="3.5" stroke="none"/>',
+      ace: '<path d="M33 35h34v8H43l-1 6c3-2 6-3 10-3 9 0 15 6 15 13s-7 13-17 13c-8 0-14-3-17-8l7-5c2 3 6 5 10 5 5 0 8-2 8-5s-3-5-8-5c-4 0-7 1-10 3l-6-2z" stroke="none"/>',
+      estrela: '<path d="M50 27l6.6 14.2 15.4 1.8-11.4 10.6 3 15.4L50 61.3 36.4 69l3-15.4L28 43l15.4-1.8z" stroke="none"/>',
+      vencedor: '<path d="M37 30h26v12c0 9-6 15-13 15s-13-6-13-15zM37 34h-7c0 8 4 12 9 12M63 34h7c0 8-4 12-9 12" fill="none" stroke-width="4.5" stroke-linejoin="round"/><path d="M46 57h8v8h6v6H40v-6h6z" stroke="none"/>',
+      mutacao: '<circle cx="50" cy="50" r="6" stroke="none"/><path d="M50 44c-2-8 0-15 6-19-3 6-2 11 1 15M55.5 53c7 3 11 9 10 17-3-6-7-9-12-9M44.5 53c-7 3-11 9-10 17 3-6 7-9 12-9" fill="none" stroke-width="4.5" stroke-linecap="round"/>',
+      veterano: '<path d="M33 37l17 9 17-9M33 49l17 9 17-9M33 61l17 9 17-9" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>',
+    };
+    let sequencia = 0;
+    function insignia(familia, nivel) {
+      const n = NIVEIS[nivel];
+      const id = 'g' + (sequencia++);
+      const asas = nivel === 4
+        ? `<path d="M14 40c-6 10-4 24 6 32l8-6c-6-6-8-14-6-22zM86 40c6 10 4 24-6 32l-8-6c6-6 8-14 6-22z" fill="url(#${id})"/>`
+        : '';
+      const pontos = Array.from({ length: nivel + 1 }, (_, i) => {
+        const x = 50 + (i - nivel / 2) * 8;
+        return `<circle cx="${x}" cy="92" r="2.6" fill="${n.claro}"/>`;
+      }).join('');
+      const raios = nivel >= 3
+        ? `<g stroke="${n.claro}" stroke-width="1.5" opacity=".45">${Array.from({ length: 12 }, (_, i) => {
+            const a = (i * Math.PI) / 6; return `<path d="M${50 + Math.cos(a) * 40} ${50 + Math.sin(a) * 40}L${50 + Math.cos(a) * 46} ${50 + Math.sin(a) * 46}"/>`; }).join('')}</g>`
+        : '';
+      return `<svg viewBox="0 0 100 100" aria-label="${familia} ${n.nome}">
+        <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${n.claro}"/><stop offset="1" stop-color="${n.escuro}"/></linearGradient></defs>
+        ${raios}${asas}
+        <path d="M50 8l32 15v27c0 19-14 33-32 40-18-7-32-21-32-40V23z" fill="url(#${id})"/>
+        <path d="M50 15l26 12v23c0 15-11 27-26 33-15-6-26-18-26-33V27z" fill="#120a1f"/>
+        <g fill="${n.claro}" stroke="${n.claro}">${ICONES[familia]}</g>
+        ${pontos}
+      </svg>`;
+    }
+
+    // Exemplo de um jogador: o nível conquistado em cada família (-1 = nenhum) e a próxima meta.
+    const FAMILIAS = [
+      { chave: 'mira', nome: 'Mira', conta: 'headshots', metas: [50, 250, 1000, 3000, 10000], tem: 138, nivel: 0 },
+      { chave: 'ace', nome: 'Ace', conta: 'rodadas de 5 abates', metas: [1, 5, 20, 50, 100], tem: 7, nivel: 1 },
+      { chave: 'estrela', nome: 'Estrela', conta: 'MVPs', metas: [10, 50, 200, 500, 1000], tem: 231, nivel: 2, escolhida: true },
+      { chave: 'vencedor', nome: 'Vencedor', conta: 'vitórias no competitivo e no mix', metas: [5, 25, 100, 300, 1000], tem: 64, nivel: 1 },
+      { chave: 'mutacao', nome: 'Mutação', conta: 'partidas ganhas na Mutação', metas: [5, 25, 100, 300, 1000], tem: 112, nivel: 2 },
+      { chave: 'veterano', nome: 'Veterano', conta: 'partidas jogadas', metas: [10, 50, 200, 500, 1500], tem: 41, nivel: 0 },
+    ];
+    const numero = (v) => v.toLocaleString('pt-BR');
+
+    document.getElementById('familias').innerHTML = FAMILIAS.map((f) => {
+      const proxima = f.metas[f.nivel + 1];
+      const anterior = f.nivel >= 0 ? f.metas[f.nivel] : 0;
+      const parte = proxima ? Math.round(((f.tem - anterior) / (proxima - anterior)) * 100) : 100;
+      return `<div class="familia">
+        <div>
+          <h3>${f.nome}</h3>
+          <p>${numero(f.tem)} ${f.conta}</p>
+          <div class="barra"><i style="width:${parte}%"></i></div>
+          <div class="falta">${proxima ? `Faltam ${numero(proxima - f.tem)} para ${NIVEIS[f.nivel + 1].nome}` : 'Completa'}</div>
+        </div>
+        <div class="niveis">${f.metas.map((meta, i) => `
+          <div class="nivel ${i > f.nivel ? 'trancada' : ''} ${f.escolhida && i === f.nivel ? 'escolhida' : ''}">
+            ${insignia(f.chave, i)}<b>${NIVEIS[i].nome}</b><small>${numero(meta)}</small>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('escala').innerHTML = NIVEIS.map((n, i) => `<div>${insignia('estrela', i)}<b>${n.nome}</b></div>`).join('');
+    document.getElementById('principal').innerHTML = `${insignia('estrela', 2)}<span>Estrela Ouro<small>200 MVPs</small></span>`;
+    document.getElementById('ranking').innerHTML = [
+      ['Aposentado| Dragonzito', 'estrela', 2],
+      ['Ministro Marfioso', 'mutacao', 4],
+      ['Fulano', 'mira', 1],
+    ].map(([nome, f, n]) => `<div class="linha-jogador"><span class="mini"></span>${insignia(f, n)}<b>${nome}</b></div>`).join('');
+    document.getElementById('aviso').innerHTML = `${insignia('mutacao', 3)}<div><b>Nova insígnia: Mutação Platina</b><span>300 partidas ganhas na Mutação</span></div>`;
+  </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Partida</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="telas.css">
+  <link rel="stylesheet" href="partida.css">
+</head>
+<body>
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="inicio.html"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta">
+        <a class="painel-adm" href="painel.html">&#128737; Painel ADM <b>3</b></a>
+        <span class="sino" title="Avisos">&#128276;<b>2</b></span>
+        <div class="conta">
+          <svg class="escudo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#2b2a33" stroke="#c9d1dc" stroke-width="1.6"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round"/></svg>
+          Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;
+          <div class="conta-menu">
+            <a href="perfil.html">Meu perfil</a>
+            <a href="#">Minha patente</a>
+            <a href="#">Convites</a>
+            <a href="#">Suporte ao jogador</a>
+            <a href="#">Sair</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens">
+        <div class="item"><span>Notícias</span>
+          <div class="suspenso"><a href="noticias.html">Do clube</a><a href="noticias.html">CS2 oficial</a><a href="noticias.html">Times brasileiros</a></div>
+        </div>
+        <div class="item"><span>Jogo</span>
+          <div class="suspenso"><a href="jogo.html#como-funciona">Como funciona</a><a href="jogo.html#modos">Modos</a><a href="jogo.html#mapas">Mapas</a><a href="patentes.html">Patentes</a><a href="jogo.html#regras">Regras</a></div>
+        </div>
+        <div class="item"><span>Ranking</span>
+          <div class="suspenso"><a href="ranking.html">Comunidade</a><a href="ranking.html">Mix do mês</a><a href="#">MVPs</a></div>
+        </div>
+        <div class="item"><span>Comunidade</span>
+          <div class="suspenso"><a href="#">Online agora</a><a href="#">Convites</a><a href="#">Discord</a></div>
+        </div>
+        <div class="item"><span>Clãs</span>
+          <div class="suspenso"><a href="clas.html#meu">Meu clã</a><a href="clas.html#procurar">Procurar clãs</a><a href="clas.html#ranking">Ranking de clãs</a><a href="clas.html#criar">Criar clã</a></div>
+        </div>
+        <a class="item item-loja" href="shop.html"><span>Magnata Shop <em>em breve</em></span></a>
+      </div>
+      <a class="jogar" href="jogar.html">JOGAR</a>
+    </div>
+    <a class="aviso-sala" href="jogar.html"><span class="aviso-sala-ponto"></span><span>Você está na <b>Sala do Dragonzit0</b> · 3/5</span><em>Voltar para a sala</em></a>
+  </nav>
+
+  <section class="cabeca-jogar partida-cabeca" style="background:linear-gradient(90deg,rgba(7,4,13,.95) 35%,rgba(7,4,13,.6)),url(/mapas/mirage.webp) center/cover">
+    <div class="largura">
+      <span class="etiqueta ouro">Mix #128</span>
+      <h1 id="titulo-fase">Partida encontrada</h1>
+      <p id="texto-fase">Todos têm 30 segundos para aceitar a partida.</p>
+      <div class="fases" aria-label="Ver fase do rascunho">
+        <button class="ativo" data-fase="aceite">1 · Aceite</button>
+        <button data-fase="vetos">2 · Vetos</button>
+        <button data-fase="entrar">3 · Entrar no servidor</button>
+        <button data-fase="vivo">4 · Ao vivo</button>
+        <button data-fase="fim">5 · Fim</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="largura">
+    <section class="fase" id="fase-aceite">
+      <div class="aceite">
+        <div class="relogio-grande"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="10"/><circle cx="60" cy="60" r="52" fill="none" stroke="#f5b301" stroke-width="10" stroke-dasharray="327" stroke-dashoffset="80" transform="rotate(-90 60 60)" stroke-linecap="round"/></svg><b>0:23</b></div>
+        <h2>Sua partida está pronta</h2>
+        <p class="apoio">Mix · 5 contra 5 · o mapa sai dos vetos</p>
+        <div class="aceite-pessoas"><span class="mini-avatar aceitou">DR</span><span class="mini-avatar aceitou">CH</span><span class="mini-avatar aceitou">FI</span><span class="mini-avatar aceitou">DE</span><span class="mini-avatar aceitou">EC</span><span class="mini-avatar aceitou">AL</span><span class="mini-avatar aceitou">BR</span><span class="mini-avatar ">FI</span><span class="mini-avatar ">FI</span><span class="mini-avatar ">FI</span></div>
+        <p class="apoio">7 de 10 aceitaram</p>
+        <a class="botao-ouro" href="#">ACEITAR</a>
+      </div>
+    </section>
+
+    <section class="fase" id="fase-vetos" hidden>
+      <p class="moeda-linha">Cara ou coroa: <b>Time Alfa</b> começou vetando</p>
+      <div class="vetos-tela">
+        <div class="time-lista a"><h3>Time Dragonzit0</h3><ul><li><span class="mini-avatar ">DR</span><span>Dragonzit0<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c9d1dc" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Associado 2</small></span></li><li><span class="mini-avatar ">CH</span><span>Charlie<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#4ade80" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Empresário 2</small></span></li><li><span class="mini-avatar ">FI</span><span>ficticio_6387<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#4ade80" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Magnata Jr. 3</small></span></li><li><span class="mini-avatar ">DE</span><span>Delta<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c08a5a" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 20 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Olheiro 1</small></span></li><li><span class="mini-avatar ">EC</span><span>Echo<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c08a5a" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Novato 1</small></span></li></ul></div>
+        <div>
+          <div class="vez"><b>Sua vez de vetar</b><span>0:12</span></div>
+          <div class="vetos-grade"><div class="veto-mapa sobrou" style="background-image:url(/mapas/mirage.webp)"><b>Mirage</b><span class="vetar">Vetar</span></div><div class="veto-mapa vetado" style="background:linear-gradient(135deg,#3b1a63,#120a1f)"><b>Inferno</b><span class="carimbo">Vetado · Time Alfa</span></div><div class="veto-mapa vetado" style="background:linear-gradient(135deg,#3b1a63,#120a1f)"><b>Nuke</b><span class="carimbo">Vetado · Time Dragonzit0</span></div><div class="veto-mapa vetado" style="background:linear-gradient(135deg,#3b1a63,#120a1f)"><b>Ancient</b><span class="carimbo">Vetado · Time Alfa</span></div><div class="veto-mapa" style="background:linear-gradient(135deg,#3b1a63,#120a1f)"><b>Anubis</b><span class="vetar">Vetar</span></div><div class="veto-mapa" style="background-image:url(/mapas/dust2.webp)"><b>Dust 2</b><span class="vetar">Vetar</span></div><div class="veto-mapa vetado" style="background:linear-gradient(135deg,#3b1a63,#120a1f)"><b>Overpass</b><span class="carimbo">Vetado · Time Dragonzit0</span></div></div>
+        </div>
+        <div class="time-lista b"><h3>Time Alfa</h3><ul><li><span class="mini-avatar ">AL</span><span>Alfa<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#a855f7" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#a855f7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#a855f7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 20 6 4.5 6-4.5" fill="none" stroke="#a855f7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Ministro 5</small></span></li><li><span class="mini-avatar ">BR</span><span>Bravo<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#a855f7" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#a855f7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Consigliere 4</small></span></li><li><span class="mini-avatar ">FI</span><span>ficticio_1801<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c9d1dc" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 20 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Mafioso 2</small></span></li><li><span class="mini-avatar ">FI</span><span>ficticio_4226<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c9d1dc" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Soldado 1</small></span></li><li><span class="mini-avatar ">FI</span><span>ficticio_1123<small class="perfil-patente"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c9d1dc" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Associado 2</small></span></li></ul></div>
+      </div>
+    </section>
+
+    <section class="fase" id="fase-entrar" hidden>
+      <div class="entrar-tela">
+        <div class="mapa-escolhido" style="background-image:url(/mapas/mirage.webp)"><span class="etiqueta ouro">Mapa da partida</span><b>Mirage</b></div>
+        <div class="bloco entrar-bloco">
+          <h2>O servidor está pronto</h2>
+          <p class="apoio">Entre em até 10 minutos. A partida começa quando os 10 estiverem lá.</p>
+          <a class="botao-ouro" href="#">CONECTAR AO SERVIDOR</a>
+          <div class="connect"><code>connect 207.180.3.209:27015</code><a class="botao-pequeno contorno" href="#">Copiar</a></div>
+          <div class="relogio-linha">8:41 para todos entrarem</div>
+        </div>
+        <section class="bloco"><div class="bloco-cabeca"><h2>Quem já entrou</h2><span class="apoio">6 de 10</span></div><ul class="entrar-lista"><li><span class="mini-avatar ">DR</span><span>Dragonzit0</span><b class="ok">No servidor</b></li><li><span class="mini-avatar ">CH</span><span>Charlie</span><b class="ok">No servidor</b></li><li><span class="mini-avatar ">FI</span><span>ficticio_6387</span><b class="ok">No servidor</b></li><li><span class="mini-avatar ">DE</span><span>Delta</span><b class="ok">No servidor</b></li><li><span class="mini-avatar ">EC</span><span>Echo</span><b class="ok">No servidor</b></li><li><span class="mini-avatar ">AL</span><span>Alfa</span><b class="ok">No servidor</b></li><li><span class="mini-avatar ">BR</span><span>Bravo</span><b class="falta">Ainda não entrou</b></li><li><span class="mini-avatar ">FI</span><span>ficticio_1801</span><b class="falta">Ainda não entrou</b></li><li><span class="mini-avatar ">FI</span><span>ficticio_4226</span><b class="falta">Ainda não entrou</b></li><li><span class="mini-avatar ">FI</span><span>ficticio_1123</span><b class="falta">Ainda não entrou</b></li></ul></section>
+      </div>
+    </section>
+
+    <section class="fase" id="fase-vivo" hidden>
+      <div class="placar-grande"><div class="lado a"><span>Time Dragonzit0</span><b>8</b></div><div class="placar-meio"><span class="etiqueta verde">Ao vivo</span><span>Mirage · rodada 15</span></div><div class="lado b"><b>6</b><span>Time Alfa</span></div></div>
+      <div class="duas-colunas">
+        <section class="bloco"><table class="tabela-rascunho placar-tabela a"><thead><tr><th>Jogador</th><th>K</th><th>M</th><th>A</th><th>ADR</th><th>HS</th><th>MVP</th></tr></thead><tbody><tr><td><span class="mini-avatar ">DR</span> Dragonzit0</td><td>11</td><td>7</td><td>2</td><td>90</td><td>50%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">CH</span> Charlie</td><td>9</td><td>8</td><td>3</td><td>80</td><td>42%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_6387</td><td>8</td><td>9</td><td>1</td><td>70</td><td>36%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">DE</span> Delta</td><td>6</td><td>9</td><td>4</td><td>60</td><td>40%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">EC</span> Echo</td><td>5</td><td>10</td><td>2</td><td>50</td><td>30%</td><td class="estrelas"></td></tr></tbody></table></section>
+        <section class="bloco"><table class="tabela-rascunho placar-tabela b"><thead><tr><th>Jogador</th><th>K</th><th>M</th><th>A</th><th>ADR</th><th>HS</th><th>MVP</th></tr></thead><tbody><tr><td><span class="mini-avatar ">AL</span> Alfa</td><td>10</td><td>8</td><td>2</td><td>85</td><td>45%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">BR</span> Bravo</td><td>9</td><td>9</td><td>2</td><td>78</td><td>41%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_1801</td><td>8</td><td>10</td><td>1</td><td>70</td><td>33%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_4226</td><td>7</td><td>9</td><td>3</td><td>62</td><td>38%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_1123</td><td>5</td><td>10</td><td>1</td><td>52</td><td>30%</td><td class="estrelas"></td></tr></tbody></table></section>
+      </div>
+      <div class="mais"><a href="#">Assistir como espectador</a></div>
+    </section>
+
+    <section class="fase" id="fase-fim" hidden>
+      <div class="resultado vitoria"><b>VITÓRIA</b><span>Time Dragonzit0 13 x 9 Time Alfa · Mirage · 42 minutos</span></div>
+      <div class="fim-topo">
+        <div class="bloco mvp-bloco"><span class="mini-avatar grande">DR</span><div><span class="etiqueta ouro">MVP da partida</span><b>Dragonzit0</b><span class="apoio">21 abates · 92 de dano por rodada · 3 estrelas</span></div></div>
+        <div class="bloco xp-bloco"><span class="apoio">Você ganhou</span><b class="xp-grande">+720 XP</b><svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c9d1dc" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="patente-texto"><span>Associado 2 · faltam 410 XP para Associado 3</span><div class="barra grossa"><i style="width:93%"></i></div></div></div>
+      </div>
+      <div class="duas-colunas">
+        <section class="bloco"><div class="bloco-cabeca"><h2 class="verde-txt">Time Dragonzit0 · 13</h2></div><table class="tabela-rascunho placar-tabela a"><thead><tr><th>Jogador</th><th>K</th><th>M</th><th>A</th><th>ADR</th><th>HS</th><th>MVP</th></tr></thead><tbody><tr><td><span class="mini-avatar ">DR</span> Dragonzit0</td><td>21</td><td>14</td><td>4</td><td>92</td><td>52%</td><td class="estrelas">★★★</td></tr><tr><td><span class="mini-avatar ">CH</span> Charlie</td><td>17</td><td>15</td><td>6</td><td>81</td><td>41%</td><td class="estrelas">★</td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_6387</td><td>15</td><td>16</td><td>3</td><td>74</td><td>38%</td><td class="estrelas">★</td></tr><tr><td><span class="mini-avatar ">DE</span> Delta</td><td>12</td><td>17</td><td>7</td><td>66</td><td>44%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">EC</span> Echo</td><td>9</td><td>18</td><td>5</td><td>52</td><td>30%</td><td class="estrelas"></td></tr></tbody></table></section>
+        <section class="bloco"><div class="bloco-cabeca"><h2>Time Alfa · 9</h2></div><table class="tabela-rascunho placar-tabela b"><thead><tr><th>Jogador</th><th>K</th><th>M</th><th>A</th><th>ADR</th><th>HS</th><th>MVP</th></tr></thead><tbody><tr><td><span class="mini-avatar ">AL</span> Alfa</td><td>19</td><td>16</td><td>3</td><td>88</td><td>47%</td><td class="estrelas">★★</td></tr><tr><td><span class="mini-avatar ">BR</span> Bravo</td><td>16</td><td>17</td><td>4</td><td>79</td><td>40%</td><td class="estrelas">★</td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_1801</td><td>14</td><td>18</td><td>2</td><td>70</td><td>35%</td><td class="estrelas">★</td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_4226</td><td>13</td><td>17</td><td>6</td><td>64</td><td>39%</td><td class="estrelas"></td></tr><tr><td><span class="mini-avatar ">FI</span> ficticio_1123</td><td>10</td><td>18</td><td>3</td><td>55</td><td>33%</td><td class="estrelas"></td></tr></tbody></table></section>
+      </div>
+      <div class="fim-botoes"><a class="botao-pequeno" href="#">Elogiar um jogador</a><a class="botao-pequeno contorno" href="#">Baixar a gravação</a><a class="botao-pequeno contorno" href="#">Denunciar um jogador</a><a class="botao-pequeno" href="jogar.html">Jogar de novo</a></div>
+    </section>
+  </main>
+
+  <script>
+    const textos = {
+      aceite: ['Partida encontrada', 'Todos têm 30 segundos para aceitar a partida.'],
+      vetos: ['Vetos', 'Os líderes vetam os mapas. O que sobrar é o mapa da partida.'],
+      entrar: ['Entrar no servidor', 'O servidor está pronto. Todos precisam entrar para começar.'],
+      vivo: ['Ao vivo', 'A partida está rolando.'],
+      fim: ['Fim de jogo', 'A partida terminou. Veja como foi.'],
+    };
+    document.querySelectorAll('.fases button').forEach((botao) => botao.addEventListener('click', () => {
+      document.querySelectorAll('.fases button').forEach((outro) => outro.classList.toggle('ativo', outro === botao));
+      document.querySelectorAll('.fase').forEach((fase) => { fase.hidden = fase.id !== 'fase-' + botao.dataset.fase; });
+      document.getElementById('titulo-fase').textContent = textos[botao.dataset.fase][0];
+      document.getElementById('texto-fase').textContent = textos[botao.dataset.fase][1];
+    }));
+  </script>
+
+  <footer class="rodape">
+    <div class="largura">
+      <span>Magnatas do CS</span>
+      <span>Jogo · Ranking · Comunidade · Suporte</span>
+    </div>
+  </footer>
+
+  <span class="aviso-rascunho">RASCUNHO</span>
+</body>
+</html>

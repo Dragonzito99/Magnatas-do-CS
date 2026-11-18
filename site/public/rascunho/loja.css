@@ -1,0 +1,373 @@
+/* Clãs */
+.abas-cla {
+  margin-bottom: 0;
+}
+
+.aba {
+  padding-top: 24px;
+}
+
+.cla-capa {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 22px;
+  border: 1px solid var(--ouro);
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(245, 179, 1, 0.14), var(--painel) 60%);
+}
+
+.cla-nome {
+  flex: 1;
+}
+
+.cla-nome h2 {
+  margin: 2px 0 4px;
+  font: italic 700 46px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.cla-nome p {
+  margin: 0;
+  color: var(--apoio);
+}
+
+.cla-botoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cargo-cla {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(168, 85, 247, 0.2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cargo-cla.dono {
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.cargo-cla.capitao {
+  background: rgba(74, 222, 128, 0.18);
+  color: var(--verde);
+}
+
+.busca {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.busca input,
+.criar-form input,
+.criar-form select,
+.criar-form textarea {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--linha);
+  border-radius: 4px;
+  background: var(--escuro);
+  color: var(--tinta);
+  font: inherit;
+}
+
+.clas-lista {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cla-cartao {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+}
+
+.cla-cartao > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.cla-cartao b {
+  font: italic 700 22px/1.1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.cla-cartao span {
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.cla-cartao .etiqueta {
+  margin: 0;
+  color: inherit;
+}
+
+.cla-linha {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.criar-cla {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.criar-previa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 26px;
+  border: 1px dashed var(--roxo);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.criar-previa b {
+  font: italic 700 26px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.criar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 0;
+  padding: 20px;
+}
+
+.criar-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--apoio);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cores {
+  display: flex;
+  gap: 8px;
+}
+
+.cores i {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cores i:first-child {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.criar-form .botao-ouro {
+  align-self: flex-start;
+}
+
+/* Magnata Shop */
+.loja-capa {
+  padding: 36px 0 26px;
+  background:
+    radial-gradient(circle at 85% 30%, rgba(245, 179, 1, 0.3), transparent 45%),
+    linear-gradient(180deg, #2a1145, var(--pagina));
+}
+
+.loja-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.loja-capa h1 {
+  margin: 0;
+  font: italic 700 60px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.loja-capa h1 b {
+  color: var(--ouro);
+}
+
+.loja-capa p {
+  margin: 6px 0 0;
+  color: var(--apoio);
+}
+
+.saldo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 22px;
+  border: 1px solid var(--ouro);
+  border-radius: 6px;
+  background: rgba(18, 10, 31, 0.85);
+}
+
+.saldo span,
+.saldo small {
+  color: var(--apoio);
+  font-size: 12px;
+}
+
+.saldo b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ouro);
+  font: italic 700 44px/1 var(--titulo);
+}
+
+.moeda {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff3;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe28a, var(--ouro) 55%, #a37400);
+  vertical-align: -2px;
+}
+
+.moeda.grande {
+  width: 32px;
+  height: 32px;
+}
+
+.itens-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 18px;
+}
+
+.item-loja-cartao {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+}
+
+.item-loja-cartao:hover {
+  border-color: var(--ouro);
+}
+
+.item-previa {
+  display: grid;
+  place-items: center;
+  height: 140px;
+  background: radial-gradient(circle, #2a1145, var(--escuro));
+}
+
+.item-corpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+}
+
+.item-corpo .etiqueta {
+  margin: 0;
+}
+
+.item-corpo h3 {
+  margin: 0;
+  font: italic 700 24px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.item-corpo p {
+  margin: 0;
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.item-preco {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.item-preco b {
+  color: var(--ouro);
+  font: italic 700 24px/1 var(--titulo);
+}
+
+.previa-avatar {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border: 4px solid;
+  border-radius: 14px;
+  background: #3b1a63;
+  font: italic 700 30px/1 var(--titulo);
+}
+
+.previa-nome {
+  font: italic 700 34px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.previa-capa {
+  width: 86%;
+  height: 100px;
+  border-radius: 4px;
+  background-position: center;
+  background-size: cover;
+}
+
+.previa-titulo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.previa-titulo b {
+  font: italic 700 30px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.previa-titulo small {
+  color: var(--ouro);
+  font-weight: 700;
+}
+
+.previa-chat {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  font-family: Consolas, monospace;
+  font-size: 14px;
+}
+
+.previa-chat b {
+  color: #ef4444;
+}
+
+@media (max-width: 900px) {
+  .clas-lista,
+  .criar-cla {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Apoie o clube</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+  <style>
+    .a-abas { display: flex; gap: 6px; margin: 20px 0 0; }
+    .a-abas a { padding: 8px 14px; border: 1px solid rgba(255,255,255,.12); color: #ab9fc2; font: italic 700 15px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; text-decoration: none; }
+    .a-abas a.ativo { background: #f3eefc; color: #0a0612; border-color: #f3eefc; }
+
+    /* Capa */
+    .a-capa { position: relative; display: grid; grid-template-columns: 1.1fr 1fr; align-items: end; min-height: 300px; margin-top: 8px; overflow: hidden; border-bottom: 4px solid #f5b301;
+      background: radial-gradient(circle at 78% 30%, rgba(168,85,247,.45), transparent 55%), radial-gradient(circle at 20% 110%, rgba(245,179,1,.18), transparent 50%), #0e0718; }
+    .a-capa-texto { padding: 32px; align-self: center; }
+    .a-capa h2 { font: italic 800 56px/.92 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .a-capa h2 em { color: #f5b301; font-style: inherit; }
+    .a-capa p { max-width: 460px; margin: 12px 0 0; color: #cfc6de; font-size: 15px; }
+    .a-capa img { justify-self: end; height: 330px; margin-right: 24px; margin-bottom: -4px; filter: drop-shadow(0 0 30px rgba(168,85,247,.5)); }
+    .a-meta { max-width: 460px; margin-top: 22px; }
+    .a-meta-linha { display: flex; justify-content: space-between; margin-bottom: 6px; color: #ab9fc2; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .a-meta-linha b { color: #f3eefc; }
+    .a-barra { height: 10px; background: #1d1330; }
+    .a-barra i { display: block; height: 100%; width: 68%; background: linear-gradient(90deg, #a855f7, #f5b301); }
+
+    /* Pacotes de MagCoin */
+    .a-pacotes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .a-pacote { position: relative; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,.06); background: #110b1b; transition: transform .12s, border-color .12s; }
+    .a-pacote:hover { transform: translateY(-3px); border-color: #7c3aed; }
+    .a-pacote.melhor { border-color: #f5b301; }
+    .a-pilha { position: relative; height: 170px; border-bottom: 3px solid #7c3aed; background: radial-gradient(circle at 50% 70%, rgba(124,58,237,.35), transparent 65%), #0b0713; }
+    .a-pacote.melhor .a-pilha { border-color: #f5b301; background: radial-gradient(circle at 50% 70%, rgba(245,179,1,.28), transparent 65%), #0b0713; }
+    .a-moeda { position: absolute; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
+      background: radial-gradient(circle at 35% 30%, #c4a5ff, #7c3aed 55%, #3b1a7a); box-shadow: inset 0 -4px 0 rgba(0,0,0,.35), 0 6px 14px rgba(0,0,0,.5);
+      color: #fff; font: 800 26px/1 Inter, sans-serif; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+    .a-selo { position: absolute; top: 10px; left: 10px; padding: 3px 8px; font: italic 700 13px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; background: #f5b301; color: #1c1102; z-index: 2; }
+    .a-selo.bonus { left: auto; right: 10px; background: #4ade80; color: #062b12; }
+    .a-pacote-dados { padding: 14px 16px 16px; display: grid; gap: 6px; }
+    .a-pacote-dados small { color: #ab9fc2; font: italic 700 13px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+    .a-pacote-dados b { font: italic 800 34px/1 'Barlow Condensed', sans-serif; }
+    .a-pacote-dados b span { color: #c4a5ff; font-size: 20px; }
+    .a-pacote-dados .s-botao { justify-content: center; margin-top: 8px; }
+    .a-pacote-dados .s-botao em { margin-left: auto; font-style: normal; }
+
+    /* Membros: comparação */
+    .a-niveis { display: grid; grid-template-columns: 260px repeat(4, minmax(0, 1fr)); border: 1px solid rgba(255,255,255,.06); background: #110b1b; }
+    .a-niveis > div { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.05); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; }
+    .a-niveis > .rotulo { justify-content: flex-start; text-align: left; color: #cfc6de; }
+    .a-niveis > .premium { background: rgba(245,179,1,.06); }
+    .a-cabeca { flex-direction: column; gap: 6px; padding: 18px 12px !important; border-top: 4px solid var(--n); }
+    .a-cabeca .a-medalha { width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff8, transparent 45%), var(--n); box-shadow: 0 0 0 3px #0b0713, 0 0 0 5px var(--n); }
+    .a-cabeca b { font: italic 800 24px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; color: var(--n); }
+    .a-cabeca span { color: #f3eefc; font-weight: 700; }
+    .a-cabeca span small { color: #ab9fc2; font-weight: 400; }
+    .a-cabeca .tag { padding: 2px 8px; background: #f5b301; color: #1c1102; font: italic 700 12px/1.3 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .bronze { --n: #d08a4a; } .prata { --n: #c9d1dc; } .ouro { --n: #f5b301; } .premium { --n: #e7b6ff; }
+    .sim { color: #4ade80; font-size: 18px; font-weight: 800; }
+    .nao { color: #4a3f5c; }
+    .forte { color: #f3eefc; font-weight: 700; }
+    .a-niveis .acao { border-bottom: 0; padding: 14px 10px; }
+    .a-niveis .acao .s-botao { width: 100%; justify-content: center; font-size: 16px; min-height: 40px; height: 40px; }
+
+    /* Perguntas */
+    .a-perguntas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+    .a-perguntas details { border: 1px solid rgba(255,255,255,.06); background: #110b1b; padding: 14px 16px; }
+    .a-perguntas summary { cursor: pointer; font: italic 700 18px/1.1 'Barlow Condensed', sans-serif; text-transform: uppercase; list-style: none; display: flex; justify-content: space-between; }
+    .a-perguntas summary::after { content: '+'; color: #f5b301; }
+    .a-perguntas details[open] summary::after { content: '−'; }
+    .a-perguntas p { margin: 8px 0 0; color: #cfc6de; }
+
+    /* Janela de assinar */
+    .a-janela-caixa { width: min(480px, 92vw); background: #110b1b; border-top: 4px solid var(--n); padding: 28px; position: relative; }
+    .a-janela-caixa h3 { font: italic 800 34px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; color: var(--n); }
+    .a-janela-caixa p { margin: 8px 0 16px; color: #cfc6de; }
+    .a-janela-caixa input { width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,.18); background: #0b0713; color: #f3eefc; }
+    .a-janela-caixa .s-botao { width: 100%; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="inicio.html"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta">
+        <a class="painel-adm" href="painel.html">&#128737; Painel ADM <b>1</b></a>
+        <span class="sino" title="Avisos">&#128276;<b>1</b></span>
+        <div class="conta">Olá, <strong>Dragonzit0</strong> · Magnata Jr. 1 &#9662;</div>
+      </div>
+    </div>
+  </div>
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens">
+        <div class="item"><span>Notícias</span></div><div class="item"><span>Jogo</span></div><div class="item"><span>Ranking</span></div>
+        <div class="item"><span>Comunidade</span></div><div class="item"><span>Clãs</span></div>
+        <a class="item item-loja" href="#"><span>Magnata Shop</span></a><div class="item"><span>Baú</span></div>
+      </div>
+      <a class="jogar" href="#">JOGAR</a>
+    </div>
+  </nav>
+
+  <main class="largura s-pagina" style="padding-top:0">
+    <div class="a-abas"><a href="shop-ideia.html">Loja</a><a href="#">Minhas compras</a><a class="ativo" href="#">Apoie o clube</a></div>
+
+    <div class="s-carteira" style="margin-top:20px">
+      <h1>Apoie o clube</h1>
+      <span class="s-moeda grana"><i>$</i><b>1.089</b><small>Grana</small></span>
+      <span class="s-moeda magcoin"><i>M</i><b>10</b><small>MagCoin</small></span>
+      <a class="s-moeda" href="#" style="color:#f3eefc;text-decoration:none">&#128230; Meu baú</a>
+    </div>
+
+    <section class="a-capa">
+      <div class="a-capa-texto">
+        <h2>Os servidores<br>ficam ligados <em>com você</em></h2>
+        <p>Cada MagCoin e cada membro ajuda a pagar a máquina, os servidores e as novidades do clube.</p>
+        <div class="a-meta">
+          <div class="a-meta-linha"><span>Meta de novembro</span><b>68% pago</b></div>
+          <div class="a-barra"><i></i></div>
+        </div>
+      </div>
+      <img src="/marca/personagem.webp" alt="">
+    </section>
+
+    <div class="s-secao">
+      <h2>MagCoin</h2>
+      <span style="color:#ab9fc2;font-size:13px">Deixa os itens da Shop seus para sempre · PIX ou cartão</span>
+    </div>
+    <div class="a-pacotes">
+      <article class="a-pacote">
+        <div class="a-pilha"><span class="a-moeda" style="left:calc(50% - 32px);top:60px">M</span></div>
+        <div class="a-pacote-dados"><small>Pacote pequeno</small><b>100 <span>MagCoins</span></b><a class="s-botao" href="#">Comprar <em>R$ 10,00</em></a></div>
+      </article>
+      <article class="a-pacote">
+        <span class="a-selo bonus">+4% de bônus</span>
+        <div class="a-pilha">
+          <span class="a-moeda" style="left:calc(50% - 64px);top:70px">M</span>
+          <span class="a-moeda" style="left:calc(50% - 4px);top:70px">M</span>
+          <span class="a-moeda" style="left:calc(50% - 34px);top:42px">M</span>
+        </div>
+        <div class="a-pacote-dados"><small>Pacote médio</small><b>260 <span>MagCoins</span></b><a class="s-botao" href="#">Comprar <em>R$ 25,00</em></a></div>
+      </article>
+      <article class="a-pacote melhor">
+        <span class="a-selo">Melhor valor</span><span class="a-selo bonus">+10% de bônus</span>
+        <div class="a-pilha">
+          <span class="a-moeda" style="left:calc(50% - 94px);top:86px">M</span>
+          <span class="a-moeda" style="left:calc(50% - 32px);top:90px">M</span>
+          <span class="a-moeda" style="left:calc(50% + 30px);top:86px">M</span>
+          <span class="a-moeda" style="left:calc(50% - 62px);top:58px">M</span>
+          <span class="a-moeda" style="left:calc(50% + 0px);top:58px">M</span>
+          <span class="a-moeda" style="left:calc(50% - 32px);top:28px">M</span>
+        </div>
+        <div class="a-pacote-dados"><small>Pacote grande</small><b>550 <span>MagCoins</span></b><a class="s-botao" href="#">Comprar <em>R$ 50,00</em></a></div>
+      </article>
+    </div>
+
+    <div class="s-secao">
+      <h2>Seja membro</h2>
+      <span style="color:#ab9fc2;font-size:13px">Mensal no cartão pelo Mercado Pago · cancele quando quiser</span>
+    </div>
+    <div class="a-niveis">
+      <div class="rotulo"></div>
+      <div class="a-cabeca bronze"><span class="a-medalha"></span><b>Bronze</b><span>R$ 5 <small>/ mês</small></span></div>
+      <div class="a-cabeca prata"><span class="a-medalha"></span><b>Prata</b><span>R$ 10 <small>/ mês</small></span></div>
+      <div class="a-cabeca ouro"><span class="a-medalha"></span><b>Ouro</b><span>R$ 15 <small>/ mês</small></span></div>
+      <div class="a-cabeca premium"><span class="tag">O mais completo</span><span class="a-medalha"></span><b>Magnata Premium</b><span>R$ 30 <small>/ mês</small></span></div>
+
+      <div class="rotulo forte">Site sem anúncios</div><div class="sim">✓</div><div class="sim">✓</div><div class="sim">✓</div><div class="sim premium">✓</div>
+      <div class="rotulo">Selo do nível no perfil</div><div class="sim">✓</div><div class="sim">✓</div><div class="sim">✓</div><div class="sim premium">✓</div>
+      <div class="rotulo">Etiqueta [APOIADOR] no chat</div><div class="sim">✓</div><div class="sim">✓</div><div class="sim">✓</div><div class="sim premium">✓</div>
+      <div class="rotulo">Grana a mais por partida</div><div class="forte">+10%</div><div class="forte">+20%</div><div class="forte">+30%</div><div class="forte premium">+30%</div>
+      <div class="rotulo">MagCoins todo mês</div><div class="nao">—</div><div class="forte">50</div><div class="forte">100</div><div class="forte premium">200</div>
+      <div class="rotulo">Nome dourado no chat</div><div class="nao">—</div><div class="sim">✓</div><div class="nao">—</div><div class="nao premium">—</div>
+      <div class="rotulo">Moldura exclusiva Ouro</div><div class="nao">—</div><div class="nao">—</div><div class="sim">✓</div><div class="sim premium">✓</div>
+      <div class="rotulo">Itens de lançamento para sempre</div><div class="nao">—</div><div class="nao">—</div><div class="nao">—</div><div class="sim premium">✓</div>
+      <div class="rotulo">Produtos do clube em casa</div><div class="nao">—</div><div class="nao">—</div><div class="nao">—</div><div class="sim premium">✓</div>
+
+      <div class="rotulo acao"></div>
+      <div class="acao"><a class="s-botao fantasma" href="#" data-nivel="bronze">Assinar</a></div>
+      <div class="acao"><a class="s-botao fantasma" href="#" data-nivel="prata">Assinar</a></div>
+      <div class="acao"><a class="s-botao fantasma" href="#" data-nivel="ouro">Assinar</a></div>
+      <div class="acao premium"><a class="s-botao" href="#" data-nivel="premium">Assinar</a></div>
+    </div>
+
+    <div class="s-secao"><h2>Perguntas</h2></div>
+    <div class="a-perguntas">
+      <details><summary>Como pago a MagCoin?</summary><p>Pelo Mercado Pago, com PIX ou cartão. A MagCoin cai na hora em que o pagamento é aprovado (no PIX, em segundos).</p></details>
+      <details><summary>E as assinaturas?</summary><p>São mensais, no cartão. Você cancela aqui quando quiser, e as vantagens valem até o fim do que já pagou.</p></details>
+      <details><summary>O que é item de lançamento?</summary><p>Os itens novos da Shop, como o mutante Blindado. Quem assina o Premium ganha para sempre.</p></details>
+      <details><summary>MagCoin vira dinheiro de volta?</summary><p>Não. Ela é para usar na Shop: deixa os itens seus para sempre.</p></details>
+    </div>
+
+    <p class="s-nota"><b>Ideias deste rascunho:</b> capa com o personagem e a <b>meta do mês</b> (quanto dos custos do servidor já foi pago, você atualiza no Painel ADM) · pacotes com <b>pilha de moedas</b> que cresce e o <b>bônus</b> de verdade de cada pacote (260 por R$ 25 = +4%, 550 por R$ 50 = +10%) · membros numa <b>tabela de comparação</b> com a cor de cada nível · o e-mail do Mercado Pago só aparece ao clicar em Assinar.</p>
+  </main>
+
+  <div class="s-janela" id="janela">
+    <div class="a-janela-caixa" id="caixa">
+      <button class="s-fechar" id="fechar" aria-label="Fechar">&times;</button>
+      <h3 id="j-nome">Ouro</h3>
+      <p>Cobrança mensal no cartão, pelo Mercado Pago. Escreva o e-mail da sua conta de lá.</p>
+      <input type="email" placeholder="E-mail da sua conta do Mercado Pago">
+      <a class="s-botao" href="#">Ir para o Mercado Pago</a>
+    </div>
+  </div>
+
+  <script>
+    const nomes = { bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', premium: 'Magnata Premium' };
+    const janela = document.getElementById('janela');
+    document.querySelectorAll('[data-nivel]').forEach((botao) => botao.addEventListener('click', (evento) => {
+      evento.preventDefault();
+      const caixa = document.getElementById('caixa');
+      caixa.className = 'a-janela-caixa ' + botao.dataset.nivel;
+      document.getElementById('j-nome').textContent = nomes[botao.dataset.nivel];
+      janela.classList.add('aberta');
+    }));
+    janela.addEventListener('click', (evento) => { if (evento.target === janela || evento.target.id === 'fechar') janela.classList.remove('aberta'); });
+  </script>
+</body>
+</html>

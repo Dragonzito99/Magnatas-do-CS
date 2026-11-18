@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Perfil novo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pagina: #07040d; --painel: #120a1f; --tinta: #f3eefc; --apoio: #b9a8d6; --linha: rgba(168, 85, 247, 0.28);
+      --roxo: #a855f7; --verde: #4ade80; --vermelho: #f87171; --ouro: #f5b301; --titulo: 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--pagina); color: var(--tinta); font: 15px/1.5 'Inter', system-ui, sans-serif; }
+    .largura { width: min(1100px, 100% - 32px); margin: 0 auto; }
+    h1, h2, h3 { margin: 0; font-family: var(--titulo); font-style: italic; text-transform: uppercase; }
+    .painel { background: var(--painel); border: 1px solid var(--linha); }
+    .titulo-da-caixa { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+    .titulo-da-caixa h2 { font-size: 22px; }
+    .titulo-da-caixa a { color: var(--ouro); font-size: 13px; }
+
+    /* Topo */
+    .topo { position: relative; overflow: hidden; border-bottom: 3px solid var(--ouro);
+      background: linear-gradient(90deg, rgba(7,4,13,.97) 35%, rgba(7,4,13,.4)), url('/mapas/silent-village.webp') center/cover; }
+    .topo .largura { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; padding: 34px 0 26px; }
+    .avatar { width: 128px; height: 128px; border-radius: 12px; background: #2a1650 url('/marca/personagem.webp') center 15%/cover;
+      outline: 3px solid var(--ouro); outline-offset: 4px; box-shadow: 0 0 30px rgba(245,179,1,.4); }
+    .nome { font: italic 800 50px/1 var(--titulo); background: linear-gradient(90deg, #ffe27a, #f5b301 40%, #fff3c4 60%, #f5b301); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .selos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+    .selo { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--linha); background: rgba(255,255,255,.05); font: italic 700 14px/1 var(--titulo); text-transform: uppercase; }
+    .selo.ouro { border-color: rgba(245,179,1,.5); background: rgba(245,179,1,.1); }
+    .selo svg { width: 26px; height: 26px; margin: -5px 0; }
+    .desde { color: var(--apoio); font-size: 13px; margin-top: 10px; }
+    .acoes { display: flex; flex-direction: column; gap: 8px; }
+    .botao { padding: 10px 16px; border: 0; font: italic 700 16px/1 var(--titulo); text-transform: uppercase; text-align: center; }
+    .botao.ouro { background: var(--ouro); color: #1c1102; }
+    .botao.contorno { border: 1px solid var(--linha); color: var(--tinta); background: rgba(255,255,255,.04); }
+    .patente-do-topo { display: flex; align-items: center; gap: 12px; margin-top: 16px; max-width: 520px; }
+    .patente-do-topo .barra { flex: 1; }
+    .patente-do-topo small { color: var(--apoio); font-size: 12px; white-space: nowrap; }
+
+    .abas { display: flex; gap: 4px; margin-top: 18px; border-bottom: 1px solid var(--linha); }
+    .abas span { padding: 10px 18px; color: var(--apoio); font: italic 700 17px/1 var(--titulo); text-transform: uppercase; }
+    .abas .ativa { color: var(--tinta); border-bottom: 3px solid var(--ouro); }
+
+    .barra { height: 6px; background: rgba(255,255,255,.08); }
+    .barra i { display: block; height: 100%; background: var(--ouro); }
+
+    /* Grade da visão geral */
+    .grade { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin: 18px 0 40px; }
+    .coluna { display: grid; gap: 16px; align-content: start; }
+    .caixa { padding: 18px; }
+
+    .numeros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .numero { padding: 14px; border-left: 3px solid var(--roxo); background: rgba(255,255,255,.03); }
+    .numero.forte { border-left-color: var(--ouro); background: linear-gradient(90deg, rgba(245,179,1,.12), transparent); }
+    .numero small { display: block; color: var(--apoio); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .numero b { font: italic 800 36px/1.1 var(--titulo); }
+    .numero span { display: block; color: var(--apoio); font-size: 12px; }
+    .miudos { display: flex; gap: 18px; margin-top: 12px; color: var(--apoio); font-size: 13px; flex-wrap: wrap; }
+    .miudos b { color: var(--tinta); margin-left: 4px; }
+
+    .partidas { display: grid; gap: 8px; }
+    .partida { display: grid; grid-template-columns: 6px 86px 1fr auto auto; align-items: center; gap: 12px; background: rgba(255,255,255,.03); }
+    .partida .cor { align-self: stretch; }
+    .partida.vitoria .cor { background: var(--verde); }
+    .partida.derrota .cor { background: var(--vermelho); }
+    .partida .foto { height: 52px; background-size: cover; background-position: center; }
+    .partida b { display: block; font: italic 700 18px/1 var(--titulo); text-transform: uppercase; }
+    .partida small { color: var(--apoio); font-size: 12px; }
+    .partida .kd { font: italic 700 18px/1 var(--titulo); text-align: right; }
+    .partida .xp { padding-right: 14px; color: var(--verde); font: italic 700 18px/1 var(--titulo); }
+
+    .mapas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .mapa { position: relative; height: 110px; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end; background-size: cover; background-position: center; }
+    .mapa::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 20%, rgba(7,4,13,.95)); }
+    .mapa > * { position: relative; }
+    .mapa b { font: italic 700 18px/1 var(--titulo); text-transform: uppercase; }
+    .mapa small { color: var(--apoio); font-size: 12px; }
+    .mapa .barra { margin-top: 6px; height: 4px; }
+    .mapa .barra i { background: var(--verde); }
+
+    .mutante { position: relative; display: grid; place-items: center; height: 260px; overflow: hidden;
+      background: radial-gradient(circle at 50% 55%, rgba(176,124,255,.35), transparent 60%), #150d22; }
+    .mutante img { height: 240px; filter: brightness(1.3) drop-shadow(0 0 20px rgba(176,124,255,.45)); }
+    .mutante span { position: absolute; left: 14px; bottom: 12px; font: italic 700 20px/1 var(--titulo); text-transform: uppercase; }
+    .mutante small { position: absolute; left: 14px; top: 12px; color: var(--apoio); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+
+    .insignias-topo { display: flex; justify-content: space-around; }
+    .insignias-topo div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .insignias-topo svg { width: 76px; height: 76px; }
+    .insignias-topo b { font: italic 700 14px/1 var(--titulo); text-transform: uppercase; }
+
+    .melhor { display: flex; align-items: center; gap: 14px; }
+    .melhor .placar { font: italic 800 34px/1 var(--titulo); color: var(--verde); }
+    .melhor small { color: var(--apoio); font-size: 12px; }
+    .elogios { display: flex; flex-wrap: wrap; gap: 8px; }
+    .elogios span { padding: 6px 10px; background: rgba(255,255,255,.05); border: 1px solid var(--linha); font-size: 13px; }
+    .elogios b { color: var(--ouro); margin-left: 4px; }
+    @media (max-width: 860px) {
+      .topo .largura { grid-template-columns: 1fr; }
+      .grade { grid-template-columns: 1fr; }
+      .numeros { grid-template-columns: repeat(2, 1fr); }
+      .mapas { grid-template-columns: repeat(2, 1fr); }
+      .nome { font-size: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="topo">
+    <div class="largura">
+      <div class="avatar" aria-hidden="true"></div>
+      <div>
+        <h1 class="nome">Aposentado| Dragonzito</h1>
+        <div class="selos">
+          <span class="selo ouro">Adm</span>
+          <span class="selo">&#128737; Associado 2</span>
+          <span class="selo">[TST] Testadores</span>
+          <span class="selo ouro" id="principal"></span>
+        </div>
+        <div class="patente-do-topo">
+          <div class="barra"><i style="width:62%"></i></div>
+          <small>6.090 / 6.500 XP para Associado 3</small>
+        </div>
+        <div class="desde">Na Magnatas desde 03/11/2026 · fundo: mapa em que mais joga</div>
+      </div>
+      <div class="acoes">
+        <span class="botao ouro">+ Adicionar amigo</span>
+        <span class="botao contorno">Chamar para o clã</span>
+        <span class="botao contorno">Ver na Steam</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="largura">
+    <nav class="abas"><span class="ativa">Visão geral</span><span>Insígnias</span><span>Partidas</span><span>Baú</span></nav>
+
+    <div class="grade">
+      <div class="coluna">
+        <div class="painel caixa">
+          <div class="titulo-da-caixa"><h2>Números</h2><a>Competitivo e mix</a></div>
+          <div class="numeros">
+            <div class="numero forte"><small>K/D</small><b>1.24</b><span>melhor que 70% do clube</span></div>
+            <div class="numero"><small>Vitórias</small><b>58%</b><span>37 de 64</span></div>
+            <div class="numero"><small>Dano por rodada</small><b>86</b></div>
+            <div class="numero"><small>Headshot</small><b>47%</b></div>
+          </div>
+          <div class="miudos"><span>Abates<b>1.204</b></span><span>Mortes<b>971</b></span><span>Assistências<b>310</b></span><span>MVPs<b>231</b></span><span>Aces<b>7</b></span></div>
+        </div>
+
+        <div class="painel caixa">
+          <div class="titulo-da-caixa"><h2>Últimas partidas</h2><a>Ver todas</a></div>
+          <div class="partidas">
+            <div class="partida vitoria"><i class="cor"></i><span class="foto" style="background-image:url('/mapas/mirage.webp')"></span><span><b>Mix · Mirage</b><small>Vitória 13 : 9 · hoje</small></span><span class="kd">24/15</span><span class="xp">+320</span></div>
+            <div class="partida vitoria"><i class="cor"></i><span class="foto" style="background-image:url('/mapas/silent-village.webp')"></span><span><b>Mutação · Silent Village</b><small>Humanos venceram · ontem</small></span><span class="kd">18 infecções</span><span class="xp">+180</span></div>
+            <div class="partida derrota"><i class="cor"></i><span class="foto" style="background-image:url('/mapas/dust2.webp')"></span><span><b>Competitivo · Dust 2</b><small>Derrota 11 : 13 · 09/11</small></span><span class="kd">19/20</span><span class="xp">+90</span></div>
+          </div>
+        </div>
+
+        <div class="painel caixa">
+          <div class="titulo-da-caixa"><h2>Por mapa</h2></div>
+          <div class="mapas">
+            <div class="mapa" style="background-image:url('/mapas/mirage.webp')"><b>Mirage</b><small>64% de vitórias · 22 partidas</small><div class="barra"><i style="width:64%"></i></div></div>
+            <div class="mapa" style="background-image:url('/mapas/dust2.webp')"><b>Dust 2</b><small>51% · 18 partidas</small><div class="barra"><i style="width:51%"></i></div></div>
+            <div class="mapa" style="background-image:url('/mapas/silent-village.webp')"><b>Silent Village</b><small>Mutação · 40 partidas</small><div class="barra"><i style="width:72%"></i></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="coluna">
+        <div class="painel">
+          <div class="mutante"><small>Mutante em uso</small><img src="/loja/fumaca-1-andando.webp" alt=""><span>Senhor do Vazio</span></div>
+        </div>
+        <div class="painel caixa">
+          <div class="titulo-da-caixa"><h2>Insígnias</h2><a>11 de 30</a></div>
+          <div class="insignias-topo" id="insignias"></div>
+        </div>
+        <div class="painel caixa">
+          <div class="titulo-da-caixa"><h2>Melhor partida</h2></div>
+          <div class="melhor"><span class="placar">32/11</span><div><b>Mix · Mirage</b><br><small>2 aces · 4 MVPs · 08/11</small></div></div>
+        </div>
+        <div class="painel caixa">
+          <div class="titulo-da-caixa"><h2>Elogios</h2></div>
+          <div class="elogios"><span>Mira boa<b>12</b></span><span>Bom de time<b>8</b></span><span>Líder<b>5</b></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const NIVEIS = [
+      { claro: '#f0b27a', escuro: '#7a3f12' }, { claro: '#f1f5f9', escuro: '#64748b' }, { claro: '#ffe27a', escuro: '#a16207' },
+      { claro: '#b5f6ff', escuro: '#0e7490' }, { claro: '#f0abfc', escuro: '#7e22ce' },
+    ];
+    const ICONES = {
+      estrela: '<path d="M50 27l6.6 14.2 15.4 1.8-11.4 10.6 3 15.4L50 61.3 36.4 69l3-15.4L28 43l15.4-1.8z" stroke="none"/>',
+      mutacao: '<circle cx="50" cy="50" r="6" stroke="none"/><path d="M50 44c-2-8 0-15 6-19-3 6-2 11 1 15M55.5 53c7 3 11 9 10 17-3-6-7-9-12-9M44.5 53c-7 3-11 9-10 17 3-6 7-9 12-9" fill="none" stroke-width="4.5" stroke-linecap="round"/>',
+      ace: '<path d="M33 35h34v8H43l-1 6c3-2 6-3 10-3 9 0 15 6 15 13s-7 13-17 13c-8 0-14-3-17-8l7-5c2 3 6 5 10 5 5 0 8-2 8-5s-3-5-8-5c-4 0-7 1-10 3l-6-2z" stroke="none"/>',
+    };
+    let seq = 0;
+    function insignia(familia, nivel) {
+      const n = NIVEIS[nivel], id = 'g' + (seq++);
+      const pontos = Array.from({ length: nivel + 1 }, (_, i) => `<circle cx="${50 + (i - nivel / 2) * 8}" cy="92" r="2.6" fill="${n.claro}"/>`).join('');
+      return `<svg viewBox="0 0 100 100"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${n.claro}"/><stop offset="1" stop-color="${n.escuro}"/></linearGradient></defs>
+        <path d="M50 8l32 15v27c0 19-14 33-32 40-18-7-32-21-32-40V23z" fill="url(#${id})"/><path d="M50 15l26 12v23c0 15-11 27-26 33-15-6-26-18-26-33V27z" fill="#120a1f"/>
+        <g fill="${n.claro}" stroke="${n.claro}">${ICONES[familia]}</g>${pontos}</svg>`;
+    }
+    document.getElementById('principal').innerHTML = `${insignia('estrela', 2)} Estrela Ouro`;
+    document.getElementById('insignias').innerHTML = [['estrela', 2, 'Estrela Ouro'], ['mutacao', 2, 'Mutação Ouro'], ['ace', 1, 'Ace Prata']]
+      .map(([f, n, nome]) => `<div>${insignia(f, n)}<b>${nome}</b></div>`).join('');
+  </script>
+</body>
+</html>

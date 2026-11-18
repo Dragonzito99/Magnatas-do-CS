@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Notícias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+  <style>
+    .n-topo h1 { font: italic 700 40px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; margin-bottom: 18px; }
+    .n-cima { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; }
+    .n-destaque { position: relative; min-height: 380px; display: flex; flex-direction: column; justify-content: flex-end; padding: 28px; overflow: hidden; border-bottom: 4px solid #f5b301; background: url(/mapas/egypt.webp) center / cover; isolation: isolate; color: inherit; text-decoration: none; }
+    .n-destaque::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, #07040d 18%, rgba(7,4,13,.55) 60%, rgba(7,4,13,.15)); }
+    .n-selo { align-self: flex-start; padding: 3px 8px; margin-bottom: 10px; font: italic 700 13px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; background: var(--c, #f5b301); color: #0a0612; }
+    .n-destaque h2 { font: italic 800 48px/.95 'Barlow Condensed', sans-serif; text-transform: uppercase; max-width: 720px; }
+    .n-destaque p { margin: 10px 0 6px; color: #cfc6de; max-width: 620px; }
+    .n-destaque small, .n-cartao small { color: #ab9fc2; font-size: 12px; }
+
+    /* Agenda dos times BR */
+    .n-agenda { border: 1px solid rgba(255,255,255,.06); background: #110b1b; display: flex; flex-direction: column; }
+    .n-agenda h3 { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.06); font: italic 700 20px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; display: flex; justify-content: space-between; align-items: baseline; }
+    .n-agenda h3 small { font: 400 12px/1 Inter, sans-serif; text-transform: none; color: #ab9fc2; }
+    .n-jogo { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .n-jogo:last-child { border-bottom: 0; }
+    .n-time { display: flex; align-items: center; gap: 8px; font: italic 700 16px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .n-time.dir { justify-content: flex-end; text-align: right; }
+    .n-meio { text-align: center; }
+    .n-meio b { display: block; font: italic 800 20px/1 'Barlow Condensed', sans-serif; }
+    .n-meio small { color: #ab9fc2; font-size: 11px; }
+    .n-meio em { color: #ff5a5a; font-style: normal; font-weight: 700; font-size: 11px; }
+    .n-torneio { grid-column: 1 / -1; color: #8d82a3; font-size: 11px; text-align: center; margin-top: -2px; }
+
+    /* Logos (no rascunho, um selo no lugar da logo de verdade) */
+    .logo { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 6px; font: 800 10px/1 Inter, sans-serif; letter-spacing: -.02em; }
+    .logo.furia { background: #111; color: #fff; border: 1px solid #444; }
+    .logo.legacy { background: #0f2a4a; color: #9fd0ff; }
+    .logo.mibr { background: #1a1a1a; color: #e8e8e8; border: 1px solid #555; }
+    .logo.pain { background: #1d1d1d; color: #ff3b3b; }
+    .logo.neutro { background: #2a2140; color: #ab9fc2; }
+    .logo.grande { width: 84px; height: 84px; border-radius: 12px; font-size: 18px; }
+
+    /* Cartões */
+    .n-grade { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+    .n-cartao { display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,.06); background: #110b1b; color: inherit; text-decoration: none; transition: transform .12s, border-color .12s; }
+    .n-cartao:hover { transform: translateY(-3px); border-color: var(--c); }
+    .n-foto { position: relative; aspect-ratio: 16 / 9; background: var(--foto) center / cover; border-bottom: 3px solid var(--c); }
+    .n-foto .n-selo { position: absolute; top: 10px; left: 10px; font-size: 12px; }
+    .n-corpo { padding: 12px 14px 14px; display: grid; gap: 6px; }
+    .n-corpo h4 { font: italic 700 21px/1.05 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .n-corpo p { color: #cfc6de; font-size: 13px; }
+    .clube { --c: #f5b301; } .cs2 { --c: #4c8dff; } .times { --c: #4ade80; }
+
+    /* Cartão de jogo BR: logos no lugar da foto */
+    .n-confronto { position: relative; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; gap: 18px; border-bottom: 3px solid var(--c);
+      background: radial-gradient(circle at 30% 50%, rgba(74,222,128,.18), transparent 50%), radial-gradient(circle at 70% 50%, rgba(245,179,1,.14), transparent 50%), #0b0713; }
+    .n-confronto .x { font: italic 800 34px/1 'Barlow Condensed', sans-serif; color: #ab9fc2; }
+    .n-confronto .n-selo { position: absolute; top: 10px; left: 10px; font-size: 12px; }
+    .n-confronto .placar { position: absolute; bottom: 10px; right: 12px; font: italic 800 22px/1 'Barlow Condensed', sans-serif; }
+    .n-confronto .vs { color: #8d82a3; font: italic 700 15px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class="faixa"><div class="largura"><a class="faixa-logo" href="#"><img src="/marca/logo.webp" alt="Magnatas do CS"></a><div class="faixa-conta"><a class="painel-adm" href="#">&#128737; Painel ADM <b>1</b></a><span class="sino">&#128276;<b>1</b></span><div class="conta">Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;</div></div></div></div>
+  <nav class="menu"><div class="largura"><div class="menu-itens"><a class="item item-loja" href="#"><span>Notícias</span></a><div class="item"><span>Jogo</span></div><div class="item"><span>Ranking</span></div><div class="item"><span>Comunidade</span></div><div class="item"><span>Clãs</span></div><div class="item"><span>Magnata Shop</span></div><div class="item"><span>Baú</span></div></div><a class="jogar" href="#">JOGAR</a></div></nav>
+
+  <main class="largura s-pagina">
+    <div class="n-topo"><h1>Notícias</h1></div>
+    <div class="s-filtros"><a class="ativo" href="#">Todas</a><a href="#">Do clube</a><a href="#">CS2 oficial</a><a href="#">Times brasileiros</a></div>
+
+    <div class="n-cima">
+      <a class="n-destaque" href="#">
+        <span class="n-selo">Fixada · Do clube</span>
+        <h2>Novidades: aceite de partida, vetos e tela principal</h2>
+        <p>Agora toda partida pede o aceite dos 10 antes de começar, e os capitães vetam os mapas na tela.</p>
+        <small>07/11</small>
+      </a>
+      <aside class="n-agenda">
+        <h3>Times BR <small>jogos da semana</small></h3>
+        <div class="n-jogo"><span class="n-time"><span class="logo legacy">LGC</span>Legacy</span><span class="n-meio"><b>2 : 1</b><small>terminou</small></span><span class="n-time dir">FURIA<span class="logo furia">FURIA</span></span><span class="n-torneio">BLAST Rivals Fall 2026 · Group A</span></div>
+        <div class="n-jogo"><span class="n-time"><span class="logo furia">FURIA</span>FURIA</span><span class="n-meio"><em>● ao vivo</em><b>1 : 0</b></span><span class="n-time dir">Vitality<span class="logo neutro">VIT</span></span><span class="n-torneio">IEM Chengdu 2026 · Playoffs</span></div>
+        <div class="n-jogo"><span class="n-time"><span class="logo mibr">MIBR</span>MIBR</span><span class="n-meio"><b>14:00</b><small>amanhã</small></span><span class="n-time dir">paiN<span class="logo pain">paiN</span></span><span class="n-torneio">BLAST Rivals Fall 2026 · Group B</span></div>
+        <div class="n-jogo"><span class="n-time"><span class="logo pain">paiN</span>paiN</span><span class="n-meio"><b>18:30</b><small>sáb.</small></span><span class="n-time dir">NAVI<span class="logo neutro">NAVI</span></span><span class="n-torneio">IEM Chengdu 2026 · Group A</span></div>
+      </aside>
+    </div>
+
+    <div class="s-secao"><h2>Últimas</h2></div>
+    <div class="n-grade">
+      <a class="n-cartao times" href="#">
+        <div class="n-confronto"><span class="n-selo" style="--c:#4ade80">Times BR</span><span class="logo legacy grande">LEGACY</span><span class="x">x</span><span class="logo furia grande">FURIA</span><span class="placar">2 : 1</span></div>
+        <div class="n-corpo"><small>10/11 · BLAST Rivals Fall 2026</small><h4>Legacy x FURIA</h4><p>Clássico brasileiro na fase de grupos.</p></div>
+      </a>
+      <a class="n-cartao times" href="#">
+        <div class="n-confronto"><span class="n-selo" style="--c:#4ade80">Times BR</span><span class="logo furia grande">FURIA</span><span class="vs">contra Vitality</span><span class="placar">1 : 0</span></div>
+        <div class="n-corpo"><small>11/11 · IEM Chengdu 2026</small><h4>FURIA x Vitality</h4><p>Playoffs, melhor de três.</p></div>
+      </a>
+      <a class="n-cartao clube" href="#">
+        <div class="n-foto" style="--foto:url(/mapas/laboratory.webp)"><span class="n-selo">Do clube</span></div>
+        <div class="n-corpo"><small>07/11</small><h4>Novidades: aceite de partida, vetos e tela principal</h4><p>Agora toda partida pede o aceite dos 10.</p></div>
+      </a>
+      <a class="n-cartao cs2" href="#">
+        <div class="n-foto" style="--foto:url(/mapas/mirage.webp)"><span class="n-selo" style="--c:#4c8dff">CS2 oficial</span></div>
+        <div class="n-corpo"><small>04/11</small><h4>Counter-Strike 2 Update</h4><p>Correções de mapas e do servidor de partidas.</p></div>
+      </a>
+    </div>
+
+    <p class="s-nota"><b>Ideias deste rascunho:</b> o destaque do clube grande e, ao lado, uma <b>agenda dos times BR</b> (ao vivo, resultado e próximos jogos, com a logo de cada time) · nos cartões de jogo, <b>a logo no lugar da foto do mapa</b>: time BR contra estrangeiro mostra a logo do BR e "contra Fulano"; <b>BR x BR mostra as duas logos com o x no meio</b> · cada tipo de notícia com a sua cor (dourado clube, azul CS2, verde times BR). No rascunho as logos são selos com o nome; no site vão as logos de verdade.</p>
+  </main>
+</body>
+</html>

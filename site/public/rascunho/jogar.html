@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Jogar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="telas.css">
+</head>
+<body class="com-sala">
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="inicio.html"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta">
+        <a class="painel-adm" href="painel.html">&#128737; Painel ADM <b>3</b></a>
+        <span class="sino" title="Avisos">&#128276;<b>2</b></span>
+        <div class="conta">
+          <svg class="escudo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#2b2a33" stroke="#c9d1dc" stroke-width="1.6"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round"/></svg>
+          Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;
+          <div class="conta-menu">
+            <a href="perfil.html">Meu perfil</a>
+            <a href="#">Minha patente</a>
+            <a href="#">Convites</a>
+            <a href="#">Suporte ao jogador</a>
+            <a href="#">Sair</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens">
+        <div class="item"><span>Notícias</span>
+          <div class="suspenso"><a href="noticias.html">Do clube</a><a href="noticias.html">CS2 oficial</a><a href="noticias.html">Times brasileiros</a></div>
+        </div>
+        <div class="item"><span>Jogo</span>
+          <div class="suspenso"><a href="jogo.html#como-funciona">Como funciona</a><a href="jogo.html#modos">Modos</a><a href="jogo.html#mapas">Mapas</a><a href="patentes.html">Patentes</a><a href="jogo.html#regras">Regras</a></div>
+        </div>
+        <div class="item"><span>Ranking</span>
+          <div class="suspenso"><a href="ranking.html">Comunidade</a><a href="ranking.html">Mix do mês</a><a href="#">MVPs</a></div>
+        </div>
+        <div class="item"><span>Comunidade</span>
+          <div class="suspenso"><a href="#">Online agora</a><a href="#">Convites</a><a href="#">Discord</a></div>
+        </div>
+        <div class="item"><span>Clãs</span>
+          <div class="suspenso"><a href="clas.html#meu">Meu clã</a><a href="clas.html#procurar">Procurar clãs</a><a href="clas.html#ranking">Ranking de clãs</a><a href="clas.html#criar">Criar clã</a></div>
+        </div>
+        <a class="item item-loja" href="shop.html"><span>Magnata Shop <em>em breve</em></span></a>
+      </div>
+      <a class="jogar" href="jogar.html">JOGAR</a>
+    </div>
+  </nav>
+    <aside class="lado-sala">
+      <div class="lado-sala-topo"><span class="etiqueta ouro">Sua sala</span><b>Sala do Dragonzit0</b><small>Você é o líder · faltam 2 para desafiar</small></div>
+      <ul class="lado-sala-lista">
+        <li class="lider"><span class="foto" style="background:#6d28d9">DR</span><span>Dragonzit0<small>K/D 1.24 · líder</small></span></li>
+        <li><span class="foto" style="background:#b45309">CH</span><span>Charlie<small>K/D 1.08</small></span><a href="#" aria-label="Expulsar Charlie">&times;</a></li>
+        <li><span class="foto" style="background:#0f766e">EC</span><span>Echo<small>K/D 0.91</small></span><a href="#" aria-label="Expulsar Echo">&times;</a></li>
+        <li class="livre"><span class="foto">+</span><span>Vaga livre<small>chame alguém</small></span></li>
+        <li class="livre"><span class="foto">+</span><span>Vaga livre<small>chame alguém</small></span></li>
+      </ul>
+      <div class="lado-sala-botoes"><a class="botao-pequeno" href="#">Copiar convite</a><a class="botao-pequeno contorno" href="#">Juntar com outra sala</a><a class="botao-pequeno contorno" href="#">Sair da sala</a></div>
+    </aside>
+  <div class="conteudo-com-sala">
+
+  <section class="cabeca-jogar">
+    <div class="largura">
+      <h1>Jogar</h1>
+      <p>Escolha o que você quer jogar agora.</p>
+    </div>
+  </section>
+
+  <main class="largura jogar-tela">
+    <div>
+    <div class="filtros" role="group" aria-label="Filtrar por modo">
+      <button class="ativo" data-filtro="todos">Todos</button>
+      <button data-filtro="competitivo">Competitivo</button>
+      <button data-filtro="mix">Mix</button>
+      <button data-filtro="cada-um">Cada um por si</button>
+      <button data-filtro="equipe">Equipe x Equipe</button>
+      <button data-filtro="fantasma">Fantasma</button>
+      <button data-filtro="mutacao">Mutação</button>
+    </div>
+
+    <div class="grade-jogar">
+      <article class="modo" data-modo="mix">
+        <div class="modo-foto" style="background-image:url(/mapas/mirage.webp)"><span class="etiqueta ouro">Mix</span></div>
+        <div class="modo-corpo">
+          <h3>Fila do mix</h3>
+          <p>Entre sozinho. Com 10 na fila, os times são sorteados e a partida começa.</p>
+          <div class="barra"><i style="width:60%"></i></div>
+          <div class="lotacao"><b>6/10</b><a href="#">Entrar na fila</a></div>
+        </div>
+      </article>
+
+      <article class="modo" data-modo="competitivo">
+        <div class="modo-foto" style="background-image:url(/mapas/dust2.webp)"><span class="etiqueta">Competitivo</span></div>
+        <div class="modo-corpo">
+          <h3>Sala do Bravo</h3>
+          <div class="vagas"><div class="vaga"><span class="foto" style="background:#6d28d9">BR</span><small>1.31</small></div><div class="vaga"><span class="foto" style="background:#b45309">FI</span><small>0.88</small></div><div class="vaga"><span class="foto" style="background:#0f766e">DE</span><small>1.02</small></div><div class="vaga"><span class="foto" style="background:#be185d">FO</span><small>0.97</small></div><div class="vaga livre"><span class="foto">+</span><small>livre</small></div></div>
+          <p>Falta 1. Entre ou junte a sua sala.</p>
+          <div class="barra"><i style="width:80%"></i></div>
+          <div class="lotacao"><b>4/5</b><span class="botoes-sala"> <a href="#">Entrar</a></span></div>
+        </div>
+      </article>
+      <article class="modo" data-modo="competitivo">
+        <div class="modo-foto" style="background-image:url(/mapas/mirage.webp)"><span class="etiqueta">Competitivo</span></div>
+        <div class="modo-corpo">
+          <h3>Sala do Alfa</h3>
+          <div class="vagas"><div class="vaga"><span class="foto" style="background:#6d28d9">AL</span><small>1.45</small></div><div class="vaga"><span class="foto" style="background:#b45309">FI</span><small>0.79</small></div><div class="vaga"><span class="foto" style="background:#0f766e">GO</span><small>1.10</small></div><div class="vaga livre"><span class="foto">+</span><small>livre</small></div><div class="vaga livre"><span class="foto">+</span><small>livre</small></div></div>
+          <p>Faltam 2. Cabe com a sua sala se juntar.</p>
+          <div class="barra"><i style="width:60%"></i></div>
+          <div class="lotacao"><b>3/5</b><span class="botoes-sala"><a class="ligar" href="#">Juntar</a> <a href="#">Entrar</a></span></div>
+        </div>
+      </article>
+      <article class="modo" data-modo="competitivo">
+        <div class="modo-foto" style="background-image:url(/mapas/dust2.webp)"><span class="etiqueta">Competitivo</span></div>
+        <div class="modo-corpo">
+          <h3>Sala do Hotel</h3>
+          <div class="vagas"><div class="vaga"><span class="foto" style="background:#6d28d9">HO</span><small>1.20</small></div><div class="vaga"><span class="foto" style="background:#b45309">IN</span><small>1.05</small></div><div class="vaga"><span class="foto" style="background:#0f766e">JU</span><small>0.94</small></div><div class="vaga"><span class="foto" style="background:#be185d">KI</span><small>1.12</small></div><div class="vaga"><span class="foto" style="background:#1d4ed8">LI</span><small>0.99</small></div></div>
+          <p>Completa. Desafie quando a sua estiver 5/5.</p>
+          <div class="barra"><i style="width:100%"></i></div>
+          <div class="lotacao"><b>5/5</b><span class="botoes-sala"><a class="ligar" href="#">Desafiar</a></span></div>
+        </div>
+      </article>
+      <article class="modo" data-modo="cada-um">
+        <div class="modo-foto" style="background-image:url(/mapas/dust2.webp)"><span class="etiqueta verde">Ao vivo</span></div>
+        <div class="modo-corpo">
+          <h3>AK + Desert</h3>
+          <p>Cada um por si · Dust 2</p>
+          <div class="barra"><i style="width:50%"></i></div>
+          <div class="lotacao"><b>8/16</b><a href="#">Entrar</a></div>
+        </div>
+      </article>
+
+      <article class="modo" data-modo="cada-um">
+        <div class="modo-foto" style="background-image:url(/mapas/mirage.webp)"><span class="etiqueta">Desligado</span></div>
+        <div class="modo-corpo">
+          <h3>Só pistola</h3>
+          <p>Cada um por si · liga na hora</p>
+          <div class="lotacao"><b>0/16</b><a class="ligar" href="#">Ligar e entrar</a></div>
+        </div>
+      </article>
+
+      <article class="modo" data-modo="cada-um">
+        <div class="modo-foto" style="background-image:url(/mapas/luxville.webp)"><span class="etiqueta">Desligado</span></div>
+        <div class="modo-corpo">
+          <h3>AWP</h3>
+          <p>Cada um por si · liga na hora</p>
+          <div class="lotacao"><b>0/16</b><a class="ligar" href="#">Ligar e entrar</a></div>
+        </div>
+      </article>
+
+      <article class="modo" data-modo="equipe">
+        <div class="modo-foto" style="background-image:url(/mapas/egypt.webp)"><span class="etiqueta verde">Ao vivo</span></div>
+        <div class="modo-corpo">
+          <h3>Equipe x Equipe</h3>
+          <p>Mata-mata em times · Egypt</p>
+          <div class="barra"><i style="width:44%"></i></div>
+          <div class="lotacao"><b>7/16</b><a href="#">Entrar</a></div>
+        </div>
+      </article>
+
+      <article class="modo" data-modo="fantasma">
+        <div class="modo-foto" style="background-image:url(/mapas/laboratory.webp)"><span class="etiqueta verde">Ao vivo</span></div>
+        <div class="modo-corpo">
+          <h3>Modo Fantasma</h3>
+          <p>Fantasmas invisíveis com faca contra soldados · Laboratory</p>
+          <div class="barra"><i style="width:38%"></i></div>
+          <div class="lotacao"><b>6/16</b><a href="#">Entrar</a></div>
+        </div>
+      </article>
+
+      <article class="modo" data-modo="mutacao">
+        <div class="modo-foto" style="background-image:url(/mapas/biochemical-hotel.webp)"><span class="etiqueta">Desligado</span></div>
+        <div class="modo-corpo">
+          <h3>Mutação</h3>
+          <p>Fuja do mutante, ou vire um · Biochemical Hotel</p>
+          <div class="lotacao"><b>0/16</b><a class="ligar" href="#">Ligar e entrar</a></div>
+        </div>
+      </article>
+    </div>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    <div class="largura">
+      <span>Magnatas do CS</span>
+      <span>Jogo · Ranking · Comunidade · Suporte</span>
+    </div>
+  </footer>
+  </div>
+
+  <span class="aviso-rascunho">RASCUNHO</span>
+
+  <script>
+    const botoes = document.querySelectorAll('.filtros button');
+    botoes.forEach((botao) => botao.addEventListener('click', () => {
+      botoes.forEach((outro) => outro.classList.toggle('ativo', outro === botao));
+      const filtro = botao.dataset.filtro;
+      document.querySelectorAll('.modo').forEach((cartao) => {
+        cartao.style.display = filtro === 'todos' || cartao.dataset.modo === filtro ? '' : 'none';
+      });
+    }));
+  </script>
+</body>
+</html>

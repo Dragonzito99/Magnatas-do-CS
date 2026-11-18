@@ -1,2 +1,5 @@
 servidor/** text eol=lf
 *.sh text eol=lf
+# Rascunhos de ideias do site: guardados no git, mas fora do envio para o servidor (o git archive pula).
+site/public/rascunho/** export-ignore
+site/public/rascunho export-ignore

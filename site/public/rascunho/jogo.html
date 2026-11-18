@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Jogo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="telas.css">
+  <link rel="stylesheet" href="conteudo.css">
+</head>
+<body>
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="inicio.html"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta">
+        <a class="painel-adm" href="painel.html">&#128737; Painel ADM <b>3</b></a>
+        <span class="sino" title="Avisos">&#128276;<b>2</b></span>
+        <div class="conta">
+          <svg class="escudo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#2b2a33" stroke="#c9d1dc" stroke-width="1.6"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round"/></svg>
+          Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;
+          <div class="conta-menu">
+            <a href="perfil.html">Meu perfil</a>
+            <a href="#">Minha patente</a>
+            <a href="#">Convites</a>
+            <a href="#">Suporte ao jogador</a>
+            <a href="#">Sair</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens">
+        <div class="item"><span>Notícias</span>
+          <div class="suspenso"><a href="noticias.html">Do clube</a><a href="noticias.html">CS2 oficial</a><a href="noticias.html">Times brasileiros</a></div>
+        </div>
+        <div class="item ativo"><span>Jogo</span>
+          <div class="suspenso"><a href="jogo.html#como-funciona">Como funciona</a><a href="jogo.html#modos">Modos</a><a href="jogo.html#mapas">Mapas</a><a href="patentes.html">Patentes</a><a href="jogo.html#regras">Regras</a></div>
+        </div>
+        <div class="item"><span>Ranking</span>
+          <div class="suspenso"><a href="ranking.html">Comunidade</a><a href="ranking.html">Mix do mês</a><a href="#">MVPs</a></div>
+        </div>
+        <div class="item"><span>Comunidade</span>
+          <div class="suspenso"><a href="#">Online agora</a><a href="#">Convites</a><a href="#">Discord</a></div>
+        </div>
+        <div class="item"><span>Clãs</span>
+          <div class="suspenso"><a href="clas.html#meu">Meu clã</a><a href="clas.html#procurar">Procurar clãs</a><a href="clas.html#ranking">Ranking de clãs</a><a href="clas.html#criar">Criar clã</a></div>
+        </div>
+        <a class="item item-loja" href="shop.html"><span>Magnata Shop <em>em breve</em></span></a>
+      </div>
+      <a class="jogar" href="jogar.html">JOGAR</a>
+    </div>
+    <a class="aviso-sala" href="jogar.html"><span class="aviso-sala-ponto"></span><span>Você está na <b>Sala do Dragonzit0</b> · 3/5</span><em>Voltar para a sala</em></a>
+  </nav>
+
+  <section class="cabeca-jogar"><div class="largura"><h1>O jogo</h1><p>Tudo o que você precisa saber para jogar no Magnatas.</p>
+    <nav class="abas-jogo"><a href="#como-funciona">Como funciona</a><a href="#modos">Modos</a><a href="#mapas">Mapas</a><a href="patentes.html">Patentes</a><a href="#regras">Regras</a></nav>
+  </div></section>
+  <main class="largura">
+    <h2 class="secao-titulo" id="como-funciona">Como <b>funciona</b></h2>
+    <section class="passos"><div class="passo"><b>1</b><h3>Entre com convite</h3><p>O Magnatas é fechado. Um membro te convida e você confirma quem é: só gente de verdade joga aqui.</p></div><div class="passo"><b>2</b><h3>Escolha o que jogar</h3><p>Na tela Jogar ficam o mix, as salas de competitivo e os modos da Diversão. Filtre e clique em Entrar.</p></div><div class="passo"><b>3</b><h3>Jogue no nosso servidor</h3><p>Toda partida roda num servidor do Magnatas, com gravação. O Olho de Águia confere as denúncias.</p></div><div class="passo"><b>4</b><h3>Suba de patente</h3><p>Cada partida jogada até o fim dá XP. São 83 degraus, do Recruta ao Magnata Lendário.</p></div></section>
+    <h2 class="secao-titulo" id="modos">Os <b>modos</b></h2>
+    <section class="modos-info"><div class="modo-info" style="background-image:url(/mapas/dust2.webp)"><span class="etiqueta ouro">Competitivo</span><p>5 contra 5 em salas. Juntem a sala, desafiem outra e vetem os mapas.</p></div><div class="modo-info" style="background-image:url(/mapas/mirage.webp)"><span class="etiqueta ouro">Mix</span><p>Entre sozinho na fila. Com 10, os times são sorteados e a partida começa.</p></div><div class="modo-info" style="background-image:url(/mapas/luxville.webp)"><span class="etiqueta ">Cada um por si</span><p>Mata-mata sem time: AK + Desert, só pistola ou AWP.</p></div><div class="modo-info" style="background-image:url(/mapas/egypt.webp)"><span class="etiqueta ">Equipe x Equipe</span><p>Mata-mata em times, com volta na hora, em mapas do CrossFire.</p></div><div class="modo-info" style="background-image:url(/mapas/laboratory.webp)"><span class="etiqueta verde">Fantasma</span><p>Fantasmas invisíveis só com faca contra soldados armados.</p></div><div class="modo-info" style="background-image:url(/mapas/biochemical-hotel.webp)"><span class="etiqueta verde">Mutação</span><p>Um mutante aparece e contamina quem pega. Fuja ou vire um.</p></div></section>
+    <h2 class="secao-titulo" id="mapas">Os <b>mapas</b></h2>
+    <section class="mapas-jogo"><div class="mapa-mini grande" style="background-image:url(/mapas/mirage.webp)"><b>Mirage</b><span>Competitivo</span></div><div class="mapa-mini grande" style="background-image:url(/mapas/dust2.webp)"><b>Dust 2</b><span>Competitivo</span></div><div class="mapa-mini grande" style="background-image:url(/mapas/egypt.webp)"><b>Egypt</b><span>Equipe x Equipe</span></div><div class="mapa-mini grande" style="background-image:url(/mapas/transport-ship.webp)"><b>Transport Ship</b><span>Equipe x Equipe</span></div><div class="mapa-mini grande" style="background-image:url(/mapas/luxville.webp)"><b>Luxville</b><span>Equipe x Equipe</span></div><div class="mapa-mini grande" style="background-image:url(/mapas/laboratory.webp)"><b>Laboratory</b><span>Fantasma</span></div><div class="mapa-mini grande" style="background-image:url(/mapas/biochemical-hotel.webp)"><b>Biochemical Hotel</b><span>Mutação</span></div><div class="mapa-mini grande" style="background-image:url(/mapas/silent-village.webp)"><b>Silent Village</b><span>Mutação</span></div></section>
+    <h2 class="secao-titulo" id="regras">As <b>regras</b></h2>
+    <ol class="regras"><li><b>1</b><div><h3>Sem trapaça</h3><p>Qualquer programa que dê vantagem é banimento. Toda partida é gravada e o Olho de Águia assiste às denúncias.</p></div></li><li><b>2</b><div><h3>Respeito</h3><p>Xingar, humilhar ou ameaçar alguém leva a suspensão. Brincadeira tem limite.</p></div></li><li><b>3</b><div><h3>Jogue até o fim</h3><p>Quem sai no meio deixa o time na mão e não ganha XP da partida.</p></div></li><li><b>4</b><div><h3>Uma conta por pessoa</h3><p>A verificação de identidade garante que cada pessoa tem uma conta só.</p></div></li><li><b>5</b><div><h3>Denuncie direito</h3><p>Use o botão Denunciar na tela da partida. Denúncia falsa também é punida.</p></div></li></ol>
+  </main>
+
+  <footer class="rodape">
+    <div class="largura">
+      <span>Magnatas do CS</span>
+      <span>Jogo · Ranking · Comunidade · Suporte</span>
+    </div>
+  </footer>
+
+  <span class="aviso-rascunho">RASCUNHO</span>
+</body>
+</html>

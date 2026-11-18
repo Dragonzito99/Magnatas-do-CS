@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Clãs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+  <style>
+    .ouro { --c: #f5b301; } .roxo { --c: #a855f7; } .verde { --c: #4ade80; } .vermelho { --c: #ff5a5a; } .prata { --c: #c9d1dc; }
+    .c-topo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .c-topo h1 { margin-right: auto; font: italic 700 40px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-abas { display: flex; gap: 6px; margin-bottom: 20px; }
+    .c-abas button { padding: 8px 14px; border: 1px solid rgba(255,255,255,.12); background: none; color: #ab9fc2; font: italic 700 15px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; cursor: pointer; }
+    .c-abas button.ativo { background: #f3eefc; color: #0a0612; border-color: #f3eefc; }
+    .c-tela { display: none; } .c-tela.ativa { display: block; }
+
+    /* Brasão: escudo na cor do clã com a sigla */
+    .c-brasao { position: relative; width: var(--t, 120px); aspect-ratio: .86; display: grid; place-items: center; flex: none;
+      clip-path: polygon(50% 0, 100% 12%, 100% 58%, 50% 100%, 0 58%, 0 12%);
+      background: linear-gradient(160deg, color-mix(in srgb, var(--c) 85%, #fff) 0%, var(--c) 40%, color-mix(in srgb, var(--c) 45%, #000) 100%); }
+    .c-brasao::before { content: ''; position: absolute; inset: 5px; clip-path: inherit; background: radial-gradient(circle at 50% 30%, #2a1a40, #0b0713 75%); }
+    .c-brasao b { position: relative; color: var(--c); font: italic 800 calc(var(--t, 120px) * .3)/1 'Barlow Condensed', sans-serif; letter-spacing: .02em; }
+
+    /* Meu clã: capa */
+    .c-capa { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 28px; padding: 30px; overflow: hidden; border-bottom: 4px solid var(--c);
+      background: radial-gradient(circle at 12% 50%, color-mix(in srgb, var(--c) 30%, transparent), transparent 45%), linear-gradient(90deg, #120a1f, #0e0718); }
+    .c-capa h2 { font: italic 800 54px/.92 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-capa h2 span { color: var(--c); }
+    .c-capa p { margin: 8px 0 12px; color: #cfc6de; max-width: 520px; }
+    .c-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .c-chip { padding: 3px 8px; border: 1px solid rgba(255,255,255,.18); color: #cfc6de; font: italic 700 13px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-chip.forte { background: var(--c); border-color: var(--c); color: #0a0612; }
+    .c-capa-acoes { display: grid; gap: 8px; }
+    .c-numeros { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid rgba(255,255,255,.06); border-top: 0; background: #110b1b; }
+    .c-numeros > div { padding: 14px 18px; border-right: 1px solid rgba(255,255,255,.06); }
+    .c-numeros > div:last-child { border-right: 0; }
+    .c-numeros small { display: block; color: #ab9fc2; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .c-numeros b { font: italic 800 34px/1.1 'Barlow Condensed', sans-serif; }
+    .c-numeros .verde-t { color: #4ade80; }
+    .c-vagas { height: 6px; margin-top: 6px; background: #1d1330; } .c-vagas i { display: block; height: 100%; background: var(--c); }
+
+    .c-colunas { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
+    .c-elenco { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    .c-membro { position: relative; display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 22px 12px 12px; border: 1px solid rgba(255,255,255,.06); background: #110b1b; }
+    .c-membro.dono { border-color: color-mix(in srgb, var(--c) 60%, transparent); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 14%, transparent), #110b1b 60%); }
+    .c-foto { width: 52px; height: 52px; border-radius: 50%; background: url(/marca/personagem.webp) center 20% / 160% no-repeat, #24173a; }
+    .c-membro b { display: block; font: italic 700 19px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .c-membro small { display: block; margin-top: 4px; color: #ab9fc2; font-size: 12px; }
+    .c-membro small em { color: #f3eefc; font-style: normal; font-weight: 700; }
+    .c-cargo { position: absolute; top: 8px; right: 8px; padding: 2px 6px; font: italic 700 11px/1.3 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-cargo.dono { background: var(--c); color: #0a0612; } .c-cargo.capitao { border: 1px solid var(--c); color: var(--c); }
+
+    .c-jogo { display: grid; grid-template-columns: 4px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px 10px 0; border: 1px solid rgba(255,255,255,.06); background: #110b1b; margin-bottom: 6px; }
+    .c-jogo i { align-self: stretch; } .c-jogo.v i { background: #4ade80; } .c-jogo.d i { background: #ff5a5a; }
+    .c-jogo b { display: block; font: italic 700 18px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-jogo small { color: #ab9fc2; font-size: 12px; }
+    .c-placar { font: italic 800 26px/1 'Barlow Condensed', sans-serif; }
+    .c-jogo.v .c-placar { color: #4ade80; } .c-jogo.d .c-placar { color: #ff5a5a; }
+    .c-pedido { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px dashed rgba(255,255,255,.16); margin-bottom: 6px; }
+    .c-pedido span { margin-right: auto; } .c-pedido small { display: block; color: #ab9fc2; }
+    .c-pedido .s-botao { height: 32px; min-height: 32px; padding: 0 12px; font-size: 14px; }
+
+    /* Procurar */
+    .c-busca { display: flex; gap: 8px; margin-bottom: 16px; }
+    .c-busca input { flex: 1; padding: 12px 14px; border: 1px solid rgba(255,255,255,.14); background: #0b0713; color: #f3eefc; }
+    .c-grade { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+    .c-cartao { display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,.06); background: #110b1b; transition: transform .12s, border-color .12s; }
+    .c-cartao:hover { transform: translateY(-3px); border-color: var(--c); }
+    .c-cartao-palco { display: grid; place-items: center; padding: 22px 0 16px; border-bottom: 3px solid var(--c); background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--c) 26%, transparent), transparent 70%), #0b0713; }
+    .c-cartao-dados { padding: 12px 14px 14px; display: grid; gap: 6px; }
+    .c-cartao-dados b { font: italic 700 22px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-cartao-dados small { color: #ab9fc2; font-size: 12px; }
+    .c-cartao-linha { display: flex; justify-content: space-between; color: #cfc6de; font-size: 12px; }
+    .c-cartao .s-botao { justify-content: center; height: 38px; min-height: 38px; font-size: 16px; margin-top: 4px; }
+
+    /* Ranking: pódio */
+    .c-podio { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 16px; margin-bottom: 18px; }
+    .c-lugar { display: grid; justify-items: center; gap: 8px; padding: 22px 12px 16px; border: 1px solid rgba(255,255,255,.06); background: #110b1b; text-align: center; }
+    .c-lugar.p1 { padding-top: 34px; border-color: #f5b301; background: linear-gradient(180deg, rgba(245,179,1,.14), #110b1b 70%); }
+    .c-lugar .n { font: italic 800 40px/1 'Barlow Condensed', sans-serif; }
+    .c-lugar.p1 .n { color: #f5b301; } .c-lugar.p2 .n { color: #c9d1dc; } .c-lugar.p3 .n { color: #d08a4a; }
+    .c-lugar b { font: italic 700 22px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-lugar small { color: #ab9fc2; }
+    .c-tabela { border: 1px solid rgba(255,255,255,.06); background: #110b1b; }
+    .c-linha { display: grid; grid-template-columns: 60px 44px 1fr 120px 140px 120px; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .c-linha.cab { color: #ab9fc2; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .c-linha.minha { background: rgba(245,179,1,.07); box-shadow: inset 3px 0 0 #f5b301; }
+    .c-linha .pos { font: italic 800 22px/1 'Barlow Condensed', sans-serif; color: #ab9fc2; }
+    .c-linha .nome { font: italic 700 19px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-linha .nome span { color: var(--c); }
+    .c-aprov { display: flex; align-items: center; gap: 8px; } .c-aprov i { flex: 1; height: 6px; background: #1d1330; position: relative; } .c-aprov i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--p); background: #4ade80; }
+  </style>
+</head>
+<body>
+  <div class="faixa"><div class="largura"><a class="faixa-logo" href="#"><img src="/marca/logo.webp" alt="Magnatas do CS"></a><div class="faixa-conta"><a class="painel-adm" href="#">&#128737; Painel ADM <b>1</b></a><span class="sino">&#128276;<b>1</b></span><div class="conta">Olá, <strong>Dragonzit0</strong> · Magnata Jr. 1 &#9662;</div></div></div></div>
+  <nav class="menu"><div class="largura"><div class="menu-itens"><div class="item"><span>Notícias</span></div><div class="item"><span>Jogo</span></div><div class="item"><span>Ranking</span></div><div class="item"><span>Comunidade</span></div><a class="item item-loja" href="#"><span>Clãs</span></a><div class="item"><span>Magnata Shop</span></div><div class="item"><span>Baú</span></div></div><a class="jogar" href="#">JOGAR</a></div></nav>
+
+  <main class="largura s-pagina">
+    <div class="c-topo">
+      <h1>Clãs</h1>
+      <a class="s-botao" href="#">+ Criar clã</a>
+    </div>
+    <div class="c-abas">
+      <button class="ativo" data-tela="meu">Meu clã</button><button data-tela="procurar">Procurar clãs</button><button data-tela="ranking">Ranking de clãs</button>
+    </div>
+
+    <!-- MEU CLÃ -->
+    <section class="c-tela ativa" id="meu">
+      <div class="c-capa ouro">
+        <span class="c-brasao ouro" style="--t:140px"><b>MGN</b></span>
+        <div>
+          <div class="c-chips"><span class="c-chip forte">3º no ranking</span><span class="c-chip">Aberto: qualquer um entra</span></div>
+          <h2><span>[MGN]</span> Magnatas Originais</h2>
+          <p>Jogamos toda noite, às 21h. Comunicação no Discord e respeito acima de tudo.</p>
+        </div>
+        <div class="c-capa-acoes"><a class="s-botao" href="#">Desafiar clã</a><a class="s-botao fantasma" href="#">Editar clã</a></div>
+      </div>
+      <div class="c-numeros ouro">
+        <div><small>Posição</small><b>3º</b></div>
+        <div><small>Vitórias juntos</small><b class="verde-t">14</b></div>
+        <div><small>Aproveitamento</small><b>64%</b></div>
+        <div><small>Membros</small><b>7/20</b><div class="c-vagas"><i style="width:35%"></i></div></div>
+      </div>
+
+      <div class="c-colunas ouro" style="margin-top:16px">
+        <div>
+          <div class="s-secao" style="margin-top:20px"><h2>Elenco</h2><span style="color:#ab9fc2;font-size:13px">Dono, capitães e membros</span></div>
+          <div class="c-elenco">
+            <div class="c-membro dono"><span class="c-foto"></span><span><b>Dragonzit0</b><small>Magnata Jr. 1 · K/D <em>1.32</em></small></span><span class="c-cargo dono">Dono</span></div>
+            <div class="c-membro"><span class="c-foto"></span><span><b>Ministro Marfioso</b><small>Associado 3 · K/D <em>1.10</em></small></span><span class="c-cargo capitao">Capitão</span></div>
+            <div class="c-membro"><span class="c-foto"></span><span><b>ÈO_THIGAS</b><small>Associado 2 · K/D <em>0.98</em></small></span><span class="c-cargo capitao">Capitão</span></div>
+            <div class="c-membro"><span class="c-foto"></span><span><b>ZE PEKENO</b><small>Recruta 4 · K/D <em>0.87</em></small></span></div>
+            <div class="c-membro"><span class="c-foto"></span><span><b>Lobão</b><small>Recruta 2 · K/D <em>1.04</em></small></span></div>
+            <div class="c-membro"><span class="c-foto"></span><span><b>Fumaça</b><small>Recruta 1 · K/D <em>0.75</em></small></span></div>
+            <div class="c-membro"><span class="c-foto"></span><span><b>Tchelo</b><small>Recruta 1 · K/D <em>0.92</em></small></span></div>
+          </div>
+        </div>
+        <div>
+          <div class="s-secao" style="margin-top:20px"><h2>Últimas</h2></div>
+          <div class="c-jogo v"><i></i><span><b>vs [LBS] Lobos</b><small>MD1 · Mirage · 09/11</small></span><span class="c-placar">13-9</span></div>
+          <div class="c-jogo d"><i></i><span><b>vs [FRJ] Forja</b><small>MD3 · 07/11</small></span><span class="c-placar">1-2</span></div>
+          <div class="c-jogo v"><i></i><span><b>vs [CHF] Chefões</b><small>MD1 · Dust2 · 05/11</small></span><span class="c-placar">13-4</span></div>
+          <div class="s-secao" style="margin-top:20px"><h2>Pedidos</h2><span style="color:#f5b301;font-size:13px">2 esperando</span></div>
+          <div class="c-pedido"><span><b>Fantasma_77</b><small>Associado 1</small></span><a class="s-botao" href="#">Aceitar</a><a class="s-botao fantasma" href="#">Recusar</a></div>
+          <div class="c-pedido"><span><b>Bala Perdida</b><small>Recruta 3</small></span><a class="s-botao" href="#">Aceitar</a><a class="s-botao fantasma" href="#">Recusar</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROCURAR -->
+    <section class="c-tela" id="procurar">
+      <div class="c-busca"><input placeholder="Nome ou sigla do clã"><a class="s-botao" href="#">Procurar</a></div>
+      <div class="s-filtros"><a class="ativo" href="#">Todos</a><a href="#">Abertos</a><a href="#">Com vaga</a></div>
+      <div class="c-grade">
+        <div class="c-cartao roxo"><div class="c-cartao-palco"><span class="c-brasao roxo" style="--t:96px"><b>LBS</b></span></div><div class="c-cartao-dados"><b>Lobos</b><small>Aberto · 1º no ranking</small><div class="c-cartao-linha"><span>12/20 membros</span><span>22 vitórias · 71%</span></div><div class="c-vagas roxo"><i style="width:60%"></i></div><a class="s-botao" href="#">Entrar</a></div></div>
+        <div class="c-cartao verde"><div class="c-cartao-palco"><span class="c-brasao verde" style="--t:96px"><b>FRJ</b></span></div><div class="c-cartao-dados"><b>Forja</b><small>Com convite · 2º no ranking</small><div class="c-cartao-linha"><span>9/20 membros</span><span>18 vitórias · 66%</span></div><div class="c-vagas verde"><i style="width:45%"></i></div><a class="s-botao fantasma" href="#">Pedir para entrar</a></div></div>
+        <div class="c-cartao vermelho"><div class="c-cartao-palco"><span class="c-brasao vermelho" style="--t:96px"><b>CHF</b></span></div><div class="c-cartao-dados"><b>Chefões</b><small>Aberto · 5º no ranking</small><div class="c-cartao-linha"><span>5/20 membros</span><span>6 vitórias · 40%</span></div><div class="c-vagas vermelho"><i style="width:25%"></i></div><a class="s-botao" href="#">Entrar</a></div></div>
+        <div class="c-cartao prata"><div class="c-cartao-palco"><span class="c-brasao prata" style="--t:96px"><b>DON</b></span></div><div class="c-cartao-dados"><b>Família Don</b><small>Com convite · sem jogos</small><div class="c-cartao-linha"><span>20/20 membros</span><span>0 vitórias</span></div><div class="c-vagas prata"><i style="width:100%"></i></div><span class="s-botao fantasma" style="opacity:.5">Cheio</span></div></div>
+      </div>
+    </section>
+
+    <!-- RANKING -->
+    <section class="c-tela" id="ranking">
+      <div class="c-podio">
+        <div class="c-lugar p2 verde"><span class="n">2º</span><span class="c-brasao verde" style="--t:84px"><b>FRJ</b></span><b>Forja</b><small>18 vitórias · 66%</small></div>
+        <div class="c-lugar p1 roxo"><span class="n">1º</span><span class="c-brasao roxo" style="--t:110px"><b>LBS</b></span><b>Lobos</b><small>22 vitórias · 71%</small></div>
+        <div class="c-lugar p3 ouro"><span class="n">3º</span><span class="c-brasao ouro" style="--t:84px"><b>MGN</b></span><b>Magnatas Originais</b><small>14 vitórias · 64%</small></div>
+      </div>
+      <div class="c-tabela">
+        <div class="c-linha cab"><span>#</span><span></span><span>Clã</span><span>Vitórias</span><span>Aproveitamento</span><span>Membros</span></div>
+        <div class="c-linha roxo"><span class="pos">1</span><span class="c-brasao roxo" style="--t:36px"><b>LBS</b></span><span class="nome"><span>[LBS]</span> Lobos</span><b>22</b><span class="c-aprov" style="--p:71%"><i></i>71%</span><span>12</span></div>
+        <div class="c-linha verde"><span class="pos">2</span><span class="c-brasao verde" style="--t:36px"><b>FRJ</b></span><span class="nome"><span>[FRJ]</span> Forja</span><b>18</b><span class="c-aprov" style="--p:66%"><i></i>66%</span><span>9</span></div>
+        <div class="c-linha minha ouro"><span class="pos">3</span><span class="c-brasao ouro" style="--t:36px"><b>MGN</b></span><span class="nome"><span>[MGN]</span> Magnatas Originais</span><b>14</b><span class="c-aprov" style="--p:64%"><i></i>64%</span><span>7</span></div>
+        <div class="c-linha vermelho"><span class="pos">4</span><span class="c-brasao vermelho" style="--t:36px"><b>CHF</b></span><span class="nome"><span>[CHF]</span> Chefões</span><b>6</b><span class="c-aprov" style="--p:40%"><i></i>40%</span><span>5</span></div>
+      </div>
+      <p style="margin-top:10px;color:#ab9fc2;font-size:13px">Conta só clã x clã, com os 5 do clã no time. Contra o mesmo clã, só 1 partida por dia.</p>
+    </section>
+
+    <p class="s-nota"><b>Ideias deste rascunho:</b> cada clã ganha um <b>brasão</b> (escudo na cor do clã com a sigla), usado em todo lugar · Meu clã com <b>capa grande</b>, os números logo embaixo e a barra de vagas · membros como <b>elenco</b> em cartões (Dono destacado, Capitães marcados, patente e K/D) em vez de tabela · últimas partidas com a faixa verde/vermelha e o placar grande · Procurar em <b>cartões com o brasão</b>, vagas e números · Ranking com <b>pódio</b> dos 3 primeiros e a sua linha marcada · "Criar clã" vira botão fixo no topo. O "Desafiar clã" do topo é só ideia: hoje o desafio é feito pela sala.</p>
+  </main>
+  <script>
+    document.querySelectorAll('.c-abas button').forEach((botao) => botao.addEventListener('click', () => {
+      document.querySelectorAll('.c-abas button').forEach((b) => b.classList.toggle('ativo', b === botao));
+      document.querySelectorAll('.c-tela').forEach((t) => t.classList.toggle('ativa', t.id === botao.dataset.tela));
+    }));
+  </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Servidores em manutenção</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --pagina: #07040d; --painel: #120a1f; --tinta: #f3eefc; --apoio: #b9a8d6; --linha: rgba(168, 85, 247, 0.28);
+      --roxo: #a855f7; --verde: #4ade80; --vermelho: #f87171; --ouro: #f5b301; --laranja: #fb923c; --titulo: 'Barlow Condensed', 'Inter', system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--pagina); color: var(--tinta); font: 15px/1.5 'Inter', system-ui, sans-serif; }
+    .largura { width: min(1100px, 100% - 32px); margin: 0 auto; }
+    h1, h2, h3 { margin: 0; font-family: var(--titulo); font-style: italic; text-transform: uppercase; }
+    .etapa { margin: 34px 0 10px; color: var(--ouro); font: italic 700 15px/1 var(--titulo); text-transform: uppercase; letter-spacing: .08em; }
+    .explica { margin: 0 0 14px; color: var(--apoio); max-width: 760px; }
+    .painel { background: var(--painel); border: 1px solid var(--linha); border-radius: 8px; }
+
+    /* Cabeçalho do site (simplificado) */
+    .topo { background: #0c0716; border-bottom: 1px solid var(--linha); }
+    .topo .largura { display: flex; align-items: center; gap: 22px; height: 56px; }
+    .marca { font: italic 800 22px/1 var(--titulo); color: var(--ouro); }
+    .menu { display: flex; gap: 18px; font: italic 700 15px/1 var(--titulo); text-transform: uppercase; color: var(--tinta); }
+    .menu span:nth-child(6) { color: var(--ouro); }
+    .jogar { margin-left: auto; padding: 10px 26px; background: var(--ouro); color: #1a1000; font: italic 800 18px/1 var(--titulo); text-transform: uppercase; clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%); }
+
+    /* O aviso no topo de todas as páginas */
+    .aviso-manutencao { background: linear-gradient(90deg, rgba(251,146,60,.22), rgba(251,146,60,.08)); border-bottom: 2px solid var(--laranja); }
+    .aviso-manutencao .largura { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+    .aviso-manutencao .icone { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(251,146,60,.2); color: var(--laranja); font-size: 18px; }
+    .aviso-manutencao b { display: block; font: italic 700 18px/1.1 var(--titulo); text-transform: uppercase; color: #fed7aa; }
+    .aviso-manutencao small { color: #fde2c8; }
+    .aviso-manutencao .ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--laranja); animation: pulsar 1.4s infinite; margin-left: auto; flex: none; }
+    @keyframes pulsar { 50% { opacity: .25; } }
+
+    /* Tela Jogar */
+    .conteudo { padding: 22px 0 60px; }
+    .numeros { display: flex; gap: 28px; margin: 6px 0 18px; color: var(--apoio); }
+    .numeros b { color: var(--tinta); font: italic 800 22px/1 var(--titulo); margin-right: 6px; }
+    .secao { padding: 18px; margin-bottom: 14px; }
+    .secao > small { color: var(--apoio); }
+    .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 12px; }
+    .cartao { position: relative; overflow: hidden; display: grid; gap: 8px; align-content: end; min-height: 170px; padding: 14px; border-radius: 8px; border: 1px solid var(--linha);
+      background: linear-gradient(180deg, rgba(7,4,13,.15), rgba(7,4,13,.95) 70%), var(--foto) center/cover; }
+    .cartao.travado { filter: grayscale(.75); }
+    .cartao.travado::after { content: ''; position: absolute; inset: 0; background: rgba(7,4,13,.35); pointer-events: none; }
+    .cartao small { color: var(--apoio); }
+    .cartao h3 { font-size: 22px; }
+    .cartao p { margin: 0; color: var(--apoio); font-size: 13px; }
+    .botao { position: relative; z-index: 1; display: block; text-align: center; padding: 10px 14px; border-radius: 4px; font: italic 800 16px/1 var(--titulo); text-transform: uppercase; }
+    .botao.ouro { background: var(--ouro); color: #1a1000; }
+    .botao.esperando { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(251,146,60,.14); border: 1px solid rgba(251,146,60,.6); color: #fed7aa; cursor: not-allowed; }
+    .botao.esperando::before { content: ''; width: 12px; height: 12px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: girar 1s linear infinite; }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Painel ADM */
+    .adm { padding: 18px; display: grid; gap: 12px; }
+    .adm .linha { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border-radius: 6px; background: rgba(255,255,255,.03); }
+    .adm .linha small { display: block; color: var(--apoio); }
+    .chave { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; color: #fed7aa; }
+    .chave i { width: 42px; height: 24px; border-radius: 99px; background: var(--laranja); position: relative; }
+    .chave i::after { content: ''; position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+    .historico { color: var(--apoio); font-size: 13px; padding: 0 14px; }
+
+    @media (max-width: 760px) { .menu { display: none; } .lado { grid-template-columns: 1fr; } .aviso-manutencao .ponto { display: none; } }
+  </style>
+</head>
+<body>
+  <header class="topo">
+    <div class="largura">
+      <span class="marca">MAGNATAS</span>
+      <nav class="menu"><span>Notícias</span><span>Jogo</span><span>Ranking</span><span>Comunidade</span><span>Clãs</span><span>Magnata Shop</span><span>Baú</span></nav>
+      <span class="jogar">Jogar</span>
+    </div>
+  </header>
+
+  <!-- 1. O aviso: aparece embaixo do menu, em todas as páginas, enquanto os servidores estiverem esperando. -->
+  <div class="aviso-manutencao" role="status">
+    <div class="largura">
+      <span class="icone">⚙</span>
+      <div>
+        <b>Servidores em manutenção</b>
+        <small>O CS2 foi atualizado e estamos esperando a correção para voltar. Mix e Diversão voltam assim que possível.</small>
+      </div>
+      <span class="ponto" title="Conferindo sozinho"></span>
+    </div>
+  </div>
+
+  <main class="largura conteudo">
+    <p class="etapa">1. Aviso em todas as páginas</p>
+    <p class="explica">A faixa laranja de cima aparece no site todo enquanto os servidores esperam. Some sozinha quando eles voltam.</p>
+
+    <p class="etapa">2. Tela Jogar</p>
+    <p class="explica">Os botões de entrar na fila, criar sala e ligar servidor ficam travados, com a mensagem no lugar.</p>
+
+    <h1 style="font-size:44px">Jogar</h1>
+    <div class="numeros"><span><b>12</b>online</span><span><b>0</b>na fila do mix</span><span><b>0</b>partidas rolando</span></div>
+
+    <section class="painel secao">
+      <h2>Competitivo</h2>
+      <small>Vale XP, patente e ranking · 5 contra 5</small>
+      <div class="lado" style="margin-top:12px">
+        <div class="cartao travado" style="--foto:url('/mapas/mirage.webp')">
+          <small>Mix</small>
+          <h3>Fila do mix</h3>
+          <p>Entre sozinho. Com 10 na fila, os times são sorteados e a partida começa.</p>
+          <span class="botao esperando">Aguardando atualização do servidor</span>
+        </div>
+        <div class="cartao travado" style="--foto:url('/mapas/dust2.webp')">
+          <small>Sala 5x5</small>
+          <h3>Jogue com o seu time</h3>
+          <p>Monte uma sala de 5, chame os amigos e desafie outra sala completa.</p>
+          <span class="botao esperando">Aguardando atualização do servidor</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="painel secao">
+      <h2>Diversão</h2>
+      <small>Vale XP · liga na hora, em cerca de 1 minuto</small>
+      <div class="grade">
+        <div class="cartao travado" style="--foto:url('/mapas/silent-village.webp')">
+          <small>Mutação · Silent Village</small>
+          <h3>Quem é pego vira mutante</h3>
+          <span class="botao esperando">Aguardando atualização do servidor</span>
+        </div>
+        <div class="cartao travado" style="--foto:url('/mapas/dust2.webp')">
+          <small>Cada um por si · Dust 2</small>
+          <h3>AK e Desert</h3>
+          <span class="botao esperando">Aguardando atualização do servidor</span>
+        </div>
+        <div class="cartao travado" style="--foto:url('/mapas/mirage.webp')">
+          <small>Fantasma · Laboratory</small>
+          <h3>Invisíveis contra armados</h3>
+          <span class="botao esperando">Aguardando atualização do servidor</span>
+        </div>
+      </div>
+    </section>
+
+    <p class="etapa">Quando volta ao normal</p>
+    <div class="grade" style="max-width:260px">
+      <div class="cartao" style="--foto:url('/mapas/silent-village.webp')">
+        <small>Mutação · Silent Village</small>
+        <h3>Quem é pego vira mutante</h3>
+        <span class="botao ouro">Ligar e entrar</span>
+      </div>
+    </div>
+
+    <p class="etapa">3. Painel ADM</p>
+    <p class="explica">Liga sozinho quando a atualização automática do CS2 dá problema e desliga quando os servidores voltam. Aqui dá para ligar ou desligar na mão.</p>
+    <section class="painel adm">
+      <h2>Servidores</h2>
+      <div class="linha">
+        <div>
+          <b>Aviso de manutenção</b>
+          <small>Ligado sozinho às 21:52: o CS2 foi para a versão 1.41.9.7 e os plugins ainda não voltaram.</small>
+        </div>
+        <span class="chave"><i></i>Ligado</span>
+      </div>
+      <p class="historico">Versão do CS2 no servidor: 1.41.9.7 · Última conferência: 22:30</p>
+    </section>
+  </main>
+</body>
+</html>

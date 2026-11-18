@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Magnata Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+</head>
+<body>
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="inicio.html"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta">
+        <a class="painel-adm" href="painel.html">&#128737; Painel ADM <b>1</b></a>
+        <span class="sino" title="Avisos">&#128276;<b>1</b></span>
+        <div class="conta">Olá, <strong>Dragonzit0</strong> · Magnata Jr. 1 &#9662;</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens">
+        <div class="item"><span>Notícias</span></div>
+        <div class="item"><span>Jogo</span></div>
+        <div class="item"><span>Ranking</span></div>
+        <div class="item"><span>Comunidade</span></div>
+        <div class="item"><span>Clãs</span></div>
+        <a class="item item-loja" href="shop-ideia.html"><span>Magnata Shop</span></a>
+        <div class="item"><span>Baú</span></div>
+      </div>
+      <a class="jogar" href="jogar.html">JOGAR</a>
+    </div>
+  </nav>
+
+  <main class="largura s-pagina">
+    <div class="s-carteira">
+      <h1>Magnata Shop</h1>
+      <span class="s-moeda grana"><i>$</i><b>1.089</b><small>Grana</small></span>
+      <span class="s-moeda magcoin"><i>M</i><b>10</b><small>MagCoin</small></span>
+      <a class="s-moeda comprar" href="#">+ MagCoin</a>
+      <a class="s-moeda" href="#" style="color:#f3eefc;text-decoration:none">&#128230; Meu baú</a>
+    </div>
+
+    <div class="s-topo">
+      <article class="s-destaque">
+        <img src="/loja/mutante-blindado.webp" alt="">
+        <span class="s-raridade" style="--cor:var(--lendario)">Lendário · Lançamento</span>
+        <h3>Cyber Hulk<br>Blindado</h3>
+        <p>Na Mutação você vira esse mutante. Aperte G e fica sem levar dano por até 6 s. Evolui em 3 níveis.</p>
+        <div class="s-acoes">
+          <a class="s-botao" href="#" data-abrir="mutante-blindado">Ver o mutante</a>
+          <span class="s-botao fantasma"><span class="s-preco"><i>$</i>200 <small>/ 1 dia</small></span></span>
+        </div>
+      </article>
+      <div class="s-laterais" id="laterais"></div>
+    </div>
+
+    <div class="s-secao">
+      <h2>Ofertas do dia</h2>
+      <span class="relogio" id="relogio">renova em 13:42:10</span>
+    </div>
+    <div class="s-grade quatro" id="ofertas"></div>
+
+    <div class="s-secao">
+      <h2>Todos os itens</h2>
+      <a href="#">Como funcionam Grana e MagCoin?</a>
+    </div>
+    <div class="s-filtros">
+      <a class="ativo" href="#">Todos</a><a href="#">Mutantes</a><a href="#">Molduras</a><a href="#">Etiquetas</a><a href="#">Cor do nome</a><a href="#">Aviso</a>
+      <a class="ordem" href="#">Mais caros primeiro &#9662;</a>
+    </div>
+    <div class="s-grade" id="catalogo"></div>
+
+    <p class="s-nota"><b>Ideias deste rascunho:</b> raridade por cor (cinza comum: cores · azul raro: etiquetas e aviso · roxo épico: molduras · dourado lendário: mutantes), ofertas do dia que mudam a cada 24 h com desconto, e a janela do item ao clicar. Nada disso existe ainda; é só para ver se essa cara agrada.</p>
+  </main>
+
+  <div class="s-janela" id="janela">
+    <div class="s-janela-caixa" style="position:relative">
+      <button class="s-fechar" id="fechar" aria-label="Fechar">&times;</button>
+      <div class="s-janela-palco" id="j-palco"></div>
+      <div class="s-janela-dados">
+        <span class="s-raridade" id="j-raridade">Lendário</span>
+        <h3 id="j-nome">Cyber Hulk</h3>
+        <p id="j-texto"></p>
+        <div class="s-rotulo">Com Grana</div>
+        <div class="s-dias" id="j-dias"></div>
+        <div class="s-rotulo">Com MagCoin</div>
+        <div class="s-para-sempre"><span>Para sempre</span><span class="s-preco"><i style="background:#7c3aed;color:#fff">M</i><b id="j-magcoin">300</b></span></div>
+        <div class="s-acoes">
+          <a class="s-botao" href="#">Comprar</a>
+          <a class="s-botao fantasma" href="#">Experimentar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PRECOS = { cor: [80, 200, 300, 480], etiqueta: [100, 250, 380, 600], aviso: [60, 150, 230, 370], moldura: [80, 200, 300, 480], mutante: [200, 550, 850, 1350] };
+    const MAGCOIN = { cor: 150, etiqueta: 150, aviso: 150, moldura: 150, mutante: 300 };
+    const RARIDADE = { cor: ['comum', 'Comum'], etiqueta: ['raro', 'Raro'], aviso: ['raro', 'Raro'], moldura: ['epico', 'Épico'], mutante: ['lendario', 'Lendário'] };
+    const TIPO = { cor: 'Cor do nome', etiqueta: 'Etiqueta', aviso: 'Aviso', moldura: 'Moldura', mutante: 'Mutante' };
+    const TEXTO = {
+      cor: 'Seu nome sai nessa cor no chat de todos os servidores.',
+      etiqueta: 'Aparece antes do seu nome no chat de todos os servidores.',
+      aviso: 'Quando você entra no servidor, todo mundo vê.',
+      moldura: 'Uma borda especial na sua foto, no perfil e no ranking.',
+      mutante: 'Na Mutação você vira esse mutante. Aperte G e fica sem levar dano por 2 s no nível 1, 4 s no nível 2 e 6 s no nível 3.',
+    };
+    const ITENS = [
+      { id: 'mutante-blindado', tipo: 'mutante', nome: 'Cyber Hulk', img: '/loja/mutante-blindado.webp' },
+      { id: 'moldura-fogo', tipo: 'moldura', nome: 'Fogo', classe: 'fogo' },
+      { id: 'moldura-neon', tipo: 'moldura', nome: 'Neon', classe: 'neon' },
+      { id: 'moldura-gelo', tipo: 'moldura', nome: 'Gelo', classe: 'gelo' },
+      { id: 'moldura-dourada', tipo: 'moldura', nome: 'Dourada', classe: 'dourada' },
+      { id: 'etiqueta-magnata', tipo: 'etiqueta', nome: '[MAGNATA]' },
+      { id: 'etiqueta-chefao', tipo: 'etiqueta', nome: '[CHEFÃO]' },
+      { id: 'etiqueta-don', tipo: 'etiqueta', nome: '[DON]' },
+      { id: 'etiqueta-patrao', tipo: 'etiqueta', nome: '[PATRÃO]' },
+      { id: 'etiqueta-lenda', tipo: 'etiqueta', nome: '[LENDA]' },
+      { id: 'aviso-entrada', tipo: 'aviso', nome: 'Aviso de entrada' },
+      { id: 'cor-dourada', tipo: 'cor', nome: 'Dourado', cor: '#e4ae39' },
+      { id: 'cor-vermelha', tipo: 'cor', nome: 'Vermelho', cor: '#ff4040' },
+      { id: 'cor-roxa', tipo: 'cor', nome: 'Roxo', cor: '#b05cff' },
+      { id: 'cor-verde', tipo: 'cor', nome: 'Verde', cor: '#3fd34f' },
+      { id: 'cor-azul', tipo: 'cor', nome: 'Azul', cor: '#4c7dff' },
+      { id: 'cor-laranja', tipo: 'cor', nome: 'Laranja', cor: '#ff8c1a' },
+      { id: 'cor-rosa', tipo: 'cor', nome: 'Rosa', cor: '#ff4fd8' },
+      { id: 'cor-azul-claro', tipo: 'cor', nome: 'Azul-claro', cor: '#6fc8ff' },
+    ];
+    const TENHO = new Set(['cor-dourada', 'etiqueta-magnata']);
+
+    function previa(item) {
+      if (item.img) return `<img src="${item.img}" alt="">`;
+      if (item.tipo === 'moldura') return `<div class="p-foto ${item.classe}"></div>`;
+      if (item.tipo === 'cor') return `<div class="p-chat"><b style="color:${item.cor}">Dragonzit0</b>: gg wp</div>`;
+      if (item.tipo === 'etiqueta') return `<div class="p-chat"><b style="color:#f5b301">${item.nome}</b> Dragonzit0: bora</div>`;
+      return `<div class="p-chat" style="color:#f5b301">★ Dragonzit0 chegou</div>`;
+    }
+
+    function cartao(item, extra = {}) {
+      const preco = PRECOS[item.tipo][0];
+      const promo = extra.desconto ? `<s style="color:#8d82a3;font-weight:400">${preco}</s> ${Math.round(preco * (1 - extra.desconto))}` : preco;
+      return `<a class="s-item ${RARIDADE[item.tipo][0]}" data-abrir="${item.id}">
+        <span class="s-palco">${previa(item)}${extra.desconto ? `<span class="s-tempo">-${extra.desconto * 100}%</span>` : ''}${TENHO.has(item.id) ? '<span class="s-tenho">Você tem</span>' : ''}</span>
+        <span class="s-info"><span class="s-tipo">${TIPO[item.tipo]} · ${RARIDADE[item.tipo][1]}</span><span class="s-nome">${item.nome}</span>
+        <span class="s-preco"><i>$</i>${promo} <small>/ 1 dia</small></span></span></a>`;
+    }
+
+    const por = (id) => ITENS.find((item) => item.id === id);
+    document.getElementById('laterais').innerHTML = cartaoLado(por('moldura-fogo'), 'Mais comprado') + cartaoLado(por('etiqueta-chefao'), 'Novo');
+    function cartaoLado(item, selo) {
+      return `<a class="s-item ${RARIDADE[item.tipo][0]}" data-abrir="${item.id}" style="flex-direction:row">
+        <span class="s-palco" style="width:46%;aspect-ratio:auto;border-bottom:0;border-right:3px solid var(--cor)">${previa(item)}</span>
+        <span class="s-info" style="align-self:center"><span class="s-raridade" style="--cor:#f3eefc">${selo}</span><span class="s-tipo">${TIPO[item.tipo]} · ${RARIDADE[item.tipo][1]}</span><span class="s-nome">${item.nome}</span>
+        <span class="s-preco"><i>$</i>${PRECOS[item.tipo][0]} <small>/ 1 dia</small></span></span></a>`;
+    }
+    document.getElementById('ofertas').innerHTML = [['moldura-neon', 0.3], ['etiqueta-lenda', 0.2], ['cor-vermelha', 0.25], ['aviso-entrada', 0.2]]
+      .map(([id, desconto]) => cartao(por(id), { desconto })).join('');
+    document.getElementById('catalogo').innerHTML = ITENS.map((item) => cartao(item)).join('');
+
+    const janela = document.getElementById('janela');
+    document.addEventListener('click', (evento) => {
+      const alvo = evento.target.closest('[data-abrir]');
+      if (!alvo) return;
+      evento.preventDefault();
+      const item = por(alvo.dataset.abrir);
+      const cores = { comum: '#8a8f9c', raro: '#4c8dff', epico: '#b05cff', lendario: '#f5b301' };
+      const cor = cores[RARIDADE[item.tipo][0]];
+      janela.querySelector('.s-janela-caixa').style.borderTopColor = cor;
+      document.getElementById('j-palco').innerHTML = item.img
+        ? `<img src="${item.img}" alt=""><div class="s-niveis"><span class="ativo">Nível 1 · Cyber Hulk</span><span>Nível 2 · Toxic Warlord</span><span>Nível 3 · Venomclaw Titan</span></div>`
+        : `<div style="align-self:center;width:70%;display:grid;place-items:center;transform:scale(1.6)">${previa(item)}</div>`;
+      document.getElementById('j-palco').style.background = `radial-gradient(circle at 50% 60%, ${cor}44, transparent 65%), #0b0713`;
+      const raridade = document.getElementById('j-raridade');
+      raridade.textContent = `${TIPO[item.tipo]} · ${RARIDADE[item.tipo][1]}`;
+      raridade.style.setProperty('--cor', cor);
+      document.getElementById('j-nome').textContent = item.nome;
+      document.getElementById('j-texto').textContent = TEXTO[item.tipo];
+      document.getElementById('j-magcoin').textContent = MAGCOIN[item.tipo];
+      document.getElementById('j-dias').innerHTML = [1, 3, 5, 9]
+        .map((dias, i) => `<button class="${i === 1 ? 'ativo' : ''}"><span>${dias} ${dias === 1 ? 'dia' : 'dias'}</span><b>${PRECOS[item.tipo][i]}</b></button>`).join('');
+      janela.classList.add('aberta');
+    });
+    janela.addEventListener('click', (evento) => {
+      if (evento.target === janela || evento.target.id === 'fechar') janela.classList.remove('aberta');
+    });
+    document.getElementById('j-dias').addEventListener('click', (evento) => {
+      const botao = evento.target.closest('button');
+      if (!botao) return;
+      document.querySelectorAll('#j-dias button').forEach((b) => b.classList.remove('ativo'));
+      botao.classList.add('ativo');
+    });
+
+    let resta = 13 * 3600 + 42 * 60 + 10;
+    setInterval(() => {
+      resta -= 1;
+      const p = (n) => String(n).padStart(2, '0');
+      document.getElementById('relogio').textContent = `renova em ${p(Math.floor(resta / 3600))}:${p(Math.floor((resta % 3600) / 60))}:${p(resta % 60)}`;
+    }, 1000);
+  </script>
+</body>
+</html>

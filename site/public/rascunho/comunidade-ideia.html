@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Comunidade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+  <style>
+    body { padding-right: 64px; }
+    .foto { display: block; flex: none; border-radius: 50%; background: url(/marca/personagem.webp) center 20% / 160% no-repeat, #24173a; }
+    .c-topo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .c-topo h1 { margin-right: auto; font: italic 700 40px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-colunas { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+
+    /* Escrever */
+    .c-escrever { border: 1px solid rgba(255,255,255,.08); background: #110b1b; padding: 14px 16px; margin-bottom: 16px; }
+    .c-escrever-topo { display: flex; gap: 12px; align-items: center; }
+    .c-escrever-topo .foto { width: 40px; height: 40px; }
+    .c-escrever textarea { flex: 1; min-height: 44px; padding: 11px 12px; border: 1px solid rgba(255,255,255,.12); background: #0b0713; color: #f3eefc; resize: vertical; font: inherit; }
+    .c-tipos { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-left: 52px; }
+    .c-tipo { padding: 6px 10px; border: 1px solid rgba(255,255,255,.14); color: #ab9fc2; font: italic 700 14px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; cursor: pointer; background: none; }
+    .c-tipo.ativo { border-color: var(--c); color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }
+    .c-anexo { color: #ab9fc2; font-size: 13px; margin-left: 4px; }
+    .c-tipos .s-botao { margin-left: auto; height: 36px; min-height: 36px; font-size: 16px; }
+    .jogada { --c: #ff5a5a; } .tatica { --c: #4c8dff; } .duvida { --c: #f5b301; }
+
+    /* Post */
+    .c-post { border: 1px solid rgba(255,255,255,.06); background: #110b1b; margin-bottom: 14px; }
+    .c-post-topo { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+    .c-post-topo .foto { width: 40px; height: 40px; }
+    .c-post-topo b { font: italic 700 18px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-post-topo small { display: block; color: #8d82a3; font-size: 12px; margin-top: 2px; }
+    .c-selo { margin-left: auto; padding: 3px 8px; background: var(--c); color: #0a0612; font: italic 700 12px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-post-texto { padding: 0 16px 12px; color: #e6e0f0; }
+    .c-post-texto h3 { font: italic 700 22px/1.1 'Barlow Condensed', sans-serif; text-transform: uppercase; margin-bottom: 6px; }
+    .c-video { position: relative; aspect-ratio: 16 / 9; background: url(/mapas/mirage.webp) center / cover; border-top: 3px solid var(--c); }
+    .c-video::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+    .c-play { position: absolute; z-index: 1; inset: 0; margin: auto; width: 68px; height: 48px; border-radius: 12px; background: #ff0000; display: grid; place-items: center; color: #fff; font-size: 22px; }
+    .c-video small { position: absolute; z-index: 1; left: 10px; bottom: 8px; color: #fff; font-size: 12px; }
+    .c-imagens { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-top: 3px solid var(--c); }
+    .c-imagens span { aspect-ratio: 4 / 3; background: var(--i) center / cover; }
+    .c-acoes { display: flex; gap: 6px; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,.06); color: #ab9fc2; font-size: 13px; }
+    .c-acoes span { padding: 4px 10px; border: 1px solid rgba(255,255,255,.1); }
+    .c-acoes span.on { color: #ff5a5a; border-color: rgba(255,90,90,.5); }
+    .c-acoes .den { margin-left: auto; border: 0; color: #6b6280; }
+    .c-coment { padding: 10px 16px 14px; border-top: 1px solid rgba(255,255,255,.06); display: grid; gap: 8px; }
+    .c-coment div { display: flex; gap: 8px; font-size: 13px; }
+    .c-coment .foto { width: 26px; height: 26px; }
+    .c-coment b { color: #f3eefc; }
+
+    /* Lateral do mural */
+    .c-caixa { border: 1px solid rgba(255,255,255,.06); background: #110b1b; margin-bottom: 14px; }
+    .c-caixa h3 { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.06); font: italic 700 18px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .c-caixa a { display: flex; justify-content: space-between; padding: 9px 14px; color: #cfc6de; text-decoration: none; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .c-caixa a:hover { color: #f3eefc; }
+    .c-caixa a em { font-style: normal; color: #8d82a3; }
+
+    /* Barra de amigos (direita) */
+    .amigos { position: fixed; top: 0; right: 0; bottom: 0; width: 64px; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 0; background: #0e0818; border-left: 1px solid rgba(255,255,255,.08); }
+    .amigos .msg { position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #24173a; color: #f3eefc; font-size: 18px; cursor: pointer; }
+    .amigos .msg b { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #ff3b3b; font: 700 11px/18px Inter, sans-serif; text-align: center; }
+    .amigos hr { width: 32px; border: 0; border-top: 1px solid rgba(255,255,255,.1); margin: 2px 0; }
+    .amigos .ami { position: relative; cursor: pointer; }
+    .amigos .ami .foto { width: 40px; height: 40px; }
+    .amigos .ami i { position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0e0818; background: #6b6280; }
+    .amigos .ami.on i { background: #4ade80; } .amigos .ami.jogando i { background: #f5b301; }
+    .amigos .ami.off .foto { filter: grayscale(1) brightness(.6); }
+    .amigos .grupo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #f5b301; color: #1c1102; font: italic 800 14px/1 'Barlow Condensed', sans-serif; cursor: pointer; }
+    .amigos .grupo.roxo { background: #a855f7; color: #fff; }
+    .amigos .mais { width: 40px; height: 40px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.25); display: grid; place-items: center; color: #ab9fc2; font-size: 20px; }
+    .amigos .dica { position: absolute; right: 54px; top: 50%; transform: translateY(-50%); white-space: nowrap; padding: 6px 10px; background: #1d1330; border: 1px solid rgba(255,255,255,.12); font-size: 12px; display: none; }
+    .amigos .ami:hover .dica, .amigos .grupo:hover .dica { display: block; }
+    .amigos .grupo { position: relative; }
+
+    /* Janela de conversa */
+    .conversa { position: fixed; right: 76px; bottom: 0; width: 330px; z-index: 39; display: flex; flex-direction: column; background: #110b1b; border: 1px solid rgba(255,255,255,.12); border-bottom: 0; box-shadow: 0 -10px 30px rgba(0,0,0,.5); }
+    .conversa-topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #1d1330; }
+    .conversa-topo .foto { width: 30px; height: 30px; }
+    .conversa-topo b { font: italic 700 16px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .conversa-topo small { display: block; color: #4ade80; font-size: 11px; }
+    .conversa-topo span:last-child { margin-left: auto; color: #ab9fc2; cursor: pointer; }
+    .conversa-corpo { height: 280px; overflow-y: auto; padding: 12px; display: grid; align-content: end; gap: 8px; }
+    .balao { max-width: 78%; padding: 8px 10px; font-size: 13px; background: #24173a; }
+    .balao.eu { justify-self: end; background: #f5b301; color: #1c1102; }
+    .balao small { display: block; opacity: .7; font-size: 10px; margin-top: 3px; }
+    .convite { border: 1px solid #4ade80; background: rgba(74,222,128,.08); padding: 10px; display: grid; gap: 6px; font-size: 13px; }
+    .convite b { font: italic 700 16px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; color: #4ade80; }
+    .convite .s-botao { height: 32px; min-height: 32px; font-size: 14px; justify-content: center; }
+    .convite small { color: #8d82a3; }
+    .conversa-escrever { display: flex; gap: 6px; padding: 10px; border-top: 1px solid rgba(255,255,255,.08); }
+    .conversa-escrever input { flex: 1; padding: 9px 10px; border: 1px solid rgba(255,255,255,.12); background: #0b0713; color: #f3eefc; }
+
+    /* Sala com Convidar (lado esquerdo) */
+    .sala-demo { margin-top: 26px; border: 1px solid rgba(255,255,255,.08); background: #110b1b; padding: 14px; }
+    .sala-demo h3 { font: italic 700 20px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; margin-bottom: 10px; }
+    .vg { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 13px; }
+    .vg .foto { width: 32px; height: 32px; }
+    .vg .livre { width: 32px; height: 32px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.25); }
+    .vg .s-botao { margin-left: auto; height: 30px; min-height: 30px; font-size: 14px; padding: 0 12px; }
+    .lista-convite { margin: 6px 0 4px 42px; border: 1px solid rgba(255,255,255,.12); background: #0b0713; }
+    .lista-convite div { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .lista-convite .foto { width: 24px; height: 24px; }
+    .lista-convite em { font-style: normal; color: #4ade80; font-size: 11px; }
+    .lista-convite em.jog { color: #f5b301; }
+    .lista-convite a { margin-left: auto; color: #f5b301; font: italic 700 13px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; text-decoration: none; }
+    .lista-convite a.feito { color: #4ade80; }
+  </style>
+</head>
+<body>
+  <div class="faixa"><div class="largura"><a class="faixa-logo" href="#"><img src="/marca/logo.webp" alt="Magnatas do CS"></a><div class="faixa-conta"><a class="painel-adm" href="#">&#128737; Painel ADM <b>1</b></a><span class="sino">&#128276;<b>1</b></span><div class="conta">Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;</div></div></div></div>
+  <nav class="menu"><div class="largura"><div class="menu-itens"><div class="item"><span>Notícias</span></div><div class="item"><span>Jogo</span></div><div class="item"><span>Ranking</span></div><a class="item item-loja" href="#"><span>Comunidade</span></a><div class="item"><span>Clãs</span></div><div class="item"><span>Magnata Shop</span></div><div class="item"><span>Baú</span></div></div><a class="jogar" href="#">JOGAR</a></div></nav>
+
+  <!-- Barra de amigos -->
+  <aside class="amigos" aria-label="Amigos">
+    <span class="msg" title="Mensagens">&#128172;<b>3</b></span>
+    <hr>
+    <span class="grupo"><span class="dica">[MGN] Magnatas Originais · grupo do clã</span>MGN</span>
+    <span class="grupo roxo"><span class="dica">Grupo: Mix de sexta</span>MX</span>
+    <hr>
+    <span class="ami on"><span class="foto"></span><i></i><span class="dica">Ministro Marfioso · online</span></span>
+    <span class="ami jogando"><span class="foto"></span><i></i><span class="dica">ÈO_THIGAS · jogando Mutação</span></span>
+    <span class="ami on"><span class="foto"></span><i></i><span class="dica">ZE PEKENO · online</span></span>
+    <span class="ami off"><span class="foto"></span><i></i><span class="dica">Lobão · visto há 2 h</span></span>
+    <span class="ami off"><span class="foto"></span><i></i><span class="dica">Fumaça · visto ontem</span></span>
+    <span class="mais" title="Adicionar amigo">+</span>
+  </aside>
+
+  <!-- Conversa aberta -->
+  <section class="conversa" aria-label="Conversa com Ministro Marfioso">
+    <div class="conversa-topo"><span class="foto"></span><span><b>Ministro Marfioso</b><small>● online</small></span><span>— ✕</span></div>
+    <div class="conversa-corpo">
+      <div class="balao">bora um mix hoje?<small>21:02</small></div>
+      <div class="balao eu">bora! vou abrir sala<small>21:03</small></div>
+      <div class="convite"><b>Convite para a sala</b>Dragonzit0 chamou você para a <strong>Sala do Dragonzit0</strong> (3/5).<a class="s-botao" href="#">Entrar na sala</a><small>vence em 1:42</small></div>
+    </div>
+    <div class="conversa-escrever"><input placeholder="Escreva uma mensagem"><a class="s-botao" href="#" style="height:36px;min-height:36px;padding:0 12px;font-size:14px">Enviar</a></div>
+  </section>
+
+  <main class="largura s-pagina">
+    <div class="c-topo"><h1>Comunidade</h1><a class="s-moeda" href="#" style="color:#f3eefc;text-decoration:none">&#128101; Meus amigos · 12</a></div>
+    <div class="s-filtros"><a class="ativo" href="#">Tudo</a><a href="#">Jogadas</a><a href="#">Táticas</a><a href="#">Dúvidas</a><a href="#">Só amigos</a><a href="#" style="margin-left:auto">Mapa: todos &#9662;</a></div>
+
+    <div class="c-colunas">
+      <div>
+        <div class="c-escrever">
+          <div class="c-escrever-topo"><span class="foto"></span><textarea placeholder="Mostre uma jogada, ensine uma tática ou tire uma dúvida..."></textarea></div>
+          <div class="c-tipos">
+            <button class="c-tipo jogada ativo">&#127919; Jogada</button><button class="c-tipo tatica">&#128506; Tática</button><button class="c-tipo duvida">&#10067; Dúvida</button>
+            <span class="c-anexo">&#128279; link do vídeo · &#128247; até 4 imagens · mapa</span>
+            <a class="s-botao" href="#">Publicar</a>
+          </div>
+        </div>
+
+        <article class="c-post jogada">
+          <div class="c-post-topo"><span class="foto"></span><span><b>ÈO_THIGAS</b><small>há 25 min · Mirage</small></span><span class="c-selo">Jogada</span></div>
+          <div class="c-post-texto"><h3>Ace de Deagle no meio</h3>Última rodada do mix de ontem, 4x1 virou 5. Olha o último tiro.</div>
+          <div class="c-video"><span class="c-play">▶</span><small>Medal · toca aqui mesmo</small></div>
+          <div class="c-acoes"><span class="on">♥ 14</span><span>&#128172; 5 comentários</span><span>Compartilhar</span><span class="den">Denunciar</span></div>
+          <div class="c-coment">
+            <div><span class="foto"></span><span><b>ZE PEKENO</b> que tiro absurdo kkk</span></div>
+            <div><span class="foto"></span><span><b>Ministro Marfioso</b> o 4º foi sorte, admite</span></div>
+          </div>
+        </article>
+
+        <article class="c-post tatica">
+          <div class="c-post-topo"><span class="foto"></span><span><b>Ministro Marfioso</b><small>há 3 h · Inferno</small></span><span class="c-selo">Tática</span></div>
+          <div class="c-post-texto"><h3>Smoke da CT para entrar na B</h3>Mira na antena e solta pulando. Fecha a visão do CT inteiro.</div>
+          <div class="c-imagens"><span style="--i:url(/mapas/dust2.webp)"></span><span style="--i:url(/mapas/mirage.webp)"></span></div>
+          <div class="c-acoes"><span>♥ 9</span><span>&#128172; 2 comentários</span><span>Compartilhar</span><span class="den">Denunciar</span></div>
+        </article>
+
+        <article class="c-post duvida">
+          <div class="c-post-topo"><span class="foto"></span><span><b>Fumaça</b><small>ontem</small></span><span class="c-selo">Dúvida</span></div>
+          <div class="c-post-texto"><h3>Qual sensibilidade vocês usam?</h3>Tô com 800 DPI e 1.2, sinto que tá rápido demais pra AWP.</div>
+          <div class="c-acoes"><span>♥ 3</span><span>&#128172; 11 respostas</span><span>Compartilhar</span><span class="den">Denunciar</span></div>
+        </article>
+      </div>
+
+      <aside>
+        <div class="c-caixa"><h3>Mais curtidos da semana</h3><a href="#">Ace de Deagle no meio <em>♥ 14</em></a><a href="#">Smoke da CT para a B <em>♥ 9</em></a><a href="#">Como fazer o pixel da janela <em>♥ 7</em></a></div>
+        <div class="c-caixa"><h3>Pedidos de amizade</h3><a href="#">Bala Perdida <em style="color:#f5b301">Aceitar · Recusar</em></a><a href="#">Alfa <em style="color:#f5b301">Aceitar · Recusar</em></a></div>
+        <div class="sala-demo">
+          <h3>Sua sala · 3/5</h3>
+          <div class="vg"><span class="foto"></span>Dragonzit0 <em style="font-style:normal;color:#f5b301">líder</em></div>
+          <div class="vg"><span class="foto"></span>Ministro Marfioso</div>
+          <div class="vg"><span class="foto"></span>ZE PEKENO</div>
+          <div class="vg"><span class="livre"></span>Vaga livre<a class="s-botao" href="#">Convidar</a></div>
+          <div class="lista-convite">
+            <div><span class="foto"></span>ÈO_THIGAS <em class="jog">jogando</em><a href="#">Chamar</a></div>
+            <div><span class="foto"></span>Alfa <em>online</em><a class="feito" href="#">Chamado ✓</a></div>
+            <div><span class="foto"></span>Lobão <em style="color:#8d82a3">offline</em><a href="#">Chamar</a></div>
+          </div>
+          <div class="vg"><span class="livre"></span>Vaga livre<a class="s-botao" href="#">Convidar</a></div>
+        </div>
+      </aside>
+    </div>
+
+    <p class="s-nota" style="margin-right:0"><b>Ideias deste rascunho:</b> <b>mural</b> com Jogada (vídeo por link, toca no post), Tática (até 4 imagens) e Dúvida, curtir, comentar e denunciar; filtros por tipo, mapa e "só amigos" · na direita, a <b>barra de amigos</b> em todas as telas: mensagens no topo, os grupos (o do clã é automático) e os amigos com a bolinha verde (online), amarela (jogando) ou apagados (offline) · a <b>janelinha de conversa</b> no canto, com o <b>convite da sala</b> chegando com botão Entrar · na sala, cada vaga livre tem <b>Convidar</b>, com os amigos online primeiro (no rascunho a sala aparece aqui só para mostrar; no site ela fica na tela Jogar).</p>
+  </main>
+</body>
+</html>

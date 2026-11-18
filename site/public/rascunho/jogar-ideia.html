@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Jogar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+  <style>
+    .j-topo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .j-topo h1 { margin-right: auto; font: italic 700 40px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-vivo { display: flex; gap: 6px; }
+    .j-vivo span { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border: 1px solid rgba(255,255,255,.1); background: #110b1b; font-size: 13px; color: #cfc6de; }
+    .j-vivo b { color: #f3eefc; font-size: 16px; }
+    .j-vivo i { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+    .j-titulo { display: flex; align-items: baseline; gap: 14px; margin: 30px 0 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .j-titulo h2 { font: italic 700 26px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-titulo span { color: #ab9fc2; font-size: 13px; }
+
+    /* Competitivo: dois blocos grandes */
+    .j-comp { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .j-grande { position: relative; min-height: 300px; display: flex; flex-direction: column; justify-content: flex-end; padding: 26px; overflow: hidden; border-bottom: 4px solid var(--c); }
+    .j-grande::before { content: ''; position: absolute; inset: 0; background: var(--foto) center / cover; opacity: .55; }
+    .j-grande::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, #07040d 18%, rgba(7,4,13,.55) 60%, rgba(7,4,13,.2)); }
+    .j-grande > * { position: relative; z-index: 1; }
+    .j-grande .tag { align-self: flex-start; padding: 3px 8px; background: var(--c); color: #0a0612; font: italic 700 13px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; margin-bottom: 10px; }
+    .j-grande h3 { font: italic 800 48px/.95 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-grande p { margin: 8px 0 16px; color: #cfc6de; max-width: 420px; }
+    .j-vagas { display: flex; gap: 6px; margin-bottom: 16px; }
+    .j-vagas span { width: 36px; height: 36px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.25); }
+    .j-vagas span.cheia { border: 2px solid #f5b301; background: url(/marca/personagem.webp) center 20% / 160% no-repeat, #24173a; }
+    .j-linha-acao { display: flex; align-items: center; gap: 14px; }
+    .j-linha-acao b { font: italic 800 30px/1 'Barlow Condensed', sans-serif; }
+    .j-linha-acao small { color: #ab9fc2; }
+    .ouro { --c: #f5b301; } .roxo { --c: #a855f7; } .verde { --c: #4ade80; } .vermelho { --c: #ff5a5a; } .azul { --c: #4c8dff; }
+
+    .j-salas { display: grid; gap: 6px; margin-top: 12px; }
+    .j-sala { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; padding: 10px 14px; border: 1px solid rgba(255,255,255,.06); background: #110b1b; }
+    .j-sala b { font: italic 700 19px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-sala small { display: block; color: #ab9fc2; font-size: 12px; margin-top: 3px; }
+    .j-sala .j-vagas { margin: 0; } .j-sala .j-vagas span { width: 28px; height: 28px; }
+    .j-sala .s-botao { height: 36px; min-height: 36px; font-size: 15px; }
+
+    /* Diversão: um cartão por modo, com as variações dentro */
+    .j-div { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+    .j-modo { display: grid; grid-template-columns: 200px 1fr; border: 1px solid rgba(255,255,255,.06); background: #110b1b; }
+    .j-modo-foto { position: relative; background: var(--foto) center / cover no-repeat; border-right: 3px solid var(--c); min-height: 190px; }
+    .j-modo-foto .tag { position: absolute; top: 10px; left: 10px; padding: 3px 8px; background: var(--c); color: #0a0612; font: italic 700 12px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-modo-dados { padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+    .j-modo-dados h3 { font: italic 800 28px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-modo-dados > p { color: #ab9fc2; font-size: 13px; }
+    .j-var { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.08); background: #0b0713; }
+    .j-var b { font: italic 700 16px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-var small { display: block; color: #8d82a3; font-size: 11px; margin-top: 2px; }
+    .j-estado { font-size: 12px; color: #8d82a3; white-space: nowrap; }
+    .j-estado.vivo { color: #4ade80; } .j-estado.vivo::before { content: '● '; }
+    .j-var .s-botao { height: 32px; min-height: 32px; padding: 0 12px; font-size: 14px; }
+
+    /* Rolando agora */
+    .j-partidas { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .j-partida { padding: 12px 14px; border: 1px solid rgba(255,255,255,.06); background: #110b1b; display: grid; gap: 8px; }
+    .j-partida-topo { display: flex; justify-content: space-between; color: #ab9fc2; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    .j-partida-topo em { color: #ff5a5a; font-style: normal; font-weight: 700; } .j-partida-topo em::before { content: '● '; }
+    .j-placar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+    .j-placar span { font: italic 700 18px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .j-placar span:last-child { text-align: right; }
+    .j-placar b { font: italic 800 30px/1 'Barlow Condensed', sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="faixa"><div class="largura"><a class="faixa-logo" href="#"><img src="/marca/logo.webp" alt="Magnatas do CS"></a><div class="faixa-conta"><a class="painel-adm" href="#">&#128737; Painel ADM <b>1</b></a><span class="sino">&#128276;<b>1</b></span><div class="conta">Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;</div></div></div></div>
+  <nav class="menu"><div class="largura"><div class="menu-itens"><div class="item"><span>Notícias</span></div><div class="item"><span>Jogo</span></div><div class="item"><span>Ranking</span></div><div class="item"><span>Comunidade</span></div><div class="item"><span>Clãs</span></div><div class="item"><span>Magnata Shop</span></div><div class="item"><span>Baú</span></div></div><a class="jogar" href="#">JOGAR</a></div></nav>
+
+  <main class="largura s-pagina">
+    <div class="j-topo">
+      <h1>Jogar</h1>
+      <div class="j-vivo"><span><i></i><b>14</b> online</span><span><b>6</b> na fila do mix</span><span><b>2</b> partidas rolando</span></div>
+    </div>
+    <div class="s-filtros"><a class="ativo" href="#">Todos</a><a href="#">Competitivo</a><a href="#">Diversão</a></div>
+
+    <div class="j-titulo"><h2>Competitivo</h2><span>Vale XP, patente e ranking · 5 contra 5</span></div>
+    <div class="j-comp">
+      <article class="j-grande ouro" style="--foto:url(/mapas/mirage.webp)">
+        <span class="tag">Mix</span>
+        <h3>Fila do Mix</h3>
+        <p>Entre sozinho. Com 10 na fila, os times são sorteados e a partida começa.</p>
+        <div class="j-vagas"><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span><span></span><span></span><span></span><span></span></div>
+        <div class="j-linha-acao"><a class="s-botao" href="#">Entrar na fila</a><span><b>6/10</b> <small>faltam 4</small></span></div>
+      </article>
+      <article class="j-grande roxo" style="--foto:url(/mapas/dust2.webp)">
+        <span class="tag">Sala 5x5</span>
+        <h3>Jogue com o seu time</h3>
+        <p>Monte uma sala de 5, chame os amigos e desafie outra sala completa. Com o seu clã, vale o ranking de clãs.</p>
+        <div class="j-linha-acao"><a class="s-botao" href="#">Criar sala</a><span><b>3</b> <small>salas abertas</small></span></div>
+      </article>
+    </div>
+    <div class="j-salas">
+      <div class="j-sala"><span><b>Sala do Ministro Marfioso</b><small>[MGN] Magnatas Originais · K/D médio 1.08</small></span><span class="j-vagas"><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span><span></span><span></span></span><a class="s-botao" href="#">Entrar</a></div>
+      <div class="j-sala"><span><b>Sala do Lobão</b><small>Completa · esperando desafio</small></span><span class="j-vagas"><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span><span class="cheia"></span></span><a class="s-botao fantasma" href="#">Desafiar</a></div>
+    </div>
+
+    <div class="j-titulo"><h2>Diversão</h2><span>Sem XP · liga na hora, em cerca de 1 minuto</span></div>
+    <div class="j-div">
+      <article class="j-modo azul">
+        <div class="j-modo-foto" style="--foto:url(/mapas/dust2.webp)"><span class="tag">Mata-mata</span></div>
+        <div class="j-modo-dados"><h3>Cada um por si</h3><p>Sem time: todo mundo contra todo mundo.</p>
+          <div class="j-var"><span><b>AK e Desert</b><small>Dust 2</small></span><span class="j-estado vivo">7/16 jogando</span><a class="s-botao" href="#">Entrar</a></div>
+          <div class="j-var"><span><b>Só pistola</b><small>Mirage</small></span><span class="j-estado">desligado</span><a class="s-botao fantasma" href="#">Ligar</a></div>
+          <div class="j-var"><span><b>Só AWP</b><small>Mirage</small></span><span class="j-estado">desligado</span><a class="s-botao fantasma" href="#">Ligar</a></div>
+        </div>
+      </article>
+      <article class="j-modo verde">
+        <div class="j-modo-foto" style="--foto:url(/mapas/silent-village.webp), url(/mapas/mirage.webp)"><span class="tag">Mutação</span></div>
+        <div class="j-modo-dados"><h3>Mutação</h3><p>Quem é pego vira mutante. O último humano ganha a super Negev.</p>
+          <div class="j-var"><span><b>Mutação</b><small>Silent Village</small></span><span class="j-estado vivo">12/20 jogando</span><a class="s-botao" href="#">Entrar</a></div>
+        </div>
+      </article>
+      <article class="j-modo vermelho">
+        <div class="j-modo-foto" style="--foto:url(/mapas/transport-ship.webp), url(/mapas/dust2.webp)"><span class="tag">Times</span></div>
+        <div class="j-modo-dados"><h3>Equipe x Equipe</h3><p>Renasce na base. Ganha o time que fizer mais abates.</p>
+          <div class="j-var"><span><b>Equipe x Equipe</b><small>Transport Ship</small></span><span class="j-estado">desligado</span><a class="s-botao fantasma" href="#">Ligar</a></div>
+        </div>
+      </article>
+      <article class="j-modo roxo">
+        <div class="j-modo-foto" style="--foto:url(/mapas/laboratory.webp), url(/mapas/mirage.webp)"><span class="tag">Fantasma</span></div>
+        <div class="j-modo-dados"><h3>Fantasma</h3><p>Invisíveis de faca contra armados.</p>
+          <div class="j-var"><span><b>Fantasma</b><small>Laboratory</small></span><span class="j-estado">desligado</span><a class="s-botao fantasma" href="#">Ligar</a></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="j-titulo"><h2>Rolando agora</h2><span>Partidas ao vivo no clube</span></div>
+    <div class="j-partidas">
+      <div class="j-partida"><div class="j-partida-topo"><span>Mix #482 · Mirage</span><em>Ao vivo</em></div><div class="j-placar"><span>Time A</span><b>9 : 7</b><span>Time B</span></div></div>
+      <div class="j-partida"><div class="j-partida-topo"><span>Clã x clã · Inferno</span><em>Ao vivo</em></div><div class="j-placar"><span>[MGN]</span><b>4 : 6</b><span>[LBS]</span></div></div>
+    </div>
+
+    <p class="s-nota"><b>Ideias deste rascunho:</b> no topo, <b>quantos estão online, na fila e jogando</b> · a tela dividida em <b>Competitivo</b> (vale XP) e <b>Diversão</b> (sem XP), para ficar claro o que conta · o Mix e a Sala viram <b>dois blocos grandes</b>; o Mix mostra as <b>10 vagas</b> enchendo com a foto de quem está na fila · as salas abertas em linhas, com as vagas e o clã · na Diversão, <b>um cartão por modo</b>: os 3 "Cada um por si" ficam juntos, cada um com o seu estado (ao vivo, desligado) e o botão Entrar ou Ligar · "Rolando agora" com o placar das partidas.</p>
+  </main>
+</body>
+</html>

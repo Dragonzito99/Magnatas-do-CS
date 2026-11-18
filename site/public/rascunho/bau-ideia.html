@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Baú</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+  <style>
+    /* Equipado: o jogador no meio e os espaços de cada tipo de item */
+    .b-equipado { display: grid; grid-template-columns: 1.05fr 1fr; gap: 16px; }
+    .b-vitrine { position: relative; display: grid; grid-template-rows: 1fr auto; min-height: 360px; overflow: hidden; border-bottom: 4px solid #f5b301;
+      background: radial-gradient(circle at 50% 35%, rgba(168,85,247,.4), transparent 60%), #0e0718; }
+    .b-vitrine-topo { display: grid; place-items: center; gap: 12px; padding: 28px 20px 10px; }
+    .b-foto { width: 120px; height: 120px; border-radius: 50%; background: url(/marca/personagem.webp) center 20% / 160% no-repeat, #24173a; box-shadow: 0 0 0 3px #ff7a1a, 0 0 26px 8px #ff3d00; }
+    .b-nome { font: italic 800 30px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .b-chat { width: min(420px, 92%); padding: 10px 12px; background: rgba(0,0,0,.6); font: 600 13px/1.6 'JetBrains Mono', monospace; color: #e8e8e8; }
+    .b-chat .outro { color: #9fb7d6; }
+    .b-chat .etq { color: #e4ae39; }
+    .b-chat .eu { color: #ff4040; }
+    .b-rotulo { position: absolute; top: 12px; left: 14px; color: #ab9fc2; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    .b-espacos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+    .b-espaco { --cor: rgba(255,255,255,.15); display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 12px; padding: 10px; border: 1px solid rgba(255,255,255,.06); background: #110b1b; }
+    .b-espaco.cheio { border-left: 3px solid var(--cor); }
+    .b-espaco.vazio { border-style: dashed; border-color: rgba(255,255,255,.14); background: transparent; }
+    .b-espaco.comum { --cor: #8a8f9c; } .b-espaco.raro { --cor: #4c8dff; } .b-espaco.epico { --cor: #b05cff; } .b-espaco.lendario { --cor: #f5b301; }
+    .b-mini { width: 64px; height: 64px; display: grid; place-items: center; overflow: hidden; border-bottom: 3px solid var(--cor);
+      background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--cor) 30%, transparent), transparent 75%), #0b0713; font: 800 15px/1 'JetBrains Mono', monospace; }
+    .b-espaco.vazio .b-mini { color: #4a3f5c; font-size: 26px; border-bottom-color: transparent; }
+    .b-mini img { height: 92%; align-self: end; }
+    .b-espaco small { display: block; color: #ab9fc2; font: italic 700 12px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+    .b-espaco b { display: block; margin-top: 4px; font: italic 700 19px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .b-espaco em { display: block; margin-top: 3px; color: #8d82a3; font-style: normal; font-size: 12px; }
+    .b-espaco em.acaba { color: #ff8a5c; }
+    .b-link { color: #f5b301; font: italic 700 14px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; text-decoration: none; }
+
+    /* Itens */
+    .b-item-acao { display: flex; gap: 6px; padding: 0 12px 12px; }
+    .b-item-acao .s-botao { flex: 1; justify-content: center; height: 36px; font-size: 15px; }
+    .b-tempo { position: absolute; top: 8px; left: 8px; padding: 2px 6px; background: rgba(0,0,0,.65); color: #cfc6de; font: 600 11px/1.4 'JetBrains Mono', monospace; }
+    .b-tempo.acaba { color: #ff8a5c; }
+    .b-tempo.sempre { color: #c4a5ff; }
+    .b-uso { position: absolute; top: 8px; right: 8px; padding: 2px 6px; background: #4ade80; color: #062b12; font: 700 11px/1.4 Inter, sans-serif; text-transform: uppercase; }
+    .s-item.usando { border-color: #4ade80; box-shadow: 0 0 0 1px #4ade80 inset; }
+    .s-item.vencido { opacity: .45; filter: grayscale(.8); }
+    .s-item { cursor: default; }
+    .s-item:hover { transform: none; }
+  </style>
+</head>
+<body>
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="#"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta"><a class="painel-adm" href="#">&#128737; Painel ADM <b>1</b></a><span class="sino">&#128276;<b>1</b></span><div class="conta">Olá, <strong>Dragonzit0</strong> · Magnata Jr. 1 &#9662;</div></div>
+    </div>
+  </div>
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens"><div class="item"><span>Notícias</span></div><div class="item"><span>Jogo</span></div><div class="item"><span>Ranking</span></div><div class="item"><span>Comunidade</span></div><div class="item"><span>Clãs</span></div><div class="item"><span>Magnata Shop</span></div><a class="item item-loja" href="#"><span>Baú</span></a></div>
+      <a class="jogar" href="#">JOGAR</a>
+    </div>
+  </nav>
+
+  <main class="largura s-pagina">
+    <div class="s-carteira">
+      <h1>Baú</h1>
+      <span class="s-moeda grana"><i>$</i><b>1.176</b><small>Grana</small></span>
+      <span class="s-moeda magcoin"><i>M</i><b>10</b><small>MagCoin</small></span>
+      <a class="s-moeda comprar" href="#">Ir à Shop</a>
+    </div>
+
+    <div class="b-equipado">
+      <section class="b-vitrine">
+        <span class="b-rotulo">Assim você aparece</span>
+        <div class="b-vitrine-topo">
+          <span class="b-foto"></span>
+          <span class="b-nome">Dragonzit0</span>
+          <div class="b-chat">
+            <div><span class="outro">mais_um</span>: rush B?</div>
+            <div><span class="etq">[DON]</span> <span class="eu">Dragonzit0</span>: bora, eu entro primeiro</div>
+            <div class="etq">★ Dragonzit0 chegou</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="b-espacos">
+        <div class="b-espaco cheio comum"><span class="b-mini" style="color:#ff4040">Aa</span><span><small>Cor do nome</small><b>Vermelho</b><em>faltam 3 dias</em></span><a class="b-link" href="#">Trocar</a></div>
+        <div class="b-espaco cheio raro"><span class="b-mini" style="color:#e4ae39">[ ]</span><span><small>Etiqueta</small><b>[DON]</b><em class="acaba">acaba hoje</em></span><a class="b-link" href="#">Renovar</a></div>
+        <div class="b-espaco cheio raro"><span class="b-mini" style="color:#e4ae39">★</span><span><small>Aviso de entrada</small><b>Aviso de entrada</b><em>faltam 5 dias</em></span><a class="b-link" href="#">Trocar</a></div>
+        <div class="b-espaco cheio epico"><span class="b-mini"><span class="p-foto fogo" style="width:34px"></span></span><span><small>Moldura</small><b>Fogo</b><em>faltam 4 dias</em></span><a class="b-link" href="#">Trocar</a></div>
+        <div class="b-espaco vazio"><span class="b-mini">+</span><span><small>Mutante</small><b style="color:#8d82a3">Vazio</b><em>Na Mutação, vira o mutante comum</em></span><a class="b-link" href="#">Ver na Shop</a></div>
+      </div>
+    </div>
+
+    <div class="s-secao">
+      <h2>Seus itens</h2>
+      <span style="color:#ab9fc2;font-size:13px">A troca vale nos servidores a partir da próxima rodada</span>
+    </div>
+    <div class="s-filtros">
+      <a class="ativo" href="#">Todos · 7</a><a href="#">Em uso · 4</a><a href="#">Mutantes</a><a href="#">Molduras</a><a href="#">Etiquetas</a><a href="#">Cor do nome</a><a href="#">Vencidos · 1</a>
+    </div>
+    <div class="s-grade">
+      <div class="s-item epico usando"><span class="s-palco"><div class="p-foto fogo"></div><span class="b-tempo">4 dias</span><span class="b-uso">Em uso</span></span><span class="s-info"><span class="s-tipo">Moldura · Épico</span><span class="s-nome">Fogo</span></span><span class="b-item-acao"><a class="s-botao fantasma" href="#">Tirar</a></span></div>
+      <div class="s-item epico"><span class="s-palco"><div class="p-foto neon"></div><span class="b-tempo">2 dias</span></span><span class="s-info"><span class="s-tipo">Moldura · Épico</span><span class="s-nome">Neon</span></span><span class="b-item-acao"><a class="s-botao" href="#">Usar</a></span></div>
+      <div class="s-item raro usando"><span class="s-palco"><div class="p-chat"><b style="color:#f5b301">[DON]</b> Dragonzit0: bora</div><span class="b-tempo acaba">acaba hoje</span><span class="b-uso">Em uso</span></span><span class="s-info"><span class="s-tipo">Etiqueta · Raro</span><span class="s-nome">[DON]</span></span><span class="b-item-acao"><a class="s-botao fantasma" href="#">Tirar</a><a class="s-botao" href="#">Renovar</a></span></div>
+      <div class="s-item raro"><span class="s-palco"><div class="p-chat"><b style="color:#f5b301">[APOIADOR]</b> Dragonzit0: bora</div><span class="b-tempo sempre">membro</span></span><span class="s-info"><span class="s-tipo">Etiqueta · Raro</span><span class="s-nome">[APOIADOR]</span></span><span class="b-item-acao"><a class="s-botao" href="#">Usar</a></span></div>
+      <div class="s-item raro usando"><span class="s-palco"><div class="p-chat" style="color:#f5b301">★ Dragonzit0 chegou</div><span class="b-tempo">5 dias</span><span class="b-uso">Em uso</span></span><span class="s-info"><span class="s-tipo">Aviso · Raro</span><span class="s-nome">Aviso de entrada</span></span><span class="b-item-acao"><a class="s-botao fantasma" href="#">Tirar</a></span></div>
+      <div class="s-item comum usando"><span class="s-palco"><div class="p-chat"><b style="color:#ff4040">Dragonzit0</b>: gg wp</div><span class="b-tempo sempre">para sempre</span><span class="b-uso">Em uso</span></span><span class="s-info"><span class="s-tipo">Cor do nome · Comum</span><span class="s-nome">Vermelho</span></span><span class="b-item-acao"><a class="s-botao fantasma" href="#">Tirar</a></span></div>
+      <div class="s-item comum vencido"><span class="s-palco"><div class="p-chat"><b style="color:#3fd34f">Dragonzit0</b>: gg wp</div><span class="b-tempo">venceu</span></span><span class="s-info"><span class="s-tipo">Cor do nome · Comum</span><span class="s-nome">Verde</span></span><span class="b-item-acao"><a class="s-botao" href="#">Comprar de novo</a></span></div>
+    </div>
+
+    <p class="s-nota"><b>Ideias deste rascunho:</b> no topo, <b>"Assim você aparece"</b>: sua foto com a moldura e o chat com etiqueta, cor e aviso juntos, do jeito que os outros veem no jogo · ao lado, os <b>5 espaços equipados</b> (um por tipo), como num inventário de jogo, com o tempo que falta e o espaço vazio chamando para a Shop · embaixo, os itens na mesma grade da Shop, com <b>"Em uso"</b> em verde, o tempo em cada um (laranja quando acaba hoje), <b>Renovar</b> direto e os vencidos apagados · filtros por tipo, <b>Em uso</b> e <b>Vencidos</b>.</p>
+  </main>
+</body>
+</html>

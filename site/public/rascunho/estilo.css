@@ -1,0 +1,1132 @@
+:root {
+  --pagina: #07040d;
+  --painel: #120a1f;
+  --escuro: #0c0716;
+  --tinta: #f3eefc;
+  --apoio: #b9a8d6;
+  --linha: rgba(168, 85, 247, 0.28);
+  --roxo: #a855f7;
+  --verde: #4ade80;
+  --ouro: #f5b301;
+  --sobre-ouro: #1c1102;
+  --titulo: 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--pagina);
+  color: var(--tinta);
+  font: 15px/1.5 'Inter', system-ui, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.largura {
+  width: min(1200px, 100% - 32px);
+  margin: 0 auto;
+}
+
+/* Faixa preta: logo e conta */
+.faixa {
+  background: #000;
+  font-size: 13px;
+}
+
+.faixa .largura {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+
+.faixa-logo img {
+  height: 30px;
+  display: block;
+}
+
+.faixa-conta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--apoio);
+}
+
+.sino {
+  position: relative;
+  font-size: 18px;
+}
+
+.sino b {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  background: var(--roxo);
+  color: #fff;
+  font-size: 10px;
+  border-radius: 9px;
+  padding: 0 5px;
+}
+
+.conta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.conta strong {
+  color: var(--ouro);
+  font-weight: 600;
+}
+
+.escudo {
+  width: 18px;
+  height: 18px;
+}
+
+/* Menu principal */
+.menu {
+  background: var(--painel);
+  border-bottom: 2px solid var(--roxo);
+  position: relative;
+  z-index: 5;
+}
+
+.menu .largura {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  height: 52px;
+}
+
+.menu-itens {
+  display: flex;
+  margin: 0 auto;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font: italic 600 19px/1 var(--titulo);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.item:hover,
+.item.ativo {
+  background: var(--roxo);
+  transform: skewX(-12deg);
+}
+
+.item:hover > span,
+.item.ativo > span {
+  display: inline-block;
+  transform: skewX(12deg);
+}
+
+.suspenso,
+.conta-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  min-width: 200px;
+  translate: -50% 0;
+  background: var(--painel);
+  border: 1px solid var(--linha);
+  border-top: 2px solid var(--roxo);
+  padding: 8px 0;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+
+.item:hover .suspenso {
+  display: block;
+  transform: skewX(12deg);
+}
+
+.suspenso a,
+.conta-menu a {
+  display: block;
+  padding: 7px 18px;
+  text-align: center;
+  color: var(--apoio);
+}
+
+.suspenso a:hover,
+.conta-menu a:hover {
+  color: var(--ouro);
+}
+
+.conta-menu {
+  left: auto;
+  right: 0;
+  translate: none;
+  z-index: 10;
+}
+
+.conta-menu a {
+  text-align: left;
+  font-size: 14px;
+}
+
+.conta:hover .conta-menu {
+  display: block;
+}
+
+.jogar {
+  display: flex;
+  align-items: center;
+  padding: 0 34px;
+  margin-right: -8px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 24px/1 var(--titulo);
+  letter-spacing: 1px;
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+}
+
+.jogar:hover {
+  background: #ffc933;
+}
+
+/* Imagem grande */
+.capa {
+  position: relative;
+  height: 490px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.55), transparent 60%),
+    linear-gradient(180deg, #2a1145 0%, var(--pagina) 100%);
+}
+
+.capa-personagem {
+  position: absolute;
+  bottom: -40px;
+  height: 470px;
+}
+
+.capa-personagem.esquerda {
+  left: max(0px, 50% - 720px);
+  transform: scaleX(-1);
+  opacity: 0.45;
+}
+
+.capa-personagem.direita {
+  right: max(0px, 50% - 720px);
+}
+
+.capa-centro {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 44px;
+  text-align: center;
+}
+
+.capa-centro img {
+  width: min(560px, 90%);
+}
+
+.capa-frase {
+  margin: 4px 0 18px;
+  font: italic 700 40px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.capa-frase b {
+  color: var(--ouro);
+}
+
+.botao-ouro {
+  display: inline-block;
+  padding: 12px 70px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 30px/1 var(--titulo);
+  letter-spacing: 1px;
+}
+
+.botao-ouro small {
+  display: block;
+  margin-top: 4px;
+  font: 600 13px/1 'Inter', sans-serif;
+  font-style: normal;
+  letter-spacing: 0;
+}
+
+/* Novidades */
+.destaques {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 18px;
+  margin-top: -40px;
+}
+
+.cartao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 300px;
+  padding: 18px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--painel) center / cover no-repeat;
+  border: 1px solid var(--linha);
+}
+
+.cartao::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(7, 4, 13, 0.95));
+}
+
+.cartao > * {
+  position: relative;
+}
+
+.cartao:hover {
+  border-color: var(--ouro);
+}
+
+.etiqueta {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  padding: 2px 8px;
+  background: var(--roxo);
+  font: italic 600 15px/1.2 var(--titulo);
+  text-transform: uppercase;
+}
+
+.etiqueta.ouro {
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.etiqueta.verde {
+  background: var(--verde);
+  color: #062b14;
+}
+
+.cartao h3 {
+  margin: 0;
+  font: italic 700 30px/1.05 var(--titulo);
+  text-transform: uppercase;
+}
+
+.cartao p {
+  margin: 6px 0 0;
+  color: var(--apoio);
+  font-size: 14px;
+}
+
+.pontos {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.pontos i {
+  width: 22px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.pontos i:first-child {
+  background: var(--ouro);
+}
+
+.miudos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) 1.5fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.miudos .cartao {
+  min-height: 170px;
+  padding: 14px;
+}
+
+.miudos h3 {
+  font-size: 21px;
+}
+
+.cartao.discord {
+  background: #2b2466;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  justify-content: flex-start;
+}
+
+.cartao.discord::before {
+  display: none;
+}
+
+.cartao.discord svg {
+  width: 52px;
+  height: 52px;
+  fill: #fff;
+  flex: none;
+}
+
+.mais {
+  display: flex;
+  justify-content: center;
+  margin: 26px 0 0;
+}
+
+.mais a {
+  padding: 8px 26px;
+  border: 1px solid var(--roxo);
+  font: italic 600 19px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.mais a:hover {
+  background: var(--roxo);
+}
+
+/* Faixa de informações */
+.secao-titulo {
+  margin: 56px 0 22px;
+  text-align: center;
+  font: italic 700 44px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.secao-titulo b {
+  color: var(--ouro);
+}
+
+.secao-titulo::before,
+.secao-titulo::after {
+  content: ' / ';
+  color: var(--ouro);
+}
+
+.rodape {
+  margin-top: 60px;
+  padding: 26px 0 40px;
+  background: #000;
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.rodape .largura {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.aviso-rascunho {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 20;
+  padding: 6px 12px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* Tela Jogar */
+.cabeca-jogar {
+  padding: 34px 0 10px;
+  background: linear-gradient(180deg, #2a1145, var(--pagina));
+}
+
+.cabeca-jogar h1 {
+  margin: 0;
+  font: italic 700 54px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.cabeca-jogar p {
+  margin: 4px 0 0;
+  color: var(--apoio);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 26px;
+}
+
+.filtros button {
+  padding: 8px 18px;
+  border: 1px solid var(--linha);
+  background: var(--painel);
+  color: var(--tinta);
+  font: italic 600 18px/1 var(--titulo);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.filtros button.ativo {
+  background: var(--ouro);
+  border-color: var(--ouro);
+  color: var(--sobre-ouro);
+}
+
+.grade-jogar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 18px;
+}
+
+.modo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+}
+
+.modo-foto {
+  position: relative;
+  height: 130px;
+  background: #2a1145 center / cover no-repeat;
+}
+
+.modo-foto .etiqueta {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.modo-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  padding: 14px;
+}
+
+.modo-corpo h3 {
+  margin: 0;
+  font: italic 700 26px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.modo-corpo p {
+  margin: 0;
+  color: var(--apoio);
+  font-size: 14px;
+}
+
+.lotacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.lotacao b {
+  color: var(--ouro);
+  font: italic 700 22px/1 var(--titulo);
+}
+
+.lotacao a {
+  padding: 7px 18px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 18px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.lotacao a.ligar {
+  background: transparent;
+  border: 1px solid var(--verde);
+  color: var(--verde);
+}
+
+.barra {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.barra i {
+  display: block;
+  height: 100%;
+  background: var(--ouro);
+}
+
+@media (max-width: 900px) {
+  .menu-itens {
+    overflow-x: auto;
+  }
+
+  .item {
+    padding: 0 10px;
+    font-size: 16px;
+  }
+
+  .jogar {
+    padding: 0 20px;
+    font-size: 20px;
+  }
+
+  .destaques,
+  .miudos {
+    grid-template-columns: 1fr;
+  }
+
+  .capa-frase {
+    font-size: 28px;
+  }
+
+  .capa-personagem.esquerda {
+    display: none;
+  }
+}
+
+/* Só a equipe vê: o botão do Painel ADM na faixa preta */
+.painel-adm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--roxo);
+  border-radius: 4px;
+  color: var(--tinta);
+  font: italic 600 16px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.painel-adm:hover,
+.painel-adm.ativo {
+  background: var(--roxo);
+}
+
+.painel-adm b {
+  background: #ef4444;
+  color: #fff;
+  font: 700 11px/1 'Inter', sans-serif;
+  padding: 3px 6px;
+  border-radius: 9px;
+}
+
+/* Tela do painel */
+.painel-tela {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 24px;
+  margin-top: 26px;
+}
+
+.painel-lado {
+  align-self: start;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+  padding: 8px 0;
+}
+
+.painel-lado small {
+  display: block;
+  padding: 12px 18px 4px;
+  color: var(--apoio);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.painel-lado a {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 18px;
+  font: italic 600 18px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.painel-lado a:hover,
+.painel-lado a.ativo {
+  background: var(--roxo);
+}
+
+.painel-lado a b {
+  background: #ef4444;
+  color: #fff;
+  font: 700 11px/1.6 'Inter', sans-serif;
+  padding: 0 7px;
+  border-radius: 9px;
+}
+
+.painel-lado a.breve {
+  color: var(--apoio);
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.numero {
+  padding: 16px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+}
+
+.numero span {
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.numero b {
+  display: block;
+  margin-top: 4px;
+  font: italic 700 40px/1 var(--titulo);
+}
+
+.numero.alerta b {
+  color: #ef4444;
+}
+
+.numero.ok b {
+  color: var(--verde);
+}
+
+.bloco {
+  margin-top: 20px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+}
+
+.bloco-cabeca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--linha);
+}
+
+.bloco-cabeca h2 {
+  margin: 0;
+  font: italic 700 24px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.bloco-cabeca a {
+  color: var(--ouro);
+  font-size: 13px;
+}
+
+.linha-caso {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.12);
+  font-size: 14px;
+}
+
+.linha-caso:last-child {
+  border-bottom: 0;
+}
+
+.linha-caso small {
+  display: block;
+  color: var(--apoio);
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(168, 85, 247, 0.2);
+  font-size: 12px;
+}
+
+.tag.vermelha {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.tag.verde {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--verde);
+}
+
+.botao-pequeno {
+  padding: 6px 14px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 16px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.botao-pequeno.contorno {
+  background: transparent;
+  border: 1px solid var(--roxo);
+  color: var(--tinta);
+}
+
+.duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .painel-tela,
+  .duas-colunas,
+  .numeros {
+    grid-template-columns: 1fr;
+  }
+}
+
+.item-loja > span {
+  color: var(--ouro);
+}
+
+.item em {
+  margin-left: 4px;
+  padding: 1px 5px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: 700 10px/1.4 'Inter', sans-serif;
+  font-style: normal;
+  vertical-align: 3px;
+}
+
+/* Salas: foto de cada um com o K/D */
+.vagas {
+  display: flex;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+
+.vaga {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 44px;
+}
+
+.vaga .foto {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--linha);
+  border-radius: 8px;
+  font: italic 700 16px/1 var(--titulo);
+}
+
+.vaga small {
+  color: var(--apoio);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.vaga.livre .foto {
+  border: 2px dashed rgba(185, 168, 214, 0.35);
+  color: var(--apoio);
+}
+
+.vaga.livre small {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.botoes-sala {
+  display: flex;
+  gap: 6px;
+}
+
+.minha-sala {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border-color: var(--ouro);
+  background: linear-gradient(90deg, rgba(245, 179, 1, 0.12), var(--painel) 60%);
+}
+
+.minha-sala-topo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.minha-sala-topo .etiqueta {
+  margin: 0;
+}
+
+.minha-sala-topo h3 {
+  margin: 0;
+  font: italic 700 30px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.minha-sala-topo .apoio {
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.vagas.grandes {
+  gap: 14px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.vagas.grandes .vaga {
+  width: 120px;
+  padding: 12px 8px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--escuro);
+}
+
+.vagas.grandes .vaga.lider {
+  border-color: var(--ouro);
+}
+
+.vagas.grandes .foto {
+  width: 64px;
+  height: 64px;
+  font-size: 26px;
+}
+
+.vagas.grandes b {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.vagas.grandes small {
+  font-size: 12px;
+}
+
+.vagas.grandes .vaga.lider small::after {
+  content: ' · líder';
+  color: var(--ouro);
+}
+
+.expulsar {
+  margin-top: 4px;
+  color: #fca5a5;
+  font-size: 11px;
+}
+
+.minha-sala-botoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Sala de competitivo: barra lateral presa na borda esquerda da tela, enquanto a pessoa estiver numa sala */
+/* O cabeçalho fica inteiro e preso no topo; a barra começa logo abaixo dele. */
+body.com-sala .faixa {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+body.com-sala .menu {
+  position: sticky;
+  top: 44px;
+  z-index: 19;
+}
+
+.conteudo-com-sala {
+  margin-left: 270px;
+}
+
+.jogar-tela {
+  display: block;
+}
+
+.lado-sala {
+  position: fixed;
+  top: 98px;
+  bottom: 0;
+  left: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  width: 270px;
+  padding: 18px 16px;
+  overflow-y: auto;
+  border-right: 2px solid var(--ouro);
+  background: linear-gradient(180deg, #2a1d05 0%, var(--painel) 30%);
+  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.45);
+}
+
+.lado-sala-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lado-sala-topo .etiqueta {
+  margin: 0;
+}
+
+.lado-sala-topo b {
+  font: italic 700 26px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.lado-sala-topo small {
+  color: var(--apoio);
+  font-size: 12px;
+}
+
+.lado-sala-lista {
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lado-sala-lista li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.12);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lado-sala-lista li > span:nth-child(2) {
+  flex: 1;
+}
+
+.lado-sala-lista small {
+  display: block;
+  color: var(--apoio);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.lado-sala-lista .lider small {
+  color: var(--ouro);
+}
+
+.lado-sala-lista .foto {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--linha);
+  border-radius: 8px;
+  font: italic 700 16px/1 var(--titulo);
+}
+
+.lado-sala-lista .lider .foto {
+  border-color: var(--ouro);
+}
+
+.lado-sala-lista .livre {
+  color: var(--apoio);
+  font-weight: 400;
+}
+
+.lado-sala-lista .livre .foto {
+  border-style: dashed;
+}
+
+.lado-sala-lista a {
+  color: #fca5a5;
+  font-size: 18px;
+}
+
+.lado-sala-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.lado-sala-botoes a {
+  text-align: center;
+}
+
+body.com-sala .aviso-rascunho {
+  left: 282px;
+}
+
+@media (max-width: 900px) {
+  .conteudo-com-sala {
+    margin-left: 0;
+  }
+
+  .lado-sala {
+    position: static;
+    width: auto;
+    margin-top: 16px;
+    border: 1px solid var(--ouro);
+  }
+}
+
+/* Fora da tela Jogar: um aviso flutuante de que a pessoa está numa sala */
+.aviso-sala {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--ouro);
+  border-radius: 8px;
+  background: var(--painel);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  font-size: 14px;
+}
+
+.aviso-sala b {
+  color: var(--ouro);
+}
+
+.aviso-sala em {
+  padding: 6px 12px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: italic 700 16px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.aviso-sala-ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.25);
+  animation: pulsar 1.6s infinite;
+}
+
+@keyframes pulsar {
+  50% {
+    box-shadow: 0 0 0 7px rgba(74, 222, 128, 0);
+  }
+}

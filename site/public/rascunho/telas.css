@@ -1,0 +1,384 @@
+.apoio {
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.centro {
+  text-align: center;
+}
+
+.ouro {
+  color: var(--ouro);
+}
+
+/* Perfil */
+.perfil-capa {
+  padding: 34px 0 28px;
+  background:
+    linear-gradient(90deg, rgba(7, 4, 13, 0.95) 30%, rgba(7, 4, 13, 0.55)),
+    url(/mapas/mirage.webp) center / cover;
+  border-bottom: 1px solid var(--linha);
+}
+
+.perfil-linha {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.perfil-avatar {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border: 3px solid var(--ouro);
+  border-radius: 14px;
+  background: #3b1a63;
+  font: italic 700 40px/1 var(--titulo);
+}
+
+.perfil-nome {
+  flex: 1;
+}
+
+.perfil-nome h1 {
+  margin: 0;
+  font: italic 700 52px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.clan-tag {
+  color: var(--roxo);
+  font: italic 700 20px/1 var(--titulo);
+}
+
+.perfil-selos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.perfil-selos .etiqueta {
+  margin: 0;
+}
+
+.perfil-patente {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ouro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.perfil-botoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.patente-bloco {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  flex-wrap: wrap;
+}
+
+.patente-texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 260px;
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.patente-texto > b {
+  color: var(--ouro);
+  font: italic 700 30px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.barra.grossa {
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.perfil-numeros {
+  margin-top: 20px;
+}
+
+.numero span + span {
+  display: block;
+}
+
+.perfil-colunas {
+  grid-template-columns: 1.6fr 1fr;
+}
+
+.tabela-rascunho {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabela-rascunho th {
+  padding: 10px 14px;
+  color: var(--apoio);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.tabela-rascunho td {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(168, 85, 247, 0.12);
+}
+
+.tabela-rascunho tr.minha td {
+  background: rgba(245, 179, 1, 0.1);
+}
+
+.tabela-rascunho .xp {
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.res {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.res.v {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--verde);
+}
+
+.res.d {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.mapas-grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+}
+
+.mapa-mini,
+.melhor-corpo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 84px;
+  padding: 8px 10px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: center / cover;
+  font-size: 12px;
+}
+
+.mapa-mini::before,
+.melhor-corpo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(7, 4, 13, 0.9));
+}
+
+.mapa-mini > *,
+.melhor-corpo > * {
+  position: relative;
+}
+
+.mapa-mini b,
+.melhor-corpo b {
+  font: italic 700 20px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.melhor-corpo {
+  height: 110px;
+  margin: 12px;
+}
+
+.elogios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.elogios span {
+  padding: 6px 12px;
+  border: 1px solid var(--linha);
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.elogios b {
+  color: var(--ouro);
+}
+
+/* Ranking */
+.breve-tag {
+  margin-left: 4px;
+  padding: 1px 5px;
+  background: var(--ouro);
+  color: var(--sobre-ouro);
+  font: 700 10px/1.4 'Inter', sans-serif;
+  font-style: normal;
+}
+
+.podio {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.podio-lugar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 14px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+  text-align: center;
+}
+
+.podio-lugar.ouro {
+  padding-top: 34px;
+  border-color: var(--ouro);
+  background: linear-gradient(180deg, rgba(245, 179, 1, 0.18), var(--painel));
+}
+
+.podio-lugar.prata {
+  border-color: #c9d1dc;
+}
+
+.podio-lugar.bronze {
+  border-color: #c08a5a;
+}
+
+.podio-lugar > b {
+  font: italic 700 26px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.podio-pos {
+  font: italic 700 34px/1 var(--titulo);
+  color: var(--ouro);
+}
+
+.podio-lugar.prata .podio-pos {
+  color: #c9d1dc;
+}
+
+.podio-lugar.bronze .podio-pos {
+  color: #c08a5a;
+}
+
+.podio-lugar .perfil-avatar {
+  width: 72px;
+  height: 72px;
+  font-size: 30px;
+}
+
+.podio-xp {
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+/* Patentes */
+.como-ganha {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 20px;
+  border-left: 1px solid var(--linha);
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.como-ganha b {
+  color: var(--tinta);
+}
+
+.grupo-patentes h2 {
+  margin: 34px 0 14px;
+  font: italic 700 34px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.patentes-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.patente-cartao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 12px 16px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--painel);
+  text-align: center;
+}
+
+.patente-cartao b {
+  font: italic 700 24px/1 var(--titulo);
+  text-transform: uppercase;
+}
+
+.patente-cartao span {
+  color: var(--apoio);
+  font-size: 13px;
+}
+
+.patente-cartao small {
+  color: var(--ouro);
+  font-size: 12px;
+}
+
+.patente-cartao.minha {
+  border-color: var(--ouro);
+  background: linear-gradient(180deg, rgba(245, 179, 1, 0.14), var(--painel));
+}
+
+.patente-cartao .voce {
+  position: absolute;
+  top: -10px;
+  margin: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .perfil-colunas,
+  .podio {
+    grid-template-columns: 1fr;
+  }
+
+  .como-ganha {
+    padding-left: 0;
+    border-left: 0;
+  }
+}

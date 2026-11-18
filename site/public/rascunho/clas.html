@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Clãs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="telas.css">
+  <link rel="stylesheet" href="conteudo.css">
+  <link rel="stylesheet" href="loja.css">
+</head>
+<body>
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="inicio.html"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta">
+        <a class="painel-adm" href="painel.html">&#128737; Painel ADM <b>3</b></a>
+        <span class="sino" title="Avisos">&#128276;<b>2</b></span>
+        <div class="conta">
+          <svg class="escudo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#2b2a33" stroke="#c9d1dc" stroke-width="1.6"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round"/></svg>
+          Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;
+          <div class="conta-menu">
+            <a href="perfil.html">Meu perfil</a>
+            <a href="#">Minha patente</a>
+            <a href="#">Convites</a>
+            <a href="#">Suporte ao jogador</a>
+            <a href="#">Sair</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens">
+        <div class="item"><span>Notícias</span>
+          <div class="suspenso"><a href="noticias.html">Do clube</a><a href="noticias.html">CS2 oficial</a><a href="noticias.html">Times brasileiros</a></div>
+        </div>
+        <div class="item"><span>Jogo</span>
+          <div class="suspenso"><a href="jogo.html#como-funciona">Como funciona</a><a href="jogo.html#modos">Modos</a><a href="jogo.html#mapas">Mapas</a><a href="patentes.html">Patentes</a><a href="jogo.html#regras">Regras</a></div>
+        </div>
+        <div class="item"><span>Ranking</span>
+          <div class="suspenso"><a href="ranking.html">Comunidade</a><a href="ranking.html">Mix do mês</a><a href="#">MVPs</a></div>
+        </div>
+        <div class="item"><span>Comunidade</span>
+          <div class="suspenso"><a href="#">Online agora</a><a href="#">Convites</a><a href="#">Discord</a></div>
+        </div>
+        <div class="item ativo"><span>Clãs</span>
+          <div class="suspenso"><a href="clas.html#meu">Meu clã</a><a href="clas.html#procurar">Procurar clãs</a><a href="clas.html#ranking">Ranking de clãs</a><a href="clas.html#criar">Criar clã</a></div>
+        </div>
+        <a class="item item-loja" href="shop.html"><span>Magnata Shop <em>em breve</em></span></a>
+      </div>
+      <a class="jogar" href="jogar.html">JOGAR</a>
+    </div>
+    <a class="aviso-sala" href="jogar.html"><span class="aviso-sala-ponto"></span><span>Você está na <b>Sala do Dragonzit0</b> · 3/5</span><em>Voltar para a sala</em></a>
+  </nav>
+
+  <section class="cabeca-jogar"><div class="largura"><h1>Clãs</h1><p>Monte o seu time fixo, jogue junto e suba no ranking de clãs.</p>
+    <div class="filtros abas-cla">
+      <button class="ativo" data-aba="meu">Meu clã</button>
+      <button data-aba="procurar">Procurar clãs</button>
+      <button data-aba="ranking">Ranking de clãs</button>
+      <button data-aba="criar">Criar clã</button>
+    </div>
+  </div></section>
+  <main class="largura">
+    <section class="aba" id="aba-meu">
+      <div class="cla-capa">
+        <svg viewBox="0 0 64 64" width="110" height="110" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#f5b301" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#f5b301" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">MGN</text></svg>
+        <div class="cla-nome"><span class="clan-tag">[MGN]</span><h2>Magnatas Originais</h2><p>Os primeiros do servidor. Jogamos mix toda noite, às 21h.</p></div>
+        <div class="cla-botoes"><a class="botao-pequeno" href="#">Chamar para o clã</a><a class="botao-pequeno contorno" href="#">Editar clã</a><a class="botao-pequeno contorno" href="#">Sair do clã</a></div>
+      </div>
+      <div class="numeros">
+        <div class="numero"><span>Posição no ranking</span><b>2º</b></div>
+        <div class="numero ok"><span>Vitórias juntos</span><b>12</b></div>
+        <div class="numero"><span>Aproveitamento</span><b>64%</b></div>
+        <div class="numero"><span>Membros</span><b>6/20</b></div>
+      </div>
+      <div class="duas-colunas perfil-colunas">
+        <section class="bloco"><div class="bloco-cabeca"><h2>Membros</h2><span class="apoio">Dono, capitães e membros</span></div>
+          <table class="tabela-rascunho"><thead><tr><th>Jogador</th><th>Cargo</th><th>Patente</th><th>K/D</th></tr></thead><tbody><tr><td><span class="mini-foto">DR</span> <b>Dragonzit0</b></td><td><span class="cargo-cla dono">Dono</span></td><td><span class="perfil-patente"><svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c9d1dc" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Associado 2</span></td><td>1.24</td></tr><tr><td><span class="mini-foto">CH</span> <b>Charlie</b></td><td><span class="cargo-cla capitao">Capitão</span></td><td><span class="perfil-patente"><svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#4ade80" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Empresário 2</span></td><td>1.08</td></tr><tr><td><span class="mini-foto">EC</span> <b>Echo</b></td><td><span class="cargo-cla membro">Membro</span></td><td><span class="perfil-patente"><svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c08a5a" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Novato 1</span></td><td>0.91</td></tr><tr><td><span class="mini-foto">DE</span> <b>Delta</b></td><td><span class="cargo-cla membro">Membro</span></td><td><span class="perfil-patente"><svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c08a5a" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 20 6 4.5 6-4.5" fill="none" stroke="#c08a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Olheiro 1</span></td><td>1.02</td></tr><tr><td><span class="mini-foto">FI</span> <b>ficticio_6387</b></td><td><span class="cargo-cla membro">Membro</span></td><td><span class="perfil-patente"><svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#4ade80" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Magnata Jr. 3</span></td><td>1.15</td></tr><tr><td><span class="mini-foto">FO</span> <b>Foxtrot</b></td><td><span class="cargo-cla membro">Membro</span></td><td><span class="perfil-patente"><svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#1a1226" stroke="#c9d1dc" stroke-width="1.6" stroke-linejoin="round"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 15 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Soldado 1</span></td><td>0.97</td></tr></tbody></table>
+        </section>
+        <div>
+          <section class="bloco"><div class="bloco-cabeca"><h2>Últimas do clã</h2></div>
+            <div class="linha-caso"><div>Desafio contra [FRG] Forja<small>Mirage · 06/11</small></div><span class="res v">Vitória 13 x 10</span><span></span></div>
+            <div class="linha-caso"><div>Desafio contra [BLK] Black List<small>Dust 2 · 05/11</small></div><span class="res d">Derrota 9 x 13</span><span></span></div>
+            <div class="linha-caso"><div>Desafio contra [LOB] Lobos do Sul<small>Mirage · 03/11</small></div><span class="res v">Vitória 13 x 6</span><span></span></div>
+          </section>
+          <section class="bloco"><div class="bloco-cabeca"><h2>Pedidos para entrar</h2><span class="apoio">2</span></div>
+            <div class="linha-caso"><div>Golf<small>Magnata Jr. 1 · K/D 1.11</small></div><a class="botao-pequeno" href="#">Aceitar</a><a class="botao-pequeno contorno" href="#">Recusar</a></div>
+            <div class="linha-caso"><div>Hotel<small>Soldado 3 · K/D 0.95</small></div><a class="botao-pequeno" href="#">Aceitar</a><a class="botao-pequeno contorno" href="#">Recusar</a></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="aba" id="aba-procurar" hidden>
+      <div class="busca"><input placeholder="Nome ou sigla do clã" aria-label="Procurar clã"><a class="botao-pequeno" href="#">Procurar</a></div>
+      <div class="clas-lista"><div class="cla-cartao"><svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#f5b301" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#f5b301" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">MGN</text></svg><div><b>[MGN] Magnatas Originais</b><span>6 membros · 12 vitórias · 64%</span></div><span class="etiqueta verde">Aberto</span><a class="botao-pequeno " href="#">Entrar</a></div><div class="cla-cartao"><svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#a855f7" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#a855f7" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">FRG</text></svg><div><b>[FRG] Forja</b><span>9 membros · 15 vitórias · 58%</span></div><span class="etiqueta ">Com convite</span><a class="botao-pequeno contorno" href="#">Pedir para entrar</a></div><div class="cla-cartao"><svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#4ade80" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#4ade80" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">LOB</text></svg><div><b>[LOB] Lobos do Sul</b><span>5 membros · 8 vitórias · 52%</span></div><span class="etiqueta verde">Aberto</span><a class="botao-pequeno " href="#">Entrar</a></div><div class="cla-cartao"><svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#c9d1dc" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#c9d1dc" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">BLK</text></svg><div><b>[BLK] Black List</b><span>11 membros · 21 vitórias · 61%</span></div><span class="etiqueta ">Com convite</span><a class="botao-pequeno contorno" href="#">Pedir para entrar</a></div><div class="cla-cartao"><svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#c08a5a" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#c08a5a" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">NOV</text></svg><div><b>[NOV] Novatos FC</b><span>4 membros · 2 vitórias · 40%</span></div><span class="etiqueta verde">Aberto</span><a class="botao-pequeno " href="#">Entrar</a></div><div class="cla-cartao"><svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#ef4444" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#ef4444" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">SNP</text></svg><div><b>[SNP] Snipers</b><span>7 membros · 10 vitórias · 55%</span></div><span class="etiqueta ">Com convite</span><a class="botao-pequeno contorno" href="#">Pedir para entrar</a></div></div>
+    </section>
+
+    <section class="aba" id="aba-ranking" hidden>
+      <section class="bloco"><table class="tabela-rascunho"><thead><tr><th>#</th><th>Clã</th><th>Vitórias</th><th>Aproveitamento</th><th>Membros</th></tr></thead><tbody><tr class=""><td>1</td><td><span class="cla-linha"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#c9d1dc" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#c9d1dc" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">BLK</text></svg> <b>[BLK] Black List</b></span></td><td>21</td><td>61%</td><td>11</td></tr><tr class=""><td>2</td><td><span class="cla-linha"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#a855f7" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#a855f7" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">FRG</text></svg> <b>[FRG] Forja</b></span></td><td>15</td><td>58%</td><td>9</td></tr><tr class="minha"><td>3</td><td><span class="cla-linha"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#f5b301" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#f5b301" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">MGN</text></svg> <b>[MGN] Magnatas Originais</b></span></td><td>12</td><td>64%</td><td>6</td></tr><tr class=""><td>4</td><td><span class="cla-linha"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#ef4444" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#ef4444" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">SNP</text></svg> <b>[SNP] Snipers</b></span></td><td>10</td><td>55%</td><td>7</td></tr><tr class=""><td>5</td><td><span class="cla-linha"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#4ade80" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#4ade80" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">LOB</text></svg> <b>[LOB] Lobos do Sul</b></span></td><td>8</td><td>52%</td><td>5</td></tr><tr class=""><td>6</td><td><span class="cla-linha"><svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#c08a5a" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#c08a5a" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">NOV</text></svg> <b>[NOV] Novatos FC</b></span></td><td>2</td><td>40%</td><td>4</td></tr></tbody></table></section>
+      <p class="apoio centro">Conta só desafio entre clãs, com pelo menos 3 membros de cada clã no time.</p>
+    </section>
+
+    <section class="aba" id="aba-criar" hidden>
+      <div class="criar-cla">
+        <div class="criar-previa"><svg viewBox="0 0 64 64" width="120" height="120" aria-hidden="true"><path d="M32 3 58 13v18c0 15-11 26-26 30C17 57 6 46 6 31V13z" fill="#1a1226" stroke="#a855f7" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="#a855f7" font-family="Barlow Condensed" font-style="italic" font-weight="700" font-size="22">???</text></svg><b>[TAG] Nome do clã</b><span class="apoio">É assim que o seu clã vai aparecer</span></div>
+        <form class="bloco criar-form" onsubmit="return false">
+          <label>Nome do clã<input placeholder="Magnatas Originais"></label>
+          <label>Sigla, de 2 a 4 letras<input placeholder="MGN" maxlength="4"></label>
+          <label>Cor<span class="cores"><i style="background:#f5b301"></i><i style="background:#a855f7"></i><i style="background:#4ade80"></i><i style="background:#ef4444"></i><i style="background:#c9d1dc"></i></span></label>
+          <label>Quem pode entrar<select><option>Qualquer um</option><option>Só com convite</option></select></label>
+          <label>Descrição<textarea rows="3" placeholder="Jogamos mix toda noite, às 21h."></textarea></label>
+          <a class="botao-ouro pequeno-ouro" href="#">CRIAR CLÃ</a>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.querySelectorAll('[data-aba]').forEach((botao) => botao.addEventListener('click', () => {
+      document.querySelectorAll('[data-aba]').forEach((outro) => outro.classList.toggle('ativo', outro === botao));
+      document.querySelectorAll('.aba').forEach((aba) => { aba.hidden = aba.id !== 'aba-' + botao.dataset.aba; });
+    }));
+    const abrirPeloEndereco = () => {
+      const botaoPedido = document.querySelector('[data-aba="' + location.hash.replace('#', '') + '"]');
+      if (botaoPedido) botaoPedido.click();
+    };
+    abrirPeloEndereco();
+    window.addEventListener('hashchange', abrirPeloEndereco);
+  </script>
+
+  <footer class="rodape">
+    <div class="largura">
+      <span>Magnatas do CS</span>
+      <span>Jogo · Ranking · Comunidade · Suporte</span>
+    </div>
+  </footer>
+
+  <span class="aviso-rascunho">RASCUNHO</span>
+</body>
+</html>

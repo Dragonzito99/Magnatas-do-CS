@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Magnata Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="telas.css">
+  <link rel="stylesheet" href="conteudo.css">
+  <link rel="stylesheet" href="loja.css">
+</head>
+<body>
+  <div class="faixa">
+    <div class="largura">
+      <a class="faixa-logo" href="inicio.html"><img src="/marca/logo.webp" alt="Magnatas do CS"></a>
+      <div class="faixa-conta">
+        <a class="painel-adm" href="painel.html">&#128737; Painel ADM <b>3</b></a>
+        <span class="sino" title="Avisos">&#128276;<b>2</b></span>
+        <div class="conta">
+          <svg class="escudo" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 28 6v9c0 7-5.5 12.5-12 15C9.5 27.5 4 22 4 15V6z" fill="#2b2a33" stroke="#c9d1dc" stroke-width="1.6"/><path d="m10 10 6 4.5 6-4.5" fill="none" stroke="#c9d1dc" stroke-width="2.4" stroke-linecap="round"/></svg>
+          Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;
+          <div class="conta-menu">
+            <a href="perfil.html">Meu perfil</a>
+            <a href="#">Minha patente</a>
+            <a href="#">Convites</a>
+            <a href="#">Suporte ao jogador</a>
+            <a href="#">Sair</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="menu">
+    <div class="largura">
+      <div class="menu-itens">
+        <div class="item"><span>Notícias</span>
+          <div class="suspenso"><a href="noticias.html">Do clube</a><a href="noticias.html">CS2 oficial</a><a href="noticias.html">Times brasileiros</a></div>
+        </div>
+        <div class="item"><span>Jogo</span>
+          <div class="suspenso"><a href="jogo.html#como-funciona">Como funciona</a><a href="jogo.html#modos">Modos</a><a href="jogo.html#mapas">Mapas</a><a href="patentes.html">Patentes</a><a href="jogo.html#regras">Regras</a></div>
+        </div>
+        <div class="item"><span>Ranking</span>
+          <div class="suspenso"><a href="ranking.html">Comunidade</a><a href="ranking.html">Mix do mês</a><a href="#">MVPs</a></div>
+        </div>
+        <div class="item"><span>Comunidade</span>
+          <div class="suspenso"><a href="#">Online agora</a><a href="#">Convites</a><a href="#">Discord</a></div>
+        </div>
+        <div class="item"><span>Clãs</span>
+          <div class="suspenso"><a href="clas.html#meu">Meu clã</a><a href="clas.html#procurar">Procurar clãs</a><a href="clas.html#ranking">Ranking de clãs</a><a href="clas.html#criar">Criar clã</a></div>
+        </div>
+        <a class="item item-loja ativo" href="shop.html"><span>Magnata Shop <em>em breve</em></span></a>
+      </div>
+      <a class="jogar" href="jogar.html">JOGAR</a>
+    </div>
+    <a class="aviso-sala" href="jogar.html"><span class="aviso-sala-ponto"></span><span>Você está na <b>Sala do Dragonzit0</b> · 3/5</span><em>Voltar para a sala</em></a>
+  </nav>
+
+  <section class="loja-capa">
+    <div class="largura loja-linha">
+      <div><h1>Magnata <b>Shop</b></h1><p>Gaste as moedas que você ganha jogando. Só visual: nada aqui dá vantagem no jogo.</p></div>
+      <div class="saldo"><span>Seu saldo</span><b><i class="moeda grande"></i> 4.320</b><small>+120 por partida jogada até o fim · nome da moeda a definir</small></div>
+    </div>
+  </section>
+  <main class="largura">
+    <div class="filtros">
+      <button class="ativo" data-filtro="todos">Tudo</button>
+      <button data-filtro="Molduras">Molduras</button>
+      <button data-filtro="Nomes">Cor do nome</button>
+      <button data-filtro="Capas">Capas de perfil</button>
+      <button data-filtro="Títulos">Títulos</button>
+      <button data-filtro="Chat">Chat do servidor</button>
+    </div>
+    <div class="itens-grade"><article class="item-loja-cartao" data-cat="Molduras"><div class="item-previa"><span class="previa-avatar" style="border-color:#f5b301;box-shadow:0 0 18px #f5b301">DZ</span></div><div class="item-corpo"><span class="etiqueta">Molduras</span><h3>Moldura Dourada</h3><p>Borda de ouro no seu avatar, em todo o site.</p><div class="item-preco"><b><i class="moeda"></i> 2.500</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Molduras"><div class="item-previa"><span class="previa-avatar" style="border-color:#a855f7;box-shadow:0 0 18px #a855f7">DZ</span></div><div class="item-corpo"><span class="etiqueta">Molduras</span><h3>Moldura Neon Roxo</h3><p>Borda roxa que brilha no seu avatar.</p><div class="item-preco"><b><i class="moeda"></i> 1.800</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Nomes"><div class="item-previa"><span class="previa-nome" style="color:#f5b301">Dragonzit0</span></div><div class="item-corpo"><span class="etiqueta">Nomes</span><h3>Nome em Ouro</h3><p>Seu nome aparece em dourado no ranking e nas partidas.</p><div class="item-preco"><b><i class="moeda"></i> 3.000</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Nomes"><div class="item-previa"><span class="previa-nome" style="color:#4ade80">Dragonzit0</span></div><div class="item-corpo"><span class="etiqueta">Nomes</span><h3>Nome em Verde</h3><p>Seu nome aparece em verde no ranking e nas partidas.</p><div class="item-preco"><b><i class="moeda"></i> 1.500</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Capas"><div class="item-previa"><span class="previa-capa" style="background-image:url(/mapas/egypt.webp)"></span></div><div class="item-corpo"><span class="etiqueta">Capas</span><h3>Capa Egypt</h3><p>Foto do Egypt no topo do seu perfil.</p><div class="item-preco"><b><i class="moeda"></i> 1.200</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Capas"><div class="item-previa"><span class="previa-capa" style="background-image:url(/mapas/laboratory.webp)"></span></div><div class="item-corpo"><span class="etiqueta">Capas</span><h3>Capa Laboratory</h3><p>Foto do Laboratory no topo do seu perfil.</p><div class="item-preco"><b><i class="moeda"></i> 1.200</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Títulos"><div class="item-previa"><span class="previa-titulo"><b>Dragonzit0</b><small>O Fantasma</small></span></div><div class="item-corpo"><span class="etiqueta">Títulos</span><h3>Título: O Fantasma</h3><p>Aparece embaixo do seu nome no perfil.</p><div class="item-preco"><b><i class="moeda"></i> 900</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Títulos"><div class="item-previa"><span class="previa-titulo"><b>Dragonzit0</b><small>Rei do Mix</small></span></div><div class="item-corpo"><span class="etiqueta">Títulos</span><h3>Título: Rei do Mix</h3><p>Aparece embaixo do seu nome no perfil.</p><div class="item-preco"><b><i class="moeda"></i> 900</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article><article class="item-loja-cartao" data-cat="Chat"><div class="item-previa"><span class="previa-chat"><b>[VIP]</b> Dragonzit0: gg</span></div><div class="item-corpo"><span class="etiqueta">Chat</span><h3>Tag no chat do servidor</h3><p>Uma tag colorida antes do seu nome no chat do jogo.</p><div class="item-preco"><b><i class="moeda"></i> 2.000</b><a class="botao-pequeno" href="#">Comprar</a></div></div></article></div>
+    <section class="bloco"><div class="bloco-cabeca"><h2>Meus itens</h2><a href="#">Ver todos</a></div>
+      <div class="linha-caso"><div>Moldura Neon Roxo<small>Comprada em 05/11</small></div><span class="tag verde">Usando</span><a class="botao-pequeno contorno" href="#">Tirar</a></div>
+      <div class="linha-caso"><div>Título: Rei do Mix<small>Comprado em 02/11</small></div><span class="tag">Guardado</span><a class="botao-pequeno" href="#">Usar</a></div>
+    </section>
+  </main>
+  <script>
+    const botoes = document.querySelectorAll('.filtros button');
+    botoes.forEach((botao) => botao.addEventListener('click', () => {
+      botoes.forEach((outro) => outro.classList.toggle('ativo', outro === botao));
+      document.querySelectorAll('.item-loja-cartao').forEach((item) => {
+        item.style.display = botao.dataset.filtro === 'todos' || item.dataset.cat === botao.dataset.filtro ? '' : 'none';
+      });
+    }));
+  </script>
+
+  <footer class="rodape">
+    <div class="largura">
+      <span>Magnatas do CS</span>
+      <span>Jogo · Ranking · Comunidade · Suporte</span>
+    </div>
+  </footer>
+
+  <span class="aviso-rascunho">RASCUNHO</span>
+</body>
+</html>

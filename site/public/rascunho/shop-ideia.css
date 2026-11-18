@@ -1,0 +1,425 @@
+/* Rascunho da Magnata Shop: uma grade só (12 colunas, espaço de 16px) e um cartão só para todo item */
+.s-pagina {
+  --s-espaco: 16px;
+  --comum: #8a8f9c;
+  --raro: #4c8dff;
+  --epico: #b05cff;
+  --lendario: #f5b301;
+  padding: 24px 0 64px;
+}
+
+.s-carteira {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.s-carteira h1 {
+  margin-right: auto;
+  font: italic 700 40px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.s-moeda {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #110b1b;
+}
+
+.s-moeda i {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font: normal 800 12px/1 Inter, sans-serif;
+}
+
+.s-moeda.grana i { background: #f5b301; color: #1c1102; }
+.s-moeda.magcoin i { background: #7c3aed; color: #fff; }
+.s-moeda b { font-size: 16px; }
+.s-moeda small { color: #8d82a3; }
+
+.s-moeda.comprar {
+  background: #f5b301;
+  border-color: #f5b301;
+  color: #1c1102;
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.s-secao {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 36px 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.s-secao h2 {
+  font: italic 700 26px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+}
+
+.s-secao .relogio {
+  color: #f5b301;
+  font: 600 13px/1 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.s-secao a {
+  margin-left: auto;
+  color: #ab9fc2;
+  font-size: 13px;
+}
+
+/* Destaque: o lançamento ocupa 8 colunas, as duas ofertas grandes as outras 4 */
+.s-topo {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--s-espaco);
+}
+
+.s-destaque {
+  grid-column: span 8;
+  position: relative;
+  min-height: 380px;
+  overflow: hidden;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background:
+    linear-gradient(90deg, rgba(7, 4, 13, 0.95) 0%, rgba(7, 4, 13, 0.6) 45%, transparent 75%),
+    radial-gradient(circle at 75% 40%, rgba(74, 222, 128, 0.25), transparent 55%),
+    #0d1a12;
+  border-bottom: 4px solid var(--lendario);
+}
+
+.s-destaque img {
+  position: absolute;
+  right: 4%;
+  bottom: 0;
+  height: 108%;
+  pointer-events: none;
+}
+
+.s-destaque .s-raridade { position: relative; }
+
+.s-destaque h3 {
+  position: relative;
+  max-width: 55%;
+  font: italic 700 52px/0.95 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+}
+
+.s-destaque p {
+  position: relative;
+  max-width: 46%;
+  margin: 10px 0 18px;
+  color: #cfc6de;
+}
+
+.s-destaque .s-acoes { position: relative; display: flex; gap: 10px; }
+
+.s-laterais {
+  grid-column: span 4;
+  display: grid;
+  gap: var(--s-espaco);
+}
+
+.s-raridade {
+  display: inline-block;
+  align-self: flex-start;
+  margin-bottom: 10px;
+  padding: 3px 8px;
+  font: italic 700 13px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--cor);
+  color: #0a0612;
+}
+
+.s-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  background: #f5b301;
+  color: #1c1102;
+  font: italic 700 18px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.s-botao.fantasma {
+  background: transparent;
+  color: #f3eefc;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* O cartão de item: igual em toda a loja */
+.s-grade {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--s-espaco);
+}
+
+.s-grade.quatro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.s-item {
+  --cor: var(--comum);
+  display: flex;
+  flex-direction: column;
+  background: #110b1b;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.12s, border-color 0.12s;
+  cursor: pointer;
+}
+
+.s-item:hover { transform: translateY(-3px); border-color: var(--cor); }
+.s-item.raro { --cor: var(--raro); }
+.s-item.epico { --cor: var(--epico); }
+.s-item.lendario { --cor: var(--lendario); }
+
+.s-item .s-palco {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--cor) 28%, transparent), transparent 70%), #0b0713;
+  border-bottom: 3px solid var(--cor);
+}
+
+.s-item.alto .s-palco { aspect-ratio: auto; height: 100%; min-height: 0; }
+.s-item.alto { min-height: 0; }
+
+.s-item .s-palco img { height: 92%; max-width: 100%; object-fit: contain; align-self: end; }
+
+.s-item .s-tempo {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #f5b301;
+  font: 600 11px/1.4 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.s-item .s-tenho {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  background: #4ade80;
+  color: #062b12;
+  font: 700 11px/1.4 Inter, sans-serif;
+  text-transform: uppercase;
+}
+
+.s-item .s-info { padding: 10px 12px 12px; }
+
+.s-item .s-tipo {
+  display: block;
+  color: var(--cor);
+  font: italic 700 12px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.s-item .s-nome {
+  display: block;
+  margin: 4px 0 8px;
+  font: italic 700 20px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+}
+
+.s-preco {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.s-preco i {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f5b301;
+  color: #1c1102;
+  font: normal 800 10px/1 Inter, sans-serif;
+}
+
+.s-preco small { color: #8d82a3; font-weight: 400; }
+
+/* As prévias de cada tipo, dentro do palco */
+.p-chat {
+  width: 86%;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.55);
+  font: 600 13px/1.3 Inter, sans-serif;
+  color: #e9e4f2;
+}
+
+.p-chat b { font-weight: 800; }
+
+.p-foto {
+  width: 58%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: url(/marca/personagem.webp) center 20% / 160% no-repeat, #24173a;
+}
+
+.p-foto.dourada { box-shadow: 0 0 0 4px #f5b301, 0 0 0 7px #7a5a00; }
+.p-foto.neon { box-shadow: 0 0 0 3px #39f3ff, 0 0 18px 4px #39f3ff; }
+.p-foto.fogo { box-shadow: 0 0 0 3px #ff7a1a, 0 0 22px 6px #ff3d00; }
+.p-foto.gelo { box-shadow: 0 0 0 3px #b9ecff, 0 0 18px 4px #59c8ff; }
+
+/* Filtros do catálogo */
+.s-filtros {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.s-filtros a {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ab9fc2;
+  font: italic 700 15px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.s-filtros a.ativo { background: #f3eefc; color: #0a0612; border-color: #f3eefc; }
+.s-filtros .ordem { margin-left: auto; }
+
+/* Janela do item */
+.s-janela {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  place-items: center;
+  background: rgba(4, 2, 8, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.s-janela.aberta { display: grid; }
+
+.s-janela-caixa {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  width: min(920px, 92vw);
+  background: #110b1b;
+  border-top: 4px solid var(--lendario);
+}
+
+.s-janela-palco {
+  position: relative;
+  min-height: 460px;
+  display: grid;
+  place-items: end center;
+  background: radial-gradient(circle at 50% 60%, rgba(74, 222, 128, 0.28), transparent 65%), #0b0713;
+}
+
+.s-janela-palco img { height: 420px; }
+
+.s-niveis {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 6px;
+}
+
+.s-niveis span {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font: italic 700 13px/1 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+}
+
+.s-niveis span.ativo { background: #f5b301; color: #1c1102; border-color: #f5b301; }
+
+.s-janela-dados { padding: 28px; display: flex; flex-direction: column; }
+
+.s-janela-dados h3 {
+  font: italic 700 40px/0.95 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+}
+
+.s-janela-dados > p { margin: 10px 0 20px; color: #cfc6de; }
+
+.s-rotulo {
+  margin-bottom: 8px;
+  color: #8d82a3;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.s-dias {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.s-dias button {
+  padding: 10px 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0b0713;
+  color: #f3eefc;
+  cursor: pointer;
+}
+
+.s-dias button.ativo { border-color: #f5b301; box-shadow: inset 0 0 0 1px #f5b301; }
+.s-dias button span { display: block; color: #8d82a3; font-size: 12px; }
+.s-dias button b { font-size: 16px; }
+
+.s-para-sempre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid rgba(124, 58, 237, 0.6);
+  background: rgba(124, 58, 237, 0.12);
+}
+
+.s-janela-dados .s-acoes { margin-top: auto; display: flex; gap: 10px; }
+.s-janela-dados .s-acoes .s-botao { flex: 1; justify-content: center; }
+
+.s-fechar {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  color: #ab9fc2;
+  font-size: 22px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.s-nota {
+  margin-top: 40px;
+  padding: 14px 16px;
+  border-left: 3px solid #f5b301;
+  background: #110b1b;
+  color: #cfc6de;
+}

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rascunho: Ranking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,700;1,800&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="shop-ideia.css">
+  <style>
+    .r-topo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .r-topo h1 { margin-right: auto; font: italic 700 40px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .r-foto { display: block; border-radius: 50%; background: url(/marca/personagem.webp) center 20% / 160% no-repeat, #24173a; }
+
+    /* Seu lugar */
+    .r-eu { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 20px; padding: 18px 22px; margin-bottom: 22px; border: 1px solid rgba(245,179,1,.35); border-left: 4px solid #f5b301; background: linear-gradient(90deg, rgba(245,179,1,.10), #110b1b 55%); }
+    .r-eu .pos { font: italic 800 56px/1 'Barlow Condensed', sans-serif; color: #f5b301; }
+    .r-eu .pos small { font-size: 22px; }
+    .r-eu .r-foto { width: 64px; height: 64px; box-shadow: 0 0 0 3px #ff7a1a, 0 0 18px 4px #ff3d00; }
+    .r-eu b { display: block; font: italic 800 26px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .r-eu small.sub { color: #ab9fc2; }
+    .r-meta { margin-top: 10px; max-width: 520px; }
+    .r-meta div { display: flex; justify-content: space-between; color: #ab9fc2; font-size: 12px; margin-bottom: 5px; }
+    .r-meta div em { color: #f3eefc; font-style: normal; font-weight: 700; }
+    .r-barra { height: 8px; background: #1d1330; } .r-barra i { display: block; height: 100%; background: linear-gradient(90deg, #a855f7, #f5b301); }
+    .r-eu .xp { text-align: right; } .r-eu .xp b { font-size: 34px; } .r-eu .xp small { color: #ab9fc2; }
+
+    /* Pódio com degraus */
+    .r-podio { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 14px; margin-bottom: 22px; }
+    .r-lugar { display: grid; justify-items: center; text-align: center; }
+    .r-pessoa { display: grid; justify-items: center; gap: 8px; padding-bottom: 14px; }
+    .r-coroa { color: #f5b301; font-size: 26px; line-height: 1; filter: drop-shadow(0 0 8px rgba(245,179,1,.7)); }
+    .r-lugar .r-foto { width: 92px; height: 92px; box-shadow: 0 0 0 4px var(--m), 0 0 24px 2px color-mix(in srgb, var(--m) 60%, transparent); }
+    .r-lugar.p1 .r-foto { width: 120px; height: 120px; }
+    .r-lugar b { font: italic 800 24px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .r-lugar small { color: #ab9fc2; display: flex; align-items: center; gap: 6px; }
+    .r-lugar small i { width: 16px; height: 16px; background: var(--m); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+    .r-degrau { width: 100%; display: grid; place-items: center; gap: 2px; border-top: 4px solid var(--m); background: linear-gradient(180deg, color-mix(in srgb, var(--m) 22%, #110b1b), #0e0718); }
+    .r-degrau span { font: italic 800 54px/1 'Barlow Condensed', sans-serif; color: var(--m); }
+    .r-degrau em { font-style: normal; font-weight: 800; color: #f3eefc; }
+    .p1 { --m: #f5b301; } .p2 { --m: #c9d1dc; } .p3 { --m: #d08a4a; }
+    .p1 .r-degrau { height: 150px; } .p2 .r-degrau { height: 110px; } .p3 .r-degrau { height: 84px; }
+
+    /* Lista */
+    .r-lista { display: grid; gap: 6px; }
+    .r-linha { display: grid; grid-template-columns: 54px 44px minmax(0,1fr) 170px minmax(0,1.3fr) 80px 80px; align-items: center; gap: 14px; padding: 10px 16px 10px 12px; border: 1px solid rgba(255,255,255,.06); background: #110b1b; }
+    .r-linha.cab { background: none; border-color: transparent; color: #ab9fc2; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding-block: 0; }
+    .r-linha.eu { border-color: rgba(245,179,1,.5); background: linear-gradient(90deg, rgba(245,179,1,.10), #110b1b 50%); }
+    .r-linha .n { font: italic 800 26px/1 'Barlow Condensed', sans-serif; color: #ab9fc2; text-align: center; }
+    .r-linha .r-foto { width: 44px; height: 44px; }
+    .r-linha .nome { font: italic 700 20px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .r-pat { display: flex; align-items: center; gap: 8px; color: #cfc6de; font-size: 13px; }
+    .r-pat i { width: 18px; height: 18px; flex: none; background: #8d82a3; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+    .r-xp { display: grid; gap: 5px; } .r-xp b { font-size: 15px; } .r-xp span { height: 5px; background: #1d1330; } .r-xp span i { display: block; height: 100%; background: #a855f7; }
+    .r-num { text-align: right; color: #cfc6de; } .r-num small { display: block; color: #8d82a3; font-size: 11px; text-transform: uppercase; }
+    .r-ver { text-align: center; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="faixa"><div class="largura"><a class="faixa-logo" href="#"><img src="/marca/logo.webp" alt="Magnatas do CS"></a><div class="faixa-conta"><a class="painel-adm" href="#">&#128737; Painel ADM <b>1</b></a><span class="sino">&#128276;<b>1</b></span><div class="conta">Olá, <strong>Dragonzit0</strong> · Associado 2 &#9662;</div></div></div></div>
+  <nav class="menu"><div class="largura"><div class="menu-itens"><div class="item"><span>Notícias</span></div><div class="item"><span>Jogo</span></div><a class="item item-loja" href="#"><span>Ranking</span></a><div class="item"><span>Comunidade</span></div><div class="item"><span>Clãs</span></div><div class="item"><span>Magnata Shop</span></div><div class="item"><span>Baú</span></div></div><a class="jogar" href="#">JOGAR</a></div></nav>
+
+  <main class="largura s-pagina">
+    <div class="r-topo"><h1>Ranking</h1></div>
+    <div class="s-filtros"><a class="ativo" href="#">Comunidade</a><a href="#">Mix do mês</a><a href="#">MVPs</a><a href="#">Clãs</a></div>
+
+    <section class="r-eu">
+      <span class="pos">4<small>º</small></span>
+      <span class="r-foto"></span>
+      <div>
+        <b>Você · Dragonzit0</b>
+        <small class="sub">Associado 2 · 17 partidas · 18% de vitórias</small>
+        <div class="r-meta"><div><span>Faltam <em>1.200 XP</em> para passar <em>Lobão</em> e ficar em 3º</span><span>81%</span></div><div class="r-barra"><i style="width:81%"></i></div></div>
+      </div>
+      <div class="xp"><b>5.090</b><small>XP</small></div>
+    </section>
+
+    <div class="r-podio">
+      <div class="r-lugar p2"><div class="r-pessoa"><span class="r-foto"></span><b>Ministro Marfioso</b><small><i></i>Olheiro 3</small></div><div class="r-degrau"><span>2</span><em>8.200 XP</em></div></div>
+      <div class="r-lugar p1"><div class="r-pessoa"><span class="r-coroa">♛</span><span class="r-foto"></span><b>ÈO_THIGAS</b><small><i></i>Magnata Jr. 2</small></div><div class="r-degrau"><span>1</span><em>12.480 XP</em></div></div>
+      <div class="r-lugar p3"><div class="r-pessoa"><span class="r-foto"></span><b>Lobão</b><small><i></i>Associado 3</small></div><div class="r-degrau"><span>3</span><em>6.290 XP</em></div></div>
+    </div>
+
+    <div class="r-lista">
+      <div class="r-linha cab"><span>#</span><span></span><span>Jogador</span><span>Patente</span><span>XP</span><span style="text-align:right">Partidas</span><span style="text-align:right">Vitórias</span></div>
+      <div class="r-linha eu"><span class="n" style="color:#f5b301">4</span><span class="r-foto"></span><span class="nome">Dragonzit0</span><span class="r-pat"><i style="background:#c9d1dc"></i>Associado 2</span><span class="r-xp"><b>5.090</b><span><i style="width:41%"></i></span></span><span class="r-num">17</span><span class="r-num">18%</span></div>
+      <div class="r-linha"><span class="n">5</span><span class="r-foto"></span><span class="nome">ZE PEKENO</span><span class="r-pat"><i></i>Novato 3</span><span class="r-xp"><b>2.100</b><span><i style="width:17%"></i></span></span><span class="r-num">9</span><span class="r-num">44%</span></div>
+      <div class="r-linha"><span class="n">6</span><span class="r-foto"></span><span class="nome">Alfa</span><span class="r-pat"><i></i>Novato 1</span><span class="r-xp"><b>1.100</b><span><i style="width:9%"></i></span></span><span class="r-num">1</span><span class="r-num">100%</span></div>
+      <div class="r-linha"><span class="n">7</span><span class="r-foto"></span><span class="nome">Fumaça</span><span class="r-pat"><i></i>Novato 1</span><span class="r-xp"><b>900</b><span><i style="width:7%"></i></span></span><span class="r-num">3</span><span class="r-num">33%</span></div>
+      <div class="r-linha"><span class="n">8</span><span class="r-foto"></span><span class="nome">Bala Perdida</span><span class="r-pat"><i></i>Recruta 3</span><span class="r-xp"><b>300</b><span><i style="width:3%"></i></span></span><span class="r-num">1</span><span class="r-num">0%</span></div>
+    </div>
+    <p style="margin-top:10px;color:#ab9fc2;font-size:13px">Todas as partidas dão XP, e ele não zera.</p>
+
+    <p class="s-nota"><b>Ideias deste rascunho:</b> no topo, <b>"Seu lugar"</b>: sua posição grande, a sua patente e uma barra de quanto falta para passar quem está logo acima · <b>pódio com degraus</b> (1º mais alto e com coroa, cores de ouro, prata e bronze, a foto com a moldura que a pessoa usa) · a lista em <b>linhas largas</b>, com a posição grande, a insígnia da patente e uma <b>barra de XP</b> comparada ao 1º · a sua linha marcada em dourado. Mix do mês e MVPs ganham o mesmo jeito (com K/D e estrelas no lugar do XP).</p>
+  </main>
+</body>
+</html>
